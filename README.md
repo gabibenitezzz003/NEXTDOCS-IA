@@ -10,56 +10,92 @@ No es un módulo de Follow: Follow, CIMA y Valid360.ai son **consumidores opcion
 
 ## Estado actual
 
+El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado contra infraestructura real**.
+
 | Área | Estado |
 |---|---|
-| Andamiaje del backend (Maven, Spring Boot 3.4, Java 21) | ✅ |
+| Andamiaje Maven · Spring Boot 3.4 · Java 21 · PostgreSQL 16 | ✅ |
 | Infraestructura local (PostgreSQL, Redis, MinIO) | ✅ |
-| Enumeraciones del núcleo documental | ✅ |
-| Entidades JPA del núcleo (27) | ✅ |
-| Migración Flyway `V1` del esquema | ✅ |
-| Configuración, seguridad JWT y multi-tenancy | ⏳ en curso |
-| Repositorios, servicios y controladores REST | ⏳ pendiente |
-| Proveedor IA abstracto + worker de extracción | ⏳ pendiente |
-| Motor de reglas y validación | ⏳ pendiente |
-| Outbox + webhooks HMAC | ⏳ pendiente |
+| 27 enumeraciones + 27 entidades JPA + migración Flyway `V1` | ✅ |
+| Multi-tenancy con aislamiento verificado (`SEC-01`) | ✅ |
+| Autenticación JWT + cuentas de servicio con clave hasheada | ✅ |
+| Ingesta idempotente con MIME real (Tika) y conteo de páginas (PDFBox) | ✅ |
+| Almacenamiento S3/MinIO con checksum y URL firmada | ✅ |
+| Máquina de estados del documento con transiciones validadas | ✅ |
+| Proveedor de IA abstracto + adaptador `SIMULADO` + router con respaldo | ✅ |
+| Worker de extracción con backoff exponencial y reencolado | ✅ |
+| Motor de validación con reglas versionadas por plantilla | ✅ |
+| Revisión humana con correcciones, sobreescritura y motivo obligatorio | ✅ |
+| Centro de excepciones con SLA, prioridad y deduplicación | ✅ |
+| Auditoría de toda acción con actor, recurso y correlación | ✅ |
+| Outbox transaccional + despachador de webhooks firmados con HMAC | ✅ |
+| API REST v1 de documentos, excepciones y autenticación | ✅ |
+| API de plantillas (draft/test/publish/rollback) | ⏳ |
+| Adaptador Gemini real | ⏳ |
+| Segmentación de PDF multi-documento | ⏳ |
+| `FollowConnector` para matching | ⏳ |
+| Suite de QA `QA1-01` … `QA1-10` | ⏳ |
+
+### Verificado con el sistema corriendo
+
+```
+POST /autenticacion/ingresar   → 200, 12 permisos del rol ADMINISTRADOR
+POST /documentos               → 201 RECIBIDO
+                                 worker → PROCESANDO → EXTRAIDO → VALIDADO → OBSERVADO
+GET  /documentos/{id}/detalle  → extracción con confianza por campo,
+                                 PRESENTE / ILEGIBLE distinguidos,
+                                 2 hallazgos BLOQUEANTE por campos requeridos ilegibles,
+                                 autoaprobado = false pese a confianza 0.92 en el resto
+GET  /excepciones?estado=ABIERTA → 1 excepción VALIDACION/CRITICA con SLA de 4 h
+POST /documentos/{id}/revisiones → OBSERVADO → APROBADO con 2 correcciones auditadas
+POST .../revisiones sin motivo   → 400 "La decision requiere un motivo explicito"
+Lectura cross-tenant             → 404, bandeja del intruso con 0 documentos
+Sin token                        → 403
+```
+
+Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades
+y la migración Flyway coinciden exactamente.
 
 ---
 
-## Decisiones de arquitectura tomadas
+## Decisiones de arquitectura
 
 1. **Sistema desacoplado de Follow.** Ningún servicio del core importa modelos de Follow.
-   Las referencias externas se guardan como `ReferenciaExterna` (`origen` / `tipoObjeto` / `idObjeto` / `tenantOrigen`).
-   Follow entra únicamente como conector registrado en el Integration Hub.
-2. **Monorepo con boundaries lógicos.** Un solo deployable al inicio (menos complejidad operativa),
-   pero con contratos y capas de dominio desacopladas para poder extraer servicios cuando el volumen lo justifique.
-3. **Stack moderno.** Spring Boot 3.4 + Java 21 + PostgreSQL 16, en lugar del Spring Boot 2.3 / Java 11 de Follow,
+   Las referencias externas se guardan como `ReferenciaExterna` (`origen` / `tipoObjeto` / `idObjeto`).
+2. **Monorepo con boundaries lógicos.** Un solo deployable, con contratos y capas de dominio
+   desacopladas para poder extraer servicios cuando el volumen lo justifique.
+3. **Stack moderno.** Spring Boot 3.4 + Java 21 en lugar del Spring Boot 2.3 / Java 11 de Follow,
    que está fuera de soporte. Se conserva **la nomenclatura y la estructura de paquetes de Follow**.
-4. **Multi-tenancy por columna discriminante.** Toda entidad de negocio tiene `tenant`.
-   El aislamiento se refuerza en repositorio y servicio, nunca sólo en el controlador.
-5. **Proveedor de IA abstracto.** `Gemini`, `DeepSeek`, `ABBYY` y `Simulado` detrás de un mismo contrato
-   que devuelve un resultado canónico. Cambiar de proveedor no cambia el payload de negocio.
-6. **Asincronía obligatoria.** La API guarda y encola; el worker es el único que llama al proveedor de IA.
+4. **Multi-tenancy en tres capas**: token → repositorio → servicio. Nunca sólo en el controlador.
+5. **Proveedor de IA abstracto.** Cambiar de proveedor no cambia el payload de negocio.
+6. **Asincronía obligatoria.** La API guarda y encola; el worker es el único que llama al proveedor.
+7. **Los servicios devuelven modelos, no entidades.** La conversión ocurre dentro de la transacción.
+   Esto evita `LazyInitializationException` en el borde HTTP.
+
+Detalle completo en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md).
 
 ---
 
 ## Convenciones de código
 
-Estas reglas son **obligatorias** y replican las de `follow-backend`:
+Obligatorias. Replican las de `follow-backend`.
 
-- **Todo en español**: nombres de clases, métodos, variables, columnas y tablas.
-- **camelCase** en Java; `snake_case` en la base (resuelto por la estrategia de nombres de Hibernate).
+- **Todo en español**: clases, métodos, variables, columnas y tablas.
+- **camelCase** en Java; `snake_case` en la base.
 - **Prohibido escribir comentarios en el código.** El nombre de la clase, del método y de la variable
-  tienen que alcanzar. Si algo necesita explicación, se documenta en `docs/`.
+  tienen que alcanzar. Lo que necesite explicación va en `docs/`.
 - Paquetes: `config`, `clientes`, `convertidores`, `entidades`, `enumeraciones`, `errores`,
-  `exceptions`, `filtros`, `interfaces`, `modelos`, `repositorios`, `restControladores`, `servicios`, `utiles`.
-- Entidades con `@Data` de Lombok, `implements Serializable`, id `String` UUID.
-- Campos de ciclo de vida: `alta` (creación) y `baja` (borrado lógico), igual que Follow.
-- DTOs terminan en `Model`, `ReqModel` o `ResModel`. Servicios en `Service`. Controladores en `RestController`.
-- Cada enumeración expone un `desde(String)` tolerante a mayúsculas/minúsculas.
+  `exceptions`, `filtros`, `interfaces`, `modelos`, `repositorios`, `restControladores`,
+  `servicios`, `specificationBuilder`, `utiles`.
+- Entidades con `@Data`, `implements Serializable`, id `String` UUID, campos `alta` y `baja`.
+- DTOs terminan en `Model`, `ReqModel` o `ResModel`. Servicios en `Service`. Controladores en
+  `RestController`. Contratos en `Int`. Convertidores en `Converter`.
+- Cada enumeración expone un `desde(String)` tolerante a mayúsculas y minúsculas.
+- Los controladores extienden `ControladorRest<T>` y obtienen tenant y usuario de ahí.
 
 ---
 
-## Estructura del repositorio
+## Estructura
 
 ```
 nextdocs-ai/
@@ -68,48 +104,46 @@ nextdocs-ai/
 │   └── src/main/
 │       ├── java/com/nextdocs/ai/
 │       │   ├── NextDocsAiApplication.java
-│       │   ├── clientes/            clientes HTTP de terceros
-│       │   ├── config/              beans de configuración y properties
+│       │   ├── config/              properties tipadas, seguridad, S3, OpenAPI, arranque
 │       │   ├── convertidores/       entidad → modelo
-│       │   ├── entidades/           entidades JPA
-│       │   ├── enumeraciones/       enums de dominio
-│       │   ├── errores/             manejador global y modelo de error
+│       │   ├── entidades/           27 entidades JPA
+│       │   ├── enumeraciones/       27 enums de dominio
+│       │   ├── errores/             ErrorHandler global y WebErrorModel
 │       │   ├── exceptions/          excepciones de negocio
-│       │   ├── filtros/             filtros de servlet (JWT, tenant, correlación)
-│       │   ├── interfaces/          contratos de proveedores y conectores
+│       │   ├── filtros/             correlación y autenticación
+│       │   ├── interfaces/          ProveedorDocumentalIaInt, ConectorAsociacionInt
 │       │   ├── modelos/             DTOs de entrada y salida
-│       │   ├── repositorios/        Spring Data JPA
+│       │   ├── repositorios/        26 repositorios, siempre filtrados por tenant
 │       │   ├── restControladores/   API REST v1
-│       │   ├── servicios/           lógica de negocio
-│       │   └── utiles/              utilidades transversales
+│       │   ├── servicios/
+│       │   │   ├── jwt/             TokenService
+│       │   │   └── proveedores/     adaptadores de IA y router
+│       │   ├── specificationBuilder/
+│       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        migraciones Flyway
-├── docs/                            documentación viva del proyecto
-└── compose.yml                      PostgreSQL + Redis + MinIO
+│           └── db/migration/        V1__esquema_nucleo_documental.sql
+├── docs/
+│   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes
+│   └── API.md                       endpoints, permisos, errores, webhooks
+└── compose.yml                      PostgreSQL 5434 · Redis 6381 · MinIO 9102/9101
 ```
 
 ---
 
-## Modelo de datos del núcleo
+## Modelo de datos
 
 **Identidad y tenancy:** `Tenant`, `Usuario`, `Rol`, `CuentaServicio`
-
 **Plantillas:** `PlantillaDocumental`, `VersionPlantilla`, `CampoPlantilla`, `ReglaPlantilla`
-
 **Documental:** `Documento`, `ArchivoDocumento`, `SegmentoDocumento`, `SeguimientoOriginalFisico`
-
 **Extracción:** `EjecucionExtraccion`, `ValorExtraido`
-
 **Validación:** `EjecucionValidacion`, `HallazgoValidacion`
-
 **Asociación:** `CandidatoAsociacion`
+**Revisión:** `RevisionDocumento`, `CambioCampoRevision`, `ExcepcionDocumental`
+**Gobernanza e integración:** `EventoAuditoria`, `EventoSalida`, `SuscripcionWebhook`,
+`EntregaWebhook`, `ConfiguracionProveedor`, `PoliticaRetencion`
 
-**Revisión humana:** `RevisionDocumento`, `CambioCampoRevision`, `ExcepcionDocumental`
-
-**Gobernanza e integración:** `EventoAuditoria`, `EventoSalida`, `SuscripcionWebhook`, `EntregaWebhook`, `ConfiguracionProveedor`, `PoliticaRetencion`
-
-### Máquina de estados del documento
+### Máquina de estados
 
 ```
 RECIBIDO → PROCESANDO → EXTRAIDO → VALIDADO → APROBADO → CERRADO
@@ -119,22 +153,31 @@ RECIBIDO → PROCESANDO → EXTRAIDO → VALIDADO → APROBADO → CERRADO
                          RECHAZADO
 ```
 
-Reglas que no se negocian:
+Reglas invariantes:
 - La confianza de lectura **nunca** aprueba por sí sola. La decisión la toman las reglas.
-- `NO_FIGURA` y `ILEGIBLE` son estados distintos y deben producir hallazgos distintos.
-- Un documento con dos candidatos de asociación va a revisión humana; jamás se elige en silencio.
+- `NO_FIGURA` e `ILEGIBLE` son estados distintos y producen hallazgos distintos.
+- Dos candidatos de asociación van a revisión humana; jamás se elige en silencio.
 - Una plantilla publicada no se modifica: se crea una versión nueva.
+- Sobreescribir un hallazgo exige motivo, actor y queda auditado.
 
 ---
 
 ## Cómo levantar el entorno
 
 ```bash
-docker compose up -d                 # PostgreSQL 5434 · Redis 6381 · MinIO 9102/9101
-cd backend && ./mvnw spring-boot:run # API en http://localhost:8090
+docker compose up -d
+cd backend && ./mvnw spring-boot:run
 ```
 
-Documentación de la API: `http://localhost:8090/swagger-ui.html`
+- API: `http://localhost:8090`
+- Swagger: `http://localhost:8090/swagger-ui.html`
+- Consola MinIO: `http://localhost:9101` (`nextdocs` / `nextdocs123`)
+
+Al arrancar se crea el tenant `demo` con el usuario `admin@nextdocs.ai` / `nextdocs123`.
+Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
+
+> Sin JDK local se puede compilar y ejecutar con Docker:
+> `docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run`
 
 ---
 
@@ -142,31 +185,39 @@ Documentación de la API: `http://localhost:8090/swagger-ui.html`
 
 Orden de trabajo. Quien retome el proyecto arranca por el primero sin marcar.
 
-- [x] Andamiaje Maven, `compose.yml` y `application.yml`
-- [x] Enumeraciones del núcleo documental
-- [x] Entidades JPA + migración Flyway `V1`
-- [ ] `config/`: properties tipadas, `SecurityConfig`, `OpenApiConfig`, cliente S3, Redis
-- [ ] `filtros/`: filtro JWT, filtro de contexto de tenant, filtro de correlación (`correlacionId` en MDC)
-- [ ] `errores/` + `exceptions/`: `ErrorHandler` global con el mismo contrato de error que Follow
-- [ ] `repositorios/`: uno por entidad, con consultas **siempre** filtradas por `tenant`
-- [ ] `servicios/AutenticacionService`: login, refresh, cuentas de servicio con clave hasheada
-- [ ] `servicios/AlmacenamientoService`: subida a S3/MinIO, checksum, URL firmada con TTL
-- [ ] `servicios/IngestaDocumentalService`: idempotencia por `claveIdempotencia`, validación MIME real
-      con Tika, límite de tamaño, cuarentena y encolado
-- [ ] `interfaces/ProveedorDocumentalIa` + adaptadores `Simulado` y `Gemini`
-- [ ] `servicios/ExtractorDocumentalService` y worker de cola con reintento exponencial, DLQ y
-      circuit breaker para el 429 del proveedor
-- [ ] `servicios/ValidacionDocumentalService`: motor de reglas versionadas por `VersionPlantilla`
-- [ ] `servicios/SegmentacionDocumentalService`: split de PDF multi-documento con PDFBox
-- [ ] `servicios/RevisionDocumentalService` y `ExcepcionService` con SLA y asignación
-- [ ] `servicios/AuditoriaService`: registro de toda acción con actor, recurso, hash antes/después y correlación
-- [ ] `servicios/EventoSalidaService`: outbox transaccional + despachador de webhooks firmados con HMAC
-- [ ] `restControladores/`: `DocumentoRestController`, `PlantillaRestController`,
-      `ExcepcionRestController`, `AutenticacionRestController`, `TenantRestController`
-- [ ] Suite de QA de la Etapa 1 (`QA1-01` a `QA1-10` del documento N3)
-- [ ] `FollowConnector` como adaptador aislado detrás de la interfaz de asociación
-- [ ] Frontend del portal standalone
-- [ ] Etapa 2: Workflow Definition/Runtime, Process Studio y Sentinel de consistencia
+**Cerrar la Etapa 1 vendible**
+
+- [ ] `PlantillaRestController` + `PlantillaService`: CRUD, versionado y ciclo
+      `BORRADOR → EN_PRUEBA → PUBLICADA → DEPRECADA` con rollback. Hoy las plantillas se cargan por SQL
+- [ ] `POST /plantillas/{id}/probar`: correr una versión borrador contra un documento de muestra
+      y mostrar esperado vs. obtenido por campo
+- [ ] Quality gate: bloquear la publicación si no hay dataset gold o si empeoran los campos críticos
+- [ ] `ProveedorGeminiService` implementando `ProveedorDocumentalIaInt` con el contrato canónico
+- [ ] Antivirus/antimalware y cuarentena en la ingesta (`SEC-04` del N3)
+- [ ] `SegmentacionDocumentalService`: split de PDF multi-documento con PDFBox → estado `DIVIDIDO`
+      con documentos hijo (`QA1-02`)
+- [ ] `FollowConnector` implementando `ConectorAsociacionInt`, aislado detrás de la interfaz.
+      Timeout, retry y circuit breaker; un timeout **no** puede confundirse con cero candidatos (`QA1-05`)
+- [ ] Suite de tests `QA1-01` … `QA1-10` del N3 con Testcontainers
+- [ ] `GobernanzaRestController`: exportación del paquete de auditoría por documento (`GOV-01`)
+- [ ] Job de retención y legal hold aplicando `PoliticaRetencion` (`GOV-02`)
+- [ ] `TenantRestController` y `UsuarioRestController` para el onboarding autoservicio
+- [ ] Observabilidad: métricas por tenant de tokens, páginas, latencia p95, tasa de error del
+      proveedor, tasa de autoaprobación y backlog de revisión
+
+**Etapa 1 completa**
+
+- [ ] Portal frontend standalone
+- [ ] SSO y embed con Follow, CIMA y Valid360.ai por federación de identidad
+- [ ] Channel Gateway: email dedicado por tenant y WhatsApp
+- [ ] Archive & Export básico: búsqueda, ZIP, índice XLSX y manifiesto con hashes
+
+**Etapa 2**
+
+- [ ] Workflow Definition + Runtime
+- [ ] Process Studio con canvas y editor guiado sobre el mismo modelo
+- [ ] Consistency & Impact Sentinel: grafo de dependencias y reevaluación incremental
+- [ ] Signature Adapter (Legale / Docusign)
 
 ---
 
@@ -177,17 +228,17 @@ Orden de trabajo. Quien retome el proyecto arranca por el primero sin marcar.
 | **NEXTDOCS-AI** | Core documental. Este repositorio. | `gabibenitezzz003/NEXTDOCS-IA` |
 | **workflow** | Motor de procesos. Microservicio aparte, Etapa 2. | `Follow-Hub/workflow` rama `NEXT-DOCS-AI` |
 | **docvance-ai** | Servicio auxiliar de IA documental. | `gabibenitezzz003/docvance-ai` rama `next-ai` |
-| **follow-backend** | Consumidor vía conector. No es dependencia. | `Follow-Hub/follow-backend` |
-| **follow-front** | Consumidor embebido vía SSO. No es dependencia. | `Follow-Hub/follow-front` |
+| **follow-backend** | Consumidor vía conector. **No es dependencia.** | `Follow-Hub/follow-backend` rama `integraciones-pedidos` |
+| **follow-front** | Consumidor embebido vía SSO. **No es dependencia.** | `Follow-Hub/follow-front` rama `Integraciones-front` |
 
 ---
 
 ## Documentación fuente
 
 La especificación funcional y técnica vive en `dev/NEXT_DOC_AI_SRP084_V7_FINAL_20260823/`
-(fuera de este repositorio). Los documentos que gobiernan las decisiones son:
+(fuera de este repositorio). Los documentos que gobiernan las decisiones:
 
-- `03_ARQUITECTURA_FUNCIONAL_TECNICA_..._MICROSERVICIOS_V7` — arquitectura, contratos, eventos, modelo de datos
+- `03_ARQUITECTURA_FUNCIONAL_TECNICA_..._MICROSERVICIOS_V7` — arquitectura, contratos, eventos, datos
 - `N1-SPR084-V7-..._PRD` — alcance de producto
 - `N2-SPR084-V7-..._ARQUITECTURA_FLUJOS_ESCENARIOS` — flujos y escenarios
 - `N3-SPR084-V7-..._ESPECIFICACION_DESARROLLO_QA_UX` — backlog, criterios de aceptación y QA
