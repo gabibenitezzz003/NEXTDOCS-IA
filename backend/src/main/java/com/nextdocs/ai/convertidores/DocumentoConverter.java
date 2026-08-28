@@ -78,6 +78,11 @@ public class DocumentoConverter {
 		modelo.setPaginas(archivo.getPaginas());
 		modelo.setVersion(archivo.getVersion());
 		modelo.setOriginal(archivo.isOriginal());
+		modelo.setResultadoEscaneo(archivo.getResultadoEscaneo());
+		modelo.setAmenazaDetectada(archivo.getAmenazaDetectada());
+		modelo.setMotorEscaneo(archivo.getMotorEscaneo());
+		modelo.setEscaneado(archivo.getEscaneado());
+		modelo.setEnCuarentena(archivo.isEnCuarentena());
 		modelo.setAlta(archivo.getAlta());
 		return modelo;
 	}

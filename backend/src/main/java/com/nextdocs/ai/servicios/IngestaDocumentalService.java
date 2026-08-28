@@ -16,11 +16,14 @@ import com.nextdocs.ai.entidades.Usuario;
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
 import com.nextdocs.ai.enumeraciones.EstadoDocumento;
 import com.nextdocs.ai.enumeraciones.OrigenDocumento;
+import com.nextdocs.ai.enumeraciones.SeveridadHallazgo;
+import com.nextdocs.ai.enumeraciones.TipoExcepcion;
 import com.nextdocs.ai.enumeraciones.TipoEventoCanonico;
 import com.nextdocs.ai.exceptions.ArchivoRechazadoException;
 import com.nextdocs.ai.exceptions.ValidacionException;
 import com.nextdocs.ai.modelos.DocumentoModel;
 import com.nextdocs.ai.modelos.NuevoDocumentoReqModel;
+import com.nextdocs.ai.modelos.ResultadoEscaneoModel;
 import com.nextdocs.ai.repositorios.ArchivoDocumentoRepository;
 import com.nextdocs.ai.repositorios.DocumentoRepository;
 import com.nextdocs.ai.repositorios.PlantillaDocumentalRepository;
@@ -42,6 +45,8 @@ public class IngestaDocumentalService {
 
 	public static final String ENTIDAD = "Documento";
 
+	public static final String CODIGO_ARCHIVO_INFECTADO = "ARCHIVO_INFECTADO";
+
 	private static final Logger log = LoggerFactory.getLogger(IngestaDocumentalService.class);
 
 	private final DocumentoRepository documentoRepository;
@@ -62,12 +67,17 @@ public class IngestaDocumentalService {
 
 	private final DocumentoConverter documentoConverter;
 
+	private final EscaneoArchivoService escaneoArchivoService;
+
+	private final ExcepcionDocumentalService excepcionDocumentalService;
+
 	public IngestaDocumentalService(DocumentoRepository documentoRepository,
 			ArchivoDocumentoRepository archivoDocumentoRepository,
 			PlantillaDocumentalRepository plantillaDocumentalRepository, AlmacenamientoService almacenamientoService,
 			ColaExtraccionService colaExtraccionService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesIngesta propiedades,
-			DocumentoConverter documentoConverter) {
+			DocumentoConverter documentoConverter, EscaneoArchivoService escaneoArchivoService,
+			ExcepcionDocumentalService excepcionDocumentalService) {
 		this.documentoRepository = documentoRepository;
 		this.archivoDocumentoRepository = archivoDocumentoRepository;
 		this.plantillaDocumentalRepository = plantillaDocumentalRepository;
@@ -77,6 +87,8 @@ public class IngestaDocumentalService {
 		this.eventoSalidaService = eventoSalidaService;
 		this.propiedades = propiedades;
 		this.documentoConverter = documentoConverter;
+		this.escaneoArchivoService = escaneoArchivoService;
+		this.excepcionDocumentalService = excepcionDocumentalService;
 	}
 
 	@Transactional
@@ -98,19 +110,46 @@ public class IngestaDocumentalService {
 		String tipoMime = InspectorArchivo.detectarTipoMime(contenido, archivo.getOriginalFilename());
 		validarTipoMime(tipoMime);
 
+		ResultadoEscaneoModel escaneo = escaneoArchivoService.escanear(contenido, archivo.getOriginalFilename());
+
 		Documento documento = construirDocumento(tenant, usuario, archivo, datos, hashContenido, claveEfectiva);
+		if (escaneo.estaInfectado()) {
+			documento.setEstado(EstadoDocumento.RECHAZADO);
+			documento.setObservacion("Archivo rechazado por el antivirus: " + escaneo.getAmenaza());
+		}
 		documentoRepository.save(documento);
 
-		int paginas = InspectorArchivo.contarPaginas(contenido, tipoMime);
+		int paginas = escaneo.estaInfectado() ? 0 : InspectorArchivo.contarPaginas(contenido, tipoMime);
 		String claveObjeto = ClaveObjeto.paraDocumento(tenant.getId(), documento.getId(),
 				archivo.getOriginalFilename());
-		almacenamientoService.guardarDocumento(claveObjeto, contenido, tipoMime);
+		if (escaneo.estaInfectado()) {
+			almacenamientoService.guardarEnCuarentena(claveObjeto, contenido, tipoMime);
+		} else {
+			almacenamientoService.guardarDocumento(claveObjeto, contenido, tipoMime);
+		}
 
-		archivoDocumentoRepository.save(construirArchivo(tenant, documento, archivo, contenido, tipoMime, paginas,
-				claveObjeto));
+		ArchivoDocumento archivoDocumento = construirArchivo(tenant, documento, archivo, contenido, tipoMime,
+				paginas, claveObjeto);
+		aplicarEscaneo(archivoDocumento, escaneo);
+		archivoDocumentoRepository.save(archivoDocumento);
+
+		if (escaneo.estaInfectado()) {
+			auditoriaService.registrarFallo(tenant.getId(), AccionAuditoria.DOCUMENTO_INGRESADO, ENTIDAD,
+					documento.getId(), Map.of("amenaza", escaneo.getAmenaza(), "motor", escaneo.getMotor(),
+							"hash", hashContenido));
+			excepcionDocumentalService.abrir(tenant, documento, TipoExcepcion.SEGURIDAD,
+					SeveridadHallazgo.BLOQUEANTE, CODIGO_ARCHIVO_INFECTADO,
+					"El archivo contiene la amenaza " + escaneo.getAmenaza() + " y quedo en cuarentena");
+			eventoSalidaService.publicarDeDocumento(documento, TipoEventoCanonico.DOCUMENTO_RECHAZADO);
+			log.warn("Archivo infectado en cuarentena: documento {} amenaza {}", documento.getId(),
+					escaneo.getAmenaza());
+			return documentoConverter.aModelo(documento,
+					archivoDocumentoRepository.listarPorDocumento(documento.getId()));
+		}
 
 		auditoriaService.registrarConDetalle(tenant.getId(), AccionAuditoria.DOCUMENTO_INGRESADO, ENTIDAD,
-				documento.getId(), Map.of("origen", documento.getOrigen(), "hash", hashContenido, "paginas", paginas));
+				documento.getId(), Map.of("origen", documento.getOrigen(), "hash", hashContenido, "paginas", paginas,
+						"escaneo", escaneo.getResultado()));
 		eventoSalidaService.publicarDeDocumento(documento, TipoEventoCanonico.DOCUMENTO_RECIBIDO);
 		encolarTrasCommit(documento.getId());
 		return documentoConverter.aModelo(documento, archivoDocumentoRepository.listarPorDocumento(documento.getId()));
@@ -173,6 +212,17 @@ public class IngestaDocumentalService {
 		archivoDocumento.setOriginal(true);
 		archivoDocumento.setAlta(Instant.now());
 		return archivoDocumento;
+	}
+
+	private void aplicarEscaneo(ArchivoDocumento archivo, ResultadoEscaneoModel escaneo) {
+		archivo.setResultadoEscaneo(escaneo.getResultado());
+		archivo.setAmenazaDetectada(escaneo.getAmenaza());
+		archivo.setMotorEscaneo(escaneo.getMotor() == null ? null : escaneo.getMotor().name());
+		archivo.setEscaneado(escaneo.getEscaneado());
+		archivo.setEnCuarentena(escaneo.estaInfectado());
+		if (escaneo.estaInfectado()) {
+			archivo.setBucket(almacenamientoService.bucketCuarentena());
+		}
 	}
 
 	private void validarArchivo(MultipartFile archivo, byte[] contenido) {

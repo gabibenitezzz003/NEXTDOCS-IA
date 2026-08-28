@@ -20,6 +20,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Multi-tenancy con aislamiento verificado (`SEC-01`) | ✅ |
 | Autenticación JWT + cuentas de servicio con clave hasheada | ✅ |
 | Ingesta idempotente con MIME real (Tika) y conteo de páginas (PDFBox) | ✅ |
+| Antivirus con cuarentena, ClamAV o permisivo, fail-closed por defecto | ✅ |
 | Almacenamiento S3/MinIO con checksum y URL firmada | ✅ |
 | Máquina de estados del documento con transiciones validadas | ✅ |
 | Proveedor de IA abstracto + adaptadores `GEMINI` y `SIMULADO` + router con respaldo | ✅ |
@@ -88,6 +89,13 @@ padre         → DIVIDIDO con 10 segmentos, y CERO extracciones sobre el padre
                 y su propio motivo de corte
 extracción    → los 10 extrajeron SUS datos: remito 98471..98480,
                 bultos 10..100, conformidad alternando true/false
+
+Antivirus (SEC-04, ClamAV 1.5.4 real)
+EICAR suelto  → 415 en el chequeo de MIME, ni llega al antivirus
+PDF con EICAR → RECHAZADO, amenaza Eicar-Signature, bucket de cuarentena,
+                excepción SEGURIDAD/CRITICA y CERO extracciones:
+                el contenido malicioso nunca llegó a Gemini
+PDF limpio    → LIMPIO por CLAMAV, sigue el pipeline normal
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades
@@ -159,13 +167,13 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 núcleo · V2 bloqueo optimista · V3 conectores · V4 segmentación
+│           └── db/migration/        V1 núcleo · V2 bloqueo · V3 conectores · V4 segmentación · V5 antivirus
 ├── .env.example                     plantilla de variables; copiala a .env
 ├── docs/
 │   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes
 │   ├── API.md                       endpoints, permisos, errores, webhooks
 │   └── TODO.md                      plan de trabajo hasta terminar el producto
-└── compose.yml                      PostgreSQL 5434 · Redis 6381 · MinIO 9102/9101
+└── compose.yml                      PostgreSQL 5434 · Redis 6381 · MinIO 9102/9101 · ClamAV opcional
 ```
 
 ---
@@ -246,7 +254,7 @@ Bloqueantes inmediatos para poder vender:
 3. ~~Matching + `FollowConnector`~~ — **terminado**
 
 Los tres bloqueantes de venta están cerrados. Lo que sigue es endurecer y completar:
-antivirus en la ingesta, seguimiento del original físico, y la suite de QA automatizada.
+seguimiento del original físico, gobernanza y la suite de QA automatizada.
 
 ---
 

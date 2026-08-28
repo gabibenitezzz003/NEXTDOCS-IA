@@ -20,6 +20,8 @@ public class PropiedadesAlmacenamiento {
 
 	private String bucketExportaciones;
 
+	private String bucketCuarentena;
+
 	private boolean rutaEstiloForzado;
 
 	private int duracionUrlFirmadaMinutos;

@@ -54,6 +54,7 @@ POST /api/v1/documentos
 IngestaDocumentalService
    · valida tamaño y extensión
    · detecta el MIME real con Tika (no confía en el header)
+   · escanea con el antivirus; si está infectado va a cuarentena y NO se encola
    · calcula sha256
    · resuelve idempotencia por Idempotency-Key (o por hash si no viene)
    · guarda en S3/MinIO, cuenta páginas con PDFBox
@@ -144,6 +145,7 @@ devuelve 0 documentos.
 | Autorización | `@PreAuthorize("hasAuthority('...')")` sobre permisos granulares de `Permiso` |
 | Secretos en el navegador | Ninguno. El front usa sesión; las integraciones usan `X-Clave-Servicio` server-to-server |
 | Archivos | MIME real por contenido con Tika, no por extensión ni por header |
+| Antivirus | ClamAV por `INSTREAM` antes de almacenar; fail-closed por defecto; infectado va a bucket de cuarentena |
 | Descarga del original | URL firmada con TTL de 15 min. El bucket no es público |
 | Webhooks | Firma HMAC-SHA256 del cuerpo en `X-Nextdocs-Firma` |
 | Trazabilidad | `correlacionId` en el MDC, en la respuesta, en cada evento y en cada registro de auditoría |
@@ -239,6 +241,5 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 
 | Falta | Riesgo si no se hace |
 |---|---|
-| Antivirus / antimalware en la ingesta | `SEC-04` del N3 no se cumple: un archivo malicioso llega al proveedor de IA |
 | Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
 | Retención y legal hold ejecutándose | `GOV-02`: la política existe en el modelo pero nadie la aplica |

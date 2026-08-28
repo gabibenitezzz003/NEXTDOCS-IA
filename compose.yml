@@ -60,11 +60,29 @@ services:
       mc alias set local http://minio:9000 nextdocs nextdocs123;
       mc mb --ignore-existing local/nextdocs-documentos;
       mc mb --ignore-existing local/nextdocs-exportaciones;
+      mc mb --ignore-existing local/nextdocs-cuarentena;
       mc anonymous set none local/nextdocs-documentos;
+      mc anonymous set none local/nextdocs-cuarentena;
       exit 0;
       "
+
+  clamav:
+    image: clamav/clamav:stable
+    container_name: nextdocs-clamav
+    profiles: ["antivirus"]
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav-datos:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
 
 volumes:
   postgres-datos:
   redis-datos:
   minio-datos:
+  clamav-datos:

@@ -52,6 +52,16 @@ Idempotency-Key: <clave>            (opcional; por defecto usa el sha256 del con
 
 Reenviar la misma `Idempotency-Key` devuelve **el mismo documento**, no crea uno nuevo.
 
+**Controles de ingesta, en este orden:**
+
+1. Tamaño y extensión → 413 / 415
+2. **MIME real por contenido** con Tika, no por el header ni la extensión → 415
+3. **Antivirus** → si está infectado el documento se crea en estado `RECHAZADO`, el archivo va al
+   bucket de cuarentena, se abre una excepción `SEGURIDAD` bloqueante y **nunca se encola**:
+   el contenido malicioso jamás llega al proveedor de IA
+
+La respuesta incluye `resultadoEscaneo`, `amenazaDetectada`, `motorEscaneo` y `enCuarentena` por archivo.
+
 `sujeto*` es la referencia externa opaca. Por ejemplo `FOLLOW / PEDIDO / PED-2026-0042`.
 El core no interpreta esos valores: los guarda y los emite en los eventos.
 
@@ -196,6 +206,27 @@ motivo del corte.
 > Un remito con `conformidad = false` pasa una regla `OBLIGATORIO` sobre `conformidad`, porque el dato
 > está. Para exigir un valor concreto usá `CATALOGO` con `{"valores":["true"]}`. Esta distinción es la
 > diferencia entre aprobar y observar un remito sin conformidad.
+
+### Antivirus
+
+Se configura con `nextdocs.antivirus`. Dos motores detrás de `AntivirusInt`:
+
+| Motor | Uso |
+|---|---|
+| `PERMISIVO` | por defecto. **No analiza nada** y marca `NO_ANALIZADO`. Sólo para desarrollo |
+| `CLAMAV` | habla el protocolo `INSTREAM` de clamd por TCP |
+
+`rechazarSiNoDisponible` decide qué pasa si el antivirus no responde:
+
+- `true` (por defecto) — **fail-closed**: el archivo se rechaza con `ANTIVIRUS_NO_DISPONIBLE`.
+  Si activaste el escaneo, es porque lo querés aplicado.
+- `false` — fail-open: el archivo pasa marcado como `ERROR`, nunca como `LIMPIO`.
+
+> El motor `PERMISIVO` marca `NO_ANALIZADO`, **nunca `LIMPIO`**. Un archivo sin analizar y un archivo
+> analizado y limpio son cosas distintas, y la diferencia queda en la auditoría.
+
+Para levantar ClamAV localmente: `docker compose --profile antivirus up -d clamav`.
+Tarda unos minutos en descargar las firmas la primera vez.
 
 ### Asociación a objetos de negocio
 

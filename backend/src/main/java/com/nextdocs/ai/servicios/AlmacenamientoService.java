@@ -48,6 +48,10 @@ public class AlmacenamientoService {
 		return guardar(propiedades.getBucketExportaciones(), claveObjeto, contenido, tipoMime);
 	}
 
+	public String guardarEnCuarentena(String claveObjeto, byte[] contenido, String tipoMime) {
+		return guardar(propiedades.getBucketCuarentena(), claveObjeto, contenido, tipoMime);
+	}
+
 	public byte[] leerDocumento(String claveObjeto) {
 		try (ResponseInputStream<GetObjectResponse> flujo = clienteS3.getObject(GetObjectRequest.builder()
 				.bucket(propiedades.getBucketDocumentos()).key(claveObjeto).build())) {
@@ -84,6 +88,10 @@ public class AlmacenamientoService {
 
 	public String bucketDocumentos() {
 		return propiedades.getBucketDocumentos();
+	}
+
+	public String bucketCuarentena() {
+		return propiedades.getBucketCuarentena();
 	}
 
 	private String guardar(String bucket, String claveObjeto, byte[] contenido, String tipoMime) {

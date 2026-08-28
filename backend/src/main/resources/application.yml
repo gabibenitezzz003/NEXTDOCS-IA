@@ -81,6 +81,7 @@ nextdocs:
     claveSecreta: ${NEXTDOCS_S3_CLAVE_SECRETA:nextdocs123}
     bucketDocumentos: ${NEXTDOCS_S3_BUCKET_DOCUMENTOS:nextdocs-documentos}
     bucketExportaciones: ${NEXTDOCS_S3_BUCKET_EXPORTACIONES:nextdocs-exportaciones}
+    bucketCuarentena: ${NEXTDOCS_S3_BUCKET_CUARENTENA:nextdocs-cuarentena}
     rutaEstiloForzado: true
     duracionUrlFirmadaMinutos: 15
   ingesta:
@@ -99,6 +100,13 @@ nextdocs:
       - tif
       - tiff
       - webp
+  antivirus:
+    motor: ${NEXTDOCS_ANTIVIRUS_MOTOR:PERMISIVO}
+    host: ${NEXTDOCS_ANTIVIRUS_HOST:localhost}
+    puerto: ${NEXTDOCS_ANTIVIRUS_PUERTO:3310}
+    tiempoEsperaMilisegundos: ${NEXTDOCS_ANTIVIRUS_ESPERA:30000}
+    tamanoBloque: 32768
+    rechazarSiNoDisponible: ${NEXTDOCS_ANTIVIRUS_RECHAZAR_SI_CAIDO:true}
   proveedor-ia:
     proveedorPorDefecto: ${NEXTDOCS_IA_PROVEEDOR:SIMULADO}
     intentosMaximos: 4
