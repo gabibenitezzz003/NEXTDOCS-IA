@@ -21,6 +21,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Autenticación JWT + cuentas de servicio con clave hasheada | ✅ |
 | Ingesta idempotente con MIME real (Tika) y conteo de páginas (PDFBox) | ✅ |
 | Antivirus con cuarentena, ClamAV o permisivo, fail-closed por defecto | ✅ |
+| Seguimiento del original físico con política por plantilla | ✅ |
 | Almacenamiento S3/MinIO con checksum y URL firmada | ✅ |
 | Máquina de estados del documento con transiciones validadas | ✅ |
 | Proveedor de IA abstracto + adaptadores `GEMINI` y `SIMULADO` + router con respaldo | ✅ |
@@ -96,6 +97,12 @@ PDF con EICAR → RECHAZADO, amenaza Eicar-Signature, bucket de cuarentena,
                 excepción SEGURIDAD/CRITICA y CERO extracciones:
                 el contenido malicioso nunca llegó a Gemini
 PDF limpio    → LIMPIO por CLAMAV, sigue el pipeline normal
+
+Original físico (QA1-08)
+NO_REQUIERE          → no se crea seguimiento
+REQUIERE_SEGUIMIENTO → documento CERRADO y el papel sigue PENDIENTE y visible
+REQUIERE_PARA_CIERRE → cierre rechazado con 400 hasta recibir el papel,
+                       después CERRADO; archivar sin recibir da 400
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades

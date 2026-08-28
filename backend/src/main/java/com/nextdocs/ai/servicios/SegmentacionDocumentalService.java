@@ -47,11 +47,13 @@ public class SegmentacionDocumentalService {
 
 	private final AuditoriaService auditoriaService;
 
+	private final OriginalFisicoService originalFisicoService;
+
 	public SegmentacionDocumentalService(DocumentoRepository documentoRepository,
 			ArchivoDocumentoRepository archivoDocumentoRepository,
 			SegmentoDocumentoRepository segmentoDocumentoRepository, AlmacenamientoService almacenamientoService,
 			ColaExtraccionService colaExtraccionService, EstadoDocumentalService estadoDocumentalService,
-			AuditoriaService auditoriaService) {
+			AuditoriaService auditoriaService, OriginalFisicoService originalFisicoService) {
 		this.documentoRepository = documentoRepository;
 		this.archivoDocumentoRepository = archivoDocumentoRepository;
 		this.segmentoDocumentoRepository = segmentoDocumentoRepository;
@@ -59,6 +61,7 @@ public class SegmentacionDocumentalService {
 		this.colaExtraccionService = colaExtraccionService;
 		this.estadoDocumentalService = estadoDocumentalService;
 		this.auditoriaService = auditoriaService;
+		this.originalFisicoService = originalFisicoService;
 	}
 
 	public boolean corresponde(Documento documento) {
@@ -120,6 +123,7 @@ public class SegmentacionDocumentalService {
 						hijos.size(), "paginas", archivo.getPaginas()));
 
 		for (Documento hijo : hijos) {
+			originalFisicoService.iniciarSiCorresponde(hijo);
 			colaExtraccionService.encolar(hijo.getId());
 		}
 		return hijos.size();

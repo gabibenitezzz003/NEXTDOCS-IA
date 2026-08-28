@@ -71,13 +71,15 @@ public class IngestaDocumentalService {
 
 	private final ExcepcionDocumentalService excepcionDocumentalService;
 
+	private final OriginalFisicoService originalFisicoService;
+
 	public IngestaDocumentalService(DocumentoRepository documentoRepository,
 			ArchivoDocumentoRepository archivoDocumentoRepository,
 			PlantillaDocumentalRepository plantillaDocumentalRepository, AlmacenamientoService almacenamientoService,
 			ColaExtraccionService colaExtraccionService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesIngesta propiedades,
 			DocumentoConverter documentoConverter, EscaneoArchivoService escaneoArchivoService,
-			ExcepcionDocumentalService excepcionDocumentalService) {
+			ExcepcionDocumentalService excepcionDocumentalService, OriginalFisicoService originalFisicoService) {
 		this.documentoRepository = documentoRepository;
 		this.archivoDocumentoRepository = archivoDocumentoRepository;
 		this.plantillaDocumentalRepository = plantillaDocumentalRepository;
@@ -89,6 +91,7 @@ public class IngestaDocumentalService {
 		this.documentoConverter = documentoConverter;
 		this.escaneoArchivoService = escaneoArchivoService;
 		this.excepcionDocumentalService = excepcionDocumentalService;
+		this.originalFisicoService = originalFisicoService;
 	}
 
 	@Transactional
@@ -150,6 +153,7 @@ public class IngestaDocumentalService {
 		auditoriaService.registrarConDetalle(tenant.getId(), AccionAuditoria.DOCUMENTO_INGRESADO, ENTIDAD,
 				documento.getId(), Map.of("origen", documento.getOrigen(), "hash", hashContenido, "paginas", paginas,
 						"escaneo", escaneo.getResultado()));
+		originalFisicoService.iniciarSiCorresponde(documento);
 		eventoSalidaService.publicarDeDocumento(documento, TipoEventoCanonico.DOCUMENTO_RECIBIDO);
 		encolarTrasCommit(documento.getId());
 		return documentoConverter.aModelo(documento, archivoDocumentoRepository.listarPorDocumento(documento.getId()));

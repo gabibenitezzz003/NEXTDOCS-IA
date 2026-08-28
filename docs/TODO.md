@@ -29,6 +29,7 @@ Cada tarea trae su criterio de aceptación referenciando los códigos de QA del 
 - [x] **Tarea 6** — matching con circuit breaker y `FollowConnector` aislado
 - [x] **Tarea 5** — segmentación de PDF multi-documento con estrategias configurables
 - [x] **Tarea 4** — antivirus con cuarentena verificado contra ClamAV real
+- [x] **Tarea 11** — seguimiento del original físico con política por plantilla
 
 ---
 
@@ -49,12 +50,12 @@ sin Workflow y sin Follow.
 | 8 | Job de retención y legal hold | `GOV-02`: la política existe en el modelo pero nadie la aplica |
 | 9 | API de administración de tenant, usuarios y cuentas de servicio | Sin onboarding autoservicio no hay portal |
 | 10 | API de suscripciones de webhook y monitor de integraciones | El motor funciona pero no se puede administrar |
-| 11 | Seguimiento del original físico | `QA1-08` |
+| ~~11~~ | ~~Seguimiento del original físico~~ | ✅ **Terminada.** `QA1-08` verificado con las tres políticas |
 | 12 | Observabilidad y control de costos por tenant | Sin costo por documento no se sabe si el negocio cierra |
 | 13 | **Suite de QA `QA1-01`…`QA1-10` con Testcontainers** | Requisito del Definition of Done antes de release |
 | 14 | Despliegue reproducible y pipeline de CI | Hoy el despliegue del motor es manual |
 
-**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → **11** → 13 → 2 → 7 → 8 → 9 → 10 → 12 → 14
+**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → **13** → 2 → 7 → 8 → 9 → 10 → 12 → 14
 
 **Dependencias:** 2 necesita 1 · 13 necesita 3, 4, 5, 6 y 11
 

@@ -207,6 +207,43 @@ motivo del corte.
 > está. Para exigir un valor concreto usá `CATALOGO` con `{"valores":["true"]}`. Esta distinción es la
 > diferencia entre aprobar y observar un remito sin conformidad.
 
+### Original físico
+
+Se activa por `politicaOriginalFisico` de la versión de plantilla. Al ingresar un documento cuya
+plantilla lo pide, se crea el seguimiento en `PENDIENTE`.
+
+| Política | Efecto |
+|---|---|
+| `NO_REQUIERE` | no se crea seguimiento |
+| `REQUIERE_SEGUIMIENTO` | el documento **puede cerrarse digitalmente**, pero el papel queda `PENDIENTE` y visible |
+| `REQUIERE_PARA_CIERRE` | el cierre se rechaza con 400 hasta que el papel esté `RECIBIDO` o `ARCHIVADO` |
+
+```
+GET  /api/v1/originales-fisicos/configuracion
+GET  /api/v1/originales-fisicos?estado=PENDIENTE          permiso: documentos.leer
+GET  /api/v1/originales-fisicos/documento/{documentoId}   permiso: documentos.leer
+     → 204 si el documento no requiere seguimiento
+POST /api/v1/originales-fisicos/documento/{id}/recibir    permiso: documentos.escribir
+     { ubicacion, referenciaFisica, observacion }
+POST /api/v1/originales-fisicos/documento/{id}/archivar   permiso: documentos.escribir
+POST /api/v1/originales-fisicos/documento/{id}/extraviar  permiso: documentos.escribir
+     { observacion }   obligatoria
+```
+
+**Ciclo del papel**
+
+```
+PENDIENTE ──► RECIBIDO ──► ARCHIVADO
+     │            │             │
+     └────────────┴─────────────┴──► EXTRAVIADO ──► RECIBIDO
+```
+
+Archivar un papel que nunca se recibió devuelve 400. Declararlo extraviado exige observación.
+
+> **Cerrar el documento digital no cierra el papel.** Son dos ciclos de vida distintos y esa es
+> justamente la razón de existir del seguimiento (`QA1-08`): el expediente digital puede estar
+> terminado mientras el original todavía está en tránsito.
+
 ### Antivirus
 
 Se configura con `nextdocs.antivirus`. Dos motores detrás de `AntivirusInt`:

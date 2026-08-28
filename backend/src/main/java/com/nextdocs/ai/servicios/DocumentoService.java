@@ -72,6 +72,8 @@ public class DocumentoService {
 
 	private final ExcepcionConverter excepcionConverter;
 
+	private final OriginalFisicoService originalFisicoService;
+
 	public DocumentoService(DocumentoRepository documentoRepository,
 			ArchivoDocumentoRepository archivoDocumentoRepository,
 			EjecucionExtraccionRepository ejecucionExtraccionRepository,
@@ -82,7 +84,8 @@ public class DocumentoService {
 			RevisionDocumentoRepository revisionDocumentoRepository, AlmacenamientoService almacenamientoService,
 			ColaExtraccionService colaExtraccionService, EstadoDocumentalService estadoDocumentalService,
 			AuditoriaService auditoriaService, DocumentoConverter documentoConverter,
-			ExtraccionConverter extraccionConverter, ExcepcionConverter excepcionConverter) {
+			ExtraccionConverter extraccionConverter, ExcepcionConverter excepcionConverter,
+			OriginalFisicoService originalFisicoService) {
 		this.documentoRepository = documentoRepository;
 		this.archivoDocumentoRepository = archivoDocumentoRepository;
 		this.ejecucionExtraccionRepository = ejecucionExtraccionRepository;
@@ -99,6 +102,7 @@ public class DocumentoService {
 		this.documentoConverter = documentoConverter;
 		this.extraccionConverter = extraccionConverter;
 		this.excepcionConverter = excepcionConverter;
+		this.originalFisicoService = originalFisicoService;
 	}
 
 	@Transactional(readOnly = true)
@@ -135,6 +139,7 @@ public class DocumentoService {
 		detalle.put("revisiones", revisionDocumentoRepository.listarPorDocumento(documentoId).stream()
 				.map(revision -> excepcionConverter.aModelo(revision, null)).toList());
 		detalle.put("segmentos", documentoConverter.aModelos(documentoRepository.listarSegmentos(documentoId)));
+		detalle.put("originalFisico", originalFisicoService.buscarPorDocumento(tenantId, documentoId).orElse(null));
 		return detalle;
 	}
 
@@ -166,6 +171,7 @@ public class DocumentoService {
 	@Transactional
 	public DocumentoModel cerrar(String tenantId, String documentoId) {
 		Documento documento = buscarEntidad(tenantId, documentoId);
+		originalFisicoService.exigirParaCierre(documento);
 		estadoDocumentalService.transicionar(documento, EstadoDocumento.CERRADO);
 		return documentoConverter.aModelo(documento);
 	}

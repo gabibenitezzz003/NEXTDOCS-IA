@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.time.Instant;
 
 import com.nextdocs.ai.enumeraciones.EstadoOriginalFisico;
+import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,6 +40,10 @@ public class SeguimientoOriginalFisico implements Serializable {
 	@Column(length = 32, nullable = false)
 	private EstadoOriginalFisico estado;
 
+	@Enumerated(EnumType.STRING)
+	@Column(length = 32)
+	private PoliticaOriginalFisico politica;
+
 	@Column(length = 256)
 	private String ubicacion;
 
@@ -48,12 +53,17 @@ public class SeguimientoOriginalFisico implements Serializable {
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Usuario recibidoPor;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+	private Usuario registradoPor;
+
 	@Column(length = 512)
 	private String observacion;
 
 	private Instant recibido;
 
 	private Instant archivado;
+
+	private Instant extraviado;
 
 	private Instant alta;
 
