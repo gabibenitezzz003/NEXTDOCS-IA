@@ -39,7 +39,7 @@ docker run --rm --network host --env-file ../.env \
   maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
-Tests: `./mvnw verify` con la infra levantada. 41 unitarios + 29 de integración.
+Tests: `./mvnw verify` con la infra levantada. 50 unitarios + 46 de integración.
 
 ---
 
@@ -122,6 +122,12 @@ un archivo infectado falla con "No se pudo almacenar el archivo". Se arregla con
 tipo del parámetro. Con `String` y enums funciona. Ya nos rompió la consulta de auditoría. Si escribís
 una consulta con fechas opcionales, pasá valores por defecto en vez de nulos.
 
+Para filtros opcionales que se combinan, la salida limpia es una `Specification`: el predicado sólo
+se agrega cuando el valor existe, así que el parámetro nulo nunca llega a PostgreSQL. Es lo que hacen
+`DocumentoSpecificationBuilder` y `EventoAuditoriaSpecificationBuilder`. Los `@Query` con
+`INICIO_DE_LOS_TIEMPOS` / `FIN_DE_LOS_TIEMPOS` del `EventoAuditoriaRepository` son el otro camino, y
+siguen ahí para las consultas de rango simple.
+
 ---
 
 ## 5. Dónde está cada cosa
@@ -137,23 +143,24 @@ una consulta con fechas opcionales, pasá valores por defecto en vez de nulos.
 
 ## 6. Por dónde seguir
 
-La **Fase 1** cierra el producto vendible. Van 7 de 14.
+La **Fase 1** cierra el producto vendible. Van 8 de 14.
 
 **Hecho:** API de plantillas con ciclo de vida (1) · adaptador Gemini real (3) · antivirus con
-cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector (6) · original físico (11) ·
-suite de QA (13)
+cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector (6) · gobernanza y auditoría
+(7) · original físico (11) · suite de QA (13)
 
 **Siguiente, en este orden:**
 
-1. **Tarea 7** — API de gobernanza y exportación de auditoría (`GOV-01`).
-   Ya arreglamos la consulta que la sostiene, el camino está limpio.
-2. **Tarea 8** — job de retención y legal hold (`GOV-02`)
-3. **Tarea 9** — administración de tenant, usuarios y cuentas de servicio.
+1. **Tarea 8** — job de retención y legal hold (`GOV-02`).
+   La tarea 7 ya dejó la administración de políticas y el legal hold por API, más
+   `listarVencidosPorRetencion` en el repositorio. Falta el job que los recorra y aplique la acción
+   (`CONSERVAR`, `ANONIMIZAR`, `ELIMINAR`) respetando `retencionLegal`.
+2. **Tarea 9** — administración de tenant, usuarios y cuentas de servicio.
    **Desbloquea el frontend.**
-4. **Tarea 10** — API de suscripciones de webhook y monitor de integraciones
-5. **Tarea 2** — quality gate con dataset gold. Acá va la calibración real de la confianza
-6. **Tarea 12** — observabilidad y costo por tenant
-7. **Tarea 14** — Dockerfile, CI y despliegue reproducible
+3. **Tarea 10** — API de suscripciones de webhook y monitor de integraciones
+4. **Tarea 2** — quality gate con dataset gold. Acá va la calibración real de la confianza
+5. **Tarea 12** — observabilidad y costo por tenant
+6. **Tarea 14** — Dockerfile, CI y despliegue reproducible
 
 Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
 criterio: está escrito.

@@ -303,6 +303,63 @@ POST /api/v1/excepciones/{id}/asignar  { "responsableId": "..." }   permiso: exc
 POST /api/v1/excepciones/{id}/resolver { "resolucion": "..." }      permiso: excepciones.gestionar
 ```
 
+### Gobernanza y auditoría
+
+```
+GET  /api/v1/gobernanza/configuracion
+GET  /api/v1/gobernanza/auditoria                            permiso: gobernanza.leer
+GET  /api/v1/gobernanza/auditoria/resumen                    permiso: gobernanza.leer
+GET  /api/v1/gobernanza/auditoria/correlacion/{correlacionId}   permiso: gobernanza.leer
+GET  /api/v1/gobernanza/auditoria/recurso/{tipo}/{id}        permiso: gobernanza.leer
+GET  /api/v1/gobernanza/auditoria/exportacion                permiso: gobernanza.administrar
+GET  /api/v1/gobernanza/auditoria/exportacion/json           permiso: gobernanza.administrar
+GET  /api/v1/gobernanza/documentos/{id}/trazabilidad         permiso: gobernanza.leer
+POST /api/v1/gobernanza/documentos/{id}/retencion-legal      permiso: gobernanza.administrar
+GET  /api/v1/gobernanza/retencion/politicas                  permiso: gobernanza.leer
+POST /api/v1/gobernanza/retencion/politicas                  permiso: gobernanza.administrar
+PUT  /api/v1/gobernanza/retencion/politicas/{id}             permiso: gobernanza.administrar
+DEL  /api/v1/gobernanza/retencion/politicas/{id}             permiso: gobernanza.administrar
+```
+
+**Filtros de la consulta y de las dos exportaciones.** `desde`, `hasta` (ISO-8601), `accion`,
+`tipoRecurso`, `idRecurso`, `tipoActor`, `idActor`, `correlacionId` y `exitoso`. Todos opcionales y
+combinables; el orden por defecto es `fecha,desc`. La consulta pagina con `pagina`, `tamano` y
+`orden`; el tamaño máximo es 200.
+
+**Trazabilidad (`GOV-01`).** Devuelve, para un documento, todo lo necesario para reconstruir cómo
+llegó a su estado: la versión de plantilla con su `versionPrompt` y `versionEsquema`, cada ejecución
+de extracción con proveedor, modelo y valores, cada ejecución de validación con sus hallazgos, las
+reglas vigentes en esa versión, los candidatos de asociación con el seleccionado, las revisiones
+humanas con sus correcciones y la línea de tiempo de auditoría.
+
+La respuesta trae además `completa` y `faltantes`: en vez de devolver huecos silenciosos, declara
+qué eslabón no se pudo reconstruir. `completa` es `true` cuando existe rastro de cada etapa que el
+documento **efectivamente atravesó**, con dos matices que evitan falsos negativos:
+
+- El revisor sólo se exige si el documento terminó en `APROBADO`, `RECHAZADO` o `CERRADO` **y**
+  ninguna validación fue autoaprobada. Un documento autoaprobado no tuvo revisor y eso es correcto.
+- La asociación seleccionada sólo se exige si hubo candidatos. Un tenant sin conector no produce
+  ninguno, y eso tampoco es un hueco.
+
+Consultar la trazabilidad queda auditado como `AUDITORIA_CONSULTADA` sobre el documento: en gobernanza
+importa quién miró qué.
+
+**Exportación.** `/exportacion` devuelve `text/csv` con `Content-Disposition: attachment`;
+`/exportacion/json` devuelve el mismo conjunto como arreglo JSON. Ambas quedan auditadas como
+`AUDITORIA_EXPORTADA` con el formato, la cantidad exportada, los filtros usados y si la exportación
+se truncó. El tope es de 50 000 eventos por exportación, recorridos en lotes de 500.
+
+El CSV usa `;` como separador y neutraliza los valores que empiezan con `=`, `+`, `-` o `@`
+anteponiéndoles una comilla simple, para que una planilla no ejecute como fórmula un dato que entró
+por el nombre de un archivo.
+
+**Retención legal.** `POST /retencion-legal` con `{ "activa": true, "motivo": "..." }`. El motivo es
+obligatorio y activar dos veces devuelve 400: preferimos rechazar antes que auditar un cambio que no
+ocurrió. Queda registrado como `RETENCION_LEGAL_MODIFICADA` con actor y motivo.
+
+**Políticas de retención.** Una clase por tenant. Desactivar deja la política visible como inactiva
+en vez de borrarla, para no perder el historial ni bloquear la clase.
+
 ---
 
 ## Permisos

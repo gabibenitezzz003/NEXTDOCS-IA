@@ -40,7 +40,8 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Adaptador Gemini real (`gemini-2.5-flash`) con esquema estructurado | ✅ |
 | Segmentación de PDF multi-documento (páginas fijas o patrón) | ✅ |
 | Matching con circuit breaker + `FollowConnector` aislado | ✅ |
-| Suite de QA automatizada: 41 unitarios + 29 de integración | ✅ |
+| API de gobernanza: reconstrucción de la decisión, exportación de auditoría, retención y legal hold | ✅ |
+| Suite de QA automatizada: 50 unitarios + 46 de integración | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -107,6 +108,21 @@ NO_REQUIERE          → no se crea seguimiento
 REQUIERE_SEGUIMIENTO → documento CERRADO y el papel sigue PENDIENTE y visible
 REQUIERE_PARA_CIERRE → cierre rechazado con 400 hasta recibir el papel,
                        después CERRADO; archivar sin recibir da 400
+
+Gobernanza (GOV-01, GOV-02)
+doc aprobado         → trazabilidad completa=true: proveedor, modelo prueba-v1,
+                       prompt p1, esquema e1, regla REMITO_OBLIGATORIO,
+                       match PEDIDO:ped-77 y el revisor que lo aprobó
+doc sin extraer      → completa=false y faltantes declara extraccion, proveedor,
+                       modelo y validacion: no devuelve huecos en silencio
+doc autoaprobado     → completa=true sin revisor, porque nunca hubo decisión humana
+trazabilidad ajena   → 404, no filtra nada del otro tenant
+exportación CSV      → encabezados, respeta el filtro y queda auditada como
+                       AUDITORIA_EXPORTADA con formato, cantidad y filtros
+fórmulas en el CSV   → =, +, - y @ neutralizados con comilla simple
+legal hold sin motivo → 400; con motivo queda auditado con actor y motivo
+legal hold repetido   → 400 en vez de auditar un cambio que no ocurrió
+política duplicada    → 409 sobre la misma clase del tenant
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
@@ -119,14 +135,15 @@ docker compose up -d      # PostgreSQL, Redis y MinIO
 cd backend && ./mvnw verify
 ```
 
-- **41 tests unitarios** — no necesitan nada levantado
-- **29 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **50 tests unitarios** — no necesitan nada levantado
+- **46 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
 `QA1-06` dos candidatos van a revisión, `QA1-07` `ILEGIBLE` ≠ `NO_FIGURA`, `QA1-08` original físico,
 `QA1-10` rollback de plantilla, `QA-WF-03` el documento no cambia de versión, `QA-FOL-01` el núcleo
-sigue sin conector, `SEC-01` aislamiento cross-tenant y `GOV-01`/`GOV-03` linaje y overrides.
+sigue sin conector, `SEC-01` aislamiento cross-tenant, `GOV-01` reconstrucción completa de la decisión
+sobre un documento aprobado, `GOV-02` legal hold con motivo obligatorio y `GOV-03` overrides.
 
 Si la infraestructura no está levantada, los tests de integración se **saltan** con un mensaje claro
 en vez de fallar.

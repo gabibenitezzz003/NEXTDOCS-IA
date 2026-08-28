@@ -32,7 +32,8 @@ Cada tarea trae su criterio de aceptación referenciando los códigos de QA del 
 - [x] **Tarea 5** — segmentación de PDF multi-documento con estrategias configurables
 - [x] **Tarea 4** — antivirus con cuarentena verificado contra ClamAV real
 - [x] **Tarea 11** — seguimiento del original físico con política por plantilla
-- [x] **Tarea 13** — suite de QA automatizada, 41 unitarios y 29 de integración
+- [x] **Tarea 13** — suite de QA automatizada, 50 unitarios y 46 de integración
+- [x] **Tarea 7** — API de gobernanza, reconstrucción de la decisión y exportación de auditoría
 
 ---
 
@@ -49,8 +50,8 @@ sin Workflow y sin Follow.
 | ~~4~~ | ~~Antivirus y cuarentena en la ingesta~~ | ✅ **Terminada.** `SEC-04` verificado con ClamAV 1.5.4 y un PDF con EICAR embebido |
 | ~~5~~ | ~~Segmentación de PDF multi-documento~~ | ✅ **Terminada.** `QA1-02` verificado con un PDF real de 10 remitos |
 | ~~6~~ | ~~Matching + `FollowConnector`~~ | ✅ **Terminada.** `QA1-05`, `QA1-06` y `QA-FOL-01` verificados end-to-end con Follow simulado |
-| 7 | API de gobernanza y exportación de auditoría | `GOV-01`: sin esto no hay venta enterprise |
-| 8 | Job de retención y legal hold | `GOV-02`: la política existe en el modelo pero nadie la aplica |
+| ~~7~~ | ~~API de gobernanza y exportación de auditoría~~ | ✅ **Terminada.** `GOV-01` verificado: un documento aprobado reconstruye proveedor, modelo, prompt, esquema, reglas, match y revisor, y declara qué falta cuando no puede |
+| 8 | Job de retención y legal hold | `GOV-02`: la política y el legal hold ya se administran por API, falta el job que recorra los vencidos |
 | 9 | API de administración de tenant, usuarios y cuentas de servicio | Sin onboarding autoservicio no hay portal |
 | 10 | API de suscripciones de webhook y monitor de integraciones | El motor funciona pero no se puede administrar |
 | ~~11~~ | ~~Seguimiento del original físico~~ | ✅ **Terminada.** `QA1-08` verificado con las tres políticas |
@@ -58,7 +59,7 @@ sin Workflow y sin Follow.
 | ~~13~~ | ~~Suite de QA automatizada~~ | ✅ **Terminada.** 70 tests. Sin Testcontainers: usa la infra del compose, ver nota abajo |
 | 14 | Despliegue reproducible y pipeline de CI | Hoy el despliegue del motor es manual |
 
-**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → ~~13~~ → **7** → 8 → 9 → 10 → 2 → 12 → 14
+**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → ~~13~~ → ~~7~~ → **8** → 9 → 10 → 2 → 12 → 14
 
 **Nota sobre Testcontainers.** No se pudo usar: Docker 29.7 exige API ≥ 1.40 y el `docker-java` que
 trae Testcontainers 1.21.3 negocia 1.32, así que no encuentra el entorno Docker. En vez de eso los

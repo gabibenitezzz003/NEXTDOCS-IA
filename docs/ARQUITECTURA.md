@@ -38,7 +38,7 @@ que impidan extraer servicios cuando el volumen lo justifique"*.
 | Validation Service | `ValidacionDocumentalService` | ✅ |
 | Matching Service | `AsociacionService`, `ConectorAsociacionInt`, `RegistroCircuitosService` | ✅ |
 | Review / Exception | `RevisionDocumentalService`, `ExcepcionDocumentalService` | ✅ |
-| Governance & Audit | `AuditoriaService`, entidades `EventoAuditoria` / `PoliticaRetencion` | ⚠️ auditoría lista, falta API de gobernanza |
+| Governance & Audit | `AuditoriaService`, `GobernanzaService`, entidades `EventoAuditoria` / `PoliticaRetencion` | ✅ |
 | Event / Integration Hub | `EventoSalidaService`, `DespachadorEventosService` | ✅ |
 | Follow Connector | `FollowConnector`, `FollowCliente` | ✅ |
 | Workflow Definition/Runtime | — | ❌ Etapa 2 |
@@ -149,6 +149,32 @@ devuelve 0 documentos.
 | Descarga del original | URL firmada con TTL de 15 min. El bucket no es público |
 | Webhooks | Firma HMAC-SHA256 del cuerpo en `X-Nextdocs-Firma` |
 | Trazabilidad | `correlacionId` en el MDC, en la respuesta, en cada evento y en cada registro de auditoría |
+| Exportación de auditoría | CSV con neutralización de fórmulas, tope de 50 000 eventos y la propia exportación auditada |
+
+---
+
+## Reconstrucción de la decisión
+
+`GOV-01` no pide un log: pide poder sentarse frente a un auditor con un documento aprobado y explicar
+**por qué** se aprobó. `GobernanzaService.reconstruir` arma esa respuesta leyendo el rastro que las
+demás etapas ya dejaban:
+
+| Pregunta del auditor | De dónde sale |
+|---|---|
+| ¿Qué modelo lo leyó, con qué prompt y qué esquema? | `EjecucionExtraccion`: proveedor, modelo, `versionPrompt`, `versionEsquema` |
+| ¿Contra qué reglas se validó? | `ReglaPlantilla` de la versión que el documento tiene congelada, no de la versión vigente hoy |
+| ¿Qué encontró y con qué severidad? | `EjecucionValidacion` con sus `HallazgoValidacion` |
+| ¿A qué objeto de negocio se asoció y por qué ese? | `CandidatoAsociacion` con puntaje, razones y el motivo de selección |
+| ¿Quién lo aprobó y qué corrigió? | `RevisionDocumento` con sus `CambioCampoRevision` |
+| ¿Quién más lo tocó? | `EventoAuditoria` del documento |
+
+La pieza que no existía es `completa` / `faltantes`. Una reconstrucción que devuelve campos vacíos
+sin decirlo es peor que ninguna: el auditor no distingue "no pasó" de "no lo guardamos". Por eso el
+modelo declara explícitamente qué eslabón falta, y sólo exige revisor cuando el documento llegó a un
+estado que **requiere** decisión humana y ninguna validación fue autoaprobada.
+
+Consultar la trazabilidad es en sí un acceso a información sensible, así que queda auditado como
+`AUDITORIA_CONSULTADA`.
 
 ---
 
@@ -242,4 +268,4 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 | Falta | Riesgo si no se hace |
 |---|---|
 | Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
-| Retención y legal hold ejecutándose | `GOV-02`: la política existe en el modelo pero nadie la aplica |
+| El job que aplica la retención | `GOV-02`: la política y el legal hold ya se administran por API, pero nadie recorre los documentos vencidos |

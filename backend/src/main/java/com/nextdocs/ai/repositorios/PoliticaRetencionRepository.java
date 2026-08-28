@@ -17,4 +17,8 @@ public interface PoliticaRetencionRepository extends JpaRepository<PoliticaReten
 	@Query("SELECT p FROM PoliticaRetencion p WHERE p.baja IS NULL AND p.activa = TRUE "
 			+ "AND p.tenant.id = :tenantId AND p.clase = :clase")
 	Optional<PoliticaRetencion> buscarPorClase(@Param("tenantId") String tenantId, @Param("clase") String clase);
+
+	@Query("SELECT p FROM PoliticaRetencion p WHERE p.baja IS NULL AND p.tenant.id = :tenantId AND p.clase = :clase")
+	Optional<PoliticaRetencion> buscarPorClaseSinImportarEstado(@Param("tenantId") String tenantId,
+			@Param("clase") String clase);
 }

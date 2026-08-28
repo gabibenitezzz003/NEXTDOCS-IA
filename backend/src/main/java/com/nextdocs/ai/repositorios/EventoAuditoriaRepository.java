@@ -8,10 +8,12 @@ import com.nextdocs.ai.entidades.EventoAuditoria;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface EventoAuditoriaRepository extends JpaRepository<EventoAuditoria, String> {
+public interface EventoAuditoriaRepository
+		extends JpaRepository<EventoAuditoria, String>, JpaSpecificationExecutor<EventoAuditoria> {
 
 	Instant INICIO_DE_LOS_TIEMPOS = Instant.EPOCH;
 
@@ -35,4 +37,19 @@ public interface EventoAuditoriaRepository extends JpaRepository<EventoAuditoria
 
 	@Query("SELECT e FROM EventoAuditoria e WHERE e.correlacionId = :correlacionId ORDER BY e.fecha")
 	List<EventoAuditoria> listarPorCorrelacion(@Param("correlacionId") String correlacionId);
+
+	@Query("SELECT e FROM EventoAuditoria e WHERE e.tenantId = :tenantId AND e.correlacionId = :correlacionId "
+			+ "ORDER BY e.fecha")
+	List<EventoAuditoria> listarPorCorrelacionYTenant(@Param("tenantId") String tenantId,
+			@Param("correlacionId") String correlacionId);
+
+	@Query("SELECT e.accion, COUNT(e) FROM EventoAuditoria e WHERE e.tenantId = :tenantId "
+			+ "AND e.fecha >= :desde AND e.fecha <= :hasta GROUP BY e.accion ORDER BY COUNT(e) DESC")
+	List<Object[]> contarPorAccion(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	default List<Object[]> resumirPorAccion(String tenantId, Instant desde, Instant hasta) {
+		return contarPorAccion(tenantId, desde == null ? INICIO_DE_LOS_TIEMPOS : desde,
+				hasta == null ? FIN_DE_LOS_TIEMPOS : hasta);
+	}
 }
