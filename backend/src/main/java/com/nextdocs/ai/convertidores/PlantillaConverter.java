@@ -59,6 +59,9 @@ public class PlantillaConverter {
 		modelo.setPoliticaOriginalFisico(version.getPoliticaOriginalFisico());
 		modelo.setVersionPrompt(version.getVersionPrompt());
 		modelo.setVersionEsquema(version.getVersionEsquema());
+		modelo.setEstrategiaSegmentacion(version.getEstrategiaSegmentacion());
+		modelo.setPaginasPorDocumento(version.getPaginasPorDocumento());
+		modelo.setPatronInicioDocumento(version.getPatronInicioDocumento());
 		modelo.setInstruccionExtraccion(version.getInstruccionExtraccion());
 		modelo.setNotasCambio(version.getNotasCambio());
 		modelo.setPublicada(version.getPublicada());

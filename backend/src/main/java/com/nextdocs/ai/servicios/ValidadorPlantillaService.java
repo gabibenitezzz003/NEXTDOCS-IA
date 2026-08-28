@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nextdocs.ai.entidades.CampoPlantilla;
 import com.nextdocs.ai.entidades.ReglaPlantilla;
 import com.nextdocs.ai.entidades.VersionPlantilla;
+import com.nextdocs.ai.enumeraciones.EstrategiaSegmentacion;
 import com.nextdocs.ai.enumeraciones.TipoReglaValidacion;
 
 import org.springframework.stereotype.Service;
@@ -46,6 +47,29 @@ public class ValidadorPlantillaService {
 		BigDecimal umbral = version.getUmbralAutoaprobacion();
 		if (umbral != null && (umbral.compareTo(BigDecimal.ZERO) < 0 || umbral.compareTo(BigDecimal.ONE) > 0)) {
 			errores.add("El umbral de autoaprobacion debe estar entre 0 y 1");
+		}
+		validarSegmentacion(version, errores);
+	}
+
+	private void validarSegmentacion(VersionPlantilla version, List<String> errores) {
+		EstrategiaSegmentacion estrategia = version.getEstrategiaSegmentacion();
+		if (estrategia == null || estrategia == EstrategiaSegmentacion.NINGUNA) {
+			return;
+		}
+		if (estrategia == EstrategiaSegmentacion.PAGINAS_FIJAS && version.getPaginasPorDocumento() < 1) {
+			errores.add("La estrategia PAGINAS_FIJAS necesita paginasPorDocumento mayor a cero");
+		}
+		if (estrategia == EstrategiaSegmentacion.PATRON_TEXTO) {
+			String patron = version.getPatronInicioDocumento();
+			if (patron == null || patron.isBlank()) {
+				errores.add("La estrategia PATRON_TEXTO necesita patronInicioDocumento");
+				return;
+			}
+			try {
+				Pattern.compile(patron);
+			} catch (PatternSyntaxException e) {
+				errores.add("El patron de inicio de documento no es una expresion regular valida");
+			}
 		}
 	}
 

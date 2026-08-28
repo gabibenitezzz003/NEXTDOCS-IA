@@ -14,6 +14,7 @@ import com.nextdocs.ai.entidades.Usuario;
 import com.nextdocs.ai.entidades.VersionPlantilla;
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
 import com.nextdocs.ai.enumeraciones.EstadoPlantilla;
+import com.nextdocs.ai.enumeraciones.EstrategiaSegmentacion;
 import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
 import com.nextdocs.ai.enumeraciones.TipoEventoCanonico;
 import com.nextdocs.ai.exceptions.EntidadNoEncontradaException;
@@ -118,6 +119,7 @@ public class PlantillaService {
 
 		VersionPlantilla primera = construirVersion(tenant, plantilla, 1);
 		primera.setPoliticaOriginalFisico(PoliticaOriginalFisico.NO_REQUIERE);
+		primera.setEstrategiaSegmentacion(EstrategiaSegmentacion.NINGUNA);
 		versionPlantillaRepository.save(primera);
 
 		auditoriaService.registrar(tenant.getId(), AccionAuditoria.PLANTILLA_CREADA, ENTIDAD, plantilla.getId());
@@ -356,6 +358,7 @@ public class PlantillaService {
 		version.setPlantilla(plantilla);
 		version.setNumero(numero);
 		version.setEstado(EstadoPlantilla.BORRADOR);
+		version.setEstrategiaSegmentacion(EstrategiaSegmentacion.NINGUNA);
 		version.setVersionPrompt("p" + numero);
 		version.setVersionEsquema("e" + numero);
 		version.setAlta(Instant.now());
@@ -419,6 +422,12 @@ public class PlantillaService {
 		if (destino.getInstruccionExtraccion() == null) {
 			destino.setInstruccionExtraccion(base.getInstruccionExtraccion());
 		}
+		if (destino.getEstrategiaSegmentacion() == null
+				|| destino.getEstrategiaSegmentacion() == EstrategiaSegmentacion.NINGUNA) {
+			destino.setEstrategiaSegmentacion(base.getEstrategiaSegmentacion());
+			destino.setPaginasPorDocumento(base.getPaginasPorDocumento());
+			destino.setPatronInicioDocumento(base.getPatronInicioDocumento());
+		}
 		versionPlantillaRepository.save(destino);
 	}
 
@@ -434,6 +443,15 @@ public class PlantillaService {
 		}
 		if (datos.getVersionEsquema() != null) {
 			version.setVersionEsquema(datos.getVersionEsquema());
+		}
+		if (datos.getEstrategiaSegmentacion() != null) {
+			version.setEstrategiaSegmentacion(datos.getEstrategiaSegmentacion());
+		}
+		if (datos.getPaginasPorDocumento() != null) {
+			version.setPaginasPorDocumento(datos.getPaginasPorDocumento());
+		}
+		if (datos.getPatronInicioDocumento() != null) {
+			version.setPatronInicioDocumento(datos.getPatronInicioDocumento());
 		}
 		if (datos.getInstruccionExtraccion() != null) {
 			version.setInstruccionExtraccion(datos.getInstruccionExtraccion());

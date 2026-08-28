@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 import com.nextdocs.ai.enumeraciones.EstadoPlantilla;
+import com.nextdocs.ai.enumeraciones.EstrategiaSegmentacion;
 import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
 
 import jakarta.persistence.Column;
@@ -57,6 +58,15 @@ public class VersionPlantilla implements Serializable {
 
 	@Column(length = 64)
 	private String versionEsquema;
+
+	@Enumerated(EnumType.STRING)
+	@Column(length = 32)
+	private EstrategiaSegmentacion estrategiaSegmentacion;
+
+	private int paginasPorDocumento;
+
+	@Column(length = 512)
+	private String patronInicioDocumento;
 
 	@Column(columnDefinition = "text")
 	private String instruccionExtraccion;

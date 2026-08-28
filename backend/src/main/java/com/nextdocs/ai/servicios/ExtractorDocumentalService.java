@@ -71,6 +71,8 @@ public class ExtractorDocumentalService {
 
 	private final AsociacionService asociacionService;
 
+	private final SegmentacionDocumentalService segmentacionDocumentalService;
+
 	private final EstadoDocumentalService estadoDocumentalService;
 
 	private final ExcepcionDocumentalService excepcionDocumentalService;
@@ -88,7 +90,7 @@ public class ExtractorDocumentalService {
 			EjecucionExtraccionRepository ejecucionExtraccionRepository,
 			ValorExtraidoRepository valorExtraidoRepository, RuteadorProveedorService ruteadorProveedorService,
 			AlmacenamientoService almacenamientoService, ValidacionDocumentalService validacionDocumentalService,
-			AsociacionService asociacionService,
+			AsociacionService asociacionService, SegmentacionDocumentalService segmentacionDocumentalService,
 			EstadoDocumentalService estadoDocumentalService, ExcepcionDocumentalService excepcionDocumentalService,
 			ColaExtraccionService colaExtraccionService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesProveedorIa propiedades) {
@@ -101,6 +103,7 @@ public class ExtractorDocumentalService {
 		this.almacenamientoService = almacenamientoService;
 		this.validacionDocumentalService = validacionDocumentalService;
 		this.asociacionService = asociacionService;
+		this.segmentacionDocumentalService = segmentacionDocumentalService;
 		this.estadoDocumentalService = estadoDocumentalService;
 		this.excepcionDocumentalService = excepcionDocumentalService;
 		this.colaExtraccionService = colaExtraccionService;
@@ -116,6 +119,9 @@ public class ExtractorDocumentalService {
 		ContextoCorrelacion.establecer(documento.getCorrelacionId());
 		if (!estadoDocumentalService.puedeTransicionar(documento, EstadoDocumento.PROCESANDO)) {
 			log.warn("El documento {} en estado {} no admite procesamiento", documentoId, documento.getEstado());
+			return;
+		}
+		if (segmentar(documento)) {
 			return;
 		}
 		estadoDocumentalService.transicionar(documento, EstadoDocumento.PROCESANDO);
@@ -137,6 +143,20 @@ public class ExtractorDocumentalService {
 			excepcionDocumentalService.abrir(documento.getTenant(), documento, TipoExcepcion.TECNICA,
 					SeveridadHallazgo.REQUIERE_REVISION, "EXTRACCION_FALLIDA", e.getMessage());
 			estadoDocumentalService.transicionar(documento, EstadoDocumento.OBSERVADO);
+		}
+	}
+
+	private boolean segmentar(Documento documento) {
+		if (!segmentacionDocumentalService.corresponde(documento)) {
+			return false;
+		}
+		try {
+			return segmentacionDocumentalService.segmentar(documento) > 0;
+		} catch (Exception e) {
+			log.error("Fallo la segmentacion del documento {}, se procesa completo", documento.getId(), e);
+			excepcionDocumentalService.abrir(documento.getTenant(), documento, TipoExcepcion.TECNICA,
+					SeveridadHallazgo.ADVERTENCIA, "SEGMENTACION_FALLIDA", e.getMessage());
+			return false;
 		}
 	}
 

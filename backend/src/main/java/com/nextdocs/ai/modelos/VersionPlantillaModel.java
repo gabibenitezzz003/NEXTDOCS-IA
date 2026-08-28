@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.nextdocs.ai.enumeraciones.EstadoPlantilla;
+import com.nextdocs.ai.enumeraciones.EstrategiaSegmentacion;
 import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
 
 import lombok.Data;
@@ -37,6 +38,12 @@ public class VersionPlantillaModel implements Serializable {
 	private String versionPrompt;
 
 	private String versionEsquema;
+
+	private EstrategiaSegmentacion estrategiaSegmentacion;
+
+	private int paginasPorDocumento;
+
+	private String patronInicioDocumento;
 
 	private String instruccionExtraccion;
 

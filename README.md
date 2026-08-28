@@ -32,7 +32,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | API REST v1 de documentos, excepciones y autenticación | ✅ |
 | API de plantillas con ciclo de vida, versionado, publish y rollback | ✅ |
 | Adaptador Gemini real (`gemini-2.5-flash`) con esquema estructurado | ✅ |
-| Segmentación de PDF multi-documento | ⏳ |
+| Segmentación de PDF multi-documento (páginas fijas o patrón) | ✅ |
 | Matching con circuit breaker + `FollowConnector` aislado | ✅ |
 | Suite de QA `QA1-01` … `QA1-10` | ⏳ |
 
@@ -81,6 +81,13 @@ Matching (Follow simulado, 4 escenarios end-to-end)
                 tras la selección humana → sujeto = ped-2, el resto descartado
 Follow caído  → QA1-05: excepción CONECTOR con el HTTP 500, y el core sigue (QA-FOL-01)
 0 candidatos  → sin excepción de conector: es un resultado distinto de "falló"
+
+Segmentación (QA1-02, PDF real de 10 remitos)
+padre         → DIVIDIDO con 10 segmentos, y CERO extracciones sobre el padre
+10 hijos      → cada uno con su rango de páginas, su archivo propio en S3
+                y su propio motivo de corte
+extracción    → los 10 extrajeron SUS datos: remito 98471..98480,
+                bultos 10..100, conformidad alternando true/false
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades
@@ -152,7 +159,7 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 esquema del núcleo · V2 bloqueo optimista
+│           └── db/migration/        V1 núcleo · V2 bloqueo optimista · V3 conectores · V4 segmentación
 ├── .env.example                     plantilla de variables; copiala a .env
 ├── docs/
 │   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes
@@ -239,7 +246,7 @@ Bloqueantes inmediatos para poder vender:
 3. ~~Matching + `FollowConnector`~~ — **terminado**
 
 Los tres bloqueantes de venta están cerrados. Lo que sigue es endurecer y completar:
-antivirus en la ingesta, segmentación de PDF, y la suite de QA automatizada.
+antivirus en la ingesta, seguimiento del original físico, y la suite de QA automatizada.
 
 ---
 

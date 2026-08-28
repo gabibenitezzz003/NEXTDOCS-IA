@@ -113,7 +113,8 @@ DELETE /api/v1/plantillas/{id}                             permiso: plantillas.e
 ```
 POST /api/v1/plantillas/{id}/versiones                     permiso: plantillas.escribir
      { versionBaseId, umbralAutoaprobacion, politicaOriginalFisico,
-       versionPrompt, versionEsquema, instruccionExtraccion, notasCambio }
+       versionPrompt, versionEsquema, instruccionExtraccion, notasCambio,
+       estrategiaSegmentacion, paginasPorDocumento, patronInicioDocumento }
      → 201  crea una versión BORRADOR; si viene versionBaseId clona campos y reglas
 
 GET  /api/v1/plantillas/versiones/{versionId}              permiso: plantillas.leer
@@ -170,6 +171,26 @@ Reglas que impone la API:
 | `COMPARACION_CAMPOS` | `{"campoA":"...","campoB":"..."}` | dos campos deben coincidir |
 | `CATALOGO` | `{"valores":["USD","ARS"]}` | valor dentro de una lista |
 | `CONFIANZA_MINIMA` | `{"minima":"0.9"}` | umbral por regla |
+
+**Segmentación de PDF multi-documento**
+
+Se configura por versión de plantilla. Corre **antes** de la extracción: si aplica, el padre pasa a
+`DIVIDIDO` y **no se extrae**; cada hijo entra al pipeline por separado con su propio archivo.
+
+| Estrategia | Configuración | Cuándo usarla |
+|---|---|---|
+| `NINGUNA` | — | el PDF es un solo documento (por defecto) |
+| `PAGINAS_FIJAS` | `paginasPorDocumento` | cada documento ocupa siempre la misma cantidad de páginas |
+| `PATRON_TEXTO` | `patronInicioDocumento` (regex) | un lote donde cada documento arranca con un encabezado reconocible |
+
+Con `PATRON_TEXTO` el corte se hace donde **arranca** el siguiente documento, no en cada página:
+un remito de dos páginas queda entero. Si el patrón no aparece nunca, devuelve un único tramo y no
+se divide. Si el patrón no coincide en la página 1, esa página igual queda dentro del primer tramo.
+
+Cada hijo hereda plantilla, versión, origen, remitente y referencia externa del padre, pero tiene su
+propio `hashContenido`, su propia `claveIdempotencia` (`<clave del padre>#segmento-N`) y su propio
+archivo en el object store. El vínculo queda en `segmento_documento` con el rango de páginas y el
+motivo del corte.
 
 > **Cuidado con `OBLIGATORIO`.** Verifica que el campo esté `PRESENTE`, no que su valor sea el esperado.
 > Un remito con `conformidad = false` pasa una regla `OBLIGATORIO` sobre `conformidad`, porque el dato

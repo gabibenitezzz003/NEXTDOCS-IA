@@ -3,9 +3,12 @@ package com.nextdocs.ai.modelos;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import com.nextdocs.ai.enumeraciones.EstrategiaSegmentacion;
 import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
 
 import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;
 
@@ -27,6 +30,15 @@ public class VersionPlantillaReqModel implements Serializable {
 
 	@Size(max = 64)
 	private String versionEsquema;
+
+	private EstrategiaSegmentacion estrategiaSegmentacion;
+
+	@Min(0)
+	@Max(500)
+	private Integer paginasPorDocumento;
+
+	@Size(max = 512)
+	private String patronInicioDocumento;
 
 	private String instruccionExtraccion;
 

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.nextdocs.ai.enumeraciones.EstadoPlantilla;
+import com.nextdocs.ai.enumeraciones.EstrategiaSegmentacion;
 import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
 import com.nextdocs.ai.enumeraciones.SensibilidadCampo;
 import com.nextdocs.ai.enumeraciones.SeveridadHallazgo;
@@ -54,6 +55,7 @@ public class PlantillaRestController extends ControladorRest<PlantillaRestContro
 		configuracion.put("severidades", listar(SeveridadHallazgo.values()));
 		configuracion.put("sensibilidades", listar(SensibilidadCampo.values()));
 		configuracion.put("politicasOriginalFisico", listar(PoliticaOriginalFisico.values()));
+		configuracion.put("estrategiasSegmentacion", listar(EstrategiaSegmentacion.values()));
 		return new ResponseEntity<>(configuracion, HttpStatus.OK);
 	}
 

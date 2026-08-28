@@ -63,6 +63,12 @@ IngestaDocumentalService
         ▼  RECIBIDO
 TrabajadorExtraccionService (@Scheduled sobre Redis)
         │
+        ▼
+SegmentacionDocumentalService (sólo si la plantilla lo pide y el PDF tiene > 1 página)
+   · calcula los tramos por páginas fijas o por patrón de texto
+   · crea un hijo por tramo con su propio recorte en el object store
+   · el padre pasa a DIVIDIDO y NO se extrae; cada hijo se encola aparte
+        │
         ▼  PROCESANDO
 ExtractorDocumentalService
    · arma el esquema desde CampoPlantilla de la VersionPlantilla
@@ -234,6 +240,5 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 | Falta | Riesgo si no se hace |
 |---|---|
 | Antivirus / antimalware en la ingesta | `SEC-04` del N3 no se cumple: un archivo malicioso llega al proveedor de IA |
-| Segmentación de PDF multi-documento | `QA1-02`: un PDF con 10 remitos hoy entra como uno solo |
 | Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
 | Retención y legal hold ejecutándose | `GOV-02`: la política existe en el modelo pero nadie la aplica |
