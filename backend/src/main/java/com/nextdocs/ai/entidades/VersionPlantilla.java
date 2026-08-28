@@ -17,6 +17,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.persistence.UniqueConstraint;
 
 import lombok.Data;
@@ -67,6 +68,9 @@ public class VersionPlantilla implements Serializable {
 	private Usuario publicadaPor;
 
 	private Instant publicada;
+
+	@Version
+	private long bloqueoOptimista;
 
 	private Instant alta;
 

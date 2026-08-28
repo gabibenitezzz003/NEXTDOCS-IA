@@ -86,6 +86,85 @@ POST /api/v1/documentos/{id}/reprocesar                    permiso: documentos.e
 POST /api/v1/documentos/{id}/cerrar                        permiso: documentos.escribir
 ```
 
+### Plantillas
+
+```
+GET  /api/v1/plantillas/configuracion
+→ 200 { estados[], tiposDato[], tiposRegla[], severidades[], sensibilidades[], politicasOriginalFisico[] }
+
+GET  /api/v1/plantillas?familia=COMEX                      permiso: plantillas.leer
+GET  /api/v1/plantillas/familias                           permiso: plantillas.leer
+GET  /api/v1/plantillas/{id}                               permiso: plantillas.leer
+     → PlantillaModel con todas sus versiones y el estado de cada una
+POST /api/v1/plantillas                                    permiso: plantillas.escribir
+     { codigo, nombre, familia, descripcion }              crea la plantilla y su versión 1 en BORRADOR
+PUT  /api/v1/plantillas/{id}                               permiso: plantillas.escribir
+DELETE /api/v1/plantillas/{id}                             permiso: plantillas.escribir  (baja lógica)
+```
+
+**Versiones**
+
+```
+POST /api/v1/plantillas/{id}/versiones                     permiso: plantillas.escribir
+     { versionBaseId, umbralAutoaprobacion, politicaOriginalFisico,
+       versionPrompt, versionEsquema, instruccionExtraccion, notasCambio }
+     → 201  crea una versión BORRADOR; si viene versionBaseId clona campos y reglas
+
+GET  /api/v1/plantillas/versiones/{versionId}              permiso: plantillas.leer
+     → VersionPlantillaModel con campos, reglas, editable y transicionesPosibles
+PUT  /api/v1/plantillas/versiones/{versionId}              permiso: plantillas.escribir
+POST /api/v1/plantillas/versiones/{versionId}/estado/{destino}   permiso: plantillas.escribir
+POST /api/v1/plantillas/versiones/{versionId}/validar      permiso: plantillas.leer
+     → { valida: bool, errores: [] }
+POST /api/v1/plantillas/versiones/{versionId}/publicar     permiso: plantillas.publicar
+POST /api/v1/plantillas/{id}/revertir/{versionId}          permiso: plantillas.publicar
+```
+
+**Campos y reglas** (sólo sobre versiones `BORRADOR` o `EN_PRUEBA`)
+
+```
+POST   /api/v1/plantillas/versiones/{versionId}/campos
+PUT    /api/v1/plantillas/versiones/{versionId}/campos/{campoId}
+DELETE /api/v1/plantillas/versiones/{versionId}/campos/{campoId}
+POST   /api/v1/plantillas/versiones/{versionId}/reglas
+PUT    /api/v1/plantillas/versiones/{versionId}/reglas/{reglaId}
+DELETE /api/v1/plantillas/versiones/{versionId}/reglas/{reglaId}
+```
+
+**Ciclo de vida**
+
+```
+BORRADOR ⇄ EN_PRUEBA ──publicar──► PUBLICADA ──► DEPRECADA
+                                       ▲              │
+                                       └──revertir────┘
+```
+
+Reglas que impone la API:
+
+- Una versión `PUBLICADA` o `DEPRECADA` es **inmutable**: agregar o editar campos y reglas devuelve 400.
+  Para cambiar algo se crea una versión nueva, opcionalmente clonando la anterior.
+- **Publicar valida antes**: la versión necesita al menos un campo extraíble, ninguna regla puede apuntar
+  a un campo inexistente, las expresiones regulares deben compilar, los umbrales deben estar entre 0 y 1
+  y la configuración JSON de cada regla debe ser válida.
+- Publicar una versión **deprecata automáticamente** la que estaba publicada.
+- `revertir` sólo acepta una versión `DEPRECADA` que ya estuvo publicada.
+- **Los documentos históricos nunca cambian de versión.** Un documento ingresado con la v1 sigue
+  apuntando a la v1 aunque después se publique la v2 (`QA-WF-03`).
+- Las plantillas y sus versiones usan **bloqueo optimista**: dos ediciones concurrentes producen
+  un 409 en la segunda.
+
+**Tipos de regla y su configuración**
+
+| Tipo | Configuración | Ejemplo |
+|---|---|---|
+| `OBLIGATORIO` | — | el campo debe estar `PRESENTE` |
+| `FORMATO` | `{"expresionRegular":"..."}` | validar patrón |
+| `RANGO` | `{"minimo":"0.01","maximo":"9999"}` | numérico acotado |
+| `VIGENCIA` | `{"diasTolerancia":30}` | la fecha no puede estar vencida |
+| `COMPARACION_CAMPOS` | `{"campoA":"...","campoB":"..."}` | dos campos deben coincidir |
+| `CATALOGO` | `{"valores":["USD","ARS"]}` | valor dentro de una lista |
+| `CONFIANZA_MINIMA` | `{"minima":"0.9"}` | umbral por regla |
+
 ### Excepciones
 
 ```

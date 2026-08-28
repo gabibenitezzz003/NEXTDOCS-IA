@@ -11,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import jakarta.persistence.UniqueConstraint;
 
 import lombok.Data;
@@ -46,6 +47,9 @@ public class PlantillaDocumental implements Serializable {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Usuario creadoPor;
+
+	@Version
+	private long bloqueoOptimista;
 
 	private Instant alta;
 

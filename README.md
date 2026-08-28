@@ -30,7 +30,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Auditoría de toda acción con actor, recurso y correlación | ✅ |
 | Outbox transaccional + despachador de webhooks firmados con HMAC | ✅ |
 | API REST v1 de documentos, excepciones y autenticación | ✅ |
-| API de plantillas (draft/test/publish/rollback) | ⏳ |
+| API de plantillas con ciclo de vida, versionado, publish y rollback | ✅ |
 | Adaptador Gemini real | ⏳ |
 | Segmentación de PDF multi-documento | ⏳ |
 | `FollowConnector` para matching | ⏳ |
@@ -51,6 +51,18 @@ POST /documentos/{id}/revisiones → OBSERVADO → APROBADO con 2 correcciones a
 POST .../revisiones sin motivo   → 400 "La decision requiere un motivo explicito"
 Lectura cross-tenant             → 404, bandeja del intruso con 0 documentos
 Sin token                        → 403
+
+Plantillas
+POST /plantillas                 → crea la plantilla con su versión 1 en BORRADOR
+POST .../publicar sin campos     → 400 quality gate: "no tiene ningun campo definido"
+POST .../validar                 → detecta reglas que apuntan a campos inexistentes
+POST .../publicar                → v1 PUBLICADA, editable=false
+POST .../campos sobre publicada  → 400 "Una version PUBLICADA es inmutable"
+POST .../versiones (clonando v1) → v2 BORRADOR con 4 campos y 2 reglas clonados
+POST .../publicar v2             → v1 pasa a DEPRECADA automáticamente
+POST .../revertir/v1             → v1 vuelve a PUBLICADA, v2 a DEPRECADA
+QA-WF-03                         → doc ingresado con v1 sigue en v1 y con esquema e1
+                                   tras publicarse la v2; el doc nuevo usa v2 y esquema e2
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades
@@ -122,10 +134,11 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1__esquema_nucleo_documental.sql
+│           └── db/migration/        V1 esquema del núcleo · V2 bloqueo optimista
 ├── docs/
 │   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes
-│   └── API.md                       endpoints, permisos, errores, webhooks
+│   ├── API.md                       endpoints, permisos, errores, webhooks
+│   └── TODO.md                      plan de trabajo hasta terminar el producto
 └── compose.yml                      PostgreSQL 5434 · Redis 6381 · MinIO 9102/9101
 ```
 
@@ -195,10 +208,9 @@ Quien retome el proyecto arranca por la **primera tarea sin marcar de la Fase 1*
 | **3** | Etapa 2: Workflow Runtime y Process Studio | 21–27 |
 | **4** | Etapa 3: Sentinel, Simulation Lab y Process Copilot | 28–32 |
 
-Los tres bloqueantes inmediatos para poder vender:
+Bloqueantes inmediatos para poder vender:
 
-1. **API de plantillas** con ciclo `BORRADOR → EN_PRUEBA → PUBLICADA → DEPRECADA` y rollback.
-   Hoy las plantillas se cargan por SQL.
+1. ~~API de plantillas con ciclo de vida y rollback~~ — **terminado**
 2. **Adaptador Gemini real.** Hoy sólo existe `SIMULADO`, útil para desarrollo y tests.
 3. **Matching + `FollowConnector`.** Sin esto no hay `QA1-05` ni `QA1-06`.
 

@@ -24,6 +24,7 @@ Cada tarea trae su criterio de aceptación referenciando los códigos de QA del 
 - [x] Auditoría de toda acción con actor, recurso y correlación
 - [x] Outbox transaccional y despachador de webhooks firmados con HMAC
 - [x] API REST v1 de autenticación, documentos y excepciones
+- [x] **Tarea 1** — API de plantillas con ciclo de vida, versionado, publish y rollback
 
 ---
 
@@ -34,7 +35,7 @@ sin Workflow y sin Follow.
 
 | # | Tarea | Por qué bloquea la venta |
 |---|---|---|
-| 1 | **API de plantillas con ciclo de vida completo** | Hoy las plantillas se cargan por SQL. Es el bloqueante número uno |
+| ~~1~~ | ~~API de plantillas con ciclo de vida completo~~ | ✅ **Terminada.** Ciclo, clonado, validador de publicación, rollback y bloqueo optimista |
 | 2 | Prueba de plantilla y quality gate con dataset gold | Sin gate, una versión que empeora llega a producción (`GOV-04`, `QA1-10`) |
 | 3 | **Adaptador Gemini real** | Hoy sólo existe `SIMULADO`. Sirve para tests, no para vender |
 | 4 | Antivirus y cuarentena en la ingesta | `SEC-04`: hoy un archivo malicioso llega al proveedor de IA |
@@ -49,7 +50,7 @@ sin Workflow y sin Follow.
 | 13 | **Suite de QA `QA1-01`…`QA1-10` con Testcontainers** | Requisito del Definition of Done antes de release |
 | 14 | Despliegue reproducible y pipeline de CI | Hoy el despliegue del motor es manual |
 
-**Orden sugerido:** 1 → 3 → 6 → 5 → 4 → 11 → 13 → 2 → 7 → 8 → 9 → 10 → 12 → 14
+**Orden sugerido:** ~~1~~ → **3** → 6 → 5 → 4 → 11 → 13 → 2 → 7 → 8 → 9 → 10 → 12 → 14
 
 **Dependencias:** 2 necesita 1 · 13 necesita 3, 4, 5, 6 y 11
 

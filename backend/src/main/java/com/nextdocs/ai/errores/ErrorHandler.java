@@ -18,6 +18,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -111,6 +112,14 @@ public class ErrorHandler {
 	public ResponseEntity<WebErrorModel> metodoNoSoportado(HttpServletRequest peticion,
 			HttpRequestMethodNotSupportedException e) {
 		return respuesta(peticion, e.getMessage(), HttpStatus.METHOD_NOT_ALLOWED);
+	}
+
+	@ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+	public ResponseEntity<WebErrorModel> conflictoConcurrencia(HttpServletRequest peticion,
+			ObjectOptimisticLockingFailureException e) {
+		log.warn("Conflicto de concurrencia en {}: {}", peticion.getRequestURI(), e.getMessage());
+		return respuesta(peticion, "Otro usuario modifico el recurso. Recargue y vuelva a intentar",
+				HttpStatus.CONFLICT);
 	}
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
