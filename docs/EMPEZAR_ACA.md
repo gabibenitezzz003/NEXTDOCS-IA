@@ -39,7 +39,7 @@ docker run --rm --network host --env-file ../.env \
   maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
-Tests: `./mvnw verify` con la infra levantada. 50 unitarios + 80 de integración.
+Tests: `./mvnw verify` con la infra levantada. 57 unitarios + 90 de integración.
 
 ---
 
@@ -148,22 +148,18 @@ siguen ahí para las consultas de rango simple.
 
 ## 6. Por dónde seguir
 
-La **Fase 1** cierra el producto vendible. Van 10 de 14.
+La **Fase 1** cierra el producto vendible. Van 11 de 14.
 
 **Hecho:** API de plantillas con ciclo de vida (1) · adaptador Gemini real (3) · antivirus con
 cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector (6) · gobernanza y auditoría
-(7) · retención y legal hold (8) · administración de tenant y usuarios (9) · original físico (11) ·
-suite de QA (13)
-
-**El backend ya expone todo lo que el portal necesita.** La tarea 9 era lo último que lo bloqueaba.
+(7) · retención y legal hold (8) · administración de tenant y usuarios (9) · webhooks y monitor
+de integraciones (10) · original físico (11) · suite de QA (13)
 
 **Siguiente, en este orden:**
 
-1. **Tarea 10** — API de suscripciones de webhook y monitor de integraciones.
-   El motor de webhooks funciona desde el andamiaje pero no se puede administrar.
-2. **Tarea 2** — quality gate con dataset gold. Acá va la calibración real de la confianza
-3. **Tarea 12** — observabilidad y costo por tenant
-4. **Tarea 14** — Dockerfile, CI y despliegue reproducible
+1. **Tarea 2** — quality gate con dataset gold. Acá va la calibración real de la confianza
+2. **Tarea 12** — observabilidad y costo por tenant
+3. **Tarea 14** — Dockerfile, CI y despliegue reproducible
 
 Después de eso arranca la **Fase 2**, que empieza por el portal frontend (tarea 15).
 

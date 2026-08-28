@@ -121,8 +121,11 @@ nextdocs:
     concurrenciaTrabajadores: ${NEXTDOCS_COLA_CONCURRENCIA:4}
     intervaloSondeoMilisegundos: 1000
   webhooks:
+    despachadorActivo: ${NEXTDOCS_WEBHOOK_DESPACHADOR:true}
     intentosMaximos: 6
     tiempoEsperaSegundos: 15
+    umbralPausa: ${NEXTDOCS_WEBHOOK_UMBRAL_PAUSA:10}
+    permitirLocalhost: ${NEXTDOCS_WEBHOOK_LOCALHOST:false}
   retencion:
     trabajadorActivo: ${NEXTDOCS_RETENCION_ACTIVA:true}
     documentosPorCiclo: ${NEXTDOCS_RETENCION_POR_CICLO:100}

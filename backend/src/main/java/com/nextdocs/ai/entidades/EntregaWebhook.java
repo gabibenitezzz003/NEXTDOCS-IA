@@ -22,7 +22,10 @@ import lombok.Data;
 
 @Data
 @Entity
-@Table(name = "entrega_webhook", uniqueConstraints = @UniqueConstraint(columnNames = { "suscripcion_id", "evento_id" }), indexes = @Index(name = "ix_entrega_webhook_estado", columnList = "estado,disponible_en"))
+@Table(name = "entrega_webhook", uniqueConstraints = @UniqueConstraint(columnNames = { "suscripcion_id", "evento_id" }), indexes = {
+		@Index(name = "ix_entrega_webhook_estado", columnList = "estado,disponible_en"),
+		@Index(name = "ix_entrega_webhook_tenant_estado", columnList = "tenant_id,estado,alta"),
+		@Index(name = "ix_entrega_webhook_suscripcion", columnList = "suscripcion_id,alta") })
 public class EntregaWebhook implements Serializable {
 	private static final long serialVersionUID = 2790295331650125259L;
 

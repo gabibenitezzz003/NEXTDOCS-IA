@@ -43,7 +43,8 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | API de gobernanza: reconstrucción de la decisión y exportación de auditoría | ✅ |
 | Retención en ejecución: plazo desde el cierre, legal hold y prueba de borrado | ✅ |
 | Administración de tenant, usuarios, roles propios y cuentas de servicio | ✅ |
-| Suite de QA automatizada: 50 unitarios + 80 de integración | ✅ |
+| API de webhooks: suscripciones, prueba firmada y monitor de entregas | ✅ |
+| Suite de QA automatizada: 57 unitarios + 90 de integración | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -171,15 +172,16 @@ docker compose up -d      # PostgreSQL, Redis y MinIO
 cd backend && ./mvnw verify
 ```
 
-- **50 tests unitarios** — no necesitan nada levantado
-- **80 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **57 tests unitarios** — no necesitan nada levantado
+- **90 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
 `QA1-06` dos candidatos van a revisión, `QA1-07` `ILEGIBLE` ≠ `NO_FIGURA`, `QA1-08` original físico,
 `QA1-10` rollback de plantilla, `QA-WF-03` el documento no cambia de versión, `QA-FOL-01` el núcleo
 sigue sin conector, `SEC-01` aislamiento cross-tenant, `GOV-01` reconstrucción completa de la decisión
-sobre un documento aprobado, `GOV-02` legal hold con motivo obligatorio y `GOV-03` overrides.
+sobre un documento aprobado, `GOV-02` legal hold con motivo obligatorio y `GOV-03` overrides. El
+monitor de webhooks verifica firma HMAC, auto-pausa por fallos y el aislamiento de suscripciones.
 
 Si la infraestructura no está levantada, los tests de integración se **saltan** con un mensaje claro
 en vez de fallar.

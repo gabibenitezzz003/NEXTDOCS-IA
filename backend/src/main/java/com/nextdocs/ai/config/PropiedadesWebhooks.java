@@ -11,4 +11,8 @@ public class PropiedadesWebhooks {
 	private int intentosMaximos;
 
 	private int tiempoEsperaSegundos;
+
+	private int umbralPausa;
+
+	private boolean permitirLocalhost;
 }

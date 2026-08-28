@@ -16,7 +16,8 @@ public enum TipoEventoCanonico {
 	EXCEPCION_RESUELTA("exception.resolved"),
 	PLANTILLA_PUBLICADA("template.published"),
 	PLANTILLA_DEPRECADA("template.deprecated"),
-	ACCION_CONECTOR_FALLIDA("connector.action.failed");
+	ACCION_CONECTOR_FALLIDA("connector.action.failed"),
+	WEBHOOK_PRUEBA("webhook.test");
 
 	private final String clave;
 

@@ -13,6 +13,10 @@ nextdocs:
     trabajadorActivo: false
   webhooks:
     despachadorActivo: false
+    permitirLocalhost: true
+    umbralPausa: 3
+    tiempoEsperaSegundos: 2
+    intentosMaximos: 3
   retencion:
     trabajadorActivo: false
   proveedor-ia:

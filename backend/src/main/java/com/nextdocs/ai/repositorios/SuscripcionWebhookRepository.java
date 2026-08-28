@@ -15,11 +15,16 @@ public interface SuscripcionWebhookRepository extends JpaRepository<SuscripcionW
 	@Query("SELECT s FROM SuscripcionWebhook s WHERE s.baja IS NULL AND s.tenant.id = :tenantId ORDER BY s.nombre")
 	List<SuscripcionWebhook> listarPorTenant(@Param("tenantId") String tenantId);
 
-	@Query("SELECT DISTINCT s FROM SuscripcionWebhook s JOIN s.eventos e WHERE s.baja IS NULL AND s.activa = TRUE "
-			+ "AND s.tenant.id = :tenantId AND e = :evento")
+	@Query("SELECT DISTINCT s FROM SuscripcionWebhook s JOIN FETCH s.tenant JOIN s.eventos e "
+			+ "WHERE s.baja IS NULL AND s.activa = TRUE AND s.tenant.id = :tenantId AND e = :evento")
 	List<SuscripcionWebhook> listarActivasPorEvento(@Param("tenantId") String tenantId,
 			@Param("evento") TipoEventoCanonico evento);
 
-	@Query("SELECT s FROM SuscripcionWebhook s WHERE s.baja IS NULL AND s.id = :id AND s.tenant.id = :tenantId")
+	@Query("SELECT s FROM SuscripcionWebhook s JOIN FETCH s.tenant WHERE s.baja IS NULL AND s.id = :id "
+			+ "AND s.tenant.id = :tenantId")
 	Optional<SuscripcionWebhook> buscarPorIdYTenant(@Param("id") String id, @Param("tenantId") String tenantId);
+
+	@Query("SELECT COUNT(s) FROM SuscripcionWebhook s WHERE s.baja IS NULL AND s.tenant.id = :tenantId "
+			+ "AND s.activa = :activa")
+	long contarPorTenantYActiva(@Param("tenantId") String tenantId, @Param("activa") boolean activa);
 }

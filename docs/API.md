@@ -375,6 +375,47 @@ GET  /api/v1/gobernanza/retencion/vencidos                   permiso: gobernanza
 POST /api/v1/gobernanza/retencion/documentos/{id}/aplicar    permiso: gobernanza.administrar
 ```
 
+### Integraciones (webhooks)
+
+```
+GET  /api/v1/integraciones/configuracion
+GET  /api/v1/integraciones/salud                              permiso: gobernanza.leer
+GET  /api/v1/integraciones/suscripciones                      permiso: gobernanza.leer
+GET  /api/v1/integraciones/suscripciones/{id}                 permiso: gobernanza.leer
+POST /api/v1/integraciones/suscripciones                      permiso: gobernanza.administrar
+PUT  /api/v1/integraciones/suscripciones/{id}                 permiso: gobernanza.administrar
+POST /api/v1/integraciones/suscripciones/{id}/pausar          permiso: gobernanza.administrar
+POST /api/v1/integraciones/suscripciones/{id}/reactivar       permiso: gobernanza.administrar
+POST /api/v1/integraciones/suscripciones/{id}/secreto         permiso: gobernanza.administrar
+POST /api/v1/integraciones/suscripciones/{id}/probar          permiso: gobernanza.administrar
+DEL  /api/v1/integraciones/suscripciones/{id}                 permiso: gobernanza.administrar
+GET  /api/v1/integraciones/entregas?estado&suscripcionId      permiso: gobernanza.leer
+POST /api/v1/integraciones/entregas/{id}/reintentar           permiso: gobernanza.administrar
+```
+
+No se crearon permisos nuevos: los tenants ya existentes no migran roles solos. Quien ya puede
+leer gobernanza ve el monitor; quien la administra da de alta suscripciones.
+
+**Secreto.** Se genera si no viene (`ndwh_...`). El alta y la rotación lo devuelven **una sola vez**.
+El listado y el detalle sólo exponen un prefijo de 8 caracteres. Nunca viaja en eventos de auditoría.
+
+**URL.** Tiene que ser HTTPS. Se rechazan loopback, IPs privadas, link-local, multicast y hosts
+`.internal`. En desarrollo, `nextdocs.webhooks.permitirLocalhost=true` permite HTTP contra
+`127.0.0.1` / `localhost` y no relaja el resto de redes internas.
+
+**Prueba.** `POST .../probar` publica `webhook.test`, entrega en el momento (aunque el evento no
+esté en la lista de la suscripción) y no fan-out a otras suscripciones.
+
+**Auto-pausa.** Si `fallosConsecutivos` llega a `nextdocs.webhooks.umbralPausa` (10 por defecto, 3
+en pruebas), la suscripción se desactiva y queda auditada como `WEBHOOK_PAUSADO`. Reactivarla pone
+el contador en cero.
+
+**Reintento.** Una entrega `PENDIENTE` se dispara ya. Una `AGOTADO` (DLQ) reinicia el presupuesto
+de intentos y entrega ya. Una `ENTREGADO` se rechaza.
+
+**El job.** `DespachadorEventosService` se apaga con `nextdocs.webhooks.despachadorActivo=false`.
+La entrega real vive en `EntregaWebhookService`, que sigue disponible para la API y para los tests.
+
 **Filtros de la consulta y de las dos exportaciones.** `desde`, `hasta` (ISO-8601), `accion`,
 `tipoRecurso`, `idRecurso`, `tipoActor`, `idActor`, `correlacionId` y `exitoso`. Todos opcionales y
 combinables; el orden por defecto es `fecha,desc`. La consulta pagina con `pagina`, `tamano` y
@@ -466,7 +507,7 @@ alguien que preguntó.
 | `documentos.eliminar` | Baja lógica |
 | `plantillas.leer` / `plantillas.escribir` / `plantillas.publicar` | Template Studio |
 | `excepciones.leer` / `excepciones.gestionar` | Exception Center |
-| `gobernanza.leer` / `gobernanza.administrar` | Auditoría, retención, proveedores |
+| `gobernanza.leer` / `gobernanza.administrar` | Auditoría, retención, proveedores, webhooks y monitor de integraciones |
 | `tenant.administrar` | Usuarios, roles, cuentas de servicio |
 
 Roles predefinidos al crear un tenant: `ADMINISTRADOR` (todos), `OPERADOR`, `REVISOR`, `AUDITOR`.
@@ -514,11 +555,13 @@ Suscribiéndose a eventos canónicos, NEXT DOC AI hace `POST` al endpoint config
 | `X-Nextdocs-Firma` | `HMAC-SHA256(secreto, cuerpo)` en hexadecimal |
 
 Se considera entregado con cualquier `2xx`. Ante fallo se reintenta con backoff exponencial
-(tope 60 min) hasta 6 intentos, y luego queda `AGOTADO`.
+(tope 60 min) hasta 6 intentos, y luego queda `AGOTADO`. Tras `umbralPausa` fallos consecutivos
+la suscripción se pausa sola.
 
 Eventos canónicos emitidos hoy: `document.received`, `document.extracted`, `document.validated`,
 `document.observed`, `document.approved`, `document.rejected`, `document.closed`,
-`document.segmented`, `extraction.failed`, `exception.created`, `exception.resolved`.
+`document.segmented`, `extraction.failed`, `exception.created`, `exception.resolved`,
+`template.published`, `template.deprecated`, `connector.action.failed`, `webhook.test`.
 
 ---
 

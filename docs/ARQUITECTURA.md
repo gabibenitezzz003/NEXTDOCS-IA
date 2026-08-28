@@ -39,7 +39,7 @@ que impidan extraer servicios cuando el volumen lo justifique"*.
 | Matching Service | `AsociacionService`, `ConectorAsociacionInt`, `RegistroCircuitosService` | ✅ |
 | Review / Exception | `RevisionDocumentalService`, `ExcepcionDocumentalService` | ✅ |
 | Governance & Audit | `AuditoriaService`, `GobernanzaService`, entidades `EventoAuditoria` / `PoliticaRetencion` | ✅ |
-| Event / Integration Hub | `EventoSalidaService`, `DespachadorEventosService` | ✅ |
+| Event / Integration Hub | `EventoSalidaService`, `EntregaWebhookService`, `IntegracionService`, `DespachadorEventosService` | ✅ |
 | Follow Connector | `FollowConnector`, `FollowCliente` | ✅ |
 | Workflow Definition/Runtime | — | ❌ Etapa 2 |
 
@@ -113,7 +113,8 @@ AsociacionService
 4. **Las transiciones de estado son explícitas.** `MaquinaEstadoDocumento` rechaza cualquier salto
    no declarado con `TransicionInvalidaException` → HTTP 409.
 5. **El evento se publica en la misma transacción que el cambio.** Patrón outbox: `EventoSalida`
-   se escribe en la transacción de negocio; `DespachadorEventosService` lo entrega después.
+   se escribe en la transacción de negocio; `EntregaWebhookService` lo entrega después
+   (el `DespachadorEventosService` sólo orquesta el schedule).
 6. **La cola se alimenta después del commit.** `TransactionSynchronization.afterCommit()`, para que
    el worker nunca lea un documento que todavía no existe.
 
@@ -148,7 +149,7 @@ devuelve 0 documentos.
 | Archivos | MIME real por contenido con Tika, no por extensión ni por header |
 | Antivirus | ClamAV por `INSTREAM` antes de almacenar; fail-closed por defecto; infectado va a bucket de cuarentena |
 | Descarga del original | URL firmada con TTL de 15 min. El bucket no es público |
-| Webhooks | Firma HMAC-SHA256 del cuerpo en `X-Nextdocs-Firma` |
+| Webhooks | Firma HMAC-SHA256 del cuerpo en `X-Nextdocs-Firma`. El secreto se muestra una sola vez. Las URLs deben ser HTTPS y no pueden apuntar a redes internas, salvo `nextdocs.webhooks.permitirLocalhost` para desarrollo. Tras `umbralPausa` fallos consecutivos la suscripcion se pausa sola |
 | Trazabilidad | `correlacionId` en el MDC, en la respuesta, en cada evento y en cada registro de auditoría |
 | Exportación de auditoría | CSV con neutralización de fórmulas, tope de 50 000 eventos y la propia exportación auditada |
 
