@@ -33,7 +33,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | API de plantillas con ciclo de vida, versionado, publish y rollback | ✅ |
 | Adaptador Gemini real (`gemini-2.5-flash`) con esquema estructurado | ✅ |
 | Segmentación de PDF multi-documento | ⏳ |
-| `FollowConnector` para matching | ⏳ |
+| Matching con circuit breaker + `FollowConnector` aislado | ✅ |
 | Suite de QA `QA1-01` … `QA1-10` | ⏳ |
 
 ### Verificado con el sistema corriendo
@@ -74,6 +74,13 @@ PDF degradado → confianzas 0.6 a 0.95 y usa ILEGIBLE en vez de inventar (QA1-0
 429 / 403     → reintentable vs no reintentable, verificado con servidor falso
 QA1-03        → remito sin conformidad con confianza 1.0 en TODOS los campos
                 queda OBSERVADO, autoaprobado=false, porque lo decide la regla
+
+Matching (Follow simulado, 4 escenarios end-to-end)
+1 candidato   → se fija solo, sujeto = FOLLOW/PEDIDO/ped-1
+2 candidatos  → QA1-06: NO elige, excepción ASOCIACION_AMBIGUA, sujeto vacío
+                tras la selección humana → sujeto = ped-2, el resto descartado
+Follow caído  → QA1-05: excepción CONECTOR con el HTTP 500, y el core sigue (QA-FOL-01)
+0 candidatos  → sin excepción de conector: es un resultado distinto de "falló"
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades
@@ -229,7 +236,10 @@ Bloqueantes inmediatos para poder vender:
 
 1. ~~API de plantillas con ciclo de vida y rollback~~ — **terminado**
 2. ~~Adaptador Gemini real~~ — **terminado**, verificado contra Gemini de verdad
-3. **Matching + `FollowConnector`.** Sin esto no hay `QA1-05` ni `QA1-06`.
+3. ~~Matching + `FollowConnector`~~ — **terminado**
+
+Los tres bloqueantes de venta están cerrados. Lo que sigue es endurecer y completar:
+antivirus en la ingesta, segmentación de PDF, y la suite de QA automatizada.
 
 ---
 

@@ -58,6 +58,11 @@ public class CandidatoAsociacion implements Serializable {
 
 	private boolean seleccionado;
 
+	private boolean descartado;
+
+	@Column(length = 256)
+	private String motivoSeleccion;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	private Usuario seleccionadoPor;
 

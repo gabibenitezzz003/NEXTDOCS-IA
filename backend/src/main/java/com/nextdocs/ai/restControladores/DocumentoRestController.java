@@ -13,10 +13,13 @@ import com.nextdocs.ai.enumeraciones.OrigenDocumento;
 import com.nextdocs.ai.enumeraciones.PresenciaCampo;
 import com.nextdocs.ai.enumeraciones.SeveridadHallazgo;
 import com.nextdocs.ai.exceptions.ValidacionException;
+import com.nextdocs.ai.modelos.CandidatoAsociacionModel;
 import com.nextdocs.ai.modelos.DocumentoModel;
 import com.nextdocs.ai.modelos.NuevoDocumentoReqModel;
 import com.nextdocs.ai.modelos.RevisionDocumentoModel;
+import com.nextdocs.ai.modelos.ResultadoAsociacionModel;
 import com.nextdocs.ai.modelos.RevisionDocumentoReqModel;
+import com.nextdocs.ai.servicios.AsociacionService;
 import com.nextdocs.ai.servicios.DocumentoService;
 import com.nextdocs.ai.servicios.IngestaDocumentalService;
 import com.nextdocs.ai.servicios.RevisionDocumentalService;
@@ -51,16 +54,20 @@ public class DocumentoRestController extends ControladorRest<DocumentoRestContro
 
 	private final RevisionDocumentalService revisionDocumentalService;
 
+	private final AsociacionService asociacionService;
+
 	private final ExcepcionConverter excepcionConverter;
 
 	private final ObjectMapper objectMapper;
 
 	public DocumentoRestController(IngestaDocumentalService ingestaDocumentalService,
 			DocumentoService documentoService, RevisionDocumentalService revisionDocumentalService,
+			AsociacionService asociacionService,
 			ExcepcionConverter excepcionConverter, ObjectMapper objectMapper) {
 		this.ingestaDocumentalService = ingestaDocumentalService;
 		this.documentoService = documentoService;
 		this.revisionDocumentalService = revisionDocumentalService;
+		this.asociacionService = asociacionService;
 		this.excepcionConverter = excepcionConverter;
 		this.objectMapper = objectMapper;
 	}
@@ -129,6 +136,24 @@ public class DocumentoRestController extends ControladorRest<DocumentoRestContro
 		return new ResponseEntity<>(
 				revisionDocumentalService.registrar(tenantId(), documentoId, usuarioObligatorio(), datos),
 				HttpStatus.CREATED);
+	}
+
+	@PreAuthorize("hasAuthority('documentos.leer')")
+	@GetMapping("/{documentoId}/candidatos")
+	public ResponseEntity<List<CandidatoAsociacionModel>> candidatos(
+			@PathVariable("documentoId") String documentoId) {
+		documentoService.buscarEntidad(tenantId(), documentoId);
+		return new ResponseEntity<>(asociacionService.listar(tenantId(), documentoId), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('documentos.revisar')")
+	@PostMapping("/{documentoId}/candidatos/{candidatoId}/seleccionar")
+	public ResponseEntity<ResultadoAsociacionModel> seleccionarCandidato(
+			@PathVariable("documentoId") String documentoId, @PathVariable("candidatoId") String candidatoId,
+			@RequestBody(required = false) Map<String, String> cuerpo) {
+		String motivo = cuerpo == null ? null : cuerpo.get("motivo");
+		return new ResponseEntity<>(asociacionService.seleccionar(tenantId(), documentoId, candidatoId,
+				usuarioObligatorio(), motivo), HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasAuthority('documentos.escribir')")

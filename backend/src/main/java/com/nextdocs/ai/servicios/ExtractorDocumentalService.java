@@ -16,6 +16,7 @@ import com.nextdocs.ai.entidades.VersionPlantilla;
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
 import com.nextdocs.ai.enumeraciones.EstadoDocumento;
 import com.nextdocs.ai.enumeraciones.EstadoEjecucion;
+import com.nextdocs.ai.enumeraciones.ResultadoAsociacion;
 import com.nextdocs.ai.enumeraciones.ResultadoValidacion;
 import com.nextdocs.ai.enumeraciones.SeveridadHallazgo;
 import com.nextdocs.ai.enumeraciones.TipoEventoCanonico;
@@ -24,6 +25,7 @@ import com.nextdocs.ai.exceptions.EntidadNoEncontradaException;
 import com.nextdocs.ai.exceptions.ProveedorNoDisponibleException;
 import com.nextdocs.ai.interfaces.ProveedorDocumentalIaInt;
 import com.nextdocs.ai.modelos.CampoEsquemaModel;
+import com.nextdocs.ai.modelos.ResultadoAsociacionModel;
 import com.nextdocs.ai.modelos.ResultadoExtraccionModel;
 import com.nextdocs.ai.modelos.SolicitudExtraccionModel;
 import com.nextdocs.ai.modelos.ValorCanonicoModel;
@@ -67,6 +69,8 @@ public class ExtractorDocumentalService {
 
 	private final ValidacionDocumentalService validacionDocumentalService;
 
+	private final AsociacionService asociacionService;
+
 	private final EstadoDocumentalService estadoDocumentalService;
 
 	private final ExcepcionDocumentalService excepcionDocumentalService;
@@ -84,6 +88,7 @@ public class ExtractorDocumentalService {
 			EjecucionExtraccionRepository ejecucionExtraccionRepository,
 			ValorExtraidoRepository valorExtraidoRepository, RuteadorProveedorService ruteadorProveedorService,
 			AlmacenamientoService almacenamientoService, ValidacionDocumentalService validacionDocumentalService,
+			AsociacionService asociacionService,
 			EstadoDocumentalService estadoDocumentalService, ExcepcionDocumentalService excepcionDocumentalService,
 			ColaExtraccionService colaExtraccionService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesProveedorIa propiedades) {
@@ -95,6 +100,7 @@ public class ExtractorDocumentalService {
 		this.ruteadorProveedorService = ruteadorProveedorService;
 		this.almacenamientoService = almacenamientoService;
 		this.validacionDocumentalService = validacionDocumentalService;
+		this.asociacionService = asociacionService;
 		this.estadoDocumentalService = estadoDocumentalService;
 		this.excepcionDocumentalService = excepcionDocumentalService;
 		this.colaExtraccionService = colaExtraccionService;
@@ -267,14 +273,34 @@ public class ExtractorDocumentalService {
 			return;
 		}
 		estadoDocumentalService.transicionar(documento, EstadoDocumento.VALIDADO);
+
+		ResultadoAsociacionModel asociacion = asociar(documento, ejecucion);
+
 		if (validacion.getResultado() == ResultadoValidacion.OBSERVADO) {
 			estadoDocumentalService.transicionar(documento, EstadoDocumento.OBSERVADO);
 			excepcionDocumentalService.abrir(documento.getTenant(), documento, TipoExcepcion.CALIDAD_LECTURA,
 					SeveridadHallazgo.REQUIERE_REVISION, "REVISION_HUMANA", validacion.getMotivoResultado());
 			return;
 		}
+		if (asociacion.requiereRevisionHumana() || asociacion.huboFallo()) {
+			estadoDocumentalService.transicionar(documento, EstadoDocumento.OBSERVADO);
+			return;
+		}
 		if (validacion.isAutoaprobado()) {
 			estadoDocumentalService.transicionar(documento, EstadoDocumento.APROBADO);
+		}
+	}
+
+	private ResultadoAsociacionModel asociar(Documento documento, EjecucionExtraccion ejecucion) {
+		try {
+			return asociacionService.asociar(documento, ejecucion.getId());
+		} catch (Exception e) {
+			log.error("La asociacion del documento {} fallo de forma inesperada", documento.getId(), e);
+			ResultadoAsociacionModel degradado = new ResultadoAsociacionModel();
+			degradado.setResultado(ResultadoAsociacion.CONECTOR_FALLIDO);
+			degradado.setMotivo(e.getMessage());
+			degradado.getConectoresFallidos().add("desconocido");
+			return degradado;
 		}
 	}
 

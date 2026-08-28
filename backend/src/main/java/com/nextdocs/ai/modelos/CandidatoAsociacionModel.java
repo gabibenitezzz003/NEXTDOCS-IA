@@ -27,4 +27,10 @@ public class CandidatoAsociacionModel implements Serializable {
 	private String razones;
 
 	private boolean seleccionado;
+
+	private boolean descartado;
+
+	private String motivoSeleccion;
+
+	private String seleccionadoPor;
 }

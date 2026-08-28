@@ -90,6 +90,11 @@ public class DocumentoConverter {
 		modelo.setPuntaje(candidato.getPuntaje());
 		modelo.setRazones(candidato.getRazones());
 		modelo.setSeleccionado(candidato.isSeleccionado());
+		modelo.setDescartado(candidato.isDescartado());
+		modelo.setMotivoSeleccion(candidato.getMotivoSeleccion());
+		if (candidato.getSeleccionadoPor() != null) {
+			modelo.setSeleccionadoPor(candidato.getSeleccionadoPor().getEmail());
+		}
 		if (candidato.getReferencia() != null) {
 			modelo.setOrigen(candidato.getReferencia().getOrigen());
 			modelo.setTipoObjeto(candidato.getReferencia().getTipoObjeto());

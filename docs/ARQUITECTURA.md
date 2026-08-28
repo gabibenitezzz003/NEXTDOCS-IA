@@ -34,13 +34,13 @@ que impidan extraer servicios cuando el volumen lo justifique"*.
 | Capture / Ingestion | `IngestaDocumentalService`, `InspectorArchivo`, `ColaExtraccionService` | ✅ |
 | Document Repository | `AlmacenamientoService`, `DocumentoService`, `EstadoDocumentalService` | ✅ |
 | Document AI Orchestrator | `ExtractorDocumentalService`, `RuteadorProveedorService`, `TrabajadorExtraccionService`, `ProveedorGeminiService` | ✅ |
-| Template Service | Entidades `PlantillaDocumental` / `VersionPlantilla` / `CampoPlantilla` / `ReglaPlantilla` | ⚠️ modelo listo, falta API |
+| Template Service | `PlantillaService`, `ValidadorPlantillaService`, `MaquinaEstadoPlantilla` | ✅ |
 | Validation Service | `ValidacionDocumentalService` | ✅ |
-| Matching Service | `ConectorAsociacionInt`, entidad `CandidatoAsociacion` | ⚠️ contrato listo, falta implementación |
+| Matching Service | `AsociacionService`, `ConectorAsociacionInt`, `RegistroCircuitosService` | ✅ |
 | Review / Exception | `RevisionDocumentalService`, `ExcepcionDocumentalService` | ✅ |
 | Governance & Audit | `AuditoriaService`, entidades `EventoAuditoria` / `PoliticaRetencion` | ⚠️ auditoría lista, falta API de gobernanza |
 | Event / Integration Hub | `EventoSalidaService`, `DespachadorEventosService` | ✅ |
-| Follow Connector | — | ❌ Etapa siguiente |
+| Follow Connector | `FollowConnector`, `FollowCliente` | ✅ |
 | Workflow Definition/Runtime | — | ❌ Etapa 2 |
 
 ---
@@ -77,8 +77,19 @@ ValidacionDocumentalService
    · genera HallazgoValidacion con severidad
         │
         ├── hay BLOQUEANTE ────────► OBSERVADO + ExcepcionDocumental CRITICA
-        ├── hay REQUIERE_REVISION ─► VALIDADO ► OBSERVADO + ExcepcionDocumental ALTA
-        └── sin hallazgos ─────────► VALIDADO ► APROBADO sólo si autoaprobable
+        └── el resto ──────────────► VALIDADO
+                                        │
+                                        ▼
+AsociacionService
+   · arma el contexto canónico con los valores extraídos
+   · consulta cada conector activo detrás de su circuit breaker
+   · un candidato claro se fija solo; dos o más van a revisión humana
+   · un conector caído es CONECTOR_FALLIDO, distinto de SIN_CANDIDATOS
+        │
+        ├── validación OBSERVADO ──► OBSERVADO + excepción CALIDAD_LECTURA
+        ├── asociación ambigua ────► OBSERVADO + excepción ASOCIACION
+        ├── conector caído ────────► OBSERVADO + excepción CONECTOR
+        └── todo limpio ───────────► APROBADO sólo si autoaprobable
                                                        │
                                               POST /revisiones (humano)
                                                        ▼
@@ -222,9 +233,7 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 
 | Falta | Riesgo si no se hace |
 |---|---|
-| API de plantillas con `draft → test → publish → rollback` | Hoy las plantillas se cargan por SQL. Sin quality gate una versión mala llega a producción |
 | Antivirus / antimalware en la ingesta | `SEC-04` del N3 no se cumple: un archivo malicioso llega al proveedor de IA |
 | Segmentación de PDF multi-documento | `QA1-02`: un PDF con 10 remitos hoy entra como uno solo |
-| `FollowConnector` detrás de `ConectorAsociacionInt` | Sin matching no hay `QA1-05` ni `QA1-06` |
 | Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
 | Retención y legal hold ejecutándose | `GOV-02`: la política existe en el modelo pero nadie la aplica |

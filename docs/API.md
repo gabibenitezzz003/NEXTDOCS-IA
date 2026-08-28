@@ -82,6 +82,12 @@ POST /api/v1/documentos/{id}/revisiones                    permiso: documentos.r
 }
 → 201 RevisionDocumentoModel
 
+GET  /api/v1/documentos/{id}/candidatos                    permiso: documentos.leer
+     → candidatos de asociación con puntaje, seleccionado, descartado y motivo
+POST /api/v1/documentos/{id}/candidatos/{candidatoId}/seleccionar   permiso: documentos.revisar
+     { "motivo": "..." }
+     → selecciona uno, descarta el resto y fija la referencia externa del documento
+
 POST /api/v1/documentos/{id}/reprocesar                    permiso: documentos.escribir
 POST /api/v1/documentos/{id}/cerrar                        permiso: documentos.escribir
 ```
@@ -169,6 +175,33 @@ Reglas que impone la API:
 > Un remito con `conformidad = false` pasa una regla `OBLIGATORIO` sobre `conformidad`, porque el dato
 > está. Para exigir un valor concreto usá `CATALOGO` con `{"valores":["true"]}`. Esta distinción es la
 > diferencia entre aprobar y observar un remito sin conformidad.
+
+### Asociación a objetos de negocio
+
+El matching corre después de la validación. Los conectores se registran por tenant en
+`configuracion_conector` y se consultan a través de `ConectorAsociacionInt`. El core **nunca**
+conoce el sistema del otro lado; `FollowConnector` es la única clase que sabe qué es un pedido de Follow.
+
+**Cómo se resuelve**
+
+| Situación | Resultado | Estado del documento |
+|---|---|---|
+| Un candidato con puntaje ≥ `umbralSeleccionAutomatica` | `RESUELTA`, se fija la referencia | sigue su curso |
+| Un candidato por debajo del umbral | `AMBIGUA` + excepción | `OBSERVADO` |
+| Dos o más candidatos viables | `AMBIGUA` + excepción, **jamás elige solo** | `OBSERVADO` |
+| Cero candidatos | `SIN_CANDIDATOS`, sin excepción de conector | sigue su curso |
+| El conector falló | `CONECTOR_FALLIDO` + excepción `CONECTOR` | `OBSERVADO` |
+| Un candidato pero otro conector falló | `AMBIGUA`, la búsqueda está incompleta | `OBSERVADO` |
+
+> **Un timeout no es cero candidatos.** Son dos resultados distintos con dos excepciones distintas.
+> Confundirlos haría que un documento quede sin asociar en silencio cuando en realidad nadie preguntó.
+
+**Circuit breaker.** Cada par tenant + conector tiene su circuito. Tras `umbralCircuitoAbierto`
+fallos consecutivos se abre por `duracionCircuitoAbiertoSegundos`; después pasa a semiabierto y
+deja pasar una sonda. Si la sonda falla vuelve a abrirse de inmediato.
+
+**Credenciales.** Igual que con los proveedores de IA: `referenciaSecreto` guarda `env:NOMBRE_VAR`,
+nunca el secreto. Soporta `CLAVE_API` con cabecera configurable y `BEARER`.
 
 ### Excepciones
 
