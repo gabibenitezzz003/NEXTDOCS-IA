@@ -5,9 +5,11 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 @Service
+@ConditionalOnProperty(name = "nextdocs.cola.trabajadorActivo", havingValue = "true", matchIfMissing = true)
 public class TrabajadorExtraccionService {
 
 	private static final Logger log = LoggerFactory.getLogger(TrabajadorExtraccionService.class);

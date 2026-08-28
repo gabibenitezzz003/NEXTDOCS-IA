@@ -1,0 +1,30 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    clean-disabled: false
+
+nextdocs:
+  arranque:
+    crearTenantDemostracion: false
+  cola:
+    trabajadorActivo: false
+  webhooks:
+    despachadorActivo: false
+  proveedor-ia:
+    proveedorPorDefecto: DEEPSEEK
+    intentosMaximos: 3
+    esperaInicialMilisegundos: 10
+    esperaMaximaMilisegundos: 50
+  antivirus:
+    motor: PERMISIVO
+  seguridad:
+    jwtSecreto: secreto-de-prueba-con-mas-de-treinta-y-dos-bytes
+
+logging:
+  level:
+    root: WARN
+    com.nextdocs.ai: INFO
+    org.testcontainers: WARN

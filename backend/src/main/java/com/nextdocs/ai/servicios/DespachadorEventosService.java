@@ -25,10 +25,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@ConditionalOnProperty(name = "nextdocs.webhooks.despachadorActivo", havingValue = "true", matchIfMissing = true)
 public class DespachadorEventosService {
 
 	public static final String CABECERA_FIRMA = "X-Nextdocs-Firma";

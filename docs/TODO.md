@@ -30,6 +30,7 @@ Cada tarea trae su criterio de aceptación referenciando los códigos de QA del 
 - [x] **Tarea 5** — segmentación de PDF multi-documento con estrategias configurables
 - [x] **Tarea 4** — antivirus con cuarentena verificado contra ClamAV real
 - [x] **Tarea 11** — seguimiento del original físico con política por plantilla
+- [x] **Tarea 13** — suite de QA automatizada, 41 unitarios y 29 de integración
 
 ---
 
@@ -52,10 +53,17 @@ sin Workflow y sin Follow.
 | 10 | API de suscripciones de webhook y monitor de integraciones | El motor funciona pero no se puede administrar |
 | ~~11~~ | ~~Seguimiento del original físico~~ | ✅ **Terminada.** `QA1-08` verificado con las tres políticas |
 | 12 | Observabilidad y control de costos por tenant | Sin costo por documento no se sabe si el negocio cierra |
-| 13 | **Suite de QA `QA1-01`…`QA1-10` con Testcontainers** | Requisito del Definition of Done antes de release |
+| ~~13~~ | ~~Suite de QA automatizada~~ | ✅ **Terminada.** 70 tests. Sin Testcontainers: usa la infra del compose, ver nota abajo |
 | 14 | Despliegue reproducible y pipeline de CI | Hoy el despliegue del motor es manual |
 
-**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → **13** → 2 → 7 → 8 → 9 → 10 → 12 → 14
+**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → ~~13~~ → **7** → 8 → 9 → 10 → 2 → 12 → 14
+
+**Nota sobre Testcontainers.** No se pudo usar: Docker 29.7 exige API ≥ 1.40 y el `docker-java` que
+trae Testcontainers 1.21.3 negocia 1.32, así que no encuentra el entorno Docker. En vez de eso los
+tests de integración usan la infraestructura del `compose.yml` sobre una base `nextdocs_prueba`
+separada, que se crea sola. Es lo mismo que va a hacer la CI con service containers, y quita una
+dependencia frágil. Si en el futuro Testcontainers soporta esta versión de Docker, migrar es directo:
+sólo cambia `PruebaIntegracion`.
 
 **Dependencias:** 2 necesita 1 · 13 necesita 3, 4, 5, 6 y 11
 

@@ -36,7 +36,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Adaptador Gemini real (`gemini-2.5-flash`) con esquema estructurado | ✅ |
 | Segmentación de PDF multi-documento (páginas fijas o patrón) | ✅ |
 | Matching con circuit breaker + `FollowConnector` aislado | ✅ |
-| Suite de QA `QA1-01` … `QA1-10` | ⏳ |
+| Suite de QA automatizada: 41 unitarios + 29 de integración | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -105,8 +105,27 @@ REQUIERE_PARA_CIERRE → cierre rechazado con 400 hasta recibir el papel,
                        después CERRADO; archivar sin recibir da 400
 ```
 
-Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades
-y la migración Flyway coinciden exactamente.
+Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
+y las migraciones Flyway coinciden exactamente.
+
+### Tests
+
+```bash
+docker compose up -d      # PostgreSQL, Redis y MinIO
+cd backend && ./mvnw verify
+```
+
+- **41 tests unitarios** — no necesitan nada levantado
+- **29 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+
+Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
+`QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
+`QA1-06` dos candidatos van a revisión, `QA1-07` `ILEGIBLE` ≠ `NO_FIGURA`, `QA1-08` original físico,
+`QA1-10` rollback de plantilla, `QA-WF-03` el documento no cambia de versión, `QA-FOL-01` el núcleo
+sigue sin conector, `SEC-01` aislamiento cross-tenant y `GOV-01`/`GOV-03` linaje y overrides.
+
+Si la infraestructura no está levantada, los tests de integración se **saltan** con un mensaje claro
+en vez de fallar.
 
 ---
 
