@@ -135,6 +135,14 @@ POST /api/v1/plantillas/versiones/{versionId}/validar      permiso: plantillas.l
      → { valida: bool, errores: [] }
 POST /api/v1/plantillas/versiones/{versionId}/publicar     permiso: plantillas.publicar
 POST /api/v1/plantillas/{id}/revertir/{versionId}          permiso: plantillas.publicar
+PUT  /api/v1/plantillas/{id}/quality-gate                  permiso: plantillas.escribir
+     { exigirQualityGate, umbralMinimo }
+GET  /api/v1/plantillas/{id}/conjunto-prueba               permiso: plantillas.leer
+POST /api/v1/plantillas/{id}/conjunto-prueba/casos         permiso: plantillas.escribir
+     multipart: archivo + esperado (JSON) + nombre
+DEL  /api/v1/plantillas/conjunto-prueba/casos/{casoId}     permiso: plantillas.escribir
+POST /api/v1/plantillas/versiones/{versionId}/probar       permiso: plantillas.escribir
+GET  /api/v1/plantillas/versiones/{versionId}/pruebas      permiso: plantillas.leer
 ```
 
 **Campos y reglas** (sólo sobre versiones `BORRADOR` o `EN_PRUEBA`)
@@ -163,6 +171,14 @@ Reglas que impone la API:
 - **Publicar valida antes**: la versión necesita al menos un campo extraíble, ninguna regla puede apuntar
   a un campo inexistente, las expresiones regulares deben compilar, los umbrales deben estar entre 0 y 1
   y la configuración JSON de cada regla debe ser válida.
+- **Quality gate (`GOV-04`).** Si la plantilla tiene `exigirQualityGate`, publicar exige una corrida
+  gold **aprobada** contra el conjunto vigente. Sin casos, o con una corrida vieja (la huella cambió),
+  se bloquea. El umbral por defecto es `0.80`. Una versión que **empeora** la exactitud de la publicada
+  queda `RECHAZADO` y no se publica. Sin la política, publicar sigue igual que antes.
+- La corrida no crea documentos de bandeja: llama al proveedor en seco, puntúa presencia y valor
+  contra el esperado, deja la versión en `EN_PRUEBA` y, si aprueba, graba
+  `factorCalibracionConfianza` en la versión. Ese factor se aplica a `confianza` en extracciones
+  reales; `confianzaProveedor` sigue cruda.
 - Publicar una versión **deprecata automáticamente** la que estaba publicada.
 - `revertir` sólo acepta una versión `DEPRECADA` que ya estuvo publicada.
 - **Los documentos históricos nunca cambian de versión.** Un documento ingresado con la v1 sigue

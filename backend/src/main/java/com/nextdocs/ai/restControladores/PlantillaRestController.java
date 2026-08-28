@@ -7,19 +7,25 @@ import java.util.Map;
 import com.nextdocs.ai.enumeraciones.EstadoPlantilla;
 import com.nextdocs.ai.enumeraciones.EstrategiaSegmentacion;
 import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
+import com.nextdocs.ai.enumeraciones.ResultadoQualityGate;
 import com.nextdocs.ai.enumeraciones.SensibilidadCampo;
 import com.nextdocs.ai.enumeraciones.SeveridadHallazgo;
 import com.nextdocs.ai.enumeraciones.TipoDatoCampo;
 import com.nextdocs.ai.enumeraciones.TipoReglaValidacion;
 import com.nextdocs.ai.modelos.CampoPlantillaModel;
 import com.nextdocs.ai.modelos.CampoPlantillaReqModel;
+import com.nextdocs.ai.modelos.CasoPruebaModel;
+import com.nextdocs.ai.modelos.ConjuntoPruebaModel;
+import com.nextdocs.ai.modelos.EjecucionPruebaModel;
 import com.nextdocs.ai.modelos.PlantillaModel;
 import com.nextdocs.ai.modelos.PlantillaReqModel;
+import com.nextdocs.ai.modelos.PoliticaQualityGateReqModel;
 import com.nextdocs.ai.modelos.ReglaPlantillaModel;
 import com.nextdocs.ai.modelos.ReglaPlantillaReqModel;
 import com.nextdocs.ai.modelos.VersionPlantillaModel;
 import com.nextdocs.ai.modelos.VersionPlantillaReqModel;
 import com.nextdocs.ai.servicios.PlantillaService;
+import com.nextdocs.ai.servicios.QualityGateService;
 
 import jakarta.validation.Valid;
 
@@ -35,6 +41,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/plantillas")
@@ -42,8 +49,11 @@ public class PlantillaRestController extends ControladorRest<PlantillaRestContro
 
 	private final PlantillaService plantillaService;
 
-	public PlantillaRestController(PlantillaService plantillaService) {
+	private final QualityGateService qualityGateService;
+
+	public PlantillaRestController(PlantillaService plantillaService, QualityGateService qualityGateService) {
 		this.plantillaService = plantillaService;
+		this.qualityGateService = qualityGateService;
 	}
 
 	@GetMapping("/configuracion")
@@ -56,6 +66,7 @@ public class PlantillaRestController extends ControladorRest<PlantillaRestContro
 		configuracion.put("sensibilidades", listar(SensibilidadCampo.values()));
 		configuracion.put("politicasOriginalFisico", listar(PoliticaOriginalFisico.values()));
 		configuracion.put("estrategiasSegmentacion", listar(EstrategiaSegmentacion.values()));
+		configuracion.put("resultadosQualityGate", listar(ResultadoQualityGate.values()));
 		return new ResponseEntity<>(configuracion, HttpStatus.OK);
 	}
 
@@ -148,6 +159,49 @@ public class PlantillaRestController extends ControladorRest<PlantillaRestContro
 	public ResponseEntity<VersionPlantillaModel> publicar(@PathVariable("versionId") String versionId) {
 		return new ResponseEntity<>(plantillaService.publicar(tenantId(), versionId, usuarioObligatorio()),
 				HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('plantillas.escribir')")
+	@PutMapping("/{plantillaId}/quality-gate")
+	public ResponseEntity<ConjuntoPruebaModel> politicaQualityGate(@PathVariable("plantillaId") String plantillaId,
+			@RequestBody PoliticaQualityGateReqModel datos) {
+		qualityGateService.actualizarPolitica(tenantId(), plantillaId, datos);
+		return new ResponseEntity<>(qualityGateService.obtenerConjunto(tenantId(), plantillaId), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('plantillas.leer')")
+	@GetMapping("/{plantillaId}/conjunto-prueba")
+	public ResponseEntity<ConjuntoPruebaModel> conjuntoPrueba(@PathVariable("plantillaId") String plantillaId) {
+		return new ResponseEntity<>(qualityGateService.obtenerConjunto(tenantId(), plantillaId), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('plantillas.escribir')")
+	@PostMapping("/{plantillaId}/conjunto-prueba/casos")
+	public ResponseEntity<CasoPruebaModel> agregarCaso(@PathVariable("plantillaId") String plantillaId,
+			@RequestParam("archivo") MultipartFile archivo, @RequestParam("esperado") String esperado,
+			@RequestParam(required = false) String nombre) {
+		return new ResponseEntity<>(
+				qualityGateService.agregarCaso(tenantId(), plantillaId, nombre, esperado, archivo),
+				HttpStatus.CREATED);
+	}
+
+	@PreAuthorize("hasAuthority('plantillas.escribir')")
+	@DeleteMapping("/conjunto-prueba/casos/{casoId}")
+	public ResponseEntity<Void> eliminarCaso(@PathVariable("casoId") String casoId) {
+		qualityGateService.eliminarCaso(tenantId(), casoId);
+		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+
+	@PreAuthorize("hasAuthority('plantillas.escribir')")
+	@PostMapping("/versiones/{versionId}/probar")
+	public ResponseEntity<EjecucionPruebaModel> probar(@PathVariable("versionId") String versionId) {
+		return new ResponseEntity<>(qualityGateService.ejecutar(tenantId(), versionId), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('plantillas.leer')")
+	@GetMapping("/versiones/{versionId}/pruebas")
+	public ResponseEntity<List<EjecucionPruebaModel>> pruebas(@PathVariable("versionId") String versionId) {
+		return new ResponseEntity<>(qualityGateService.listarEjecuciones(tenantId(), versionId), HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasAuthority('plantillas.escribir')")

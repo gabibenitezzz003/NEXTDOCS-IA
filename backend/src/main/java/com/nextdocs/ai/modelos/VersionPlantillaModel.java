@@ -49,6 +49,8 @@ public class VersionPlantillaModel implements Serializable {
 
 	private String notasCambio;
 
+	private BigDecimal factorCalibracionConfianza;
+
 	private String publicadaPor;
 
 	private Instant publicada;

@@ -34,7 +34,7 @@ que impidan extraer servicios cuando el volumen lo justifique"*.
 | Capture / Ingestion | `IngestaDocumentalService`, `InspectorArchivo`, `ColaExtraccionService` | ✅ |
 | Document Repository | `AlmacenamientoService`, `DocumentoService`, `EstadoDocumentalService` | ✅ |
 | Document AI Orchestrator | `ExtractorDocumentalService`, `RuteadorProveedorService`, `TrabajadorExtraccionService`, `ProveedorGeminiService` | ✅ |
-| Template Service | `PlantillaService`, `ValidadorPlantillaService`, `MaquinaEstadoPlantilla` | ✅ |
+| Template Service | `PlantillaService`, `ValidadorPlantillaService`, `QualityGateService`, `MaquinaEstadoPlantilla` | ✅ |
 | Validation Service | `ValidacionDocumentalService` | ✅ |
 | Matching Service | `AsociacionService`, `ConectorAsociacionInt`, `RegistroCircuitosService` | ✅ |
 | Review / Exception | `RevisionDocumentalService`, `ExcepcionDocumentalService` | ✅ |
@@ -270,8 +270,9 @@ Conclusiones que se aplicaron al diseño:
 1. Es una señal **ordinal útil** para detectar documentos malos, no una probabilidad calibrada.
    Por eso se guardan las dos: `confianzaProveedor` cruda para lineage y `confianza` calibrada
    para decidir.
-2. `factorCalibracionConfianza` es un ajuste lineal provisorio. La calibración real sale del
-   dataset gold de la tarea 2, no de un número elegido a mano.
+2. `factorCalibracionConfianza` en la versión sale de la última corrida gold aprobada
+   (exactitud / confianza media del proveedor). El factor en la config de Gemini queda como
+   ajuste del adaptador, no como calibración de plantilla.
 3. **La confianza no puede ser el control principal.** En un documento limpio todo da `1.0`, así que
    cualquier umbral se cumple. Lo que evita aprobar un documento inválido son las reglas.
 4. En el documento degradado el modelo usó `ILEGIBLE` correctamente en vez de inventar un valor,

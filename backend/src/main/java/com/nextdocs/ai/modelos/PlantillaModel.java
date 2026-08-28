@@ -1,6 +1,7 @@
 package com.nextdocs.ai.modelos;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,10 @@ public class PlantillaModel implements Serializable {
 	private String familia;
 
 	private String descripcion;
+
+	private boolean exigirQualityGate;
+
+	private BigDecimal umbralQualityGate;
 
 	private String versionPublicadaId;
 

@@ -92,6 +92,7 @@ public class FabricaDatosPrueba {
 		plantilla.setCodigo(codigo);
 		plantilla.setNombre("Plantilla " + codigo);
 		plantilla.setFamilia("PRUEBA");
+		plantilla.setUmbralQualityGate(new BigDecimal("0.8000"));
 		plantilla.setAlta(Instant.now());
 		plantillaDocumentalRepository.save(plantilla);
 

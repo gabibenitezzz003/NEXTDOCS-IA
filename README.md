@@ -37,6 +37,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Outbox transaccional + despachador de webhooks firmados con HMAC | ✅ |
 | API REST v1 de documentos, excepciones y autenticación | ✅ |
 | API de plantillas con ciclo de vida, versionado, publish y rollback | ✅ |
+| Quality gate con dataset gold: no se publica una versión que empeora | ✅ |
 | Adaptador Gemini real (`gemini-2.5-flash`) con esquema estructurado | ✅ |
 | Segmentación de PDF multi-documento (páginas fijas o patrón) | ✅ |
 | Matching con circuit breaker + `FollowConnector` aislado | ✅ |
@@ -44,7 +45,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Retención en ejecución: plazo desde el cierre, legal hold y prueba de borrado | ✅ |
 | Administración de tenant, usuarios, roles propios y cuentas de servicio | ✅ |
 | API de webhooks: suscripciones, prueba firmada y monitor de entregas | ✅ |
-| Suite de QA automatizada: 57 unitarios + 90 de integración | ✅ |
+| Suite de QA automatizada: 57 unitarios + 97 de integración | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -173,12 +174,12 @@ cd backend && ./mvnw verify
 ```
 
 - **57 tests unitarios** — no necesitan nada levantado
-- **90 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **97 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
 `QA1-06` dos candidatos van a revisión, `QA1-07` `ILEGIBLE` ≠ `NO_FIGURA`, `QA1-08` original físico,
-`QA1-10` rollback de plantilla, `QA-WF-03` el documento no cambia de versión, `QA-FOL-01` el núcleo
+`QA1-10` rollback de plantilla, `GOV-04` quality gate con gold, `QA-WF-03` el documento no cambia de versión, `QA-FOL-01` el núcleo
 sigue sin conector, `SEC-01` aislamiento cross-tenant, `GOV-01` reconstrucción completa de la decisión
 sobre un documento aprobado, `GOV-02` legal hold con motivo obligatorio y `GOV-03` overrides. El
 monitor de webhooks verifica firma HMAC, auto-pausa por fallos y el aislamiento de suscripciones.

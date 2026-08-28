@@ -37,6 +37,7 @@ Cada tarea trae su criterio de aceptación referenciando los códigos de QA del 
 - [x] **Tarea 8** — retención en ejecución con legal hold y prueba de borrado
 - [x] **Tarea 9** — administración de tenant, usuarios, roles y cuentas de servicio
 - [x] **Tarea 10** — API de suscripciones de webhook y monitor de integraciones
+- [x] **Tarea 2** — prueba de plantilla y quality gate con dataset gold
 
 ---
 
@@ -48,7 +49,7 @@ sin Workflow y sin Follow.
 | # | Tarea | Por qué bloquea la venta |
 |---|---|---|
 | ~~1~~ | ~~API de plantillas con ciclo de vida completo~~ | ✅ **Terminada.** Ciclo, clonado, validador de publicación, rollback y bloqueo optimista |
-| 2 | Prueba de plantilla y quality gate con dataset gold | Sin gate, una versión que empeora llega a producción (`GOV-04`, `QA1-10`) |
+| ~~2~~ | ~~Prueba de plantilla y quality gate con dataset gold~~ | ✅ **Terminada.** `GOV-04`: si la política exige el gate, no se publica sin una corrida gold aprobada; una versión que empeora queda bloqueada |
 | ~~3~~ | ~~Adaptador Gemini real~~ | ✅ **Terminada.** `gemini-2.5-flash` con esquema estructurado, 10 tests contra servidor falso y verificación contra Gemini real |
 | ~~4~~ | ~~Antivirus y cuarentena en la ingesta~~ | ✅ **Terminada.** `SEC-04` verificado con ClamAV 1.5.4 y un PDF con EICAR embebido |
 | ~~5~~ | ~~Segmentación de PDF multi-documento~~ | ✅ **Terminada.** `QA1-02` verificado con un PDF real de 10 remitos |
@@ -62,7 +63,7 @@ sin Workflow y sin Follow.
 | ~~13~~ | ~~Suite de QA automatizada~~ | ✅ **Terminada.** 70 tests. Sin Testcontainers: usa la infra del compose, ver nota abajo |
 | 14 | Despliegue reproducible y pipeline de CI | Hoy el despliegue del motor es manual |
 
-**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → ~~13~~ → ~~7~~ → ~~8~~ → ~~9~~ → ~~10~~ → **2** → 12 → 14
+**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → ~~13~~ → ~~7~~ → ~~8~~ → ~~9~~ → ~~10~~ → ~~2~~ → **12** → 14
 
 **Nota sobre Testcontainers.** No se pudo usar: Docker 29.7 exige API ≥ 1.40 y el `docker-java` que
 trae Testcontainers 1.21.3 negocia 1.32, así que no encuentra el entorno Docker. En vez de eso los
@@ -73,10 +74,10 @@ sólo cambia `PruebaIntegracion`.
 
 **Dependencias:** 2 necesita 1 · 13 necesita 3, 4, 5, 6 y 11
 
-**Aprendido en la tarea 3, aplica a la 2:** la confianza que reporta Gemini es auto-reportada y
-gruesa (`1.0` en documentos limpios, `0.6`–`0.95` en degradados). Sirve como señal ordinal pero no
-es una probabilidad calibrada. La calibración real tiene que salir del dataset gold, no de un
-factor elegido a mano.
+**Aprendido en la tarea 3, aplicado en la 2:** la confianza que reporta Gemini es auto-reportada y
+gruesa. El gold mide exactitud de campo (presencia + valor) y, si la corrida aprueba, escribe
+`factorCalibracionConfianza` en la versión. La decisión de publicar no usa la confianza: usa el
+umbral de exactitud y la comparación con la versión publicada.
 
 ---
 

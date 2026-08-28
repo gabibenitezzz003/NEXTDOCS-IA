@@ -1,5 +1,6 @@
 package com.nextdocs.ai.servicios;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,7 @@ import com.nextdocs.ai.repositorios.DocumentoRepository;
 import com.nextdocs.ai.repositorios.EjecucionExtraccionRepository;
 import com.nextdocs.ai.repositorios.ValorExtraidoRepository;
 import com.nextdocs.ai.servicios.proveedores.RuteadorProveedorService;
+import com.nextdocs.ai.servicios.proveedores.NormalizadorValor;
 import com.nextdocs.ai.utiles.ContextoCorrelacion;
 
 import org.slf4j.Logger;
@@ -269,8 +271,8 @@ public class ExtractorDocumentalService {
 			valor.setValorCrudo(canonico.getValorCrudo());
 			valor.setValorNormalizado(canonico.getValorNormalizado());
 			valor.setPresencia(canonico.getPresencia());
-			valor.setConfianza(canonico.getConfianza());
 			valor.setConfianzaProveedor(canonico.getConfianzaProveedor());
+			valor.setConfianza(calibrar(documento.getVersionPlantilla(), canonico));
 			valor.setEvidenciaPagina(canonico.getEvidenciaPagina());
 			valor.setEvidenciaRecuadro(canonico.getEvidenciaRecuadro());
 			valor.setAlta(Instant.now());
@@ -346,6 +348,15 @@ public class ExtractorDocumentalService {
 			return;
 		}
 		colaExtraccionService.encolarReintento(documento.getId(), esperaDe(reintentos));
+	}
+
+	private BigDecimal calibrar(VersionPlantilla version, ValorCanonicoModel canonico) {
+		BigDecimal cruda = canonico.getConfianzaProveedor() != null ? canonico.getConfianzaProveedor()
+				: canonico.getConfianza();
+		if (version == null || version.getFactorCalibracionConfianza() == null || cruda == null) {
+			return canonico.getConfianza();
+		}
+		return NormalizadorValor.calibrarConfianza(cruda.multiply(version.getFactorCalibracionConfianza()));
 	}
 
 	private long esperaDe(int reintento) {

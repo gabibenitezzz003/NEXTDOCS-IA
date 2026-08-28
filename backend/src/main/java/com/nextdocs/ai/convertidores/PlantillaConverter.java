@@ -25,6 +25,8 @@ public class PlantillaConverter {
 		modelo.setNombre(plantilla.getNombre());
 		modelo.setFamilia(plantilla.getFamilia());
 		modelo.setDescripcion(plantilla.getDescripcion());
+		modelo.setExigirQualityGate(plantilla.isExigirQualityGate());
+		modelo.setUmbralQualityGate(plantilla.getUmbralQualityGate());
 		modelo.setAlta(plantilla.getAlta());
 		modelo.setBloqueoOptimista(plantilla.getBloqueoOptimista());
 		if (plantilla.getVersionPublicada() != null) {
@@ -64,6 +66,7 @@ public class PlantillaConverter {
 		modelo.setPatronInicioDocumento(version.getPatronInicioDocumento());
 		modelo.setInstruccionExtraccion(version.getInstruccionExtraccion());
 		modelo.setNotasCambio(version.getNotasCambio());
+		modelo.setFactorCalibracionConfianza(version.getFactorCalibracionConfianza());
 		modelo.setPublicada(version.getPublicada());
 		modelo.setAlta(version.getAlta());
 		modelo.setBloqueoOptimista(version.getBloqueoOptimista());

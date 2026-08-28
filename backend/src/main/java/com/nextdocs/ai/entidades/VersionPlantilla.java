@@ -71,6 +71,9 @@ public class VersionPlantilla implements Serializable {
 	@Column(columnDefinition = "text")
 	private String instruccionExtraccion;
 
+	@Column(precision = 5, scale = 4)
+	private BigDecimal factorCalibracionConfianza;
+
 	@Column(length = 1024)
 	private String notasCambio;
 

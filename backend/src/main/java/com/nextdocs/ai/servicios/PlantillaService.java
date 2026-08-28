@@ -62,13 +62,16 @@ public class PlantillaService {
 
 	private final EventoSalidaService eventoSalidaService;
 
+	private final QualityGateService qualityGateService;
+
 	private final PlantillaConverter plantillaConverter;
 
 	public PlantillaService(PlantillaDocumentalRepository plantillaDocumentalRepository,
 			VersionPlantillaRepository versionPlantillaRepository,
 			CampoPlantillaRepository campoPlantillaRepository, ReglaPlantillaRepository reglaPlantillaRepository,
 			ValidadorPlantillaService validadorPlantillaService, AuditoriaService auditoriaService,
-			EventoSalidaService eventoSalidaService, PlantillaConverter plantillaConverter) {
+			EventoSalidaService eventoSalidaService, QualityGateService qualityGateService,
+			PlantillaConverter plantillaConverter) {
 		this.plantillaDocumentalRepository = plantillaDocumentalRepository;
 		this.versionPlantillaRepository = versionPlantillaRepository;
 		this.campoPlantillaRepository = campoPlantillaRepository;
@@ -76,6 +79,7 @@ public class PlantillaService {
 		this.validadorPlantillaService = validadorPlantillaService;
 		this.auditoriaService = auditoriaService;
 		this.eventoSalidaService = eventoSalidaService;
+		this.qualityGateService = qualityGateService;
 		this.plantillaConverter = plantillaConverter;
 	}
 
@@ -113,6 +117,7 @@ public class PlantillaService {
 		plantilla.setNombre(datos.getNombre());
 		plantilla.setFamilia(datos.getFamilia());
 		plantilla.setDescripcion(datos.getDescripcion());
+		plantilla.setUmbralQualityGate(QualityGateService.UMBRAL_POR_DEFECTO);
 		plantilla.setCreadoPor(usuario);
 		plantilla.setAlta(Instant.now());
 		plantillaDocumentalRepository.save(plantilla);
@@ -200,6 +205,7 @@ public class PlantillaService {
 		if (!errores.isEmpty()) {
 			throw new ValidacionException("La version no se puede publicar: " + String.join("; ", errores));
 		}
+		qualityGateService.exigirAprobado(tenantId, version);
 
 		PlantillaDocumental plantilla = version.getPlantilla();
 		deprecarVersionPublicadaActual(plantilla, versionId);

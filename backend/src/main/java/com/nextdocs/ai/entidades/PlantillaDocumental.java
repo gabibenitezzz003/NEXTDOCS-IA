@@ -1,6 +1,7 @@
 package com.nextdocs.ai.entidades;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.Instant;
 
 import jakarta.persistence.Column;
@@ -41,6 +42,11 @@ public class PlantillaDocumental implements Serializable {
 
 	@Column(length = 1024)
 	private String descripcion;
+
+	private boolean exigirQualityGate;
+
+	@Column(precision = 5, scale = 4)
+	private BigDecimal umbralQualityGate = new BigDecimal("0.8000");
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	private VersionPlantilla versionPublicada;

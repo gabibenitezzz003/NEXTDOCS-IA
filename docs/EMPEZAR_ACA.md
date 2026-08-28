@@ -39,7 +39,7 @@ docker run --rm --network host --env-file ../.env \
   maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
-Tests: `./mvnw verify` con la infra levantada. 57 unitarios + 90 de integración.
+Tests: `./mvnw verify` con la infra levantada. 57 unitarios + 97 de integración.
 
 ---
 
@@ -96,8 +96,8 @@ Medido contra `gemini-2.5-flash` real:
 
 Sirve como señal ordinal para detectar documentos malos. **No es una probabilidad calibrada.**
 Por eso se guardan las dos: `confianzaProveedor` cruda para lineage y `confianza` calibrada para
-decidir. El `factorCalibracionConfianza` es un ajuste provisorio a mano: la calibración de verdad
-sale del dataset gold de la **tarea 2**, que está pendiente.
+decidir. El `factorCalibracionConfianza` de la versión sale de la última corrida gold **aprobada**
+(tarea 2): exactitud del conjunto / confianza media del proveedor, acotado a `[0.10, 1.00]`.
 
 ### 4. Sólo se cierra desde `APROBADO`, `RECHAZADO` o `DIVIDIDO`
 
@@ -148,18 +148,17 @@ siguen ahí para las consultas de rango simple.
 
 ## 6. Por dónde seguir
 
-La **Fase 1** cierra el producto vendible. Van 11 de 14.
+La **Fase 1** cierra el producto vendible. Van 12 de 14.
 
-**Hecho:** API de plantillas con ciclo de vida (1) · adaptador Gemini real (3) · antivirus con
-cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector (6) · gobernanza y auditoría
-(7) · retención y legal hold (8) · administración de tenant y usuarios (9) · webhooks y monitor
-de integraciones (10) · original físico (11) · suite de QA (13)
+**Hecho:** API de plantillas con ciclo de vida (1) · quality gate con dataset gold (2) · adaptador
+Gemini real (3) · antivirus con cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector
+(6) · gobernanza y auditoría (7) · retención y legal hold (8) · administración de tenant y usuarios
+(9) · webhooks y monitor de integraciones (10) · original físico (11) · suite de QA (13)
 
 **Siguiente, en este orden:**
 
-1. **Tarea 2** — quality gate con dataset gold. Acá va la calibración real de la confianza
-2. **Tarea 12** — observabilidad y costo por tenant
-3. **Tarea 14** — Dockerfile, CI y despliegue reproducible
+1. **Tarea 12** — observabilidad y costo por tenant
+2. **Tarea 14** — Dockerfile, CI y despliegue reproducible
 
 Después de eso arranca la **Fase 2**, que empieza por el portal frontend (tarea 15).
 
