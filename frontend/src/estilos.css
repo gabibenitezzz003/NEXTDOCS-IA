@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme {
+  --color-grafito: #0d0f12;
+  --color-grafito-claro: #1a1d23;
+  --color-grafito-borde: #2a2e37;
+  --color-violeta: #6c3bff;
+  --color-violeta-claro: #8a63ff;
+  --color-violeta-tenue: #efeaff;
+  --color-rojo: #ff1e1e;
+  --color-rojo-tenue: #ffeaea;
+  --color-arena: #f4e9de;
+  --color-lienzo: #f7f8fa;
+  --color-tinta: #12141a;
+  --color-tinta-suave: #5b6272;
+  --color-borde: #e4e7ee;
+  --color-exito: #0f9d58;
+  --color-exito-tenue: #e6f5ec;
+  --color-alerta: #d97706;
+  --color-alerta-tenue: #fdf0dd;
+
+  --font-titulo: "Space Grotesk", system-ui, sans-serif;
+  --font-cuerpo: "Inter", system-ui, sans-serif;
+}
+
+@layer base {
+  html,
+  body,
+  #raiz {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-cuerpo);
+    color: var(--color-tinta);
+    background: var(--color-lienzo);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-titulo);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .degradado-marca {
+    background-image: linear-gradient(90deg, var(--color-violeta) 0%, var(--color-rojo) 100%);
+  }
+
+  .texto-degradado {
+    background-image: linear-gradient(90deg, var(--color-violeta) 0%, var(--color-rojo) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+
+@keyframes latido {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+.esqueleto {
+  animation: latido 1.4s ease-in-out infinite;
+}

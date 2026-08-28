@@ -269,6 +269,14 @@ nextdocs-ai/
 ├── backend/Dockerfile               imagen multi-stage (Maven 3.9 → JRE 21)
 ├── .github/workflows/verificar.yml  mvn verify + build de imagen
 ├── .env.example                     plantilla de variables; copiala a .env
+├── frontend/                        Portal React 19 · TypeScript · Vite · Tailwind 4
+│   ├── src/
+│   │   ├── api/                     cliente axios con refresco y manejo de errores
+│   │   ├── componentes/             marca, insignias, estados y disposicion
+│   │   ├── contextos/               sesion
+│   │   ├── paginas/                 resumen, bandeja, visor, excepciones, plantillas
+│   │   └── tipos/                   contratos de la API
+│   └── package.json
 ├── docs/
 │   ├── EMPEZAR_ACA.md               traspaso: leer esto primero
 │   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes

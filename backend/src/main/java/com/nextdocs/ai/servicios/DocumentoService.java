@@ -21,6 +21,7 @@ import com.nextdocs.ai.exceptions.ValidacionException;
 import com.nextdocs.ai.modelos.DocumentoModel;
 import com.nextdocs.ai.repositorios.ArchivoDocumentoRepository;
 import com.nextdocs.ai.repositorios.CampoPlantillaRepository;
+import com.nextdocs.ai.repositorios.CambioCampoRevisionRepository;
 import com.nextdocs.ai.repositorios.CandidatoAsociacionRepository;
 import com.nextdocs.ai.repositorios.DocumentoRepository;
 import com.nextdocs.ai.repositorios.EjecucionExtraccionRepository;
@@ -58,6 +59,8 @@ public class DocumentoService {
 
 	private final RevisionDocumentoRepository revisionDocumentoRepository;
 
+	private final CambioCampoRevisionRepository cambioCampoRevisionRepository;
+
 	private final AlmacenamientoService almacenamientoService;
 
 	private final ColaExtraccionService colaExtraccionService;
@@ -81,7 +84,9 @@ public class DocumentoService {
 			HallazgoValidacionRepository hallazgoValidacionRepository,
 			ValorExtraidoRepository valorExtraidoRepository, CampoPlantillaRepository campoPlantillaRepository,
 			CandidatoAsociacionRepository candidatoAsociacionRepository,
-			RevisionDocumentoRepository revisionDocumentoRepository, AlmacenamientoService almacenamientoService,
+			RevisionDocumentoRepository revisionDocumentoRepository,
+			CambioCampoRevisionRepository cambioCampoRevisionRepository,
+			AlmacenamientoService almacenamientoService,
 			ColaExtraccionService colaExtraccionService, EstadoDocumentalService estadoDocumentalService,
 			AuditoriaService auditoriaService, DocumentoConverter documentoConverter,
 			ExtraccionConverter extraccionConverter, ExcepcionConverter excepcionConverter,
@@ -95,6 +100,7 @@ public class DocumentoService {
 		this.campoPlantillaRepository = campoPlantillaRepository;
 		this.candidatoAsociacionRepository = candidatoAsociacionRepository;
 		this.revisionDocumentoRepository = revisionDocumentoRepository;
+		this.cambioCampoRevisionRepository = cambioCampoRevisionRepository;
 		this.almacenamientoService = almacenamientoService;
 		this.colaExtraccionService = colaExtraccionService;
 		this.estadoDocumentalService = estadoDocumentalService;
@@ -136,8 +142,11 @@ public class DocumentoService {
 		detalle.put("validacion", ultimaValidacion(documentoId));
 		detalle.put("candidatos",
 				documentoConverter.aModelosCandidatos(candidatoAsociacionRepository.listarPorDocumento(documentoId)));
-		detalle.put("revisiones", revisionDocumentoRepository.listarPorDocumento(documentoId).stream()
-				.map(revision -> excepcionConverter.aModelo(revision, null)).toList());
+		detalle.put("revisiones",
+				revisionDocumentoRepository.listarPorDocumento(documentoId).stream()
+						.map(revision -> excepcionConverter.aModelo(revision,
+								cambioCampoRevisionRepository.listarPorRevision(revision.getId())))
+						.toList());
 		detalle.put("segmentos", documentoConverter.aModelos(documentoRepository.listarSegmentos(documentoId)));
 		detalle.put("originalFisico", originalFisicoService.buscarPorDocumento(tenantId, documentoId).orElse(null));
 		return detalle;
