@@ -40,6 +40,7 @@ que impidan extraer servicios cuando el volumen lo justifique"*.
 | Review / Exception | `RevisionDocumentalService`, `ExcepcionDocumentalService` | ✅ |
 | Governance & Audit | `AuditoriaService`, `GobernanzaService`, entidades `EventoAuditoria` / `PoliticaRetencion` | ✅ |
 | Event / Integration Hub | `EventoSalidaService`, `EntregaWebhookService`, `IntegracionService`, `DespachadorEventosService` | ✅ |
+| Observability / Cost | `ObservabilidadService`, `PoliticaCostoTenant`, métricas Micrometer por tenant y proveedor | ✅ |
 | Follow Connector | `FollowConnector`, `FollowCliente` | ✅ |
 | Workflow Definition/Runtime | — | ❌ Etapa 2 |
 
@@ -312,5 +313,5 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 
 | Falta | Riesgo si no se hace |
 |---|---|
-| Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
-| Portal frontend | El backend ya expone todo lo que el portal necesita; falta construirlo |
+| Portal frontend | El backend ya expone bandeja, plantillas, gobernanza y costo; falta construirlo |
+| Despliegue reproducible y CI | El motor se levanta a mano |

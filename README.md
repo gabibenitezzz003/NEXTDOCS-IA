@@ -45,7 +45,8 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Retención en ejecución: plazo desde el cierre, legal hold y prueba de borrado | ✅ |
 | Administración de tenant, usuarios, roles propios y cuentas de servicio | ✅ |
 | API de webhooks: suscripciones, prueba firmada y monitor de entregas | ✅ |
-| Suite de QA automatizada: 57 unitarios + 97 de integración | ✅ |
+| Costo por tenant: efectivo por documento correcto y presupuesto opcional | ✅ |
+| Suite de QA automatizada: 57 unitarios + 104 de integración | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -145,6 +146,14 @@ segunda pasada       → OMITIDA_YA_APLICADA, sale del listado de vencidos
 ciclo completo       → elimina el tratable, cuenta el retenido y deja un
                        RETENCION_CICLO_EJECUTADO por tenant
 
+Costo por tenant
+2 docs, USD 0.50 c/u → uno APROBADO y uno OBSERVADO: efectivo = 1.00, no 0.50
+sin correctos        → costoInferencia queda, efectivo es null
+ALERTA al 40%        → alerta=true y la ingesta sigue
+BLOQUEAR al tope     → el alta nueva recibe 400; el replay idempotente no
+politica apagada     → aunque el numero se pase, no corta
+tenant ajeno         → ve 0, no el gasto del otro
+
 Administración (usuarios, roles, cuentas de servicio)
 alta de usuario      → activo, con sus roles y permisos efectivos
 email duplicado      → 409 dentro del tenant; el mismo email sí puede
@@ -174,7 +183,7 @@ cd backend && ./mvnw verify
 ```
 
 - **57 tests unitarios** — no necesitan nada levantado
-- **97 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **104 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
@@ -183,6 +192,8 @@ Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` spl
 sigue sin conector, `SEC-01` aislamiento cross-tenant, `GOV-01` reconstrucción completa de la decisión
 sobre un documento aprobado, `GOV-02` legal hold con motivo obligatorio y `GOV-03` overrides. El
 monitor de webhooks verifica firma HMAC, auto-pausa por fallos y el aislamiento de suscripciones.
+El costo por tenant verifica el efectivo sobre documentos correctos, el bloqueo de ingesta y que un
+tenant ajeno vea cero.
 
 Si la infraestructura no está levantada, los tests de integración se **saltan** con un mensaje claro
 en vez de fallar.

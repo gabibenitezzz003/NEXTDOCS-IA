@@ -73,13 +73,16 @@ public class IngestaDocumentalService {
 
 	private final OriginalFisicoService originalFisicoService;
 
+	private final ObservabilidadService observabilidadService;
+
 	public IngestaDocumentalService(DocumentoRepository documentoRepository,
 			ArchivoDocumentoRepository archivoDocumentoRepository,
 			PlantillaDocumentalRepository plantillaDocumentalRepository, AlmacenamientoService almacenamientoService,
 			ColaExtraccionService colaExtraccionService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesIngesta propiedades,
 			DocumentoConverter documentoConverter, EscaneoArchivoService escaneoArchivoService,
-			ExcepcionDocumentalService excepcionDocumentalService, OriginalFisicoService originalFisicoService) {
+			ExcepcionDocumentalService excepcionDocumentalService, OriginalFisicoService originalFisicoService,
+			ObservabilidadService observabilidadService) {
 		this.documentoRepository = documentoRepository;
 		this.archivoDocumentoRepository = archivoDocumentoRepository;
 		this.plantillaDocumentalRepository = plantillaDocumentalRepository;
@@ -92,6 +95,7 @@ public class IngestaDocumentalService {
 		this.escaneoArchivoService = escaneoArchivoService;
 		this.excepcionDocumentalService = excepcionDocumentalService;
 		this.originalFisicoService = originalFisicoService;
+		this.observabilidadService = observabilidadService;
 	}
 
 	@Transactional
@@ -112,6 +116,7 @@ public class IngestaDocumentalService {
 		validarArchivo(archivo, contenido);
 		String tipoMime = InspectorArchivo.detectarTipoMime(contenido, archivo.getOriginalFilename());
 		validarTipoMime(tipoMime);
+		observabilidadService.exigirPresupuesto(tenant.getId());
 
 		ResultadoEscaneoModel escaneo = escaneoArchivoService.escanear(contenido, archivo.getOriginalFilename());
 

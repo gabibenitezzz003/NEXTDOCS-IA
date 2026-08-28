@@ -87,6 +87,8 @@ public class ExtractorDocumentalService {
 
 	private final PropiedadesProveedorIa propiedades;
 
+	private final ObservabilidadService observabilidadService;
+
 	public ExtractorDocumentalService(DocumentoRepository documentoRepository,
 			ArchivoDocumentoRepository archivoDocumentoRepository, CampoPlantillaRepository campoPlantillaRepository,
 			EjecucionExtraccionRepository ejecucionExtraccionRepository,
@@ -95,7 +97,8 @@ public class ExtractorDocumentalService {
 			AsociacionService asociacionService, SegmentacionDocumentalService segmentacionDocumentalService,
 			EstadoDocumentalService estadoDocumentalService, ExcepcionDocumentalService excepcionDocumentalService,
 			ColaExtraccionService colaExtraccionService, AuditoriaService auditoriaService,
-			EventoSalidaService eventoSalidaService, PropiedadesProveedorIa propiedades) {
+			EventoSalidaService eventoSalidaService, PropiedadesProveedorIa propiedades,
+			ObservabilidadService observabilidadService) {
 		this.documentoRepository = documentoRepository;
 		this.archivoDocumentoRepository = archivoDocumentoRepository;
 		this.campoPlantillaRepository = campoPlantillaRepository;
@@ -112,6 +115,7 @@ public class ExtractorDocumentalService {
 		this.auditoriaService = auditoriaService;
 		this.eventoSalidaService = eventoSalidaService;
 		this.propiedades = propiedades;
+		this.observabilidadService = observabilidadService;
 	}
 
 	@Transactional
@@ -261,6 +265,7 @@ public class ExtractorDocumentalService {
 		ejecucion.setFin(Instant.now());
 		ejecucionExtraccionRepository.save(ejecucion);
 
+		observabilidadService.registrarUso(ejecucion);
 		List<ValorExtraido> valores = new ArrayList<>();
 		for (ValorCanonicoModel canonico : resultado.getValores()) {
 			ValorExtraido valor = new ValorExtraido();
@@ -332,6 +337,7 @@ public class ExtractorDocumentalService {
 		ejecucion.setMensajeError(mensaje);
 		ejecucion.setFin(Instant.now());
 		ejecucionExtraccionRepository.save(ejecucion);
+		observabilidadService.registrarUso(ejecucion);
 		eventoSalidaService.publicar(documento.getTenant().getId(), TipoEventoCanonico.EXTRACCION_FALLIDA, ENTIDAD,
 				ejecucion.getId(), Map.of("documentoId", documento.getId(), "codigo", codigo));
 	}

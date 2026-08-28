@@ -38,6 +38,7 @@ Cada tarea trae su criterio de aceptación referenciando los códigos de QA del 
 - [x] **Tarea 9** — administración de tenant, usuarios, roles y cuentas de servicio
 - [x] **Tarea 10** — API de suscripciones de webhook y monitor de integraciones
 - [x] **Tarea 2** — prueba de plantilla y quality gate con dataset gold
+- [x] **Tarea 12** — observabilidad y control de costos por tenant
 
 ---
 
@@ -59,11 +60,11 @@ sin Workflow y sin Follow.
 | ~~9~~ | ~~API de administración de tenant, usuarios y cuentas de servicio~~ | ✅ **Terminada.** Usuarios, roles propios, cuentas de servicio y tenant, con revocación inmediata y sin poder dejar el tenant sin administradores |
 | ~~10~~ | ~~API de suscripciones de webhook y monitor de integraciones~~ | ✅ **Terminada.** Alta, pausa, prueba firmada, auto-pausa por fallos, DLQ y reintento manual. El secreto se muestra una sola vez |
 | ~~11~~ | ~~Seguimiento del original físico~~ | ✅ **Terminada.** `QA1-08` verificado con las tres políticas |
-| 12 | Observabilidad y control de costos por tenant | Sin costo por documento no se sabe si el negocio cierra |
+| ~~12~~ | ~~Observabilidad y control de costos por tenant~~ | ✅ **Terminada.** Costo efectivo = inferencia del periodo / documentos `APROBADO` o `CERRADO`; presupuesto mensual opcional puede cortar la ingesta |
 | ~~13~~ | ~~Suite de QA automatizada~~ | ✅ **Terminada.** 70 tests. Sin Testcontainers: usa la infra del compose, ver nota abajo |
 | 14 | Despliegue reproducible y pipeline de CI | Hoy el despliegue del motor es manual |
 
-**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → ~~13~~ → ~~7~~ → ~~8~~ → ~~9~~ → ~~10~~ → ~~2~~ → **12** → 14
+**Orden sugerido:** ~~1~~ → ~~3~~ → ~~6~~ → ~~5~~ → ~~4~~ → ~~11~~ → ~~13~~ → ~~7~~ → ~~8~~ → ~~9~~ → ~~10~~ → ~~2~~ → ~~12~~ → **14**
 
 **Nota sobre Testcontainers.** No se pudo usar: Docker 29.7 exige API ≥ 1.40 y el `docker-java` que
 trae Testcontainers 1.21.3 negocia 1.32, así que no encuentra el entorno Docker. En vez de eso los

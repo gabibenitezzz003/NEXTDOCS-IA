@@ -511,6 +511,41 @@ resultado (`APLICADA`, `OMITIDA_POR_RETENCION_LEGAL`, `OMITIDA_SIN_POLITICA`, `O
 `OMITIDA_YA_APLICADA`) con su motivo. A diferencia del ciclo, sí audita las omisiones, porque hubo
 alguien que preguntó.
 
+### Observabilidad y costo por tenant
+
+El N3 pide **costo efectivo por documento correcto**, no sólo tokens de inferencia. El costo de
+inferencia ya vive en cada `EjecucionExtraccion`. Esta API lo agrega por tenant y lo divide por los
+documentos que terminaron `APROBADO` o `CERRADO`. Un observado, un rechazo o un fallo **suman al
+numerador** y no al denominador: encarecen el documento que sí salió bien.
+
+```
+GET  /api/v1/observabilidad/configuracion
+GET  /api/v1/observabilidad/costo?desde&hasta              permiso: gobernanza.leer
+GET  /api/v1/observabilidad/presupuesto                    permiso: gobernanza.leer
+PUT  /api/v1/observabilidad/presupuesto                    permiso: gobernanza.administrar
+     { activo, presupuestoMensual, umbralAlerta, accionAlExceder, moneda }
+```
+
+Sin `desde`/`hasta` el resumen cubre el mes UTC en curso, el mismo recorte que usa el presupuesto.
+
+`costoEfectivoPorDocumentoCorrecto` queda `null` si no hubo ningún documento correcto: no se divide
+por cero. El desglose `porProveedor` y `porPlantilla` sale de las mismas ejecuciones.
+
+**Presupuesto.** Apagado por defecto (`activo=false`) para no cortar tenants existentes.
+`accionAlExceder`:
+
+| Acción | Efecto |
+|---|---|
+| `ALERTA` | `alerta=true` al cruzar `umbralAlerta` (default 0.80). La ingesta sigue |
+| `BLOQUEAR_INGESTA` | además, un alta nueva recibe 400 cuando el mes ya gastó el tope |
+
+El replay idempotente no se bloquea: devuelve el documento de siempre antes de mirar el presupuesto.
+
+**Prometheus.** `/actuator/prometheus` (autenticado) exporta `nextdocs.extraccion.costo`,
+`nextdocs.extraccion.tokens.entrada`, `nextdocs.extraccion.tokens.salida` y
+`nextdocs.extraccion.duracion` con tags `tenant` (código) y `proveedor`. Health e info siguen
+públicos; métricas no.
+
 ---
 
 ## Permisos
@@ -523,7 +558,7 @@ alguien que preguntó.
 | `documentos.eliminar` | Baja lógica |
 | `plantillas.leer` / `plantillas.escribir` / `plantillas.publicar` | Template Studio |
 | `excepciones.leer` / `excepciones.gestionar` | Exception Center |
-| `gobernanza.leer` / `gobernanza.administrar` | Auditoría, retención, proveedores, webhooks y monitor de integraciones |
+| `gobernanza.leer` / `gobernanza.administrar` | Auditoría, retención, proveedores, webhooks, monitor de integraciones y costo por tenant |
 | `tenant.administrar` | Usuarios, roles, cuentas de servicio |
 
 Roles predefinidos al crear un tenant: `ADMINISTRADOR` (todos), `OPERADOR`, `REVISOR`, `AUDITOR`.

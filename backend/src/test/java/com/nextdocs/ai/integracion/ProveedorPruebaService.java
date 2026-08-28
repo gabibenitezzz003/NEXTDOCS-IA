@@ -35,6 +35,12 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 
 	private BigDecimal confianzaPorDefecto = new BigDecimal("1.0000");
 
+	private long tokensEntrada = 100;
+
+	private long tokensSalida = 50;
+
+	private BigDecimal costo = BigDecimal.ZERO;
+
 	@Override
 	public ProveedorDocumentalIa tipo() {
 		return ProveedorDocumentalIa.DEEPSEEK;
@@ -60,9 +66,9 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 		resultado.setVersionEsquema(solicitud.getVersionEsquema());
 		resultado.setTipoDetectado(solicitud.getCodigoPlantilla());
 		resultado.setPaginasProcesadas(Math.max(solicitud.getPaginas(), 1));
-		resultado.setTokensEntrada(100);
-		resultado.setTokensSalida(50);
-		resultado.setCosto(BigDecimal.ZERO);
+		resultado.setTokensEntrada(tokensEntrada);
+		resultado.setTokensSalida(tokensSalida);
+		resultado.setCosto(costo);
 		resultado.setMonedaCosto("USD");
 		for (CampoEsquemaModel campo : solicitud.getCampos()) {
 			resultado.getValores().add(resolver(campo));
@@ -115,6 +121,12 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 		this.falloReintentable = reintentable;
 	}
 
+	public synchronized void programarUso(long tokensEntrada, long tokensSalida, String costo) {
+		this.tokensEntrada = tokensEntrada;
+		this.tokensSalida = tokensSalida;
+		this.costo = new BigDecimal(costo);
+	}
+
 	public synchronized void reiniciar() {
 		valoresProgramados.clear();
 		solicitudes.clear();
@@ -122,6 +134,9 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 		fallosPendientes = 0;
 		falloReintentable = true;
 		confianzaPorDefecto = new BigDecimal("1.0000");
+		tokensEntrada = 100;
+		tokensSalida = 50;
+		costo = BigDecimal.ZERO;
 	}
 
 	public int cantidadLlamadas() {

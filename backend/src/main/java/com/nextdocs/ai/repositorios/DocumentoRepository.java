@@ -55,4 +55,9 @@ public interface DocumentoRepository extends JpaRepository<Documento, String>, J
 	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
 			+ "AND d.estado = com.nextdocs.ai.enumeraciones.EstadoDocumento.CERRADO AND d.retenerHasta IS NULL")
 	long contarCerradosSinPolitica(@Param("tenantId") String tenantId);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.documentoPadre IS NULL "
+			+ "AND d.tenant.id = :tenantId AND d.alta >= :desde AND d.alta < :hasta")
+	long contarRecibidosEntre(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
 }

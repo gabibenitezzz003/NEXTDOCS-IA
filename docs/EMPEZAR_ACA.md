@@ -39,7 +39,7 @@ docker run --rm --network host --env-file ../.env \
   maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
-Tests: `./mvnw verify` con la infra levantada. 57 unitarios + 97 de integración.
+Tests: `./mvnw verify` con la infra levantada. 57 unitarios + 104 de integración.
 
 ---
 
@@ -148,17 +148,17 @@ siguen ahí para las consultas de rango simple.
 
 ## 6. Por dónde seguir
 
-La **Fase 1** cierra el producto vendible. Van 12 de 14.
+La **Fase 1** cierra el producto vendible. Van 13 de 14.
 
 **Hecho:** API de plantillas con ciclo de vida (1) · quality gate con dataset gold (2) · adaptador
 Gemini real (3) · antivirus con cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector
 (6) · gobernanza y auditoría (7) · retención y legal hold (8) · administración de tenant y usuarios
-(9) · webhooks y monitor de integraciones (10) · original físico (11) · suite de QA (13)
+(9) · webhooks y monitor de integraciones (10) · original físico (11) · costo por tenant (12) ·
+suite de QA (13)
 
 **Siguiente, en este orden:**
 
-1. **Tarea 12** — observabilidad y costo por tenant
-2. **Tarea 14** — Dockerfile, CI y despliegue reproducible
+1. **Tarea 14** — Dockerfile, CI y despliegue reproducible
 
 Después de eso arranca la **Fase 2**, que empieza por el portal frontend (tarea 15).
 
