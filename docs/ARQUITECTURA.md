@@ -295,6 +295,28 @@ Un campo que el modelo no devuelve se completa como `ILEGIBLE` con confianza `0`
 
 ---
 
+## Proveedor de respaldo
+
+Hay dos adaptadores reales detrás de `ProveedorDocumentalIaInt`, y ambos construyen el prompt con
+la **misma** `InstruccionExtraccion`. Eso es lo que hace que el contrato sea de verdad canónico:
+cambiar de proveedor no cambia la semántica de `PRESENTE` / `NO_FIGURA` / `ILEGIBLE`.
+
+| Proveedor | Entrada | Uso |
+|---|---|---|
+| `GEMINI` | el PDF completo, con visión | principal. Funciona con escaneados |
+| `DEEPSEEK` | la **capa de texto** del PDF, API compatible con OpenAI | respaldo ante 429 de Gemini |
+
+> **Limitación honesta del respaldo.** DeepSeek recibe texto, no imágenes. Un PDF escaneado sin capa
+> de texto se rechaza con un error **no reintentable** que lo dice explícitamente, en vez de
+> devolver campos vacíos que parecerían una extracción válida. Para que el respaldo cubra escaneados
+> hay que apuntarlo a un endpoint con visión, o agregar OCR previo.
+
+`RuteadorProveedorService` **falla al arrancar** si dos adaptadores declaran el mismo tipo. Es una
+guarda contra una clase de bug que ya nos mordió: dos implementaciones compitiendo por el mismo
+slot del mapa, donde una pisa a la otra en silencio.
+
+---
+
 ## Persistencia
 
 PostgreSQL 16. Esquema versionado con Flyway y **`ddl-auto: validate`**: si una entidad y la migración

@@ -21,4 +21,6 @@ public class PropiedadesAntivirus {
 	private int tamanoBloque;
 
 	private boolean rechazarSiNoDisponible;
+
+	private boolean permitirSinAnalisis;
 }

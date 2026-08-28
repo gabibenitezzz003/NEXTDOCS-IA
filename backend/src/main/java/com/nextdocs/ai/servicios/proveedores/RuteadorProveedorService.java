@@ -27,7 +27,13 @@ public class RuteadorProveedorService {
 	public RuteadorProveedorService(List<ProveedorDocumentalIaInt> proveedores,
 			ConfiguracionProveedorRepository configuracionProveedorRepository, PropiedadesProveedorIa propiedades) {
 		for (ProveedorDocumentalIaInt proveedor : proveedores) {
-			adaptadores.put(proveedor.tipo(), proveedor);
+			ProveedorDocumentalIaInt anterior = adaptadores.put(proveedor.tipo(), proveedor);
+			if (anterior != null) {
+				throw new IllegalStateException("Hay dos adaptadores registrados para el proveedor "
+						+ proveedor.tipo() + ": " + anterior.getClass().getSimpleName() + " y "
+						+ proveedor.getClass().getSimpleName()
+						+ ". Cada implementacion de ProveedorDocumentalIaInt debe declarar un tipo distinto");
+			}
 		}
 		this.configuracionProveedorRepository = configuracionProveedorRepository;
 		this.propiedades = propiedades;

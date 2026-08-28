@@ -262,6 +262,25 @@ Archivar un papel que nunca se recibió devuelve 400. Declararlo extraviado exig
 > justamente la razón de existir del seguimiento (`QA1-08`): el expediente digital puede estar
 > terminado mientras el original todavía está en tránsito.
 
+### Límite de uso
+
+Ventana fija de un minuto sobre Redis, en tres alcances que se evalúan en orden:
+
+| Alcance | Default | Protege de |
+|---|---|---|
+| por principal | 300 req/min | un usuario o cuenta de servicio desbocado |
+| por tenant | 1200 req/min | un cliente que satura la instancia |
+| por ingesta y tenant | 60 req/min | **la cuota y el costo del proveedor de IA** |
+
+Toda respuesta lleva `X-Limite-Uso` y `X-Limite-Restantes`. Al excederse: **429** con `Retry-After`
+en segundos y el mismo contrato de error del resto de la API.
+
+Exentas: `/actuator/**` y `/api/v1/autenticacion/**`. Un cliente bloqueado siempre puede
+autenticarse y siempre responde el health.
+
+> Si Redis no responde, el filtro **deja pasar** la petición y lo registra. Un problema de
+> infraestructura no debe convertirse en una caída total del servicio.
+
 ### Antivirus
 
 Se configura con `nextdocs.antivirus`. Dos motores detrás de `AntivirusInt`:

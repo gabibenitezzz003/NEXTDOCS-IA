@@ -20,10 +20,12 @@ nextdocs:
   retencion:
     trabajadorActivo: false
   proveedor-ia:
-    proveedorPorDefecto: DEEPSEEK
+    proveedorPorDefecto: ABBYY
     intentosMaximos: 3
     esperaInicialMilisegundos: 10
     esperaMaximaMilisegundos: 50
+  limite-uso:
+    activo: false
   antivirus:
     motor: PERMISIVO
   seguridad:

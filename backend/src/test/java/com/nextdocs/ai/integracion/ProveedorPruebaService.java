@@ -43,7 +43,7 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 
 	@Override
 	public ProveedorDocumentalIa tipo() {
-		return ProveedorDocumentalIa.DEEPSEEK;
+		return ProveedorDocumentalIa.ABBYY;
 	}
 
 	@Override

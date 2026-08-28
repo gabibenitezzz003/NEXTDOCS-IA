@@ -2,6 +2,7 @@ package com.nextdocs.ai.config;
 
 import com.nextdocs.ai.filtros.FiltroAutenticacion;
 import com.nextdocs.ai.filtros.FiltroCorrelacion;
+import com.nextdocs.ai.filtros.FiltroLimiteUso;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -29,11 +30,14 @@ public class SeguridadConfig {
 
 	private final FiltroCorrelacion filtroCorrelacion;
 
+	private final FiltroLimiteUso filtroLimiteUso;
+
 	public SeguridadConfig(PropiedadesSeguridad propiedades, FiltroAutenticacion filtroAutenticacion,
-			FiltroCorrelacion filtroCorrelacion) {
+			FiltroCorrelacion filtroCorrelacion, FiltroLimiteUso filtroLimiteUso) {
 		this.propiedades = propiedades;
 		this.filtroAutenticacion = filtroAutenticacion;
 		this.filtroCorrelacion = filtroCorrelacion;
+		this.filtroLimiteUso = filtroLimiteUso;
 	}
 
 	@Bean
@@ -52,7 +56,8 @@ public class SeguridadConfig {
 						.requestMatchers(propiedades.getRutasPublicas().toArray(new String[0])).permitAll()
 						.anyRequest().authenticated())
 				.addFilterBefore(filtroCorrelacion, UsernamePasswordAuthenticationFilter.class)
-				.addFilterBefore(filtroAutenticacion, UsernamePasswordAuthenticationFilter.class);
+				.addFilterBefore(filtroAutenticacion, UsernamePasswordAuthenticationFilter.class)
+				.addFilterAfter(filtroLimiteUso, FiltroAutenticacion.class);
 		return http.build();
 	}
 

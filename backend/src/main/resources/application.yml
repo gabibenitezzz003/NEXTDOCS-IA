@@ -103,6 +103,18 @@ nextdocs:
       - tif
       - tiff
       - webp
+  limite-uso:
+    activo: ${NEXTDOCS_LIMITE_ACTIVO:true}
+    peticionesPorMinutoPorPrincipal: ${NEXTDOCS_LIMITE_PRINCIPAL:300}
+    peticionesPorMinutoPorTenant: ${NEXTDOCS_LIMITE_TENANT:1200}
+    ingestasPorMinutoPorTenant: ${NEXTDOCS_LIMITE_INGESTA:60}
+    rutasIngesta:
+      - /api/v1/documentos
+    rutasExentas:
+      - /api/v1/autenticacion/**
+      - /actuator/**
+      - /api-docs/**
+      - /swagger-ui/**
   antivirus:
     motor: ${NEXTDOCS_ANTIVIRUS_MOTOR:PERMISIVO}
     host: ${NEXTDOCS_ANTIVIRUS_HOST:localhost}
@@ -110,6 +122,7 @@ nextdocs:
     tiempoEsperaMilisegundos: ${NEXTDOCS_ANTIVIRUS_ESPERA:30000}
     tamanoBloque: 32768
     rechazarSiNoDisponible: ${NEXTDOCS_ANTIVIRUS_RECHAZAR_SI_CAIDO:true}
+    permitirSinAnalisis: ${NEXTDOCS_ANTIVIRUS_PERMITIR_SIN_ANALISIS:false}
   proveedor-ia:
     proveedorPorDefecto: ${NEXTDOCS_IA_PROVEEDOR:SIMULADO}
     intentosMaximos: 4
@@ -137,7 +150,7 @@ nextdocs:
   auditoria:
     registrarAccesoLectura: true
   arranque:
-    crearTenantDemostracion: ${NEXTDOCS_CREAR_TENANT_DEMO:true}
+    crearTenantDemostracion: ${NEXTDOCS_CREAR_TENANT_DEMO:false}
     codigoTenant: ${NEXTDOCS_TENANT_DEMO_CODIGO:demo}
     nombreTenant: ${NEXTDOCS_TENANT_DEMO_NOMBRE:Tenant de demostracion}
     emailAdministrador: ${NEXTDOCS_TENANT_DEMO_EMAIL:admin@nextdocs.ai}
