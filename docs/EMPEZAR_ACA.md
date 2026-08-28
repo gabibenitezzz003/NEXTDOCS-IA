@@ -39,7 +39,7 @@ docker run --rm --network host --env-file ../.env \
   maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
-Tests: `./mvnw verify` con la infra levantada. 50 unitarios + 46 de integración.
+Tests: `./mvnw verify` con la infra levantada. 50 unitarios + 58 de integración.
 
 ---
 
@@ -58,6 +58,9 @@ no sólo el estilo.
 | **Una plantilla publicada no se modifica** | Se crea una versión nueva. Los documentos históricos no cambian de versión |
 | **Sobreescribir un hallazgo exige motivo** | Queda auditado con actor y hash antes/después |
 | **Un timeout de conector ≠ cero candidatos** | Son resultados distintos con excepciones distintas |
+| **La retención legal bloquea toda acción destructiva** | Aunque el plazo haya vencido. Es una orden judicial, no una preferencia |
+| **Un documento sin política de retención no vence** | Borrar por omisión es el peor error posible. Queda en el inventario para que alguien decida |
+| **Ninguna acción de retención borra la auditoría** | El registro de qué se borró es justamente lo que hay que conservar |
 | **Los servicios devuelven modelos, no entidades** | Ver trampa 1 abajo |
 
 ---
@@ -143,24 +146,20 @@ siguen ahí para las consultas de rango simple.
 
 ## 6. Por dónde seguir
 
-La **Fase 1** cierra el producto vendible. Van 8 de 14.
+La **Fase 1** cierra el producto vendible. Van 9 de 14.
 
 **Hecho:** API de plantillas con ciclo de vida (1) · adaptador Gemini real (3) · antivirus con
 cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector (6) · gobernanza y auditoría
-(7) · original físico (11) · suite de QA (13)
+(7) · retención y legal hold (8) · original físico (11) · suite de QA (13)
 
 **Siguiente, en este orden:**
 
-1. **Tarea 8** — job de retención y legal hold (`GOV-02`).
-   La tarea 7 ya dejó la administración de políticas y el legal hold por API, más
-   `listarVencidosPorRetencion` en el repositorio. Falta el job que los recorra y aplique la acción
-   (`CONSERVAR`, `ANONIMIZAR`, `ELIMINAR`) respetando `retencionLegal`.
-2. **Tarea 9** — administración de tenant, usuarios y cuentas de servicio.
-   **Desbloquea el frontend.**
-3. **Tarea 10** — API de suscripciones de webhook y monitor de integraciones
-4. **Tarea 2** — quality gate con dataset gold. Acá va la calibración real de la confianza
-5. **Tarea 12** — observabilidad y costo por tenant
-6. **Tarea 14** — Dockerfile, CI y despliegue reproducible
+1. **Tarea 9** — administración de tenant, usuarios y cuentas de servicio.
+   **Desbloquea el frontend**, que es lo que falta para mostrar el producto.
+2. **Tarea 10** — API de suscripciones de webhook y monitor de integraciones
+3. **Tarea 2** — quality gate con dataset gold. Acá va la calibración real de la confianza
+4. **Tarea 12** — observabilidad y costo por tenant
+5. **Tarea 14** — Dockerfile, CI y despliegue reproducible
 
 Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
 criterio: está escrito.

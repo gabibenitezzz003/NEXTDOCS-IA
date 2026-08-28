@@ -40,8 +40,9 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Adaptador Gemini real (`gemini-2.5-flash`) con esquema estructurado | ✅ |
 | Segmentación de PDF multi-documento (páginas fijas o patrón) | ✅ |
 | Matching con circuit breaker + `FollowConnector` aislado | ✅ |
-| API de gobernanza: reconstrucción de la decisión, exportación de auditoría, retención y legal hold | ✅ |
-| Suite de QA automatizada: 50 unitarios + 46 de integración | ✅ |
+| API de gobernanza: reconstrucción de la decisión y exportación de auditoría | ✅ |
+| Retención en ejecución: plazo desde el cierre, legal hold y prueba de borrado | ✅ |
+| Suite de QA automatizada: 50 unitarios + 58 de integración | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -123,6 +124,23 @@ fórmulas en el CSV   → =, +, - y @ neutralizados con comilla simple
 legal hold sin motivo → 400; con motivo queda auditado con actor y motivo
 legal hold repetido   → 400 en vez de auditar un cambio que no ocurrió
 política duplicada    → 409 sobre la misma clase del tenant
+
+Retención (GOV-02, escenario S12)
+cierre con política  → retenerHasta = cerrado + duracionDias
+cierre sin política  → no vence nunca; queda en cerradosSinPolitica
+vencido + legal hold → OMITIDA_POR_RETENCION_LEGAL: no borra, no marca,
+                       el archivo sigue estando
+levantar el hold     → el mismo documento pasa a APLICADA y se elimina
+CONSERVAR            → marca tratado sin borrar nada
+ANONIMIZAR           → borra el original, purga sólo el campo PERSONAL y
+                       deja intacto el campo INTERNA
+ELIMINAR             → borra el original y da de baja el documento;
+                       la auditoría del documento sigue consultable
+prueba de borrado    → RETENCION_APLICADA con clase, acción, hash del
+                       contenido y checksum de cada archivo borrado
+segunda pasada       → OMITIDA_YA_APLICADA, sale del listado de vencidos
+ciclo completo       → elimina el tratable, cuenta el retenido y deja un
+                       RETENCION_CICLO_EJECUTADO por tenant
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
@@ -136,7 +154,7 @@ cd backend && ./mvnw verify
 ```
 
 - **50 tests unitarios** — no necesitan nada levantado
-- **46 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **58 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,

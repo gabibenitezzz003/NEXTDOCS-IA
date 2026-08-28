@@ -38,7 +38,21 @@ public interface DocumentoRepository extends JpaRepository<Documento, String>, J
 	List<Documento> listarEstancadosPorEstado(@Param("estado") EstadoDocumento estado,
 			@Param("limite") Instant limite, Pageable paginado);
 
-	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.retencionLegal = FALSE "
-			+ "AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora")
+	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.retencionAplicada IS NULL "
+			+ "AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora ORDER BY d.retenerHasta")
 	Page<Documento> listarVencidosPorRetencion(@Param("ahora") Instant ahora, Pageable paginado);
+
+	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.retencionAplicada IS NULL AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora "
+			+ "ORDER BY d.retenerHasta")
+	Page<Documento> listarVencidosPorTenant(@Param("tenantId") String tenantId, @Param("ahora") Instant ahora,
+			Pageable paginado);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.retencionLegal = TRUE")
+	long contarConRetencionLegal(@Param("tenantId") String tenantId);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.estado = com.nextdocs.ai.enumeraciones.EstadoDocumento.CERRADO AND d.retenerHasta IS NULL")
+	long contarCerradosSinPolitica(@Param("tenantId") String tenantId);
 }

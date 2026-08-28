@@ -3,6 +3,7 @@ package com.nextdocs.ai.entidades;
 import java.io.Serializable;
 import java.time.Instant;
 
+import com.nextdocs.ai.enumeraciones.AccionRetencion;
 import com.nextdocs.ai.enumeraciones.EstadoDocumento;
 import com.nextdocs.ai.enumeraciones.OrigenDocumento;
 
@@ -107,6 +108,12 @@ public class Documento implements Serializable {
 	private Instant retenerHasta;
 
 	private boolean retencionLegal;
+
+	private Instant retencionAplicada;
+
+	@Enumerated(EnumType.STRING)
+	@Column(length = 32)
+	private AccionRetencion accionRetencionAplicada;
 
 	private Instant alta;
 

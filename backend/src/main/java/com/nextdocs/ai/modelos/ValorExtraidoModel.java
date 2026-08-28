@@ -35,4 +35,6 @@ public class ValorExtraidoModel implements Serializable {
 	private boolean corregidoManualmente;
 
 	private String valorAnterior;
+
+	private boolean anonimizado;
 }

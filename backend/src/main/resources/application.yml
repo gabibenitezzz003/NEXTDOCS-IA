@@ -123,6 +123,11 @@ nextdocs:
   webhooks:
     intentosMaximos: 6
     tiempoEsperaSegundos: 15
+  retencion:
+    trabajadorActivo: ${NEXTDOCS_RETENCION_ACTIVA:true}
+    documentosPorCiclo: ${NEXTDOCS_RETENCION_POR_CICLO:100}
+    intervaloMilisegundos: ${NEXTDOCS_RETENCION_INTERVALO_MS:3600000}
+    demoraInicialMilisegundos: 60000
   auditoria:
     registrarAccesoLectura: true
   arranque:

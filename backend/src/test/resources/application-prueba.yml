@@ -13,6 +13,8 @@ nextdocs:
     trabajadorActivo: false
   webhooks:
     despachadorActivo: false
+  retencion:
+    trabajadorActivo: false
   proveedor-ia:
     proveedorPorDefecto: DEEPSEEK
     intentosMaximos: 3

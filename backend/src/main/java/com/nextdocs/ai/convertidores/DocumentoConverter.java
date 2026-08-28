@@ -40,6 +40,9 @@ public class DocumentoConverter {
 		modelo.setRemitente(documento.getRemitente());
 		modelo.setObservacion(documento.getObservacion());
 		modelo.setRetencionLegal(documento.isRetencionLegal());
+		modelo.setRetenerHasta(documento.getRetenerHasta());
+		modelo.setRetencionAplicada(documento.getRetencionAplicada());
+		modelo.setAccionRetencionAplicada(documento.getAccionRetencionAplicada());
 		modelo.setRecibido(documento.getRecibido());
 		modelo.setProcesado(documento.getProcesado());
 		modelo.setCerrado(documento.getCerrado());

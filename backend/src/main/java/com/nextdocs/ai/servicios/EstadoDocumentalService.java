@@ -32,9 +32,13 @@ public class EstadoDocumentalService {
 
 	private final EventoSalidaService eventoSalidaService;
 
-	public EstadoDocumentalService(DocumentoRepository documentoRepository, EventoSalidaService eventoSalidaService) {
+	private final RetencionService retencionService;
+
+	public EstadoDocumentalService(DocumentoRepository documentoRepository, EventoSalidaService eventoSalidaService,
+			RetencionService retencionService) {
 		this.documentoRepository = documentoRepository;
 		this.eventoSalidaService = eventoSalidaService;
+		this.retencionService = retencionService;
 	}
 
 	@Transactional
@@ -47,6 +51,7 @@ public class EstadoDocumentalService {
 		}
 		if (destino == EstadoDocumento.CERRADO) {
 			documento.setCerrado(Instant.now());
+			retencionService.programar(documento);
 		}
 		documentoRepository.save(documento);
 		log.info("Documento {} paso de {} a {}", documento.getId(), origen, destino);

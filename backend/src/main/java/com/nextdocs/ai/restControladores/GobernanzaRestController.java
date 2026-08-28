@@ -8,13 +8,17 @@ import java.util.Map;
 
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
 import com.nextdocs.ai.enumeraciones.AccionRetencion;
+import com.nextdocs.ai.enumeraciones.ResultadoRetencion;
 import com.nextdocs.ai.enumeraciones.TipoActor;
+import com.nextdocs.ai.modelos.DocumentoModel;
 import com.nextdocs.ai.modelos.EventoAuditoriaModel;
 import com.nextdocs.ai.modelos.FiltroAuditoriaModel;
 import com.nextdocs.ai.modelos.PoliticaRetencionModel;
 import com.nextdocs.ai.modelos.PoliticaRetencionReqModel;
+import com.nextdocs.ai.modelos.ResultadoRetencionModel;
 import com.nextdocs.ai.modelos.TrazabilidadDocumentoModel;
 import com.nextdocs.ai.servicios.GobernanzaService;
+import com.nextdocs.ai.servicios.RetencionService;
 
 import jakarta.validation.Valid;
 
@@ -43,8 +47,11 @@ public class GobernanzaRestController extends ControladorRest<GobernanzaRestCont
 
 	private final GobernanzaService gobernanzaService;
 
-	public GobernanzaRestController(GobernanzaService gobernanzaService) {
+	private final RetencionService retencionService;
+
+	public GobernanzaRestController(GobernanzaService gobernanzaService, RetencionService retencionService) {
 		this.gobernanzaService = gobernanzaService;
+		this.retencionService = retencionService;
 	}
 
 	@GetMapping("/configuracion")
@@ -53,6 +60,7 @@ public class GobernanzaRestController extends ControladorRest<GobernanzaRestCont
 		configuracion.put("acciones", listar(AccionAuditoria.values()));
 		configuracion.put("tiposActor", listar(TipoActor.values()));
 		configuracion.put("accionesRetencion", listar(AccionRetencion.values()));
+		configuracion.put("resultadosRetencion", listar(ResultadoRetencion.values()));
 		return new ResponseEntity<>(configuracion, HttpStatus.OK);
 	}
 
@@ -172,6 +180,28 @@ public class GobernanzaRestController extends ControladorRest<GobernanzaRestCont
 	public ResponseEntity<PoliticaRetencionModel> desactivarPolitica(
 			@PathVariable("politicaId") String politicaId) {
 		return new ResponseEntity<>(gobernanzaService.desactivarPolitica(tenantId(), politicaId), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('gobernanza.leer')")
+	@GetMapping("/retencion/inventario")
+	public ResponseEntity<Map<String, Object>> inventarioRetencion() {
+		return new ResponseEntity<>(retencionService.inventario(tenantId()), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('gobernanza.leer')")
+	@GetMapping("/retencion/vencidos")
+	public ResponseEntity<Page<DocumentoModel>> vencidos(@RequestParam(defaultValue = "0") int pagina,
+			@RequestParam(defaultValue = "25") int tamano) {
+		return new ResponseEntity<>(
+				retencionService.listarVencidos(tenantId(), paginado(pagina, tamano, "retenerHasta,asc")),
+				HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('gobernanza.administrar')")
+	@PostMapping("/retencion/documentos/{documentoId}/aplicar")
+	public ResponseEntity<ResultadoRetencionModel> aplicarRetencion(
+			@PathVariable("documentoId") String documentoId) {
+		return new ResponseEntity<>(retencionService.aplicar(tenantId(), documentoId), HttpStatus.OK);
 	}
 
 	private FiltroAuditoriaModel filtro(Instant desde, Instant hasta, AccionAuditoria accion, String tipoRecurso,

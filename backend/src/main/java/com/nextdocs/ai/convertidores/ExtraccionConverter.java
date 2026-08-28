@@ -59,6 +59,7 @@ public class ExtraccionConverter {
 		modelo.setEvidenciaRecuadro(valor.getEvidenciaRecuadro());
 		modelo.setCorregidoManualmente(valor.isCorregidoManualmente());
 		modelo.setValorAnterior(valor.getValorAnterior());
+		modelo.setAnonimizado(valor.isAnonimizado());
 		if (camposPorClave != null && camposPorClave.containsKey(valor.getClaveCampo())) {
 			modelo.setEtiqueta(camposPorClave.get(valor.getClaveCampo()).getEtiqueta());
 		}

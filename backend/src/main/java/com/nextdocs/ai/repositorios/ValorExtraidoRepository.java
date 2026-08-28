@@ -26,4 +26,7 @@ public interface ValorExtraidoRepository extends JpaRepository<ValorExtraido, St
 			+ "AND v.valorNormalizado = :valor AND v.documento.id <> :documentoId")
 	List<ValorExtraido> buscarDuplicados(@Param("tenantId") String tenantId, @Param("clave") String clave,
 			@Param("valor") String valor, @Param("documentoId") String documentoId);
+
+	@Query("SELECT v FROM ValorExtraido v WHERE v.documento.id = :documentoId ORDER BY v.claveCampo")
+	List<ValorExtraido> listarPorDocumento(@Param("documentoId") String documentoId);
 }

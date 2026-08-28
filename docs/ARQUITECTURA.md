@@ -178,6 +178,28 @@ Consultar la trazabilidad es en sí un acceso a información sensible, así que 
 
 ---
 
+## Ciclo de vida y retención
+
+El escenario `S12` del N2 lo define en cuatro pasos: vence el plazo, se chequea el legal hold, se
+borra o anonimiza, y queda un evento de evidencia. La implementación sigue ese orden literal en
+`RetencionService.evaluar`.
+
+Las decisiones que la especificación no fijaba y hubo que tomar:
+
+| Decisión | Por qué |
+|---|---|
+| El plazo corre **desde el cierre**, no desde la recepción | Es el criterio contable estándar y el conservador: un documento en trámite no se borra por haber entrado hace mucho |
+| Un documento sin política **no vence** | Borrar por omisión es el peor error posible acá. Aparece en el inventario como `cerradosSinPolitica` para que alguien decida |
+| `ANONIMIZAR` purga sólo los campos `CONFIDENCIAL` y `PERSONAL` | Es el mínimo que cumple protección de datos sin destruir la trazabilidad del resto |
+| La `presencia` de un valor anonimizado no cambia | `PRESENTE` describe qué había en el documento original. Convertirla en un estado de purga mezclaría dos cosas distintas y rompería la invariante `NO_FIGURA` ≠ `ILEGIBLE`. La purga se marca con el campo `anonimizado` |
+| Ninguna acción borra la auditoría | El registro de qué se borró es justamente lo que hay que conservar |
+| El ciclo no audita cada legal hold en cada pasada | Con un job horario eso inundaría la auditoría. El hold queda probado por el evento de activación más el contador del ciclo |
+
+`retencionAplicada` es lo que evita que un documento se trate dos veces. Sin esa marca, una política
+`ANONIMIZAR` volvería a procesar el mismo documento en cada ciclo para siempre.
+
+---
+
 ## Resiliencia del proveedor de IA
 
 El problema documentado en la auditoría del 23/08/2026 era que **11 de 15 excepciones eran 429 de Gemini**.
@@ -268,4 +290,4 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 | Falta | Riesgo si no se hace |
 |---|---|
 | Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
-| El job que aplica la retención | `GOV-02`: la política y el legal hold ya se administran por API, pero nadie recorre los documentos vencidos |
+| Administración de tenant, usuarios y cuentas de servicio | Sin onboarding autoservicio no hay portal, y el frontend queda bloqueado |

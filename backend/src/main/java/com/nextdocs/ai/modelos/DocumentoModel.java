@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.nextdocs.ai.enumeraciones.AccionRetencion;
 import com.nextdocs.ai.enumeraciones.EstadoDocumento;
 import com.nextdocs.ai.enumeraciones.OrigenDocumento;
 
@@ -56,6 +57,12 @@ public class DocumentoModel implements Serializable {
 	private String ingresadoPor;
 
 	private boolean retencionLegal;
+
+	private Instant retenerHasta;
+
+	private Instant retencionAplicada;
+
+	private AccionRetencion accionRetencionAplicada;
 
 	private Instant recibido;
 

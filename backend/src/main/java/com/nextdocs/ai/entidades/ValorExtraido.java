@@ -71,5 +71,7 @@ public class ValorExtraido implements Serializable {
 	@Column(columnDefinition = "text")
 	private String valorAnterior;
 
+	private boolean anonimizado;
+
 	private Instant alta;
 }

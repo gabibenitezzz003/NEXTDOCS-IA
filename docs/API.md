@@ -319,6 +319,9 @@ GET  /api/v1/gobernanza/retencion/politicas                  permiso: gobernanza
 POST /api/v1/gobernanza/retencion/politicas                  permiso: gobernanza.administrar
 PUT  /api/v1/gobernanza/retencion/politicas/{id}             permiso: gobernanza.administrar
 DEL  /api/v1/gobernanza/retencion/politicas/{id}             permiso: gobernanza.administrar
+GET  /api/v1/gobernanza/retencion/inventario                 permiso: gobernanza.leer
+GET  /api/v1/gobernanza/retencion/vencidos                   permiso: gobernanza.leer
+POST /api/v1/gobernanza/retencion/documentos/{id}/aplicar    permiso: gobernanza.administrar
 ```
 
 **Filtros de la consulta y de las dos exportaciones.** `desde`, `hasta` (ISO-8601), `accion`,
@@ -359,6 +362,46 @@ ocurrió. Queda registrado como `RETENCION_LEGAL_MODIFICADA` con actor y motivo.
 
 **Políticas de retención.** Una clase por tenant. Desactivar deja la política visible como inactiva
 en vez de borrarla, para no perder el historial ni bloquear la clase.
+
+### Retención en ejecución (`GOV-02`)
+
+**Cuándo empieza a correr el plazo.** Al **cerrar** el documento. `retenerHasta` se fija en ese
+momento como `cerrado + duracionDias` de la política cuya clase coincide con el código de plantilla.
+Un documento que nunca se cierra no vence nunca, y uno cerrado sin política tampoco: aparece en el
+inventario como `cerradosSinPolitica` para que alguien decida, en vez de quedar expuesto a un
+borrado por omisión.
+
+**Qué hace cada acción cuando vence el plazo.**
+
+| Acción | Efecto |
+|---|---|
+| `CONSERVAR` | No borra nada. Marca el documento como tratado y deja el evento |
+| `ANONIMIZAR` | Borra el archivo original del almacenamiento y reemplaza por `[ANONIMIZADO]` los valores de los campos marcados `CONFIDENCIAL` o `PERSONAL`. El documento, sus hallazgos y su auditoría quedan |
+| `ELIMINAR` | Borra el archivo original y da de baja lógica el documento. El registro y la auditoría quedan |
+
+Ninguna acción borra la auditoría. La `presencia` de un valor anonimizado **no cambia**: seguía
+estando presente en el documento original y decir lo contrario falsearía el registro histórico. Lo
+que marca la purga es el campo `anonimizado`.
+
+**Legal hold.** Un documento con `retencionLegal = true` no se trata, sin importar que haya vencido.
+El ciclo lo cuenta como retenido y sigue. Al levantar el hold, el documento vuelve a ser elegible en
+el ciclo siguiente.
+
+**Prueba de borrado.** Cada documento tratado deja un `RETENCION_APLICADA` con la política, la clase,
+la acción, la fecha de cierre, la de vencimiento, el hash del contenido y, por cada archivo borrado,
+su nombre, checksum y tamaño. Es la evidencia de qué se borró, sin conservar el contenido.
+
+**El job.** Corre cada hora (`nextdocs.retencion.intervaloMilisegundos`), toma hasta 100 documentos
+por ciclo (`documentosPorCiclo`, tope duro de 500) y se apaga con
+`nextdocs.retencion.trabajadorActivo=false`. Cada ciclo deja un `RETENCION_CICLO_EJECUTADO` por
+tenant con los contadores. Los documentos retenidos por orden legal **no** generan un evento
+individual en cada pasada: eso inundaría la auditoría. Quedan en el contador del ciclo, y la prueba
+de que el hold se respetó es que el documento nunca fue tratado más el evento de activación del hold.
+
+`POST /retencion/documentos/{id}/aplicar` fuerza la evaluación de un documento puntual y devuelve el
+resultado (`APLICADA`, `OMITIDA_POR_RETENCION_LEGAL`, `OMITIDA_SIN_POLITICA`, `OMITIDA_NO_VENCIDA`,
+`OMITIDA_YA_APLICADA`) con su motivo. A diferencia del ciclo, sí audita las omisiones, porque hubo
+alguien que preguntó.
 
 ---
 
