@@ -54,6 +54,8 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+      probes:
+        enabled: true
 
 springdoc:
   api-docs:
@@ -73,6 +75,7 @@ nextdocs:
       - /swagger-ui/**
       - /swagger-ui.html
       - /actuator/health
+      - /actuator/health/**
       - /actuator/info
   almacenamiento:
     endpoint: ${NEXTDOCS_S3_ENDPOINT:http://localhost:9102}

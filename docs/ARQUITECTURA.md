@@ -313,5 +313,4 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 
 | Falta | Riesgo si no se hace |
 |---|---|
-| Portal frontend | El backend ya expone bandeja, plantillas, gobernanza y costo; falta construirlo |
-| Despliegue reproducible y CI | El motor se levanta a mano |
+| Portal frontend | El backend ya expone bandeja, plantillas, gobernanza, costo y un compose reproducible; falta el portal |

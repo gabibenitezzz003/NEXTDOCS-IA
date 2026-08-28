@@ -2,6 +2,8 @@
 
 Base: `http://localhost:8090`
 OpenAPI: `/api-docs` · Swagger UI: `/swagger-ui.html`
+Health (público): `/actuator/health`, `/actuator/health/liveness`, `/actuator/health/readiness`
+Métricas Prometheus (autenticado): `/actuator/prometheus`
 
 ## Autenticación
 

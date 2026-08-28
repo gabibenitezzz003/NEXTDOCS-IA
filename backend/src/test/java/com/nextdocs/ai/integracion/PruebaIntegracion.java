@@ -54,9 +54,13 @@ public abstract class PruebaIntegracion {
 					sentencia.executeUpdate("CREATE DATABASE " + BASE_DATOS);
 				}
 			}
-		} catch (Exception e) {
-			Assumptions.abort("No hay infraestructura de pruebas disponible en " + HOST + ":" + PUERTO
-					+ ". Levantala con: docker compose up -d. Detalle: " + e.getMessage());
+        } catch (Exception e) {
+			String mensaje = "No hay infraestructura de pruebas disponible en " + HOST + ":" + PUERTO
+					+ ". Levantala con: docker compose up -d. Detalle: " + e.getMessage();
+			if (Boolean.parseBoolean(variable("NEXTDOCS_PRUEBA_OBLIGATORIA", "false"))) {
+				throw new IllegalStateException(mensaje, e);
+			}
+			Assumptions.abort(mensaje);
 		}
 	}
 

@@ -47,6 +47,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | API de webhooks: suscripciones, prueba firmada y monitor de entregas | ✅ |
 | Costo por tenant: efectivo por documento correcto y presupuesto opcional | ✅ |
 | Suite de QA automatizada: 57 unitarios + 104 de integración | ✅ |
+| Imagen Docker, `compose --profile app` y CI en GitHub Actions | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -264,14 +265,17 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 núcleo · V2 bloqueo · V3 conectores · V4 segmentación · V5 antivirus
+│           └── db/migration/        V1 núcleo · … · V11 costo por tenant
+├── backend/Dockerfile               imagen multi-stage (Maven 3.9 → JRE 21)
+├── .github/workflows/verificar.yml  mvn verify + build de imagen
 ├── .env.example                     plantilla de variables; copiala a .env
 ├── docs/
 │   ├── EMPEZAR_ACA.md               traspaso: leer esto primero
 │   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes
 │   ├── API.md                       endpoints, permisos, errores, webhooks
+│   ├── DESPLIEGUE.md                compose, imagen, CI y recuperación
 │   └── TODO.md                      plan de trabajo hasta terminar el producto
-└── compose.yml                      PostgreSQL 5434 · Redis 6381 · MinIO 9102/9101 · ClamAV opcional
+└── compose.yml                      infra siempre; API con --profile app
 ```
 
 ---

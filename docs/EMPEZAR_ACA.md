@@ -39,7 +39,14 @@ docker run --rm --network host --env-file ../.env \
   maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
-Tests: `./mvnw verify` con la infra levantada. 57 unitarios + 104 de integración.
+**Stack completo** (imagen + infra, sin JDK):
+
+```bash
+docker compose --profile app up -d --build
+curl -fsS http://localhost:8090/actuator/health
+```
+
+El detalle está en [`DESPLIEGUE.md`](DESPLIEGUE.md).
 
 ---
 
@@ -142,23 +149,20 @@ siguen ahí para las consultas de rango simple.
 | Qué está hecho y qué falta, en orden | [`TODO.md`](TODO.md) — **es el plan maestro, 32 tareas en 4 fases** |
 | Bounded contexts, flujo del documento, decisiones | [`ARQUITECTURA.md`](ARQUITECTURA.md) |
 | Endpoints, permisos, errores, webhooks | [`API.md`](API.md) |
+| Imagen, Compose, CI y recuperación | [`DESPLIEGUE.md`](DESPLIEGUE.md) |
 | Estado general y convenciones | [`../README.md`](../README.md) |
 
 ---
 
 ## 6. Por dónde seguir
 
-La **Fase 1** cierra el producto vendible. Van 13 de 14.
+La **Fase 1** cierra el producto vendible. Van 14 de 14.
 
-**Hecho:** API de plantillas con ciclo de vida (1) · quality gate con dataset gold (2) · adaptador
-Gemini real (3) · antivirus con cuarentena (4) · segmentación de PDF (5) · matching + FollowConnector
-(6) · gobernanza y auditoría (7) · retención y legal hold (8) · administración de tenant y usuarios
-(9) · webhooks y monitor de integraciones (10) · original físico (11) · costo por tenant (12) ·
-suite de QA (13)
+**Hecho:** API de plantillas (1) · quality gate gold (2) · Gemini (3) · antivirus (4) · segmentación
+(5) · matching (6) · gobernanza (7) · retención (8) · administración (9) · webhooks (10) · original
+físico (11) · costo por tenant (12) · suite de QA (13) · imagen + CI (14)
 
-**Siguiente, en este orden:**
-
-1. **Tarea 14** — Dockerfile, CI y despliegue reproducible
+**Siguiente:** **Fase 2**, que empieza por el portal frontend (tarea 15).
 
 Después de eso arranca la **Fase 2**, que empieza por el portal frontend (tarea 15).
 

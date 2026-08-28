@@ -66,6 +66,44 @@ services:
       exit 0;
       "
 
+  app:
+    profiles: ["app"]
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: nextdocs-ai:local
+    container_name: nextdocs-app
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      NEXTDOCS_BD_URL: jdbc:postgresql://postgres:5432/nextdocs
+      NEXTDOCS_BD_USUARIO: nextdocs
+      NEXTDOCS_BD_CLAVE: nextdocs
+      NEXTDOCS_REDIS_HOST: redis
+      NEXTDOCS_REDIS_PUERTO: "6379"
+      NEXTDOCS_S3_ENDPOINT: http://minio:9000
+      NEXTDOCS_S3_CLAVE_ACCESO: nextdocs
+      NEXTDOCS_S3_CLAVE_SECRETA: nextdocs123
+      NEXTDOCS_ANTIVIRUS_HOST: clamav
+    ports:
+      - "8090:8090"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8090/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+
   clamav:
     image: clamav/clamav:stable
     container_name: nextdocs-clamav
