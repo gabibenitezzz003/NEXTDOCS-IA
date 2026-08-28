@@ -303,6 +303,57 @@ POST /api/v1/excepciones/{id}/asignar  { "responsableId": "..." }   permiso: exc
 POST /api/v1/excepciones/{id}/resolver { "resolucion": "..." }      permiso: excepciones.gestionar
 ```
 
+### Administración de tenant, usuarios y cuentas de servicio
+
+```
+GET  /api/v1/administracion/configuracion
+GET  /api/v1/administracion/perfil                      cualquier usuario autenticado
+POST /api/v1/administracion/perfil/clave                cualquier usuario autenticado
+GET  /api/v1/administracion/tenant                      permiso: tenant.administrar
+PUT  /api/v1/administracion/tenant                      permiso: tenant.administrar
+GET  /api/v1/administracion/usuarios?estado&texto       permiso: tenant.administrar
+POST /api/v1/administracion/usuarios                    permiso: tenant.administrar
+GET  /api/v1/administracion/usuarios/{id}               permiso: tenant.administrar
+PUT  /api/v1/administracion/usuarios/{id}               permiso: tenant.administrar
+PUT  /api/v1/administracion/usuarios/{id}/roles         permiso: tenant.administrar
+POST /api/v1/administracion/usuarios/{id}/bloquear      permiso: tenant.administrar
+POST /api/v1/administracion/usuarios/{id}/desbloquear   permiso: tenant.administrar
+POST /api/v1/administracion/usuarios/{id}/clave         permiso: tenant.administrar
+DEL  /api/v1/administracion/usuarios/{id}               permiso: tenant.administrar
+GET  /api/v1/administracion/roles                       permiso: tenant.administrar
+POST /api/v1/administracion/roles                       permiso: tenant.administrar
+PUT  /api/v1/administracion/roles/{id}                  permiso: tenant.administrar
+DEL  /api/v1/administracion/roles/{id}                  permiso: tenant.administrar
+GET  /api/v1/administracion/cuentas-servicio            permiso: tenant.administrar
+POST /api/v1/administracion/cuentas-servicio            permiso: tenant.administrar
+POST /api/v1/administracion/cuentas-servicio/{id}/revocar   permiso: tenant.administrar
+```
+
+**El tenant nunca se queda sin gobierno.** Bloquear, dar de baja o quitarle el rol de administrador
+al **último** administrador activo devuelve 400. Es el error que deja un tenant inaccesible y sólo se
+arregla por base de datos. Tampoco un usuario puede bloquearse ni eliminarse a sí mismo.
+
+**Los roles predefinidos son inmutables.** `ADMINISTRADOR`, `OPERADOR`, `REVISOR` y `AUDITOR` no se
+modifican ni se borran: se crea un rol propio a partir de sus permisos. Un rol propio con usuarios
+asignados tampoco se borra, hay que reasignarlos primero.
+
+**Los permisos se validan contra el catálogo.** Un permiso inventado en un rol o un alcance inventado
+en una cuenta de servicio devuelve 400. `GET /configuracion` devuelve el catálogo completo.
+
+**Una cuenta de servicio no puede tener `tenant.administrar`.** Administrar el tenant es una acción de
+persona, no de integración. Pedirlo devuelve 400.
+
+**La clave de una cuenta de servicio se devuelve una sola vez**, en la respuesta del alta. En base
+sólo queda el sha256 y el prefijo de 12 caracteres para identificarla. Revocar exige motivo.
+
+**Claves de usuario.** Mínimo 10 caracteres. Cambiar la propia exige la actual y rechaza repetirla; un
+administrador puede restablecer la de otro sin conocerla, y eso queda auditado con su email.
+
+**Un bloqueo tiene efecto inmediato.** Cada petición con JWT revalida contra la base que el usuario
+siga activo y **relee sus permisos**. Sin eso, un usuario bloqueado seguiría entrando hasta que
+expirara su token, que dura 8 horas, y el bloqueo sería una ilusión. El costo es una consulta por
+petición, la misma que ya pagaban las cuentas de servicio.
+
 ### Gobernanza y auditoría
 
 ```

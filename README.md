@@ -42,7 +42,8 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Matching con circuit breaker + `FollowConnector` aislado | ✅ |
 | API de gobernanza: reconstrucción de la decisión y exportación de auditoría | ✅ |
 | Retención en ejecución: plazo desde el cierre, legal hold y prueba de borrado | ✅ |
-| Suite de QA automatizada: 50 unitarios + 58 de integración | ✅ |
+| Administración de tenant, usuarios, roles propios y cuentas de servicio | ✅ |
+| Suite de QA automatizada: 50 unitarios + 80 de integración | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -141,6 +142,23 @@ prueba de borrado    → RETENCION_APLICADA con clase, acción, hash del
 segunda pasada       → OMITIDA_YA_APLICADA, sale del listado de vencidos
 ciclo completo       → elimina el tratable, cuenta el retenido y deja un
                        RETENCION_CICLO_EJECUTADO por tenant
+
+Administración (usuarios, roles, cuentas de servicio)
+alta de usuario      → activo, con sus roles y permisos efectivos
+email duplicado      → 409 dentro del tenant; el mismo email sí puede
+                       existir en dos tenants distintos
+bloquear al único admin  → 400 "el tenant quedaría sin administrador activo"
+degradar al único admin  → 400 por la misma razón
+con dos admins           → sí se puede bloquear al primero
+auto-bloqueo             → 400, nadie se bloquea a sí mismo
+rol predefinido      → 400 al modificarlo o borrarlo
+rol propio con usuarios  → 400 hasta reasignarlos
+permiso inventado    → 400 contra el catálogo de Permiso
+clave de cuenta      → se devuelve una sola vez; en base sólo el sha256
+cuenta con tenant.administrar → 400, es vía de escalada
+cuenta revocada      → deja de autenticar de inmediato
+clave propia         → exige la actual y rechaza repetirla
+reset por admin      → auditado con el email de quien lo hizo
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
@@ -154,7 +172,7 @@ cd backend && ./mvnw verify
 ```
 
 - **50 tests unitarios** — no necesitan nada levantado
-- **58 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **80 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,

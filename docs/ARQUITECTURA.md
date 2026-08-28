@@ -143,6 +143,7 @@ devuelve 0 documentos.
 | Sesión de usuario | JWT HS256 firmado, con `tenantId`, `codigoTenant` y permisos. Acceso 8 h, refresco 7 d |
 | Integraciones | Cuenta de servicio con clave `ndai_...`; en base se guarda **sólo el sha256** |
 | Autorización | `@PreAuthorize("hasAuthority('...')")` sobre permisos granulares de `Permiso` |
+| Revocación | El filtro revalida en cada petición que el usuario siga activo y relee sus permisos. Un bloqueo no espera a que expire el token |
 | Secretos en el navegador | Ninguno. El front usa sesión; las integraciones usan `X-Clave-Servicio` server-to-server |
 | Archivos | MIME real por contenido con Tika, no por extensión ni por header |
 | Antivirus | ClamAV por `INSTREAM` antes de almacenar; fail-closed por defecto; infectado va a bucket de cuarentena |
@@ -197,6 +198,26 @@ Las decisiones que la especificación no fijaba y hubo que tomar:
 
 `retencionAplicada` es lo que evita que un documento se trate dos veces. Sin esa marca, una política
 `ANONIMIZAR` volvería a procesar el mismo documento en cada ciclo para siempre.
+
+---
+
+## Identidad y gobierno del tenant
+
+El JWT lleva los permisos, pero **no es la fuente de verdad**. `FiltroAutenticacion` revalida contra
+la base, en cada petición, que el usuario siga activo, y relee sus roles. La alternativa —confiar en
+el token— hace que bloquear a alguien no tenga efecto hasta que su token expire, ocho horas después.
+Un bloqueo que tarda ocho horas no es un bloqueo. El costo es una consulta por petición, exactamente
+la misma que las cuentas de servicio ya pagaban para autenticarse por hash.
+
+La otra invariante es que **el tenant no puede quedarse sin administradores activos**. Bloquear, dar
+de baja o degradar al último administrador se rechaza, porque el resultado sería un tenant que nadie
+puede administrar y que sólo se recupera tocando la base. Por eso `UsuarioRepository.contarConPermiso`
+cuenta administradores activos antes de cada una de esas tres operaciones, y no simplemente usuarios
+con el rol `ADMINISTRADOR`: lo que importa es quién tiene efectivamente `tenant.administrar`, venga
+del rol predefinido o de uno propio.
+
+Una cuenta de servicio nunca puede tener `tenant.administrar`. Administrar el tenant es una acción de
+persona, y una credencial de integración que puede crear usuarios es una vía de escalada.
 
 ---
 
@@ -290,4 +311,4 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 | Falta | Riesgo si no se hace |
 |---|---|
 | Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
-| Administración de tenant, usuarios y cuentas de servicio | Sin onboarding autoservicio no hay portal, y el frontend queda bloqueado |
+| Portal frontend | El backend ya expone todo lo que el portal necesita; falta construirlo |

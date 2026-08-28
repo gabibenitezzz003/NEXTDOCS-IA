@@ -1,10 +1,13 @@
 package com.nextdocs.ai.servicios;
 
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import com.nextdocs.ai.convertidores.AdministracionConverter;
 import com.nextdocs.ai.entidades.Rol;
 import com.nextdocs.ai.entidades.Tenant;
 import com.nextdocs.ai.entidades.Usuario;
@@ -14,6 +17,9 @@ import com.nextdocs.ai.enumeraciones.EstadoUsuario;
 import com.nextdocs.ai.enumeraciones.OrigenIdentidad;
 import com.nextdocs.ai.exceptions.EntidadNoEncontradaException;
 import com.nextdocs.ai.exceptions.RegistroExistenteException;
+import com.nextdocs.ai.modelos.TenantModel;
+import com.nextdocs.ai.modelos.TenantReqModel;
+import com.nextdocs.ai.repositorios.ArchivoDocumentoRepository;
 import com.nextdocs.ai.repositorios.RolRepository;
 import com.nextdocs.ai.repositorios.TenantRepository;
 import com.nextdocs.ai.repositorios.UsuarioRepository;
@@ -34,18 +40,25 @@ public class TenantService {
 
 	private final UsuarioRepository usuarioRepository;
 
+	private final ArchivoDocumentoRepository archivoDocumentoRepository;
+
 	private final PasswordEncoder codificadorClave;
 
 	private final AuditoriaService auditoriaService;
 
+	private final AdministracionConverter administracionConverter;
+
 	public TenantService(TenantRepository tenantRepository, RolRepository rolRepository,
-			UsuarioRepository usuarioRepository, PasswordEncoder codificadorClave,
-			AuditoriaService auditoriaService) {
+			UsuarioRepository usuarioRepository, ArchivoDocumentoRepository archivoDocumentoRepository,
+			PasswordEncoder codificadorClave, AuditoriaService auditoriaService,
+			AdministracionConverter administracionConverter) {
 		this.tenantRepository = tenantRepository;
 		this.rolRepository = rolRepository;
 		this.usuarioRepository = usuarioRepository;
+		this.archivoDocumentoRepository = archivoDocumentoRepository;
 		this.codificadorClave = codificadorClave;
 		this.auditoriaService = auditoriaService;
+		this.administracionConverter = administracionConverter;
 	}
 
 	@Transactional
@@ -62,7 +75,7 @@ public class TenantService {
 
 		List<Rol> roles = crearRolesPredefinidos(tenant);
 		crearAdministrador(tenant, roles.get(0), emailAdministrador, claveAdministrador);
-		auditoriaService.registrar(tenant.getId(), AccionAuditoria.POLITICA_MODIFICADA, ENTIDAD, tenant.getId());
+		auditoriaService.registrar(tenant.getId(), AccionAuditoria.TENANT_CREADO, ENTIDAD, tenant.getId());
 		return tenant;
 	}
 
@@ -75,6 +88,38 @@ public class TenantService {
 	@Transactional(readOnly = true)
 	public List<Tenant> listarActivos() {
 		return tenantRepository.findByEstadoAndBajaIsNull(EstadoTenant.ACTIVO);
+	}
+
+	@Transactional(readOnly = true)
+	public TenantModel obtener(String tenantId) {
+		return administracionConverter.aModelo(buscarEntidad(tenantId),
+				archivoDocumentoRepository.sumarTamanoPorTenant(tenantId),
+				usuarioRepository.contarPorEstado(tenantId, EstadoUsuario.ACTIVO));
+	}
+
+	@Transactional
+	public TenantModel actualizar(String tenantId, TenantReqModel datos) {
+		Tenant tenant = buscarEntidad(tenantId);
+		Map<String, Object> antes = instantanea(tenant);
+		tenant.setNombre(datos.getNombre().trim());
+		tenant.setPlan(datos.getPlan());
+		tenant.setRegion(datos.getRegion());
+		tenant.setDominio(datos.getDominio());
+		tenant.setCuotaAlmacenamientoBytes(datos.getCuotaAlmacenamientoBytes());
+		tenantRepository.save(tenant);
+		auditoriaService.registrarConDetalle(tenantId, AccionAuditoria.TENANT_MODIFICADO, ENTIDAD, tenantId,
+				Map.of("antes", antes, "despues", instantanea(tenant)));
+		return obtener(tenantId);
+	}
+
+	private Map<String, Object> instantanea(Tenant tenant) {
+		Map<String, Object> valores = new LinkedHashMap<>();
+		valores.put("nombre", String.valueOf(tenant.getNombre()));
+		valores.put("plan", String.valueOf(tenant.getPlan()));
+		valores.put("region", String.valueOf(tenant.getRegion()));
+		valores.put("dominio", String.valueOf(tenant.getDominio()));
+		valores.put("cuotaAlmacenamientoBytes", tenant.getCuotaAlmacenamientoBytes());
+		return valores;
 	}
 
 	private List<Rol> crearRolesPredefinidos(Tenant tenant) {
