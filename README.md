@@ -183,41 +183,24 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 
 ## Próximos pasos
 
-Orden de trabajo. Quien retome el proyecto arranca por el primero sin marcar.
+El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
+32 tareas en 4 fases, con criterios de aceptación y dependencias.
 
-**Cerrar la Etapa 1 vendible**
+Quien retome el proyecto arranca por la **primera tarea sin marcar de la Fase 1**.
 
-- [ ] `PlantillaRestController` + `PlantillaService`: CRUD, versionado y ciclo
-      `BORRADOR → EN_PRUEBA → PUBLICADA → DEPRECADA` con rollback. Hoy las plantillas se cargan por SQL
-- [ ] `POST /plantillas/{id}/probar`: correr una versión borrador contra un documento de muestra
-      y mostrar esperado vs. obtenido por campo
-- [ ] Quality gate: bloquear la publicación si no hay dataset gold o si empeoran los campos críticos
-- [ ] `ProveedorGeminiService` implementando `ProveedorDocumentalIaInt` con el contrato canónico
-- [ ] Antivirus/antimalware y cuarentena en la ingesta (`SEC-04` del N3)
-- [ ] `SegmentacionDocumentalService`: split de PDF multi-documento con PDFBox → estado `DIVIDIDO`
-      con documentos hijo (`QA1-02`)
-- [ ] `FollowConnector` implementando `ConectorAsociacionInt`, aislado detrás de la interfaz.
-      Timeout, retry y circuit breaker; un timeout **no** puede confundirse con cero candidatos (`QA1-05`)
-- [ ] Suite de tests `QA1-01` … `QA1-10` del N3 con Testcontainers
-- [ ] `GobernanzaRestController`: exportación del paquete de auditoría por documento (`GOV-01`)
-- [ ] Job de retención y legal hold aplicando `PoliticaRetencion` (`GOV-02`)
-- [ ] `TenantRestController` y `UsuarioRestController` para el onboarding autoservicio
-- [ ] Observabilidad: métricas por tenant de tokens, páginas, latencia p95, tasa de error del
-      proveedor, tasa de autoaprobación y backlog de revisión
+| Fase | Alcance | Tareas |
+|---|---|---|
+| **1** | Cerrar la Etapa 1 vendible (motor documental standalone) | 1–14 |
+| **2** | Portal, canales y KPI → completa el MVP 1 | 15–20 |
+| **3** | Etapa 2: Workflow Runtime y Process Studio | 21–27 |
+| **4** | Etapa 3: Sentinel, Simulation Lab y Process Copilot | 28–32 |
 
-**Etapa 1 completa**
+Los tres bloqueantes inmediatos para poder vender:
 
-- [ ] Portal frontend standalone
-- [ ] SSO y embed con Follow, CIMA y Valid360.ai por federación de identidad
-- [ ] Channel Gateway: email dedicado por tenant y WhatsApp
-- [ ] Archive & Export básico: búsqueda, ZIP, índice XLSX y manifiesto con hashes
-
-**Etapa 2**
-
-- [ ] Workflow Definition + Runtime
-- [ ] Process Studio con canvas y editor guiado sobre el mismo modelo
-- [ ] Consistency & Impact Sentinel: grafo de dependencias y reevaluación incremental
-- [ ] Signature Adapter (Legale / Docusign)
+1. **API de plantillas** con ciclo `BORRADOR → EN_PRUEBA → PUBLICADA → DEPRECADA` y rollback.
+   Hoy las plantillas se cargan por SQL.
+2. **Adaptador Gemini real.** Hoy sólo existe `SIMULADO`, útil para desarrollo y tests.
+3. **Matching + `FollowConnector`.** Sin esto no hay `QA1-05` ni `QA1-06`.
 
 ---
 
