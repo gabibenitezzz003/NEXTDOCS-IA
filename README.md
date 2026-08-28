@@ -6,6 +6,10 @@
 Plataforma **independiente** de captura, extracción, validación, asociación y gobernanza documental.
 No es un módulo de Follow: Follow, CIMA y Valid360.ai son **consumidores opcionales** vía conector, SSO y eventos.
 
+> ### 👉 ¿Tomás el proyecto sin contexto? Empezá por **[docs/EMPEZAR_ACA.md](docs/EMPEZAR_ACA.md)**
+> Son 5 minutos: cómo levantarlo, las reglas que no se negocian, las trampas que ya nos costaron
+> tiempo y por dónde seguir.
+
 ---
 
 ## Estado actual
@@ -196,6 +200,7 @@ nextdocs-ai/
 │           └── db/migration/        V1 núcleo · V2 bloqueo · V3 conectores · V4 segmentación · V5 antivirus
 ├── .env.example                     plantilla de variables; copiala a .env
 ├── docs/
+│   ├── EMPEZAR_ACA.md               traspaso: leer esto primero
 │   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes
 │   ├── API.md                       endpoints, permisos, errores, webhooks
 │   └── TODO.md                      plan de trabajo hasta terminar el producto

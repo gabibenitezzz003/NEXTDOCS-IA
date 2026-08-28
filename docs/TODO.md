@@ -3,6 +3,8 @@
 Plan de trabajo hasta terminar el producto completo. **Este es el documento de referencia:
 quien retome el proyecto arranca por la primera tarea sin marcar de la Fase 1.**
 
+> Si es tu primer contacto con el proyecto, leé antes [`EMPEZAR_ACA.md`](EMPEZAR_ACA.md).
+
 Cada tarea trae su criterio de aceptación referenciando los códigos de QA del documento
 `N3-SPR084-V7-NEXT_DOC_AI_ESPECIFICACION_DESARROLLO_QA_UX`.
 
