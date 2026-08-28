@@ -22,7 +22,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Ingesta idempotente con MIME real (Tika) y conteo de páginas (PDFBox) | ✅ |
 | Almacenamiento S3/MinIO con checksum y URL firmada | ✅ |
 | Máquina de estados del documento con transiciones validadas | ✅ |
-| Proveedor de IA abstracto + adaptador `SIMULADO` + router con respaldo | ✅ |
+| Proveedor de IA abstracto + adaptadores `GEMINI` y `SIMULADO` + router con respaldo | ✅ |
 | Worker de extracción con backoff exponencial y reencolado | ✅ |
 | Motor de validación con reglas versionadas por plantilla | ✅ |
 | Revisión humana con correcciones, sobreescritura y motivo obligatorio | ✅ |
@@ -31,7 +31,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Outbox transaccional + despachador de webhooks firmados con HMAC | ✅ |
 | API REST v1 de documentos, excepciones y autenticación | ✅ |
 | API de plantillas con ciclo de vida, versionado, publish y rollback | ✅ |
-| Adaptador Gemini real | ⏳ |
+| Adaptador Gemini real (`gemini-2.5-flash`) con esquema estructurado | ✅ |
 | Segmentación de PDF multi-documento | ⏳ |
 | `FollowConnector` para matching | ⏳ |
 | Suite de QA `QA1-01` … `QA1-10` | ⏳ |
@@ -63,6 +63,17 @@ POST .../publicar v2             → v1 pasa a DEPRECADA automáticamente
 POST .../revertir/v1             → v1 vuelve a PUBLICADA, v2 a DEPRECADA
 QA-WF-03                         → doc ingresado con v1 sigue en v1 y con esquema e1
                                    tras publicarse la v2; el doc nuevo usa v2 y esquema e2
+
+Gemini real (gemini-2.5-flash)
+PDF de remito → extrae los 5 campos correctamente, normaliza
+                CUIT 30-71234567-4 → 30712345674
+                fecha 14/08/2026   → 2026-08-14
+                conformidad NO     → false
+                576 tokens entrada, 323 salida, USD 0.00098, 6.5 s
+PDF degradado → confianzas 0.6 a 0.95 y usa ILEGIBLE en vez de inventar (QA1-07)
+429 / 403     → reintentable vs no reintentable, verificado con servidor falso
+QA1-03        → remito sin conformidad con confianza 1.0 en TODOS los campos
+                queda OBSERVADO, autoaprobado=false, porque lo decide la regla
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las 27 entidades
@@ -135,6 +146,7 @@ nextdocs-ai/
 │       └── resources/
 │           ├── application.yml
 │           └── db/migration/        V1 esquema del núcleo · V2 bloqueo optimista
+├── .env.example                     plantilla de variables; copiala a .env
 ├── docs/
 │   ├── ARQUITECTURA.md              bounded contexts, flujos, reglas invariantes
 │   ├── API.md                       endpoints, permisos, errores, webhooks
@@ -178,9 +190,14 @@ Reglas invariantes:
 ## Cómo levantar el entorno
 
 ```bash
+cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE
 docker compose up -d
 cd backend && ./mvnw spring-boot:run
 ```
+
+Sin `NEXTDOCS_GEMINI_CLAVE` el sistema arranca igual y usa el proveedor `SIMULADO`.
+La credencial **nunca** se guarda en base: `ConfiguracionProveedor.referenciaSecreto` guarda
+`env:NEXTDOCS_GEMINI_CLAVE` y se resuelve en runtime.
 
 - API: `http://localhost:8090`
 - Swagger: `http://localhost:8090/swagger-ui.html`
@@ -211,7 +228,7 @@ Quien retome el proyecto arranca por la **primera tarea sin marcar de la Fase 1*
 Bloqueantes inmediatos para poder vender:
 
 1. ~~API de plantillas con ciclo de vida y rollback~~ — **terminado**
-2. **Adaptador Gemini real.** Hoy sólo existe `SIMULADO`, útil para desarrollo y tests.
+2. ~~Adaptador Gemini real~~ — **terminado**, verificado contra Gemini de verdad
 3. **Matching + `FollowConnector`.** Sin esto no hay `QA1-05` ni `QA1-06`.
 
 ---

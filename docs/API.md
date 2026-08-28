@@ -157,13 +157,18 @@ Reglas que impone la API:
 
 | Tipo | Configuración | Ejemplo |
 |---|---|---|
-| `OBLIGATORIO` | — | el campo debe estar `PRESENTE` |
+| `OBLIGATORIO` | — | el campo debe estar `PRESENTE` (**sólo presencia, no el valor**) |
 | `FORMATO` | `{"expresionRegular":"..."}` | validar patrón |
 | `RANGO` | `{"minimo":"0.01","maximo":"9999"}` | numérico acotado |
 | `VIGENCIA` | `{"diasTolerancia":30}` | la fecha no puede estar vencida |
 | `COMPARACION_CAMPOS` | `{"campoA":"...","campoB":"..."}` | dos campos deben coincidir |
 | `CATALOGO` | `{"valores":["USD","ARS"]}` | valor dentro de una lista |
 | `CONFIANZA_MINIMA` | `{"minima":"0.9"}` | umbral por regla |
+
+> **Cuidado con `OBLIGATORIO`.** Verifica que el campo esté `PRESENTE`, no que su valor sea el esperado.
+> Un remito con `conformidad = false` pasa una regla `OBLIGATORIO` sobre `conformidad`, porque el dato
+> está. Para exigir un valor concreto usá `CATALOGO` con `{"valores":["true"]}`. Esta distinción es la
+> diferencia entre aprobar y observar un remito sin conformidad.
 
 ### Excepciones
 

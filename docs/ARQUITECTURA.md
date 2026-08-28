@@ -33,7 +33,7 @@ que impidan extraer servicios cuando el volumen lo justifique"*.
 | IAM / Tenant | `TenantService`, `AutenticacionService`, `CuentaServicioService`, `TokenService` | ✅ |
 | Capture / Ingestion | `IngestaDocumentalService`, `InspectorArchivo`, `ColaExtraccionService` | ✅ |
 | Document Repository | `AlmacenamientoService`, `DocumentoService`, `EstadoDocumentalService` | ✅ |
-| Document AI Orchestrator | `ExtractorDocumentalService`, `RuteadorProveedorService`, `TrabajadorExtraccionService` | ✅ |
+| Document AI Orchestrator | `ExtractorDocumentalService`, `RuteadorProveedorService`, `TrabajadorExtraccionService`, `ProveedorGeminiService` | ✅ |
 | Template Service | Entidades `PlantillaDocumental` / `VersionPlantilla` / `CampoPlantilla` / `ReglaPlantilla` | ⚠️ modelo listo, falta API |
 | Validation Service | `ValidacionDocumentalService` | ✅ |
 | Matching Service | `ConectorAsociacionInt`, entidad `CandidatoAsociacion` | ⚠️ contrato listo, falta implementación |
@@ -158,6 +158,52 @@ de forma idempotente.
 
 ---
 
+## El proveedor de IA y la confianza
+
+`ProveedorGeminiService` implementa `ProveedorDocumentalIaInt`. Construye el esquema estructurado
+a partir de `CampoPlantilla`, lo envía con `responseMimeType: application/json` y `temperature: 0`,
+y normaliza la respuesta al `ResultadoExtraccionModel` canónico.
+
+La credencial **nunca** se guarda en base. `ConfiguracionProveedor.referenciaSecreto` guarda una
+referencia, no el secreto: `env:NEXTDOCS_GEMINI_CLAVE`. `ResolvedorSecreto` la resuelve en runtime.
+
+### Qué se aprendió midiendo contra Gemini real
+
+La confianza que reporta el modelo **existe y varía**, pero es gruesa y auto-reportada:
+
+| Documento | Confianzas devueltas |
+|---|---|
+| Remito limpio | todas `1.0` |
+| Remito con texto degradado | `0.6`, `0.7`, `0.8`, `0.95`, `1.0` |
+
+Conclusiones que se aplicaron al diseño:
+
+1. Es una señal **ordinal útil** para detectar documentos malos, no una probabilidad calibrada.
+   Por eso se guardan las dos: `confianzaProveedor` cruda para lineage y `confianza` calibrada
+   para decidir.
+2. `factorCalibracionConfianza` es un ajuste lineal provisorio. La calibración real sale del
+   dataset gold de la tarea 2, no de un número elegido a mano.
+3. **La confianza no puede ser el control principal.** En un documento limpio todo da `1.0`, así que
+   cualquier umbral se cumple. Lo que evita aprobar un documento inválido son las reglas.
+4. En el documento degradado el modelo usó `ILEGIBLE` correctamente en vez de inventar un valor,
+   que es la distinción que exige `QA1-07`.
+
+### Manejo de fallos
+
+| Respuesta de Gemini | Traducción | Reintentable |
+|---|---|---|
+| 429 | `CUOTA_EXCEDIDA` | Sí → respaldo, luego backoff exponencial |
+| 401 / 403 | `CREDENCIAL_INVALIDA` | No → excepción bloqueante, no consume la cola |
+| 5xx | proveedor no disponible | Sí |
+| 4xx restantes | petición rechazada | No |
+| Sin candidatos o JSON ilegible | respuesta inválida | Sí |
+| `finishReason: SAFETY` | bloqueado por política | No |
+
+Un campo que el modelo no devuelve se completa como `ILEGIBLE` con confianza `0` y una advertencia.
+**Nunca** se completa como `NO_FIGURA`, porque no saber es distinto de saber que no está.
+
+---
+
 ## Persistencia
 
 PostgreSQL 16. Esquema versionado con Flyway y **`ddl-auto: validate`**: si una entidad y la migración
@@ -180,6 +226,5 @@ divergen, la aplicación no arranca. No hay generación automática de esquema.
 | Antivirus / antimalware en la ingesta | `SEC-04` del N3 no se cumple: un archivo malicioso llega al proveedor de IA |
 | Segmentación de PDF multi-documento | `QA1-02`: un PDF con 10 remitos hoy entra como uno solo |
 | `FollowConnector` detrás de `ConectorAsociacionInt` | Sin matching no hay `QA1-05` ni `QA1-06` |
-| Adaptador Gemini real | Hoy sólo existe `SIMULADO`, que sirve para desarrollo y tests pero no para vender |
 | Tests automatizados de los casos `QA1-01` a `QA1-10` | El `Definition of Done` del N3 los exige antes de release |
 | Retención y legal hold ejecutándose | `GOV-02`: la política existe en el modelo pero nadie la aplica |

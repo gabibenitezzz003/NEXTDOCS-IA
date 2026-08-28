@@ -25,6 +25,7 @@ Cada tarea trae su criterio de aceptación referenciando los códigos de QA del 
 - [x] Outbox transaccional y despachador de webhooks firmados con HMAC
 - [x] API REST v1 de autenticación, documentos y excepciones
 - [x] **Tarea 1** — API de plantillas con ciclo de vida, versionado, publish y rollback
+- [x] **Tarea 3** — adaptador Gemini real verificado contra `gemini-2.5-flash`
 
 ---
 
@@ -37,7 +38,7 @@ sin Workflow y sin Follow.
 |---|---|---|
 | ~~1~~ | ~~API de plantillas con ciclo de vida completo~~ | ✅ **Terminada.** Ciclo, clonado, validador de publicación, rollback y bloqueo optimista |
 | 2 | Prueba de plantilla y quality gate con dataset gold | Sin gate, una versión que empeora llega a producción (`GOV-04`, `QA1-10`) |
-| 3 | **Adaptador Gemini real** | Hoy sólo existe `SIMULADO`. Sirve para tests, no para vender |
+| ~~3~~ | ~~Adaptador Gemini real~~ | ✅ **Terminada.** `gemini-2.5-flash` con esquema estructurado, 10 tests contra servidor falso y verificación contra Gemini real |
 | 4 | Antivirus y cuarentena en la ingesta | `SEC-04`: hoy un archivo malicioso llega al proveedor de IA |
 | 5 | Segmentación de PDF multi-documento | `QA1-02`: un PDF con 10 remitos entra como uno solo |
 | 6 | **Matching + `FollowConnector`** | Sin matching no hay `QA1-05` ni `QA1-06`. Es la integración nativa que se vende |
@@ -50,9 +51,14 @@ sin Workflow y sin Follow.
 | 13 | **Suite de QA `QA1-01`…`QA1-10` con Testcontainers** | Requisito del Definition of Done antes de release |
 | 14 | Despliegue reproducible y pipeline de CI | Hoy el despliegue del motor es manual |
 
-**Orden sugerido:** ~~1~~ → **3** → 6 → 5 → 4 → 11 → 13 → 2 → 7 → 8 → 9 → 10 → 12 → 14
+**Orden sugerido:** ~~1~~ → ~~3~~ → **6** → 5 → 4 → 11 → 13 → 2 → 7 → 8 → 9 → 10 → 12 → 14
 
 **Dependencias:** 2 necesita 1 · 13 necesita 3, 4, 5, 6 y 11
+
+**Aprendido en la tarea 3, aplica a la 2:** la confianza que reporta Gemini es auto-reportada y
+gruesa (`1.0` en documentos limpios, `0.6`–`0.95` en degradados). Sirve como señal ordinal pero no
+es una probabilidad calibrada. La calibración real tiene que salir del dataset gold, no de un
+factor elegido a mano.
 
 ---
 
