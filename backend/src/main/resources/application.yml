@@ -147,6 +147,15 @@ nextdocs:
     documentosPorCiclo: ${NEXTDOCS_RETENCION_POR_CICLO:100}
     intervaloMilisegundos: ${NEXTDOCS_RETENCION_INTERVALO_MS:3600000}
     demoraInicialMilisegundos: 60000
+  correo:
+    activo: ${NEXTDOCS_CORREO_ACTIVO:true}
+    mensajesPorCiclo: ${NEXTDOCS_CORREO_POR_CICLO:25}
+    tiempoEsperaMilisegundos: ${NEXTDOCS_CORREO_TIMEOUT_MS:15000}
+    fallosParaPausar: ${NEXTDOCS_CORREO_FALLOS_PAUSA:5}
+    diasVigenciaCorrelacion: ${NEXTDOCS_CORREO_VIGENCIA_DIAS:30}
+    tamanoMaximoAdjuntoBytes: ${NEXTDOCS_CORREO_ADJUNTO_MAXIMO:67108864}
+    intervaloMilisegundos: ${NEXTDOCS_CORREO_INTERVALO_MS:30000}
+    retrasoInicialMilisegundos: 40000
   auditoria:
     registrarAccesoLectura: true
   arranque:

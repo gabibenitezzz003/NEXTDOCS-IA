@@ -627,6 +627,82 @@ Al llegar al tope **no se borra evidencia** — esa es la regla del ANEXO_D.
 
 ---
 
+### Channel Gateway de email
+
+Cada tenant recibe documentación en un **buzón dedicado**, nunca en la casilla personal de un
+empleado. El adaptador se conecta por IMAP, baja sólo los mensajes no leídos, y cada adjunto pasa
+por la **misma** ingesta que la API: MIME real por contenido, tope de tamaño, antivirus y cuarentena.
+
+```
+GET    /api/v1/canales/correo/configuracion
+POST   /api/v1/canales/correo/buzones                        permiso: canales.administrar
+GET    /api/v1/canales/correo/buzones                        permiso: canales.leer
+GET    /api/v1/canales/correo/buzones/{buzonId}              permiso: canales.leer
+POST   /api/v1/canales/correo/buzones/{buzonId}/estado       permiso: canales.administrar
+POST   /api/v1/canales/correo/buzones/{buzonId}/prueba       permiso: canales.administrar
+POST   /api/v1/canales/correo/buzones/{buzonId}/lectura      permiso: canales.administrar
+DELETE /api/v1/canales/correo/buzones/{buzonId}              permiso: canales.administrar
+POST   /api/v1/canales/correo/buzones/{buzonId}/remitentes   permiso: canales.administrar
+DELETE /api/v1/canales/correo/remitentes/{remitenteId}       permiso: canales.administrar
+POST   /api/v1/canales/correo/correlaciones                  permiso: canales.administrar
+GET    /api/v1/canales/correo/correlaciones                  permiso: canales.leer
+DELETE /api/v1/canales/correo/correlaciones/{correlacionId}  permiso: canales.administrar
+GET    /api/v1/canales/correo/mensajes?resultado             permiso: canales.leer
+GET    /api/v1/canales/correo/mensajes/{mensajeId}           permiso: canales.leer
+GET    /api/v1/canales/correo/salientes                      permiso: canales.leer
+```
+
+**La dirección del buzón es única en toda la instalación**, no por tenant: un alias resuelve a un
+solo tenant y no hay forma de que el correo de uno caiga en el otro.
+
+**Las credenciales del buzón no se guardan.** `referenciaSecretoEntrada` y
+`referenciaSecretoSalida` son referencias que resuelve `ResolvedorSecreto`: usá `env:NOMBRE_VARIABLE`
+en cualquier entorno real. El prefijo `literal:` existe para pruebas locales y deja la clave en la
+base — no lo uses en producción.
+
+#### Correlación por token, nunca heurística
+
+El flujo pensado es: se crea una **correlación** contra un sujeto de negocio (`FOLLOW / Caso /
+CASO-4477`), el sistema manda la solicitud con `[NDA-XXXXXXXXXXXXXXXX]` en el asunto, y el tercero
+responde adjuntando los archivos. El token viaja en el asunto **o** en la dirección con etiqueta
+(`casos-acme+NDA-XXXX@…`), que es lo que hace el subdireccionamiento de Gmail y Microsoft 365.
+
+Al leer, el token se resuelve **acotado al tenant y al buzón**. Si no resuelve —porque no existe,
+está vencido, fue anulado o pertenece a otro tenant— el documento **igual se ingesta** (la evidencia
+no se descarta) pero queda **sin asociar** y se abre una excepción `ASOCIACION` con código
+`CORREO_SIN_CORRELACION` para que lo resuelva una persona. **Nunca se elige un sujeto por parecido.**
+
+`exigirCorrelacion` en el buzón decide qué pasa cuando el mensaje no trae token alguno: en `true`
+también abre la excepción; en `false` el documento entra sin sujeto y sin ruido.
+
+#### Controles del canal
+
+| Riesgo del ANEXO_A | Qué hace el canal |
+|---|---|
+| Suplantación | `exigirRemitenteAutorizado` + lista blanca por dirección exacta o por dominio (`@proveedores.com`). Si el remitente no está, **no se ingesta ni un byte** y el mensaje queda auditado |
+| Adjunto malicioso | Mismo antivirus y misma cuarentena que la API; un infectado queda `RECHAZADO` y su adjunto `EN_CUARENTENA` |
+| MIME / tamaño | Mismos topes de `nextdocs.ingesta`; el rechazo queda con código (`EXTENSION_NO_PERMITIDA`, `MIME_NO_PERMITIDO`, `TAMANO_EXCEDIDO`) y sha256 del adjunto |
+| Documento equivocado | Token de correlación; sin token válido no hay asociación |
+| Datos excesivos | No se conecta la casilla completa: sólo se bajan mensajes no leídos y se guardan los adjuntos, el remitente y el asunto |
+| Reproceso | Deduplicación por `Message-ID` dentro del buzón: el mismo correo leído dos veces no duplica documentos |
+
+Resultados del mensaje: `INGESTADO`, `PARCIAL`, `SIN_ADJUNTOS`, `REMITENTE_NO_AUTORIZADO`,
+`SIN_CORRELACION`, `RECHAZADO`, `ERROR`.
+Resultados del adjunto: `INGESTADO`, `EN_CUARENTENA`, `RECHAZADO`, `ERROR`.
+
+#### Salida auditada
+
+Todo correo que sale deja fila en `mensaje_correo_saliente` con `Message-ID` propio
+(`<uuid@nextdocs-ai>`), plantilla, destinatario y estado de entrega, y se audita como
+`CORREO_ENVIADO`. Plantillas: `SOLICITUD_DOCUMENTACION`, `ACUSE_RECIBO`,
+`AVISO_ADJUNTO_RECHAZADO`, `AVISO_REMITENTE_NO_AUTORIZADO`, `AVISO_SIN_CORRELACION`.
+
+El trabajador revisa los buzones `ACTIVO` cada 30 s. Tras `fallosParaPausar` fallos seguidos el
+buzón pasa a `ERROR` y deja de leerse hasta que alguien lo reactive. Eventos canónicos:
+`mail.received` y `mail.rejected`.
+
+---
+
 ### Observabilidad y costo por tenant
 
 El N3 pide **costo efectivo por documento correcto**, no sólo tokens de inferencia. El costo de
@@ -677,6 +753,8 @@ públicos; métricas no.
 | `excepciones.leer` / `excepciones.gestionar` | Exception Center |
 | `gobernanza.leer` / `gobernanza.administrar` | Auditoría, retención, proveedores, webhooks, monitor de integraciones y costo por tenant |
 | `tenant.administrar` | Usuarios, roles, cuentas de servicio |
+| `canales.leer` | Ver buzones, correlaciones y la bandeja de correo entrante y saliente |
+| `canales.administrar` | Crear buzones, lista blanca, correlaciones y forzar una lectura |
 
 Roles predefinidos al crear un tenant: `ADMINISTRADOR` (todos), `OPERADOR`, `REVISOR`, `AUDITOR`.
 
@@ -737,7 +815,9 @@ Eventos canónicos emitidos hoy: `document.received`, `document.extracted`, `doc
 
 ```bash
 docker compose up -d
-cd backend && ./mvnw spring-boot:run     # crea el tenant demo automáticamente
+cd backend                               # crea el tenant demo automáticamente
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 
 TOKEN=$(curl -s -X POST localhost:8090/api/v1/autenticacion/ingresar \
   -H 'Content-Type: application/json' \

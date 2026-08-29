@@ -54,6 +54,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Portal React 19 standalone: bandeja, visor, excepciones y plantillas | ✅ |
 | Panel de control: 11 KPI con fórmula visible y drill-down a su población | ✅ |
 | Archive & Export Center: ZIP con índice, manifiesto de hashes y TTL de 7 días | ✅ |
+| Channel Gateway: buzón dedicado por tenant, lista blanca y correlación por token | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -177,6 +178,19 @@ cuenta con tenant.administrar → 400, es vía de escalada
 cuenta revocada      → deja de autenticar de inmediato
 clave propia         → exige la actual y rechaza repetirla
 reset por admin      → auditado con el email de quien lo hizo
+
+Canal de email (buzón dedicado, contra GreenMail real)
+solicitud saliente   → llega a compras@proveedores.com con asunto
+                       "Necesitamos el remito [NDA-KAC66FKPSBEBYHNZ]" y
+                       Message-ID propio <uuid@nextdocs-ai>
+respuesta con token  → INGESTADO, documento EMAIL asociado a Caso CASO-VIVO-1,
+                       remitente compras@proveedores.com
+remitente fuera de   → REMITENTE_NO_AUTORIZADO, 0 adjuntos registrados:
+la lista blanca        ningún byte llegó al almacenamiento
+token inexistente    → SIN_CORRELACION, el documento igual entra pero sin sujeto
+                       y con excepción ASOCIACION/CORREO_SIN_CORRELACION
+adjunto .xlsx        → RECHAZADO con código EXTENSION_NO_PERMITIDA y sin documento
+mismo Message-ID     → segunda lectura devuelve 0 mensajes, no duplica
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
@@ -186,11 +200,13 @@ y las migraciones Flyway coinciden exactamente.
 
 ```bash
 docker compose up -d      # PostgreSQL, Redis y MinIO
-cd backend && ./mvnw verify
+cd backend
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn verify     # no hay JDK ni mvnw: Maven corre por contenedor
 ```
 
-- **57 tests unitarios** — no necesitan nada levantado
-- **104 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **73 tests unitarios** — no necesitan nada levantado
+- **152 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
@@ -271,7 +287,7 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 núcleo · … · V13 export center
+│           └── db/migration/        V1 núcleo · … · V14 canal de correo
 ├── backend/Dockerfile               imagen multi-stage (Maven 3.9 → JRE 21)
 ├── .github/workflows/verificar.yml  mvn verify + build de imagen
 ├── .env.example                     plantilla de variables; copiala a .env
@@ -330,7 +346,9 @@ Reglas invariantes:
 ```bash
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE
 docker compose up -d
-cd backend && ./mvnw spring-boot:run
+cd backend
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
 Sin `NEXTDOCS_GEMINI_CLAVE` el sistema arranca igual y usa el proveedor `SIMULADO`.
@@ -354,8 +372,8 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
 32 tareas en 4 fases, con criterios de aceptación y dependencias.
 
-La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 3 de 6: portal (15), panel de control (20)
-y Archive & Export Center (19).
+La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 4 de 6: portal (15), panel de control (20),
+Archive & Export Center (19) y Channel Gateway de email (17).
 Quien retome el proyecto arranca por la **tarea 16**.
 
 | Fase | Alcance | Tareas |

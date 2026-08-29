@@ -24,20 +24,17 @@ Los códigos tipo `QA1-03` o `SEC-04` que vas a ver en tests y commits salen del
 
 ```bash
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE si vas a usar Gemini
-docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102
-cd backend && ./mvnw spring-boot:run
+docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102 · GreenMail 3027/3145
+cd backend
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
 Arranca el tenant `demo` con `admin@nextdocs.ai` / `nextdocs123`.
 Swagger en `http://localhost:8090/swagger-ui.html`.
 
-**Sin JDK local** (fue el caso en la máquina donde se construyó):
-
-```bash
-docker run --rm --network host --env-file ../.env \
-  -v "$PWD":/app -v nextdocs-m2:/root/.m2 -w /app \
-  maven:3.9-eclipse-temurin-21 mvn spring-boot:run
-```
+En la máquina donde se construyó **no hay JDK ni `mvnw`**: Maven siempre corre por contenedor, y
+por eso los comandos de arriba son así. Agregale `--env-file ../.env` si necesitás las claves de IA.
 
 **Stack completo** (imagen + infra, sin JDK):
 
@@ -169,6 +166,25 @@ los roles predefinidos, como `V13__permiso_exportar_roles_predefinidos.sql`.
 
 Y el corolario: **nunca edites una migración ya aplicada** para meter el arreglo. Rompe el checksum
 en todo entorno que la haya corrido. Siempre una migración nueva.
+
+---
+
+### 11. El correo saliente no puede abrir su propia transacción
+
+`CorreoSalienteService.enviar` guarda una fila que apunta por FK a la correlación recién creada.
+Estaba anotado `@Transactional(REQUIRES_NEW)` para que el registro de auditoría sobreviviera a un
+rollback del llamador, y eso rompía el alta: la transacción de afuera todavía no había commiteado la
+correlación, así que el `INSERT` de adentro violaba `fk_mensaje_correo_saliente_correlacion`.
+
+Si una operación tiene que ver filas que su llamador todavía no commiteó, **no puede correr en una
+transacción nueva**. O se une a la del llamador, o se difiere con `afterCommit`.
+
+### 12. GreenMail no hace subdireccionamiento
+
+El canal acepta el token en `casos-acme+NDA-XXXX@dominio`, que es lo que hacen Gmail y Microsoft 365
+al entregar. GreenMail no: crea una casilla literal con el `+` adentro y el buzón real nunca recibe
+nada. En `CanalCorreoIT` eso se simula como pasa de verdad — cabecera `To` con la etiqueta, sobre
+SMTP apuntando al buzón base — con `Transport.send(mensaje, destinatarioReal)`.
 
 ---
 

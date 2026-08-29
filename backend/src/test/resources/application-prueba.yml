@@ -19,6 +19,13 @@ nextdocs:
     intentosMaximos: 3
   retencion:
     trabajadorActivo: false
+  correo:
+    activo: false
+    mensajesPorCiclo: 25
+    tiempoEsperaMilisegundos: 8000
+    fallosParaPausar: 3
+    diasVigenciaCorrelacion: 30
+    tamanoMaximoAdjuntoBytes: 67108864
   proveedor-ia:
     proveedorPorDefecto: ABBYY
     intentosMaximos: 3

@@ -89,7 +89,7 @@ umbral de exactitud y la comparación con la versión publicada.
 |---|---|
 | 15 | Portal frontend standalone (bandeja, visor, Template Studio, Exception Center, gobernanza, monitor) |
 | 16 | SSO y embed con Follow, CIMA y Valid360.ai por federación de identidad |
-| 17 | Channel Gateway de email dedicado por tenant |
+| ~~17~~ | ~~Channel Gateway de email dedicado por tenant~~ ✅ |
 | 18 | Canal de ingesta por WhatsApp |
 | ~~19~~ | ~~Archive & Export Center~~ ✅ |
 | ~~20~~ | ~~Dashboard ejecutivo y panel de control de procesos~~ ✅ |

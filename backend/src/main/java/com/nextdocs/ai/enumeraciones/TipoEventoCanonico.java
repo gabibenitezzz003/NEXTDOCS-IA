@@ -21,6 +21,8 @@ public enum TipoEventoCanonico {
 	EXPORTACION_POR_VENCER("export.expiring"),
 	EXPORTACION_VENCIDA("export.expired"),
 	ALMACENAMIENTO_EN_UMBRAL("storage.threshold"),
+	CORREO_RECIBIDO("mail.received"),
+	CORREO_RECHAZADO("mail.rejected"),
 	WEBHOOK_PRUEBA("webhook.test");
 
 	private final String clave;
