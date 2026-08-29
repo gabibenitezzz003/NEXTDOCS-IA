@@ -532,6 +532,51 @@ resultado (`APLICADA`, `OMITIDA_POR_RETENCION_LEGAL`, `OMITIDA_SIN_POLITICA`, `O
 `OMITIDA_YA_APLICADA`) con su motivo. A diferencia del ciclo, sí audita las omisiones, porque hubo
 alguien que preguntó.
 
+### KPI y panel de control
+
+El ANEXO_H exige dos cosas de todo indicador: **fórmula documentada** y **población auditable**.
+Las dos viajan en la respuesta, así que el portal nunca muestra un número que no pueda explicar.
+
+```
+GET  /api/v1/kpi/configuracion
+GET  /api/v1/kpi/resumen?desde&hasta                       permiso: documentos.leer
+GET  /api/v1/kpi/plantillas?desde&hasta                    permiso: documentos.leer
+GET  /api/v1/kpi/poblacion?indicador&desde&hasta           permiso: documentos.leer
+```
+
+Sin `desde`/`hasta` la ventana son los últimos 30 días. Un rango invertido se ordena solo en vez de
+devolver todo en cero. Cada indicador se compara contra el período inmediatamente anterior de la
+misma longitud; si ese período no tiene datos, `tendencia` es `SIN_COMPARACION` y `variacion` viaja
+nula: no se inventa un salto del 100 %.
+
+| Indicador | Fórmula |
+|---|---|
+| `documentosRecibidos` | documentos recibidos en el rango, **sin contar segmentos** de un PDF partido |
+| `documentosCerrados` | documentos con `cerrado` dentro del rango |
+| `automatizacion` | cerrados sin ninguna `RevisionDocumento` / cerrados |
+| `cumplimientoSla` | excepciones resueltas antes de `venceEn` / excepciones resueltas |
+| `tiempoCicloP50` · `tiempoCicloP90` | percentil de `cerrado - recibido`, en horas |
+| `excepcionesAbiertas` | excepciones en `ABIERTA` o `EN_CURSO` |
+| `excepcionesVencidas` | excepciones sin resolver con `venceEn` pasado |
+| `documentosPorVencer` | retención venciendo en los próximos 30 días |
+| `almacenamientoUtilizado` | bytes almacenados / cuota del tenant |
+| `entregaDeEventos` | entregas `ENTREGADO` / entregas intentadas |
+
+Los que traen `tienePoblacion: true` aceptan el drill-down por `/kpi/poblacion` (tope 200
+documentos); el resto responde 400 con el motivo. **El valor de la tarjeta es el tamaño exacto de su
+población** — conteo y listado comparten predicado, y `KpiIT` lo verifica.
+
+Una razón sin denominador (`0/0`) devuelve `valor: null` y el portal muestra "Sin datos": no se
+divide por cero ni se disfraza de 0 %.
+
+**Panel por plantilla.** `/kpi/plantillas` agrupa por plantilla porque los KPI por *proceso* del
+ANEXO_H dependen del Workflow, que es Etapa 2. Cada plantilla trae cuatro barras con semáforo
+(`VERDE` ≥ 0.85 · `AMBAR` ≥ 0.60 · `ROJO`) y una `salud` que toma la peor barra. `porEstado` del
+resumen es el **backlog actual del tenant**, sin recorte de fechas: no se suma con los indicadores
+del rango.
+
+---
+
 ### Observabilidad y costo por tenant
 
 El N3 pide **costo efectivo por documento correcto**, no sólo tokens de inferencia. El costo de

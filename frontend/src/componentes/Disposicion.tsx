@@ -4,6 +4,7 @@ import { useSesion } from "../contextos/ProveedorSesion";
 
 const NAVEGACION = [
   { a: "/resumen", texto: "Resumen", permiso: "documentos.leer" },
+  { a: "/panel", texto: "Panel de control", permiso: "documentos.leer" },
   { a: "/documentos", texto: "Documentos", permiso: "documentos.leer" },
   { a: "/excepciones", texto: "Excepciones", permiso: "excepciones.leer" },
   { a: "/plantillas", texto: "Plantillas", permiso: "plantillas.leer" },

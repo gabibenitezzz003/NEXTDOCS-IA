@@ -92,9 +92,13 @@ umbral de exactitud y la comparación con la versión publicada.
 | 17 | Channel Gateway de email dedicado por tenant |
 | 18 | Canal de ingesta por WhatsApp |
 | 19 | Archive & Export Center |
-| 20 | Dashboard ejecutivo y panel de control de procesos |
+| ~~20~~ | ~~Dashboard ejecutivo y panel de control de procesos~~ ✅ |
 
 **Dependencias:** 15 necesita 1 y 9 · 20 necesita 12 y 15
+
+La tarea 20 se construyó sobre lo que existe hoy: los KPI de proceso del ANEXO_H que dependen del
+Workflow (Etapa 2) todavía no tienen de dónde salir, así que la unidad de agrupación es la
+**plantilla**, no el proceso. Cuando entre la Fase 3 hay que sumar los KPI por etapa de workflow.
 
 Con la Fase 2 cerrada, el **MVP 1** del resumen ejecutivo está completo:
 portal propio, motor documental, SSO embebido, KPI y export básico.

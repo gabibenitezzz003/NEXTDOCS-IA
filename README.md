@@ -46,8 +46,13 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Administración de tenant, usuarios, roles propios y cuentas de servicio | ✅ |
 | API de webhooks: suscripciones, prueba firmada y monitor de entregas | ✅ |
 | Costo por tenant: efectivo por documento correcto y presupuesto opcional | ✅ |
-| Suite de QA automatizada: 57 unitarios + 104 de integración | ✅ |
+| Suite de QA automatizada: 73 unitarios + 127 de integración | ✅ |
 | Imagen Docker, `compose --profile app` y CI en GitHub Actions | ✅ |
+| Arranque bloqueado con configuración insegura bajo el perfil `produccion` | ✅ |
+| Límite de uso por principal, tenant e ingesta con Redis (429 + `Retry-After`) | ✅ |
+| Segundo proveedor de IA (`DEEPSEEK`) como respaldo del router | ✅ |
+| Portal React 19 standalone: bandeja, visor, excepciones y plantillas | ✅ |
+| Panel de control: 11 KPI con fórmula visible y drill-down a su población | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -274,7 +279,7 @@ nextdocs-ai/
 │   │   ├── api/                     cliente axios con refresco y manejo de errores
 │   │   ├── componentes/             marca, insignias, estados y disposicion
 │   │   ├── contextos/               sesion
-│   │   ├── paginas/                 resumen, bandeja, visor, excepciones, plantillas
+│   │   ├── paginas/                 resumen, panel de control, bandeja, visor, excepciones, plantillas
 │   │   └── tipos/                   contratos de la API
 │   └── package.json
 ├── docs/
@@ -348,7 +353,8 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
 32 tareas en 4 fases, con criterios de aceptación y dependencias.
 
-Quien retome el proyecto arranca por la **primera tarea sin marcar de la Fase 1**.
+La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 2 de 6: portal (15) y panel de control (20).
+Quien retome el proyecto arranca por la **tarea 16**.
 
 | Fase | Alcance | Tareas |
 |---|---|---|
@@ -357,14 +363,18 @@ Quien retome el proyecto arranca por la **primera tarea sin marcar de la Fase 1*
 | **3** | Etapa 2: Workflow Runtime y Process Studio | 21–27 |
 | **4** | Etapa 3: Sentinel, Simulation Lab y Process Copilot | 28–32 |
 
-Bloqueantes inmediatos para poder vender:
+Los tres bloqueantes de venta (plantillas, Gemini real, matching + `FollowConnector`) están
+cerrados, y el motor documental quedó endurecido para producción. Lo que falta del MVP 1 son los
+canales de entrada y la federación de identidad:
 
-1. ~~API de plantillas con ciclo de vida y rollback~~ — **terminado**
-2. ~~Adaptador Gemini real~~ — **terminado**, verificado contra Gemini de verdad
-3. ~~Matching + `FollowConnector`~~ — **terminado**
+1. SSO y embed con Follow, CIMA y Valid360.ai (tarea 16) — sólo existe el enum `OrigenIdentidad`
+2. Channel Gateway de email dedicado por tenant (17) — sin código
+3. Canal de ingesta por WhatsApp (18) — sin código
+4. Archive & Export Center (19) — hay `ExportadorCsv` y export de auditoría; falta ZIP, índice XLSX,
+   manifiesto de hashes y ciclo de vida
 
-Los tres bloqueantes de venta están cerrados. Lo que sigue es endurecer y completar:
-seguimiento del original físico, gobernanza y la suite de QA automatizada.
+Pendiente no-código: cargar datasets gold reales, ensayar una restauración, correr una prueba de
+carga y **rotar la API key de Gemini**.
 
 ---
 

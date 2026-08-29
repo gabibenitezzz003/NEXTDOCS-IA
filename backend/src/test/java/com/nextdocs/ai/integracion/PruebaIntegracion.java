@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.BeforeAll;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -31,7 +32,8 @@ public abstract class PruebaIntegracion {
 
 	private static final String S3_ENDPOINT = variable("NEXTDOCS_PRUEBA_S3_ENDPOINT", "http://localhost:9102");
 
-	static {
+	@BeforeAll
+	static void exigirInfraestructura() {
 		prepararBaseDeDatos();
 	}
 

@@ -140,6 +140,25 @@ se agrega cuando el valor existe, así que el parámetro nulo nunca llega a Post
 `INICIO_DE_LOS_TIEMPOS` / `FIN_DE_LOS_TIEMPOS` del `EventoAuditoriaRepository` son el otro camino, y
 siguen ahí para las consultas de rango simple.
 
+### 8. Un `Assumptions.abort()` en un bloque `static` no saltea, revienta
+
+`PruebaIntegracion` saltea la clase entera cuando no hay infraestructura. Eso **sólo funciona desde
+`@BeforeAll`**: si el chequeo vive en un bloque `static`, JUnit lo envuelve en
+`ExceptionInInitializerError` y cada test falla con `NoClassDefFoundError` en vez de saltarse. Nos
+dio 14 tests en rojo sin ninguna causa visible. Si agregás una precondición de entorno, ponela en un
+método de ciclo de vida, nunca en el inicializador estático.
+
+### 9. Un número del panel tiene que ser el tamaño exacto de su población
+
+Los KPI con drill-down (`documentosRecibidos`, `documentosCerrados`) usan **dos** consultas: una que
+cuenta y otra que lista. Si los predicados no son idénticos, la tarjeta dice 20 y el detalle muestra
+30 — que es exactamente el indicador sin explicación que el ANEXO_H prohíbe. Ya pasó: el conteo
+filtraba `documentoPadre IS NULL` y usaba `alta`, y el listado ni filtraba padres ni usaba `recibido`,
+así que un PDF partido en 10 sumaba 1 en la tarjeta y 11 en el detalle.
+
+`KpiIT.elConteoCoincideConSuPoblacion` fija la invariante e ingresa a propósito un lote segmentado.
+Si agregás un indicador a `KpiService.CON_POBLACION`, el test lo toma solo.
+
 ---
 
 ## 5. Dónde está cada cosa
@@ -162,9 +181,10 @@ La **Fase 1** cierra el producto vendible. Van 14 de 14.
 (5) · matching (6) · gobernanza (7) · retención (8) · administración (9) · webhooks (10) · original
 físico (11) · costo por tenant (12) · suite de QA (13) · imagen + CI (14)
 
-**Siguiente:** **Fase 2**, que empieza por el portal frontend (tarea 15).
+De la **Fase 2** van 2 de 6: portal frontend (15) y dashboard con panel de control (20).
 
-Después de eso arranca la **Fase 2**, que empieza por el portal frontend (tarea 15).
+**Siguiente:** SSO y embed (16), Channel Gateway de email (17), WhatsApp (18) y Archive & Export
+Center (19). Ninguna de las cuatro tiene código todavía.
 
 Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
 criterio: está escrito.

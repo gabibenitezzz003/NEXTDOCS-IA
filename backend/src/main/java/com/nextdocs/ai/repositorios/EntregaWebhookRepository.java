@@ -42,4 +42,15 @@ public interface EntregaWebhookRepository extends JpaRepository<EntregaWebhook, 
 
 	@Query("SELECT e.estado, COUNT(e) FROM EntregaWebhook e WHERE e.tenant.id = :tenantId GROUP BY e.estado")
 	List<Object[]> contarPorEstado(@Param("tenantId") String tenantId);
+
+	@Query("SELECT COUNT(e) FROM EntregaWebhook e WHERE e.tenant.id = :tenantId "
+			+ "AND e.alta >= :desde AND e.alta <= :hasta")
+	long contarIntentadas(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT COUNT(e) FROM EntregaWebhook e WHERE e.tenant.id = :tenantId "
+			+ "AND e.estado = com.nextdocs.ai.enumeraciones.EstadoEntregaWebhook.ENTREGADO "
+			+ "AND e.alta >= :desde AND e.alta <= :hasta")
+	long contarEntregadas(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
 }
