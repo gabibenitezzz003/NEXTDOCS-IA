@@ -5,6 +5,7 @@ import java.time.Instant;
 
 import com.nextdocs.ai.enumeraciones.AccionRetencion;
 import com.nextdocs.ai.enumeraciones.EstadoDocumento;
+import com.nextdocs.ai.enumeraciones.OrigenTipoDocumento;
 import com.nextdocs.ai.enumeraciones.OrigenDocumento;
 
 import jakarta.persistence.AttributeOverride;
@@ -98,6 +99,16 @@ public class Documento implements Serializable {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	private CuentaServicio ingresadoPorCuentaServicio;
+
+	@Enumerated(EnumType.STRING)
+	@Column(length = 16)
+	private OrigenTipoDocumento origenTipo;
+
+	@Column(precision = 5, scale = 4)
+	private java.math.BigDecimal confianzaTipo;
+
+	@Column(length = 400)
+	private String motivoTipo;
 
 	private Instant recibido;
 

@@ -16,6 +16,7 @@ import com.nextdocs.ai.entidades.Usuario;
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
 import com.nextdocs.ai.enumeraciones.EstadoDocumento;
 import com.nextdocs.ai.enumeraciones.OrigenDocumento;
+import com.nextdocs.ai.enumeraciones.OrigenTipoDocumento;
 import com.nextdocs.ai.enumeraciones.SeveridadHallazgo;
 import com.nextdocs.ai.enumeraciones.TipoExcepcion;
 import com.nextdocs.ai.enumeraciones.TipoEventoCanonico;
@@ -194,6 +195,7 @@ public class IngestaDocumentalService {
 						"No existe la plantilla " + datos.getCodigoPlantilla() + " en el tenant"));
 		documento.setPlantilla(plantilla);
 		documento.setVersionPlantilla(plantilla.getVersionPublicada());
+		documento.setOrigenTipo(OrigenTipoDocumento.DECLARADO);
 	}
 
 	private ReferenciaExterna construirReferencia(NuevoDocumentoReqModel datos) {

@@ -41,7 +41,7 @@ public final class InstruccionExtraccion {
 	}
 
 	public static String construir(SolicitudExtraccionModel solicitud, boolean describirFormaEsperada) {
-		StringBuilder texto = new StringBuilder(BASE);
+		StringBuilder texto = new StringBuilder(ContenidoNoConfiable.ADVERTENCIA).append('\n').append(BASE);
 		for (CampoEsquemaModel campo : solicitud.getCampos()) {
 			texto.append("- ").append(campo.getClave()).append(" (").append(campo.getEtiqueta()).append(")");
 			if (campo.getTipoDato() != null) {

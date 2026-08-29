@@ -39,8 +39,19 @@ public interface DocumentoRepository extends JpaRepository<Documento, String>, J
 			@Param("limite") Instant limite, Pageable paginado);
 
 	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.retencionAplicada IS NULL "
-			+ "AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora ORDER BY d.retenerHasta")
+			+ "AND d.retencionLegal = FALSE AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora "
+			+ "ORDER BY d.retenerHasta")
 	Page<Documento> listarVencidosPorRetencion(@Param("ahora") Instant ahora, Pageable paginado);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.retencionAplicada IS NULL "
+			+ "AND d.retencionLegal = TRUE AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora")
+	long contarVencidosConRetencionLegal(@Param("ahora") Instant ahora);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.retencionAplicada IS NULL AND d.retencionLegal = TRUE AND d.retenerHasta IS NOT NULL "
+			+ "AND d.retenerHasta < :ahora")
+	long contarVencidosConRetencionLegalPorTenant(@Param("tenantId") String tenantId,
+			@Param("ahora") Instant ahora);
 
 	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
 			+ "AND d.retencionAplicada IS NULL AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora "

@@ -16,9 +16,13 @@ import com.nextdocs.ai.clientes.DeepSeekCliente;
 import com.nextdocs.ai.entidades.ConfiguracionProveedor;
 import com.nextdocs.ai.enumeraciones.PresenciaCampo;
 import com.nextdocs.ai.enumeraciones.ProveedorDocumentalIa;
+import com.nextdocs.ai.enumeraciones.TipoDatoCampo;
 import com.nextdocs.ai.exceptions.ProveedorNoDisponibleException;
 import com.nextdocs.ai.interfaces.ProveedorDocumentalIaInt;
 import com.nextdocs.ai.modelos.CampoEsquemaModel;
+import com.nextdocs.ai.modelos.CampoSugeridoModel;
+import com.nextdocs.ai.modelos.ResultadoClasificacionModel;
+import com.nextdocs.ai.modelos.SolicitudClasificacionModel;
 import com.nextdocs.ai.modelos.ResultadoExtraccionModel;
 import com.nextdocs.ai.modelos.SolicitudExtraccionModel;
 import com.nextdocs.ai.modelos.ValorCanonicoModel;
@@ -92,6 +96,84 @@ public class ProveedorDeepSeekService implements ProveedorDocumentalIaInt {
 		completarValores(resultado, respuesta, solicitud, parametros);
 		resultado.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
 		return resultado;
+	}
+
+	@Override
+	public ResultadoClasificacionModel clasificar(SolicitudClasificacionModel solicitud) {
+		long inicio = System.currentTimeMillis();
+		Optional<ConfiguracionProveedor> configuracion = configuracionProveedorRepository
+				.buscarPorProveedor(solicitud.getTenantId(), ProveedorDocumentalIa.DEEPSEEK);
+		String modelo = configuracion.map(ConfiguracionProveedor::getModelo).filter(valor -> !valor.isBlank())
+				.orElse(MODELO_POR_DEFECTO);
+		String claveApi = resolverClave(configuracion);
+		JsonNode parametros = leerParametros(configuracion);
+		String texto = ExtractorTextoPdf.extraer(solicitud.getContenido(), solicitud.getTipoMime());
+		if (texto == null || texto.isBlank()) {
+			throw new ProveedorNoDisponibleException(
+					"DeepSeek clasifica sobre la capa de texto y este documento no la tiene. "
+							+ "Un escaneo necesita un proveedor con vision",
+					false);
+		}
+
+		ObjectNode raiz = objectMapper.createObjectNode();
+		raiz.put("model", modelo);
+		raiz.put("temperature", 0.0);
+		raiz.putObject("response_format").put("type", "json_object");
+		ArrayNode mensajes = raiz.putArray("messages");
+		mensajes.addObject().put("role", "system")
+				.put("content", InstruccionClasificacion.construir(solicitud, true));
+		mensajes.addObject().put("role", "user").put("content", "Contenido del documento:\n\n"
+				+ (texto.length() > CARACTERES_MAXIMOS ? texto.substring(0, CARACTERES_MAXIMOS) : texto));
+
+		JsonNode respuesta = deepSeekCliente.completar(urlBase(parametros), claveApi, raiz.toString());
+		JsonNode contenido = extraerContenido(respuesta);
+
+		ResultadoClasificacionModel resultado = new ResultadoClasificacionModel();
+		resultado.setProveedor(tipo());
+		resultado.setModelo(modelo);
+		resultado.setCodigoPropuesto(normalizarCodigo(
+				contenido.path(InstruccionClasificacion.CAMPO_TIPO).asText(null)));
+		resultado.setConfianza(recortarConfianza(
+				contenido.path(InstruccionClasificacion.CAMPO_CONFIANZA).asDouble(0)));
+		resultado.setMotivo(recortarTexto(contenido.path(InstruccionClasificacion.CAMPO_MOTIVO).asText(null), 400));
+		resultado.setNombreSugerido(
+				recortarTexto(contenido.path(InstruccionClasificacion.CAMPO_NOMBRE_SUGERIDO).asText(null), 128));
+		for (JsonNode nodo : contenido.path(InstruccionClasificacion.CAMPO_CAMPOS_SUGERIDOS)) {
+			String clave = nodo.path("clave").asText(null);
+			if (clave == null || clave.isBlank()) {
+				continue;
+			}
+			CampoSugeridoModel campo = new CampoSugeridoModel();
+			campo.setClave(recortarTexto(clave, 64));
+			campo.setEtiqueta(recortarTexto(nodo.path("etiqueta").asText(clave), 128));
+			campo.setTipoDato(TipoDatoCampo.desde(nodo.path("tipoDato").asText(null)));
+			campo.setRequerido(nodo.path("requerido").asBoolean(false));
+			campo.setEjemplo(recortarTexto(nodo.path("ejemplo").asText(null), 256));
+			resultado.getCamposSugeridos().add(campo);
+		}
+		JsonNode uso = respuesta.path("usage");
+		resultado.setTokensEntrada(uso.path("prompt_tokens").asLong(0));
+		resultado.setTokensSalida(uso.path("completion_tokens").asLong(0));
+		resultado.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
+		return resultado;
+	}
+
+	private String normalizarCodigo(String crudo) {
+		if (crudo == null || crudo.isBlank()) {
+			return ResultadoClasificacionModel.CODIGO_DESCONOCIDO;
+		}
+		return crudo.trim().toUpperCase(java.util.Locale.ROOT).replaceAll("[\\s-]+", "_");
+	}
+
+	private BigDecimal recortarConfianza(double crudo) {
+		return BigDecimal.valueOf(Math.max(0, Math.min(1, crudo))).setScale(4, RoundingMode.HALF_UP);
+	}
+
+	private String recortarTexto(String valor, int largo) {
+		if (valor == null || valor.isBlank()) {
+			return null;
+		}
+		return valor.length() <= largo ? valor : valor.substring(0, largo);
 	}
 
 	private String extraerTexto(SolicitudExtraccionModel solicitud) {
