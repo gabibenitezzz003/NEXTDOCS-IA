@@ -17,6 +17,7 @@ import {
   Anillo,
   AnilloApilado,
   BarraAnimada,
+  Columnas,
   Embudo,
   useContador,
   useVisible,
@@ -54,6 +55,13 @@ const ESTILO_SALUD: Record<SaludPlantilla, string> = {
   ATENCION: "bg-alerta-tenue text-alerta ring-alerta-borde",
   CRITICO: "bg-rojo-tenue text-rojo ring-rojo-borde",
   SIN_DATOS: "bg-lienzo text-tinta-suave ring-borde",
+};
+
+const TONO_SALUD: Record<SaludPlantilla, ClaveTono> = {
+  OK: "exito",
+  ATENCION: "alerta",
+  CRITICO: "rojo",
+  SIN_DATOS: "neutro",
 };
 
 const COLOR_ESTADO: Record<string, string> = {
@@ -154,7 +162,7 @@ export function Panel() {
             </div>
 
             <section className="mt-6 grid gap-5 lg:grid-cols-[1fr_1fr]">
-              <Tarjeta>
+              <Tarjeta indice={0}>
                 <CabeceraTarjeta
                   titulo="Embudo del ciclo documental"
                   descripcion="Backlog actual del tenant por etapa, sin recorte de fechas."
@@ -168,7 +176,7 @@ export function Panel() {
                 </div>
               </Tarjeta>
 
-              <Tarjeta>
+              <Tarjeta indice={1}>
                 <CabeceraTarjeta
                   titulo="Composicion del backlog"
                   descripcion="Cada estado sobre el total de documentos vivos."
@@ -180,8 +188,11 @@ export function Panel() {
                       {segmentos.map((segmento) => (
                         <li key={segmento.etiqueta} className="flex items-center gap-2.5 text-xs">
                           <span
-                            className="size-2.5 shrink-0 rounded-sm"
-                            style={{ background: segmento.color }}
+                            className="size-3 shrink-0 rounded-full ring-2 ring-white"
+                            style={{
+                              background: segmento.color,
+                              boxShadow: `0 2px 6px -1px ${segmento.color}99`,
+                            }}
                           />
                           <span className="flex-1 font-medium text-tinta-media">{segmento.etiqueta}</span>
                           <span className="cifra text-tinta">{segmento.valor.toLocaleString("es-AR")}</span>
@@ -229,11 +240,30 @@ export function Panel() {
                   }
                 />
               ) : (
-                <div className="space-y-3">
-                  {plantillas.data.map((plantilla, indice) => (
-                    <FilaPlantilla key={plantilla.codigo} plantilla={plantilla} indice={indice} />
-                  ))}
-                </div>
+                <>
+                  {plantillas.data.length > 1 ? (
+                    <Tarjeta className="mb-4" indice={0}>
+                      <CabeceraTarjeta
+                        titulo="Volumen por plantilla"
+                        descripcion="Dónde se concentra el trabajo en la ventana elegida."
+                      />
+                      <div className="mt-5">
+                        <Columnas
+                          barras={plantillas.data.map((plantilla) => ({
+                            etiqueta: plantilla.codigo,
+                            valor: plantilla.volumen,
+                            tono: TONO_SALUD[plantilla.salud],
+                          }))}
+                        />
+                      </div>
+                    </Tarjeta>
+                  ) : null}
+                  <div className="space-y-3">
+                    {plantillas.data.map((plantilla, indice) => (
+                      <FilaPlantilla key={plantilla.codigo} plantilla={plantilla} indice={indice} />
+                    ))}
+                  </div>
+                </>
               )}
             </section>
           </>
@@ -269,7 +299,7 @@ function TarjetaHeroe({
   return (
     <article
       ref={referencia}
-      className="superficie-oscura relative overflow-hidden rounded-2xl p-6 shadow-elevado"
+      className="subir superficie-oscura relieve-oscuro elevar relative overflow-hidden rounded-3xl p-6"
     >
       <div
         className="pointer-events-none absolute -right-16 -top-16 size-52 rounded-full opacity-40 blur-3xl"
@@ -286,7 +316,7 @@ function TarjetaHeroe({
           </Pastilla>
         </div>
 
-        <p className="cifra mt-3 text-[56px] leading-none text-white">
+        <p className="cifra mt-3 text-[60px] leading-none text-white drop-shadow-[0_4px_24px_rgba(108,56,255,0.55)]">
           {Math.round(animado).toLocaleString("es-AR")}
         </p>
 
@@ -297,12 +327,13 @@ function TarjetaHeroe({
           ].map((fila) => (
             <div key={fila.etiqueta} className="flex items-center gap-3">
               <span className="w-28 shrink-0 text-[11px] text-white/45">{fila.etiqueta}</span>
-              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
                 <div
                   className={`h-full rounded-full ${fila.fuerte ? "degradado-marca" : "bg-white/25"}`}
                   style={{
                     width: visible ? `${(fila.valor / maximo) * 100}%` : "0%",
-                    transition: "width 1s cubic-bezier(0.22, 1, 0.36, 1)",
+                    boxShadow: fila.fuerte ? "0 0 14px -2px rgba(108,56,255,0.8)" : undefined,
+                    transition: "width 1.1s cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 />
               </div>
@@ -335,14 +366,14 @@ function TarjetaAnillo({ indicador, tono }: { indicador: IndicadorKpi; tono: Cla
   const sinDatos = indicador.valor == null;
 
   return (
-    <Tarjeta className="@container/anillo flex flex-col">
+    <Tarjeta className="@container/anillo flex flex-col" indice={1} interactiva>
       <CabeceraTarjeta titulo={indicador.etiqueta} />
       <div className="mt-4 flex flex-1 flex-col items-center gap-4 @[300px]/anillo:flex-row @[300px]/anillo:gap-5">
         <Anillo
           porcentaje={indicador.valor ?? null}
           tono={sinDatos ? "neutro" : tono}
-          tamano={112}
-          grosor={10}
+          tamano={128}
+          grosor={13}
         />
         <div className="min-w-0 flex-1 text-center @[300px]/anillo:text-left">
           {indicador.denominador ? (
@@ -389,7 +420,7 @@ function TarjetaIndicador({
           </span>
         ) : null}
       </div>
-      <p className="cifra mt-2 text-[32px] leading-none text-tinta">
+      <p className="cifra cifra-degradada mt-2.5 text-[34px] leading-none">
         {esConteo ? Math.round(animado).toLocaleString("es-AR") : formatearValor(indicador)}
       </p>
       <div className="mt-2">
@@ -405,7 +436,7 @@ function TarjetaIndicador({
     return (
       <div
         ref={referencia as RefObject<HTMLDivElement>}
-        className="rounded-2xl border border-borde bg-white px-5 py-4 shadow-tarjeta"
+        className="subir relieve rounded-3xl border border-borde bg-white px-5 py-4"
       >
         {contenido}
       </div>
@@ -417,7 +448,7 @@ function TarjetaIndicador({
       ref={referencia as RefObject<HTMLButtonElement>}
       type="button"
       onClick={alAbrir}
-      className="rounded-2xl border border-borde bg-white px-5 py-4 text-left shadow-tarjeta transition duration-200 hover:-translate-y-0.5 hover:border-violeta-borde hover:shadow-elevado"
+      className="subir relieve elevar rounded-3xl border border-borde bg-white px-5 py-4 text-left hover:border-violeta-borde"
     >
       {contenido}
     </button>
@@ -456,7 +487,7 @@ function FilaPlantilla({ plantilla, indice }: { plantilla: KpiPlantilla; indice:
   const estados = Object.entries(plantilla.porEstado).sort((uno, otro) => otro[1] - uno[1]);
 
   return (
-    <article className="overflow-hidden rounded-2xl border border-borde bg-white shadow-tarjeta transition hover:border-borde-fuerte hover:shadow-elevado">
+    <article className="subir relieve elevar overflow-hidden rounded-3xl border border-borde bg-white hover:border-borde-fuerte">
       <div className="grid gap-5 p-5 xl:grid-cols-[minmax(210px,1fr)_2.5fr] xl:items-center">
         <div className="min-w-0">
           <div className="flex items-start justify-between gap-3">

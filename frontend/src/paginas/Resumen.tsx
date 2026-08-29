@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, CargandoTarjetas, ErrorPanel } from "../componentes/Estados";
 import { CabeceraTarjeta, Metrica, Pastilla, Tarjeta } from "../componentes/Interfaz";
+import { Columnas, useContador, useVisible } from "../componentes/Graficos";
+import type { ClaveTono } from "../componentes/Graficos";
 import { IconoDerecha, IconoReloj } from "../componentes/Iconos";
 import { InsigniaSeveridad } from "../componentes/Insignias";
 import { obtenerResumen } from "../api/documentos";
@@ -20,12 +22,21 @@ const DESTACADOS: { clave: string; etiqueta: string; tono: Tono }[] = [
   { clave: "RECHAZADO", etiqueta: "Rechazados", tono: "rojo" },
 ];
 
-const TONO_BARRA_ESTADO: Record<string, string> = {
-  APROBADO: "bg-exito",
-  CERRADO: "bg-tinta-suave",
-  OBSERVADO: "bg-alerta",
-  RECHAZADO: "bg-rojo",
-  DIVIDIDO: "bg-informacion",
+const AURA: Record<Tono, string> = {
+  neutro: "bg-tinta-tenue/10",
+  violeta: "bg-violeta/12",
+  exito: "bg-exito/12",
+  alerta: "bg-alerta/14",
+  rojo: "bg-rojo/10",
+  informacion: "bg-informacion/12",
+};
+
+const TONO_BARRA_ESTADO: Record<string, ClaveTono> = {
+  APROBADO: "exito",
+  CERRADO: "neutro",
+  OBSERVADO: "alerta",
+  RECHAZADO: "rojo",
+  DIVIDIDO: "informacion",
 };
 
 export function Resumen() {
@@ -67,26 +78,25 @@ export function Resumen() {
         ) : (
           <>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-              <article className="superficie-oscura relative overflow-hidden rounded-2xl px-5 py-4 shadow-elevado">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-white/45">
-                  Documentos totales
-                </p>
-                <p className="cifra mt-1.5 text-3xl leading-none text-white">
-                  {totalDocumentos.toLocaleString("es-AR")}
-                </p>
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-white/50">
-                  <IconoReloj tamano={13} />
-                  {enCola.toLocaleString("es-AR")} en cola de extraccion
-                </p>
-              </article>
+              <TarjetaTotal total={totalDocumentos} enCola={enCola} />
 
-              {DESTACADOS.map((destacado) => {
+              {DESTACADOS.map((destacado, indice) => {
                 const cantidad = Number(datos[destacado.clave] ?? 0);
                 return (
-                  <Tarjeta key={destacado.clave} padding="px-5 py-4">
+                  <Tarjeta
+                    key={destacado.clave}
+                    padding="px-5 py-4"
+                    indice={indice + 1}
+                    interactiva
+                    className="overflow-hidden"
+                  >
+                    <span
+                      aria-hidden
+                      className={`pointer-events-none absolute -right-8 -top-10 size-28 rounded-full blur-2xl ${AURA[destacado.tono]}`}
+                    />
                     <Metrica
                       etiqueta={destacado.etiqueta}
-                      valor={cantidad.toLocaleString("es-AR")}
+                      valor={<Contado valor={cantidad} />}
                       detalle={
                         <span className="flex items-center gap-2">
                           <Pastilla tono={destacado.tono}>{destacado.clave}</Pastilla>
@@ -99,44 +109,27 @@ export function Resumen() {
               })}
             </div>
 
-            <section className="mt-6 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
-              <Tarjeta>
+            <section className="mt-5 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
+              <Tarjeta indice={5}>
                 <CabeceraTarjeta
                   titulo="Distribucion por estado"
                   descripcion="Backlog actual del tenant, sin recorte de fechas."
                 />
-                <ul className="mt-5 space-y-3">
-                  {estados
-                    .sort((uno, otro) => Number(otro[1]) - Number(uno[1]))
-                    .map(([estado, cantidad]) => {
-                      const numero = Number(cantidad);
-                      const proporcion = totalDocumentos ? (numero / totalDocumentos) * 100 : 0;
-                      return (
-                        <li key={estado} className="flex items-center gap-3">
-                          <span className="w-24 shrink-0 text-xs font-medium text-tinta-media">
-                            {estado}
-                          </span>
-                          <div className="h-2 flex-1 overflow-hidden rounded-full bg-lienzo ring-1 ring-inset ring-borde">
-                            <div
-                              className={`h-full rounded-full transition-[width] duration-700 ${
-                                TONO_BARRA_ESTADO[estado] ?? "bg-violeta"
-                              }`}
-                              style={{ width: `${numero ? Math.max(proporcion, 1.5) : 0}%` }}
-                            />
-                          </div>
-                          <span className="w-12 shrink-0 text-right text-xs font-semibold tabular-nums text-tinta">
-                            {numero.toLocaleString("es-AR")}
-                          </span>
-                          <span className="w-11 shrink-0 text-right text-xs tabular-nums text-tinta-tenue">
-                            {Math.round(proporcion)}%
-                          </span>
-                        </li>
-                      );
-                    })}
-                </ul>
+                <div className="mt-6">
+                  <Columnas
+                    barras={estados
+                      .sort((uno, otro) => Number(otro[1]) - Number(uno[1]))
+                      .map(([estado, cantidad]) => ({
+                        etiqueta: estado,
+                        valor: Number(cantidad),
+                        tono: TONO_BARRA_ESTADO[estado] ?? "violeta",
+                      }))}
+                    alto={168}
+                  />
+                </div>
               </Tarjeta>
 
-              <Tarjeta>
+              <Tarjeta indice={6}>
                 <CabeceraTarjeta
                   titulo="Excepciones abiertas"
                   descripcion="Lo que esta esperando una decision humana."
@@ -169,7 +162,7 @@ export function Resumen() {
                     {excepciones.data.content.map((excepcion) => (
                       <li
                         key={excepcion.id}
-                        className="rounded-xl border border-borde px-3.5 py-3 transition hover:border-borde-fuerte hover:bg-lienzo/60"
+                        className="rounded-2xl border border-borde px-3.5 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-borde-fuerte hover:bg-lienzo/60 hover:shadow-tarjeta"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <InsigniaSeveridad severidad={excepcion.severidad} />
@@ -188,6 +181,39 @@ export function Resumen() {
         )}
       </Contenido>
     </>
+  );
+}
+
+function Contado({ valor }: { valor: number }) {
+  const { referencia, visible } = useVisible<HTMLSpanElement>();
+  const animado = useContador(visible ? valor : 0, 900);
+  return <span ref={referencia}>{Math.round(animado).toLocaleString("es-AR")}</span>;
+}
+
+function TarjetaTotal({ total, enCola }: { total: number; enCola: number }) {
+  const { referencia, visible } = useVisible<HTMLElement>();
+  const animado = useContador(visible ? total : 0, 1100);
+
+  return (
+    <article
+      ref={referencia}
+      className="subir superficie-oscura elevar relieve-oscuro relative overflow-hidden rounded-3xl px-5 py-4"
+    >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-violeta/35 blur-3xl"
+      />
+      <p className="relative text-[11px] font-semibold uppercase tracking-wider text-white/50">
+        Documentos totales
+      </p>
+      <p className="cifra relative mt-2 text-[34px] leading-none text-white">
+        {Math.round(animado).toLocaleString("es-AR")}
+      </p>
+      <p className="relative mt-2.5 flex items-center gap-1.5 text-xs text-white/55">
+        <IconoReloj tamano={13} />
+        {enCola.toLocaleString("es-AR")} en cola de extraccion
+      </p>
+    </article>
   );
 }
 

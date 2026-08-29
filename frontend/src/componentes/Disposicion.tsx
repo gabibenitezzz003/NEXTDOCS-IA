@@ -66,7 +66,7 @@ export function Disposicion() {
 
   return (
     <div className="flex h-full bg-lienzo">
-      <aside className="superficie-oscura flex w-[248px] shrink-0 flex-col">
+      <aside className="superficie-oscura relative z-10 flex w-[248px] shrink-0 flex-col shadow-[8px_0_32px_-12px_rgba(16,18,33,0.28)]">
         <div className="px-5 py-5">
           <Logotipo claro />
         </div>
@@ -85,10 +85,10 @@ export function Disposicion() {
                       key={entrada.a}
                       to={entrada.a}
                       className={({ isActive }) =>
-                        `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                        `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-[background-color,color,box-shadow,transform] duration-200 ${
                           isActive
-                            ? "bg-violeta font-semibold text-white shadow-violeta"
-                            : "font-medium text-white/60 hover:bg-white/[0.07] hover:text-white"
+                            ? "degradado-marca font-semibold text-white shadow-violeta"
+                            : "font-medium text-white/60 hover:translate-x-0.5 hover:bg-white/[0.07] hover:text-white"
                         }`
                       }
                     >
@@ -185,7 +185,7 @@ function MenuUsuario({
           abierto ? "bg-white/[0.08]" : "hover:bg-white/[0.06]"
         }`}
       >
-        <span className="degradado-marca flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
+        <span className="degradado-marca flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-violeta">
           {iniciales}
         </span>
         <span className="min-w-0 flex-1">
@@ -210,7 +210,7 @@ export function Encabezado({
   const seccion = TITULOS[ubicacion.pathname];
 
   return (
-    <header className="sticky top-0 z-20 border-b border-borde bg-white/85 px-8 py-5 backdrop-blur-xl">
+    <header className="sticky top-0 z-20 border-b border-borde bg-white/75 px-8 py-5 shadow-[0_1px_0_rgba(255,255,255,0.8),0_8px_24px_-16px_rgba(16,18,33,0.35)] backdrop-blur-xl">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           {seccion && seccion !== titulo ? (
@@ -218,7 +218,7 @@ export function Encabezado({
               {seccion}
             </p>
           ) : null}
-          <h1 className="font-titulo text-[26px] leading-tight text-tinta">{titulo}</h1>
+          <h1 className="font-titulo text-[28px] leading-tight text-tinta">{titulo}</h1>
           {descripcion ? (
             <p className="mt-1 max-w-2xl text-sm text-tinta-suave">{descripcion}</p>
           ) : null}

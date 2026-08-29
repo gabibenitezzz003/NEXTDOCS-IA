@@ -37,7 +37,7 @@ export function useContador(objetivo: number, duracion = 900) {
   return valor;
 }
 
-export function useVisible<T extends HTMLElement>() {
+export function useVisible<T extends Element>() {
   const referencia = useRef<T>(null);
   const [visible, setVisible] = useState(false);
 
@@ -73,11 +73,21 @@ const PALETA: Record<string, [string, string]> = {
 
 export type ClaveTono = keyof typeof PALETA;
 
+const PISTA = "#E9ECF3";
+
+function Resplandor({ id, color, fuerza = 3 }: { id: string; color: string; fuerza?: number }) {
+  return (
+    <filter id={id} x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="1" stdDeviation={fuerza} floodColor={color} floodOpacity="0.45" />
+    </filter>
+  );
+}
+
 export function Anillo({
   porcentaje,
   tono = "violeta",
-  tamano = 132,
-  grosor = 12,
+  tamano = 148,
+  grosor = 14,
   centro,
   subtitulo,
 }: {
@@ -88,10 +98,10 @@ export function Anillo({
   centro?: ReactNode;
   subtitulo?: string;
 }) {
-  const id = useId();
+  const id = useId().replace(/:/g, "");
   const { referencia, visible } = useVisible<HTMLDivElement>();
   const objetivo = porcentaje == null ? 0 : Math.min(Math.max(porcentaje, 0), 100);
-  const animado = useContador(visible ? objetivo : 0, 1100);
+  const animado = useContador(visible ? objetivo : 0, 1200);
 
   const radio = (tamano - grosor) / 2;
   const circunferencia = 2 * Math.PI * radio;
@@ -99,19 +109,30 @@ export function Anillo({
 
   return (
     <div ref={referencia} className="relative inline-flex items-center justify-center">
-      <svg width={tamano} height={tamano} className="-rotate-90">
+      <span
+        aria-hidden
+        className="absolute rounded-full blur-2xl transition-opacity duration-1000"
+        style={{
+          width: tamano * 0.72,
+          height: tamano * 0.72,
+          background: claro,
+          opacity: visible ? 0.16 : 0,
+        }}
+      />
+      <svg width={tamano} height={tamano} className="-rotate-90 overflow-visible">
         <defs>
           <linearGradient id={`anillo-${id}`} x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor={claro} />
             <stop offset="100%" stopColor={oscuro} />
           </linearGradient>
+          <Resplandor id={`luz-${id}`} color={oscuro} fuerza={3.5} />
         </defs>
         <circle
           cx={tamano / 2}
           cy={tamano / 2}
           r={radio}
           fill="none"
-          stroke="#EDEFF4"
+          stroke={PISTA}
           strokeWidth={grosor}
         />
         <circle
@@ -122,18 +143,19 @@ export function Anillo({
           stroke={`url(#anillo-${id})`}
           strokeWidth={grosor}
           strokeLinecap="round"
+          filter={`url(#luz-${id})`}
           strokeDasharray={circunferencia}
           strokeDashoffset={circunferencia - (animado / 100) * circunferencia}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         {centro ?? (
-          <span className="cifra text-2xl text-tinta">
+          <span className="cifra cifra-degradada text-[28px]">
             {porcentaje == null ? "—" : `${Math.round(animado)}%`}
           </span>
         )}
         {subtitulo ? (
-          <span className="mt-0.5 text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">
+          <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">
             {subtitulo}
           </span>
         ) : null}
@@ -145,7 +167,7 @@ export function Anillo({
 export function BarraAnimada({
   porcentaje,
   tono = "violeta",
-  alto = 8,
+  alto = 10,
   retraso = 0,
 }: {
   porcentaje?: number | null;
@@ -160,83 +182,59 @@ export function BarraAnimada({
   return (
     <div
       ref={referencia}
-      className="w-full overflow-hidden rounded-full bg-[#EDEFF4]"
-      style={{ height: alto }}
+      className="w-full overflow-hidden rounded-full shadow-hundido"
+      style={{ height: alto, background: PISTA }}
     >
       <div
-        className="h-full rounded-full"
+        className="relative h-full overflow-hidden rounded-full destello"
         style={{
           width: visible ? `${objetivo}%` : "0%",
           backgroundImage: `linear-gradient(90deg, ${claro}, ${oscuro})`,
-          transition: `width 1s cubic-bezier(0.22, 1, 0.36, 1) ${retraso}ms`,
+          boxShadow: `inset 0 1px 0 rgba(255,255,255,0.4), 0 1px 6px -1px ${oscuro}80`,
+          transition: `width 1.1s cubic-bezier(0.22, 1, 0.36, 1) ${retraso}ms`,
         }}
       />
     </div>
   );
 }
 
-export function Chispa({
-  valores,
-  tono = "violeta",
-  ancho = 132,
-  alto = 40,
+export function Columnas({
+  barras,
+  alto = 120,
 }: {
-  valores: number[];
-  tono?: ClaveTono;
-  ancho?: number;
+  barras: { etiqueta: string; valor: number; tono?: ClaveTono }[];
   alto?: number;
 }) {
-  const id = useId();
-  const [claro, oscuro] = PALETA[tono];
-
-  if (valores.length < 2) {
-    return <div style={{ width: ancho, height: alto }} />;
-  }
-
-  const maximo = Math.max(...valores);
-  const minimo = Math.min(...valores);
-  const rango = maximo - minimo || 1;
-  const margen = 3;
-
-  const puntos = valores.map((valor, indice) => {
-    const x = (indice / (valores.length - 1)) * ancho;
-    const y = alto - margen - ((valor - minimo) / rango) * (alto - margen * 2);
-    return [x, y] as const;
-  });
-
-  const linea = puntos
-    .map(([x, y], indice) => {
-      if (indice === 0) {
-        return `M${x.toFixed(1)},${y.toFixed(1)}`;
-      }
-      const [xPrevio, yPrevio] = puntos[indice - 1];
-      const control = (x - xPrevio) / 2;
-      return `C${(xPrevio + control).toFixed(1)},${yPrevio.toFixed(1)} ${(x - control).toFixed(1)},${y.toFixed(1)} ${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(" ");
-
-  const area = `${linea} L${ancho},${alto} L0,${alto} Z`;
-  const [ultimoX, ultimoY] = puntos[puntos.length - 1];
+  const { referencia, visible } = useVisible<HTMLDivElement>();
+  const maximo = Math.max(...barras.map((barra) => barra.valor), 1);
 
   return (
-    <svg width={ancho} height={alto} className="overflow-visible">
-      <defs>
-        <linearGradient id={`chispa-${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={claro} stopOpacity="0.28" />
-          <stop offset="100%" stopColor={claro} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#chispa-${id})`} />
-      <path
-        d={linea}
-        fill="none"
-        stroke={oscuro}
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx={ultimoX} cy={ultimoY} r="3.2" fill={oscuro} stroke="#fff" strokeWidth="1.6" />
-    </svg>
+    <div ref={referencia} className="flex items-end gap-2" style={{ height: alto }}>
+      {barras.map((barra, indice) => {
+        const [claro, oscuro] = PALETA[barra.tono ?? "violeta"];
+        const proporcion = Math.max((barra.valor / maximo) * 100, barra.valor > 0 ? 4 : 0);
+        return (
+          <div key={barra.etiqueta} className="group flex h-full flex-1 flex-col justify-end gap-1.5">
+            <span className="cifra text-center text-[11px] text-tinta-suave tabular-nums">
+              {barra.valor.toLocaleString("es-AR")}
+            </span>
+            <div
+              className="w-full rounded-t-lg rounded-b-sm transition-transform duration-300 group-hover:scale-y-[1.03]"
+              style={{
+                height: visible ? `${proporcion}%` : "0%",
+                transformOrigin: "bottom",
+                backgroundImage: `linear-gradient(180deg, ${claro}, ${oscuro})`,
+                boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 12px -4px ${oscuro}99`,
+                transition: `height 0.95s cubic-bezier(0.22, 1, 0.36, 1) ${indice * 60}ms`,
+              }}
+            />
+            <span className="truncate text-center text-[10px] uppercase tracking-wider text-tinta-tenue">
+              {barra.etiqueta}
+            </span>
+          </div>
+        );
+      })}
+    </div>
   );
 }
 
@@ -248,7 +246,7 @@ export function Embudo({
   const maximo = Math.max(...etapas.map((etapa) => etapa.valor), 1);
 
   return (
-    <ul className="space-y-3">
+    <ul className="space-y-3.5">
       {etapas.map((etapa, indice) => (
         <li key={etapa.etiqueta}>
           <div className="mb-1.5 flex items-baseline justify-between gap-2">
@@ -258,7 +256,7 @@ export function Embudo({
           <BarraAnimada
             porcentaje={(etapa.valor / maximo) * 100}
             tono={etapa.tono ?? "violeta"}
-            retraso={indice * 70}
+            retraso={indice * 80}
           />
         </li>
       ))}
@@ -268,8 +266,8 @@ export function Embudo({
 
 export function AnilloApilado({
   segmentos,
-  tamano = 168,
-  grosor = 16,
+  tamano = 184,
+  grosor = 20,
   total,
   etiquetaTotal = "documentos",
 }: {
@@ -279,55 +277,69 @@ export function AnilloApilado({
   total: number;
   etiquetaTotal?: string;
 }) {
+  const id = useId().replace(/:/g, "");
   const { referencia, visible } = useVisible<HTMLDivElement>();
-  const animado = useContador(visible ? total : 0, 1000);
+  const animado = useContador(visible ? total : 0, 1100);
   const radio = (tamano - grosor) / 2;
   const circunferencia = 2 * Math.PI * radio;
   const suma = segmentos.reduce((acumulado, segmento) => acumulado + segmento.valor, 0) || 1;
+  const separacion = segmentos.filter((segmento) => segmento.valor > 0).length > 1 ? 2.5 : 0;
 
   let acumulado = 0;
 
   return (
     <div ref={referencia} className="relative inline-flex items-center justify-center">
-      <svg width={tamano} height={tamano} className="-rotate-90">
+      <span
+        aria-hidden
+        className="absolute rounded-full bg-violeta blur-3xl transition-opacity duration-1000"
+        style={{ width: tamano * 0.6, height: tamano * 0.6, opacity: visible ? 0.12 : 0 }}
+      />
+      <svg width={tamano} height={tamano} className="-rotate-90 overflow-visible">
+        <defs>
+          <filter id={`sombra-${id}`} x="-30%" y="-30%" width="160%" height="160%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" floodColor="#1C1444" floodOpacity="0.22" />
+          </filter>
+        </defs>
         <circle
           cx={tamano / 2}
           cy={tamano / 2}
           r={radio}
           fill="none"
-          stroke="#EDEFF4"
+          stroke={PISTA}
           strokeWidth={grosor}
         />
-        {segmentos.map((segmento) => {
-          const proporcion = segmento.valor / suma;
-          const largo = proporcion * circunferencia;
-          const desplazamiento = acumulado * circunferencia;
-          acumulado += proporcion;
-          if (!segmento.valor) {
-            return null;
-          }
-          return (
-            <circle
-              key={segmento.etiqueta}
-              cx={tamano / 2}
-              cy={tamano / 2}
-              r={radio}
-              fill="none"
-              stroke={segmento.color}
-              strokeWidth={grosor}
-              strokeLinecap="butt"
-              strokeDasharray={`${visible ? largo : 0} ${circunferencia}`}
-              strokeDashoffset={-desplazamiento}
-              style={{ transition: "stroke-dasharray 1s cubic-bezier(0.22, 1, 0.36, 1)" }}
-            />
-          );
-        })}
+        <g filter={`url(#sombra-${id})`}>
+          {segmentos.map((segmento) => {
+            const proporcion = segmento.valor / suma;
+            const largo = Math.max(proporcion * circunferencia - separacion, 0);
+            const desplazamiento = acumulado * circunferencia;
+            acumulado += proporcion;
+            if (!segmento.valor) {
+              return null;
+            }
+            return (
+              <circle
+                key={segmento.etiqueta}
+                cx={tamano / 2}
+                cy={tamano / 2}
+                r={radio}
+                fill="none"
+                stroke={segmento.color}
+                strokeWidth={grosor}
+                strokeLinecap="round"
+                strokeDasharray={`${visible ? largo : 0} ${circunferencia}`}
+                strokeDashoffset={-desplazamiento}
+                style={{ transition: "stroke-dasharray 1.1s cubic-bezier(0.22, 1, 0.36, 1)" }}
+              />
+            );
+          })}
+        </g>
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="cifra text-[28px] leading-none text-tinta">
+        <span className="cifra cifra-degradada text-[32px] leading-none">
           {Math.round(animado).toLocaleString("es-AR")}
         </span>
-        <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">
+        <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">
           {etiquetaTotal}
         </span>
       </div>

@@ -52,6 +52,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Límite de uso por principal, tenant e ingesta con Redis (429 + `Retry-After`) | ✅ |
 | Segundo proveedor de IA (`DEEPSEEK`) como respaldo del router | ✅ |
 | Portal React 19 standalone: bandeja, visor, excepciones y plantillas | ✅ |
+| Sistema visual con profundidad y movimiento sobre la identidad V2 de marca | ✅ |
 | Panel de control: 11 KPI con fórmula visible y drill-down a su población | ✅ |
 | Archive & Export Center: ZIP con índice, manifiesto de hashes y TTL de 7 días | ✅ |
 | SSO federado y embed: token exchange OIDC, JIT por política y código de un solo uso | ✅ |

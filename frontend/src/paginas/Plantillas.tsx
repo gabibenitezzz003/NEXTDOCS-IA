@@ -31,7 +31,7 @@ export function Plantillas() {
             {consulta.data.map((plantilla) => (
               <article
                 key={plantilla.id}
-                className="group relative overflow-hidden rounded-2xl border border-borde bg-white p-5 shadow-tarjeta transition duration-200 hover:-translate-y-0.5 hover:border-violeta-borde hover:shadow-elevado"
+                className="group relative overflow-hidden rounded-3xl border border-borde bg-white p-5 relieve elevar hover:border-violeta-borde"
               >
                 <span className="absolute inset-x-0 top-0 h-0.5 scale-x-0 bg-gradient-to-r from-violeta to-rojo transition-transform duration-300 group-hover:scale-x-100" />
 

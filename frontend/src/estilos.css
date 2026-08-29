@@ -41,11 +41,23 @@
   --font-titulo: "Space Grotesk", system-ui, sans-serif;
   --font-cuerpo: "Inter", system-ui, sans-serif;
 
-  --shadow-plano: 0 1px 2px rgba(15, 17, 22, 0.04);
-  --shadow-tarjeta: 0 1px 2px rgba(15, 17, 22, 0.04), 0 6px 16px -6px rgba(15, 17, 22, 0.08);
-  --shadow-elevado: 0 2px 4px rgba(15, 17, 22, 0.04), 0 12px 32px -8px rgba(15, 17, 22, 0.14);
-  --shadow-flotante: 0 8px 16px rgba(15, 17, 22, 0.06), 0 24px 56px -12px rgba(15, 17, 22, 0.22);
-  --shadow-violeta: 0 4px 14px -3px rgba(108, 56, 255, 0.45);
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+  --radius-3xl: 24px;
+
+  --shadow-plano: 0 1px 2px rgba(16, 18, 33, 0.05);
+  --shadow-tarjeta:
+    0 1px 1px rgba(16, 18, 33, 0.04), 0 4px 8px -2px rgba(16, 18, 33, 0.05),
+    0 14px 28px -12px rgba(28, 20, 68, 0.12);
+  --shadow-elevado:
+    0 1px 1px rgba(16, 18, 33, 0.05), 0 8px 16px -4px rgba(16, 18, 33, 0.07),
+    0 26px 52px -16px rgba(28, 20, 68, 0.2);
+  --shadow-flotante:
+    0 2px 4px rgba(16, 18, 33, 0.06), 0 16px 32px -8px rgba(16, 18, 33, 0.12),
+    0 48px 88px -24px rgba(28, 20, 68, 0.32);
+  --shadow-violeta: 0 1px 1px rgba(60, 20, 160, 0.24), 0 8px 20px -6px rgba(108, 56, 255, 0.55);
+  --shadow-violeta-alto: 0 2px 3px rgba(60, 20, 160, 0.3), 0 14px 30px -8px rgba(108, 56, 255, 0.62);
+  --shadow-hundido: inset 0 1px 3px rgba(16, 18, 33, 0.1), inset 0 0 0 1px rgba(16, 18, 33, 0.03);
 }
 
 @layer base {
@@ -60,7 +72,12 @@
     font-family: var(--font-cuerpo);
     font-size: 14px;
     color: var(--color-tinta);
-    background: var(--color-lienzo);
+    background-color: var(--color-lienzo);
+    background-image:
+      radial-gradient(60rem 40rem at 12% -8%, rgba(108, 56, 255, 0.07) 0%, transparent 62%),
+      radial-gradient(48rem 36rem at 105% 8%, rgba(255, 30, 30, 0.05) 0%, transparent 58%),
+      radial-gradient(56rem 44rem at 50% 118%, rgba(244, 233, 222, 0.55) 0%, transparent 60%);
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -98,11 +115,52 @@
     color: transparent;
   }
 
+  .cifra-degradada {
+    background-image: linear-gradient(150deg, var(--color-tinta) 0%, var(--color-violeta) 130%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
   .superficie-oscura {
     background:
-      radial-gradient(120% 80% at 0% 0%, rgba(108, 56, 255, 0.16) 0%, transparent 58%),
-      radial-gradient(90% 70% at 100% 100%, rgba(255, 30, 30, 0.09) 0%, transparent 55%),
+      radial-gradient(120% 80% at 0% 0%, rgba(108, 56, 255, 0.22) 0%, transparent 58%),
+      radial-gradient(90% 70% at 100% 100%, rgba(255, 30, 30, 0.12) 0%, transparent 55%),
       var(--color-grafito);
+  }
+
+  /* Filo de luz arriba y sombra apoyada abajo: da volumen sin despegar la tarjeta del papel. */
+  .relieve {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      var(--shadow-tarjeta);
+  }
+
+  .relieve-alto {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      var(--shadow-elevado);
+  }
+
+  .relieve-oscuro {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.14),
+      var(--shadow-elevado);
+  }
+
+  .elevar {
+    transition:
+      transform 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 0.2s ease;
+    will-change: transform;
+  }
+
+  .elevar:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      var(--shadow-elevado);
   }
 
   .cifra {
@@ -172,6 +230,23 @@
   animation: aparecer 0.24s ease-out both;
 }
 
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* La cascada la maneja --retraso, que cada tarjeta fija por su índice. */
+.subir {
+  animation: subir 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--retraso, 0ms);
+}
+
 @keyframes entrar-lateral {
   from {
     transform: translateX(16px);
@@ -184,7 +259,7 @@
 }
 
 .entrar-lateral {
-  animation: entrar-lateral 0.22s cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation: entrar-lateral 0.3s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
 @keyframes velo {
@@ -200,6 +275,46 @@
   animation: velo 0.18s ease-out both;
 }
 
+@keyframes latido {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 currentColor;
+    opacity: 1;
+  }
+  70% {
+    box-shadow: 0 0 0 6px transparent;
+    opacity: 0.85;
+  }
+}
+
+.latido {
+  animation: latido 2.4s cubic-bezier(0.66, 0, 0, 1) infinite;
+}
+
+@keyframes destello {
+  0% {
+    transform: translateX(-120%);
+  }
+  60%,
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+/* Reflejo que cruza una barra al terminar de crecer. */
+.destello::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.55) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: destello 2.8s ease-in-out 1.1s infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -207,5 +322,9 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .elevar:hover {
+    transform: none;
   }
 }

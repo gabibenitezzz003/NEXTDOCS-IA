@@ -334,7 +334,7 @@ function PanelCampos({
     );
   }
   return (
-    <div className="overflow-hidden rounded-2xl border border-borde bg-white shadow-tarjeta">
+    <div className="overflow-hidden rounded-3xl border border-borde bg-white relieve">
       <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-borde bg-lienzo/70">

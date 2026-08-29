@@ -95,7 +95,7 @@ export function Excepciones() {
               {excepciones.map((excepcion) => (
                 <li
                   key={excepcion.id}
-                  className={`overflow-hidden rounded-2xl border bg-white shadow-tarjeta transition hover:shadow-elevado ${
+                  className={`overflow-hidden rounded-3xl border bg-white relieve elevar ${
                     excepcion.vencida ? "border-rojo-borde" : "border-borde hover:border-borde-fuerte"
                   }`}
                 >

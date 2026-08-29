@@ -1,4 +1,10 @@
-import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from "react";
+import type {
+  ButtonHTMLAttributes,
+  CSSProperties,
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+} from "react";
 import { useEffect } from "react";
 import { IconoCerrar } from "./Iconos";
 
@@ -35,14 +41,22 @@ export function Tarjeta({
   children,
   className = "",
   padding = "p-5",
+  indice,
+  interactiva = false,
 }: {
   children: ReactNode;
   className?: string;
   padding?: string;
+  indice?: number;
+  interactiva?: boolean;
 }) {
+  const cascada = indice == null ? undefined : ({ "--retraso": `${indice * 55}ms` } as CSSProperties);
   return (
     <section
-      className={`rounded-2xl border border-borde bg-white shadow-tarjeta ${padding} ${className}`}
+      style={cascada}
+      className={`relative rounded-3xl border border-borde bg-white relieve ${
+        indice == null ? "" : "subir"
+      } ${interactiva ? "elevar hover:border-borde-fuerte" : ""} ${padding} ${className}`}
     >
       {children}
     </section>
@@ -85,7 +99,7 @@ export function Pastilla({
     : `ring-1 ring-inset ${TONO_SUAVE[tono]}`;
   return (
     <span
-      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide uppercase ${estilo} ${className}`}
+      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase ${estilo} ${className}`}
     >
       {children}
     </span>
@@ -96,9 +110,9 @@ type VarianteBoton = "primario" | "secundario" | "fantasma" | "peligro";
 
 const VARIANTE_BOTON: Record<VarianteBoton, string> = {
   primario:
-    "bg-violeta text-white shadow-violeta hover:bg-violeta-alto active:bg-violeta-alto disabled:bg-violeta/45 disabled:shadow-none",
+    "bg-violeta text-white shadow-violeta hover:bg-violeta-alto hover:shadow-violeta-alto hover:-translate-y-px active:translate-y-0 active:bg-violeta-alto disabled:bg-violeta/45 disabled:shadow-none disabled:hover:translate-y-0",
   secundario:
-    "border border-borde bg-white text-tinta shadow-plano hover:border-borde-fuerte hover:bg-lienzo disabled:text-tinta-tenue",
+    "border border-borde bg-white text-tinta shadow-plano hover:border-borde-fuerte hover:bg-lienzo hover:shadow-tarjeta disabled:text-tinta-tenue",
   fantasma: "text-tinta-suave hover:bg-lienzo hover:text-tinta disabled:text-tinta-tenue",
   peligro:
     "border border-rojo-borde bg-rojo-tenue text-rojo hover:bg-rojo hover:text-white hover:border-rojo disabled:opacity-50",
@@ -122,7 +136,7 @@ export function Boton({
 }) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-[background-color,color,border-color,box-shadow] disabled:cursor-not-allowed ${VARIANTE_BOTON[variante]} ${TAMANO_BOTON[tamano]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-[background-color,color,border-color,box-shadow,transform] duration-200 disabled:cursor-not-allowed ${VARIANTE_BOTON[variante]} ${TAMANO_BOTON[tamano]} ${className}`}
       {...resto}
     >
       {children}
@@ -207,7 +221,7 @@ export function GrupoSegmentado<T extends string | number>({
 export function Barra({
   porcentaje,
   tono = "violeta",
-  alto = "h-1.5",
+  alto = "h-2",
 }: {
   porcentaje?: number | null;
   tono?: Tono;
@@ -215,10 +229,13 @@ export function Barra({
 }) {
   const ancho = porcentaje == null ? 0 : Math.min(Math.max(porcentaje, 0), 100);
   return (
-    <div className={`${alto} w-full overflow-hidden rounded-full bg-lienzo ring-1 ring-inset ring-borde`}>
+    <div className={`${alto} w-full overflow-hidden rounded-full bg-lienzo shadow-hundido`}>
       <div
-        className={`h-full rounded-full transition-[width] duration-500 ${TONO_BARRA[tono]}`}
-        style={{ width: `${ancho}%` }}
+        className={`h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${TONO_BARRA[tono]}`}
+        style={{
+          width: `${ancho}%`,
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.35)",
+        }}
       />
     </div>
   );
@@ -253,14 +270,14 @@ export function Panel({
 
   return (
     <div
-      className="velo fixed inset-0 z-50 flex justify-end bg-grafito/45 backdrop-blur-[2px]"
+      className="velo fixed inset-0 z-50 flex justify-end bg-grafito/50 backdrop-blur-[3px]"
       onClick={alCerrar}
     >
       <aside
         role="dialog"
         aria-modal="true"
         aria-label={titulo}
-        className="entrar-lateral flex h-full w-full max-w-2xl flex-col border-l border-borde bg-white shadow-flotante"
+        className="entrar-lateral flex h-full w-full max-w-2xl flex-col border-l border-borde bg-white shadow-flotante sm:rounded-l-3xl"
         onClick={(evento) => evento.stopPropagation()}
       >
         <header className="flex items-start justify-between gap-4 border-b border-borde px-6 py-5">
@@ -284,17 +301,25 @@ export function Metrica({
   valor,
   detalle,
   children,
+  destacada = false,
 }: {
   etiqueta: string;
   valor: ReactNode;
   detalle?: ReactNode;
   children?: ReactNode;
+  destacada?: boolean;
 }) {
   return (
     <div>
       <p className="text-[11px] font-semibold uppercase tracking-wider text-tinta-suave">{etiqueta}</p>
-      <p className="cifra mt-1.5 text-3xl leading-none text-tinta">{valor}</p>
-      {detalle ? <div className="mt-2 text-xs text-tinta-suave">{detalle}</div> : null}
+      <p
+        className={`cifra mt-2 leading-none ${
+          destacada ? "cifra-degradada text-[34px]" : "text-3xl text-tinta"
+        }`}
+      >
+        {valor}
+      </p>
+      {detalle ? <div className="mt-2.5 text-xs text-tinta-suave">{detalle}</div> : null}
       {children}
     </div>
   );
