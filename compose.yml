@@ -79,19 +79,6 @@ services:
     ports:
       - "8089:8089"
 
-  graph-falso:
-    image: python:3.12-alpine
-    container_name: nextdocs-graph-falso
-    profiles: ["whatsapp"]
-    command: ["python", "/opt/graph_falso.py"]
-    environment:
-      GRAPH_FALSO_TOKEN: token-de-acceso-de-prueba
-      GRAPH_FALSO_PUERTO: "8091"
-    volumes:
-      - ./infra/whatsapp/graph_falso.py:/opt/graph_falso.py:ro
-    ports:
-      - "8091:8091"
-
   app:
     profiles: ["app"]
     build:
@@ -113,12 +100,6 @@ services:
       NEXTDOCS_S3_CLAVE_SECRETA: nextdocs123
       NEXTDOCS_ANTIVIRUS_HOST: clamav
       NEXTDOCS_FEDERACION_EXIGIR_HTTPS: "false"
-      NEXTDOCS_WHATSAPP_URL_GRAPH: ${NEXTDOCS_WHATSAPP_URL_GRAPH:-https://graph.facebook.com}
-      NEXTDOCS_WHATSAPP_VERSION_GRAPH: ${NEXTDOCS_WHATSAPP_VERSION_GRAPH:-v21.0}
-      NEXTDOCS_WHATSAPP_URL_PUBLICA: ${NEXTDOCS_WHATSAPP_URL_PUBLICA:-http://localhost:8090}
-      NEXTDOCS_PRUEBA_WA_TOKEN: ${NEXTDOCS_PRUEBA_WA_TOKEN:-}
-      NEXTDOCS_PRUEBA_WA_SECRETO: ${NEXTDOCS_PRUEBA_WA_SECRETO:-}
-      NEXTDOCS_PRUEBA_WA_VERIFICACION: ${NEXTDOCS_PRUEBA_WA_VERIFICACION:-}
     ports:
       - "8090:8090"
     depends_on:

@@ -8,8 +8,6 @@ import {
   IconoPanel,
   IconoPlantillas,
   IconoResumen,
-  IconoCorreo,
-  IconoWhatsapp,
   IconoSalir,
 } from "./Iconos";
 import { useSesion } from "../contextos/ProveedorSesion";
@@ -38,13 +36,6 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
     titulo: "Configuracion",
     entradas: [
       { a: "/plantillas", texto: "Plantillas", permiso: "plantillas.leer", icono: IconoPlantillas },
-      { a: "/canales/correo", texto: "Canal de email", permiso: "canales.leer", icono: IconoCorreo },
-      {
-        a: "/canales/whatsapp",
-        texto: "Canal de WhatsApp",
-        permiso: "canales.leer",
-        icono: IconoWhatsapp,
-      },
     ],
   },
 ];
@@ -54,8 +45,6 @@ const TITULOS: Record<string, string> = {
   "/panel": "Panel de control",
   "/documentos": "Documentos",
   "/excepciones": "Excepciones",
-  "/canales/correo": "Canal de email",
-  "/canales/whatsapp": "Canal de WhatsApp",
   "/plantillas": "Plantillas",
 };
 

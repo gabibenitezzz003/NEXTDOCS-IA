@@ -58,6 +58,6 @@ docker run --rm --network host                               \
 ## Estado y docs
 
 - Plan maestro: `docs/TODO.md` (códigos de QA del N3 como `QA1-03`/`SEC-04`; no inventar criterios de aceptación). Arquitectura: `docs/ARQUITECTURA.md`. API: `docs/API.md`. Despliegue: `docs/DESPLIEGUE.md`.
-- Fase 1 completa (tareas 1–14); Fase 2 van 15, 19, 20. Siguientes: **16 (SSO/embed)**, **17 (Channel Gateway email)**, **18 (WhatsApp)**. Hay archivos de un canal de correo (`*Correo*`) a medio agregar, sin commitear.
+- Fase 1 completa (1–14) y Fase 2 completa (15, 16, 19, 20). Los canales de entrada (17 email, 18 WhatsApp) se construyeron y se **retiraron**: no son del MVP y el porqué está en `docs/TODO.md`. Siguiente: **21 (Workflow Definition Service)**.
 - `.env` está ignorado y no se sube (verificar con `git check-ignore -v .env`). La API key de Gemini usada durante el desarrollo debe rotarse. Push por SSH (`git@github.com:gabibenitezzz003/NEXTDOCS-IA.git`).
 - `workflow` y `docvance-ai` son microservicios aparte: no fusionarlos al core. Ningún servicio del core importa modelos de Follow — los adaptadores van detrás de `ConectorAsociacionInt`.

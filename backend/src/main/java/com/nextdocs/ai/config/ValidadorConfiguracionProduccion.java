@@ -41,7 +41,6 @@ public class ValidadorConfiguracionProduccion
 		validarAntivirus(entorno, problemas);
 		validarCredencialesEnClaro(entorno, problemas);
 		validarFederacion(entorno, problemas);
-		validarWhatsapp(entorno, problemas);
 
 		if (problemas.isEmpty()) {
 			log.info("Configuracion de produccion validada");
@@ -60,18 +59,6 @@ public class ValidadorConfiguracionProduccion
 		if (!entorno.getProperty("nextdocs.federacion.exigirEmisorSeguro", Boolean.class, true)) {
 			problemas.add("NEXTDOCS_FEDERACION_EXIGIR_HTTPS=false permite registrar un proveedor de"
 					+ " identidad por http: en produccion el JWKS tiene que viajar cifrado");
-		}
-	}
-
-	private void validarWhatsapp(ConfigurableEnvironment entorno, List<String> problemas) {
-		if (!entorno.getProperty("nextdocs.whatsapp.exigirFirma", Boolean.class, true)) {
-			problemas.add("NEXTDOCS_WHATSAPP_EXIGIR_FIRMA=false acepta eventos sin validar la firma de Meta: "
-					+ "cualquiera que descubra la ruta del webhook puede inyectar documentos en el tenant");
-		}
-		String urlGraph = entorno.getProperty("nextdocs.whatsapp.urlGraph", "");
-		if (urlGraph.startsWith("http://")) {
-			problemas.add("nextdocs.whatsapp.urlGraph apunta a " + urlGraph
-					+ ": el token de acceso de la Cloud API viaja en la cabecera y no puede ir en claro");
 		}
 	}
 

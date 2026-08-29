@@ -24,9 +24,7 @@ Los códigos tipo `QA1-03` o `SEC-04` que vas a ver en tests y commits salen del
 
 ```bash
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE si vas a usar Gemini
-docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102
-                              # GreenMail 3027/3145 · Keycloak 8089
-docker compose --profile whatsapp up -d graph-falso   # opcional: Graph API simulada 8091
+docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102 · Keycloak 8089
 cd backend
 docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
   -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
@@ -171,26 +169,20 @@ en todo entorno que la haya corrido. Siempre una migración nueva.
 
 ---
 
-### 11. El correo saliente no puede abrir su propia transacción
+### 11. `REQUIRES_NEW` no ve lo que su llamador todavía no commiteó
 
-`CorreoSalienteService.enviar` guarda una fila que apunta por FK a la correlación recién creada.
-Estaba anotado `@Transactional(REQUIRES_NEW)` para que el registro de auditoría sobreviviera a un
-rollback del llamador, y eso rompía el alta: la transacción de afuera todavía no había commiteado la
-correlación, así que el `INSERT` de adentro violaba `fk_mensaje_correo_saliente_correlacion`.
+Un servicio guardaba una fila con FK a un registro recién creado por quien lo llamaba. Estaba
+anotado `@Transactional(REQUIRES_NEW)` para que la auditoría sobreviviera a un rollback del llamador,
+y eso rompía el alta entera: la transacción de afuera todavía no había commiteado el padre, así que
+el `INSERT` de adentro violaba la foreign key.
 
 Si una operación tiene que ver filas que su llamador todavía no commiteó, **no puede correr en una
-transacción nueva**. O se une a la del llamador, o se difiere con `afterCommit`.
-
-### 12. GreenMail no hace subdireccionamiento
-
-El canal acepta el token en `casos-acme+NDA-XXXX@dominio`, que es lo que hacen Gmail y Microsoft 365
-al entregar. GreenMail no: crea una casilla literal con el `+` adentro y el buzón real nunca recibe
-nada. En `CanalCorreoIT` eso se simula como pasa de verdad — cabecera `To` con la etiqueta, sobre
-SMTP apuntando al buzón base — con `Transport.send(mensaje, destinatarioReal)`.
+transacción nueva**. O se une a la del llamador, o se difiere con `afterCommit`. Lo agarró un test de
+integración contra PostgreSQL real; con un mock del repositorio nunca hubiera aparecido.
 
 ---
 
-### 13. El backend no resuelve los mismos hosts que el navegador
+### 12. El backend no resuelve los mismos hosts que el navegador
 
 Un proveedor de identidad tiene dos URL que parecen la misma y no lo son. El `emisor` tiene que
 coincidir **exacto** con el `iss` que viene firmado en el token, que es el que ve el navegador
@@ -203,34 +195,9 @@ causa real en vez de un `null`.
 
 ---
 
-### 14. `normalizar` un teléfono no es lo mismo según de dónde venga
+### 13. Declarar una propiedad de configuración y no usarla
 
-Meta manda el número **sin `+`** (`5491133224455`), siempre con código de país, así que el canal
-tiene que agregárselo. Pero aplicar esa misma tolerancia a lo que carga una persona es peligroso:
-si alguien escribe `1133224455` pensando en un número argentino, prefijarle `+` produce un E.164
-válido de **otro país**, y ese número termina en una lista blanca autorizando a quien no es.
-
-Por eso hay dos funciones: `NumeroTelefono.normalizar` (tolerante, para lo que manda la red) y
-`normalizarDeclarado` (exige `+` o `00`, para lo que carga un humano). El alta de línea y el número
-de destino usan la segunda. Lo encontró un test que esperaba un rechazo y no lo recibía.
-
----
-
-### 15. Responder un mensaje no autorizado cuesta plata
-
-En el canal de email, avisarle al remitente no autorizado es apenas discutible. En WhatsApp es un
-error: cada conversación que abre el negocio la factura Meta, y responderle a un número desconocido
-le confirma que la línea está viva. Se ve recién cuando mirás la corrida en vivo y notás un saliente
-que no debería existir.
-
-Ahora el canal **no contesta** a un contacto fuera de la lista blanca. El mensaje sigue visible en la
-bandeja con su motivo, que es lo que le importa al operador.
-
----
-
-### 16. Declarar una propiedad de configuración y no usarla
-
-Pasó dos veces: `exigirEmisorSeguro` en federación y `fallosParaPausar` en WhatsApp. Se ve prolijo en
+Pasó más de una vez, `exigirEmisorSeguro` en federación entre otras. Se ve prolijo en
 el `application.yml`, y no hace absolutamente nada. Es peor que no tenerla, porque quien opera cree
 que tiene un control que no existe.
 
@@ -240,28 +207,19 @@ lee. Si no la usa nadie, o la cableás o la borrás.
 
 ---
 
-### 17. Borrar una constante de un enum que ya se guardó en la base
+### 14. Borrar una constante de un enum que ya se guardó en la base
 
-Al sacar la respuesta automática al contacto no autorizado quité también
-`PlantillaWhatsapp.AVISO_CONTACTO_NO_AUTORIZADO`. El código quedó limpio, los 270 tests en verde, y
-`GET /canales/whatsapp/salientes` empezó a devolver **500** en el entorno de desarrollo: había filas
-con ese texto en `mensaje_whatsapp_saliente.plantilla` y Hibernate no puede mapearlas.
+Quitamos una constante de un enum persistido con `@Enumerated(EnumType.STRING)`. El código quedó
+limpio y toda la suite en verde, pero el listado que leía esa tabla empezó a devolver **500**: había
+filas con ese texto y Hibernate no puede mapearlas.
 
 No lo vieron los tests porque cada uno arranca con un tenant nuevo y ninguno había escrito esa fila.
-Lo vio la corrida en vivo, sobre una base que sí tenía historia. Y no rompe una fila: rompe **el
-listado entero**, para siempre, para ese tenant.
+Lo vio la corrida en vivo, sobre una base con historia. Y no rompe una fila: rompe **el listado
+entero**, para siempre, para ese tenant.
 
 Un `@Enumerated(EnumType.STRING)` es un contrato de datos. Sacarle un valor es una migración, no un
 refactor: primero un `UPDATE` que reescriba las filas viejas, después el cambio de código. Si el
 valor ya salió a producción, no se borra nunca.
-
-En este caso las filas sucias son sólo del entorno local, porque el commit que crea `V16` ya no tiene
-la constante: quien clone el repo arranca limpio. Para limpiar una base que corrió la versión
-intermedia:
-
-```sql
-DELETE FROM mensaje_whatsapp_saliente WHERE plantilla = 'AVISO_CONTACTO_NO_AUTORIZADO';
-```
 
 
 ---
@@ -286,12 +244,11 @@ La **Fase 1** cierra el producto vendible. Van 14 de 14.
 (5) · matching (6) · gobernanza (7) · retención (8) · administración (9) · webhooks (10) · original
 físico (11) · costo por tenant (12) · suite de QA (13) · imagen + CI (14)
 
-De la **Fase 2** van 3 de 6: portal frontend (15), dashboard y panel de control (20) y
-Archive & Export Center (19).
+De la **Fase 2** está todo lo que hoy entra en el producto: portal frontend (15), SSO y embed (16),
+Archive & Export Center (19) y dashboard con panel de control (20). Los canales de entrada (17 y 18)
+se sacaron: ver el porqué en `TODO.md`.
 
-**Siguiente:** SSO y embed (16), Channel Gateway de email (17) y WhatsApp (18). Las tres necesitan
-infraestructura externa para verificarse de verdad: un IdP OIDC, un servidor de correo y un proveedor
-de WhatsApp Business. Levantalas en Docker antes de escribir el adaptador.
+**Siguiente:** la Etapa 2, que arranca por el Workflow Definition Service (21).
 
 Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
 criterio: está escrito.

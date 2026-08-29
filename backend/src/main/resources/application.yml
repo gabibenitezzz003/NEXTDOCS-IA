@@ -73,7 +73,6 @@ nextdocs:
       - /api/v1/autenticacion/**
       - /api/v1/federacion/intercambio
       - /api/v1/federacion/canje
-      - /api/v1/canales/whatsapp/webhook/**
       - /api-docs/**
       - /swagger-ui/**
       - /swagger-ui.html
@@ -158,27 +157,6 @@ nextdocs:
     exigirEmisorSeguro: ${NEXTDOCS_FEDERACION_EXIGIR_HTTPS:true}
     intervaloLimpiezaMilisegundos: 900000
     retrasoInicialMilisegundos: 60000
-  correo:
-    activo: ${NEXTDOCS_CORREO_ACTIVO:true}
-    mensajesPorCiclo: ${NEXTDOCS_CORREO_POR_CICLO:25}
-    tiempoEsperaMilisegundos: ${NEXTDOCS_CORREO_TIMEOUT_MS:15000}
-    fallosParaPausar: ${NEXTDOCS_CORREO_FALLOS_PAUSA:5}
-    diasVigenciaCorrelacion: ${NEXTDOCS_CORREO_VIGENCIA_DIAS:30}
-    tamanoMaximoAdjuntoBytes: ${NEXTDOCS_CORREO_ADJUNTO_MAXIMO:67108864}
-    intervaloMilisegundos: ${NEXTDOCS_CORREO_INTERVALO_MS:30000}
-    retrasoInicialMilisegundos: 40000
-  whatsapp:
-    activo: ${NEXTDOCS_WHATSAPP_ACTIVO:true}
-    urlGraph: ${NEXTDOCS_WHATSAPP_URL_GRAPH:https://graph.facebook.com}
-    versionGraph: ${NEXTDOCS_WHATSAPP_VERSION_GRAPH:v21.0}
-    urlPublicaWebhook: ${NEXTDOCS_WHATSAPP_URL_PUBLICA:}
-    tiempoEsperaMilisegundos: ${NEXTDOCS_WHATSAPP_TIMEOUT_MS:15000}
-    tamanoMaximoMediaBytes: ${NEXTDOCS_WHATSAPP_MEDIA_MAXIMA:16777216}
-    diasVigenciaCorrelacion: ${NEXTDOCS_WHATSAPP_VIGENCIA_DIAS:30}
-    minutosVentanaCorrelacion: ${NEXTDOCS_WHATSAPP_VENTANA_CORRELACION:1440}
-    minutosVentanaRespuesta: ${NEXTDOCS_WHATSAPP_VENTANA_RESPUESTA:1440}
-    fallosParaPausar: ${NEXTDOCS_WHATSAPP_FALLOS_PAUSA:5}
-    exigirFirma: ${NEXTDOCS_WHATSAPP_EXIGIR_FIRMA:true}
   auditoria:
     registrarAccesoLectura: true
   arranque:

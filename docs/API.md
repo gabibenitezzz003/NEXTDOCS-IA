@@ -627,87 +627,6 @@ Al llegar al tope **no se borra evidencia** — esa es la regla del ANEXO_D.
 
 ---
 
-### Channel Gateway de email
-
-Cada tenant recibe documentación en un **buzón dedicado**, nunca en la casilla personal de un
-empleado. El adaptador se conecta por IMAP, baja sólo los mensajes no leídos, y cada adjunto pasa
-por la **misma** ingesta que la API: MIME real por contenido, tope de tamaño, antivirus y cuarentena.
-
-```
-GET    /api/v1/canales/correo/configuracion
-POST   /api/v1/canales/correo/buzones                        permiso: canales.administrar
-GET    /api/v1/canales/correo/buzones                        permiso: canales.leer
-GET    /api/v1/canales/correo/buzones/{buzonId}              permiso: canales.leer
-POST   /api/v1/canales/correo/buzones/{buzonId}/estado       permiso: canales.administrar
-POST   /api/v1/canales/correo/buzones/{buzonId}/prueba       permiso: canales.administrar
-POST   /api/v1/canales/correo/buzones/{buzonId}/lectura      permiso: canales.administrar
-DELETE /api/v1/canales/correo/buzones/{buzonId}              permiso: canales.administrar
-POST   /api/v1/canales/correo/buzones/{buzonId}/remitentes   permiso: canales.administrar
-DELETE /api/v1/canales/correo/remitentes/{remitenteId}       permiso: canales.administrar
-POST   /api/v1/canales/correo/correlaciones                  permiso: canales.administrar
-GET    /api/v1/canales/correo/correlaciones                  permiso: canales.leer
-DELETE /api/v1/canales/correo/correlaciones/{correlacionId}  permiso: canales.administrar
-GET    /api/v1/canales/correo/mensajes?resultado             permiso: canales.leer
-GET    /api/v1/canales/correo/mensajes/{mensajeId}           permiso: canales.leer
-GET    /api/v1/canales/correo/salientes                      permiso: canales.leer
-```
-
-**La dirección del buzón es única en toda la instalación**, no por tenant: un alias resuelve a un
-solo tenant y no hay forma de que el correo de uno caiga en el otro.
-
-**Las credenciales del buzón no se guardan.** `referenciaSecretoEntrada` y
-`referenciaSecretoSalida` son referencias que resuelve `ResolvedorSecreto`: usá `env:NOMBRE_VARIABLE`
-en cualquier entorno real. El prefijo `literal:` existe para pruebas locales y deja la clave en la
-base — no lo uses en producción.
-
-#### Correlación por token, nunca heurística
-
-El flujo pensado es: se crea una **correlación** contra un sujeto de negocio (`FOLLOW / Caso /
-CASO-4477`), el sistema manda la solicitud con `[NDA-XXXXXXXXXXXXXXXX]` en el asunto, y el tercero
-responde adjuntando los archivos. El token viaja en el asunto **o** en la dirección con etiqueta
-(`casos-acme+NDA-XXXX@…`), que es lo que hace el subdireccionamiento de Gmail y Microsoft 365.
-
-Al leer, el token se resuelve **acotado al tenant y al buzón**. Si no resuelve —porque no existe,
-está vencido, fue anulado o pertenece a otro tenant— el documento **igual se ingesta** (la evidencia
-no se descarta) pero queda **sin asociar** y se abre una excepción `ASOCIACION` con código
-`CORREO_SIN_CORRELACION` para que lo resuelva una persona. **Nunca se elige un sujeto por parecido.**
-
-`exigirCorrelacion` en el buzón decide qué pasa cuando el mensaje no trae token alguno: en `true`
-también abre la excepción; en `false` el documento entra sin sujeto y sin ruido.
-
-#### Controles del canal
-
-| Riesgo del ANEXO_A | Qué hace el canal |
-|---|---|
-| Suplantación | `exigirRemitenteAutorizado` + lista blanca por dirección exacta o por dominio (`@proveedores.com`). Si el remitente no está, **no se ingesta ni un byte** y el mensaje queda auditado |
-| Adjunto malicioso | Mismo antivirus y misma cuarentena que la API; un infectado queda `RECHAZADO` y su adjunto `EN_CUARENTENA` |
-| MIME / tamaño | Mismos topes de `nextdocs.ingesta`; el rechazo queda con código (`EXTENSION_NO_PERMITIDA`, `MIME_NO_PERMITIDO`, `TAMANO_EXCEDIDO`) y sha256 del adjunto |
-| Documento equivocado | Token de correlación; sin token válido no hay asociación |
-| Datos excesivos | No se conecta la casilla completa: sólo se bajan mensajes no leídos y se guardan los adjuntos, el remitente y el asunto |
-| Reproceso | Deduplicación por `Message-ID` dentro del buzón: el mismo correo leído dos veces no duplica documentos |
-
-Resultados del mensaje: `INGESTADO`, `PARCIAL`, `SIN_ADJUNTOS`, `REMITENTE_NO_AUTORIZADO`,
-`SIN_CORRELACION`, `RECHAZADO`, `ERROR`.
-Resultados del adjunto: `INGESTADO`, `EN_CUARENTENA`, `RECHAZADO`, `ERROR`.
-
-#### Salida auditada
-
-Todo correo que sale deja fila en `mensaje_correo_saliente` con `Message-ID` propio
-(`<uuid@nextdocs-ai>`), plantilla, destinatario y estado de entrega, y se audita como
-`CORREO_ENVIADO`. Plantillas: `SOLICITUD_DOCUMENTACION`, `ACUSE_RECIBO`,
-`AVISO_ADJUNTO_RECHAZADO`, `AVISO_REMITENTE_NO_AUTORIZADO`, `AVISO_SIN_CORRELACION`.
-
-Cuando un correo llega **sin cabecera `Message-ID`** —pasa con algunos remitentes automáticos— se
-sintetiza una: `sha256(remitente | asunto | fecha | nombre y hash de cada adjunto)`. Incluir los
-adjuntos evita que dos mensajes distintos del mismo remitente, con el mismo asunto y en el mismo
-segundo, se descarten como duplicados y se pierda documentación en silencio.
-
-El trabajador revisa los buzones `ACTIVO` cada 30 s. Tras `fallosParaPausar` fallos seguidos el
-buzón pasa a `ERROR` y deja de leerse hasta que alguien lo reactive. Eventos canónicos:
-`mail.received` y `mail.rejected`.
-
----
-
 ### SSO federado y embed
 
 NEXT DOC AI mantiene su dominio, sus tenants, su autorización y su auditoría. Follow, CIMA y
@@ -818,88 +737,6 @@ públicos; métricas no.
 
 ---
 
-### Canal de ingesta por WhatsApp
-
-Adaptador de la **WhatsApp Business Cloud API** de Meta. Los archivos que llegan por el chat entran
-por `IngestaDocumentalService.ingresar`, exactamente la misma puerta que la API: antivirus, tipo
-MIME real por contenido, tope de tamaño e idempotencia. No hay una segunda entrada con controles
-más flojos.
-
-```
-GET  /api/v1/canales/whatsapp/webhook/{ruta}        publico  (verificacion de Meta)
-POST /api/v1/canales/whatsapp/webhook/{ruta}        publico  (eventos firmados)
-
-POST   /api/v1/canales/whatsapp/lineas                      permiso: canales.administrar
-GET    /api/v1/canales/whatsapp/lineas                      permiso: canales.leer
-POST   /api/v1/canales/whatsapp/lineas/{id}/estado          permiso: canales.administrar
-POST   /api/v1/canales/whatsapp/lineas/{id}/prueba          permiso: canales.administrar
-DELETE /api/v1/canales/whatsapp/lineas/{id}                 permiso: canales.administrar
-POST   /api/v1/canales/whatsapp/lineas/{id}/contactos       permiso: canales.administrar
-DELETE /api/v1/canales/whatsapp/contactos/{id}              permiso: canales.administrar
-POST   /api/v1/canales/whatsapp/correlaciones               permiso: canales.administrar
-GET    /api/v1/canales/whatsapp/correlaciones               permiso: canales.leer
-DELETE /api/v1/canales/whatsapp/correlaciones/{id}          permiso: canales.administrar
-GET    /api/v1/canales/whatsapp/mensajes?resultado=         permiso: canales.leer
-GET    /api/v1/canales/whatsapp/mensajes/{id}               permiso: canales.leer
-GET    /api/v1/canales/whatsapp/salientes                   permiso: canales.leer
-```
-
-**Cada línea tiene su propia ruta de webhook**, un slug opaco de 32 caracteres que se genera al dar
-de alta. Meta permite una sola URL de callback por aplicación, y la práctica habitual es enrutar por
-el `metadata.phone_number_id` del cuerpo. Acá no: **el tenant no se deduce nunca del cuerpo del
-evento**, se deduce de la ruta, y el `phone_number_id` se usa después sólo para verificar que
-coincide con la línea. Un evento que no coincide se descarta.
-
-Los tres secretos se guardan como referencia `env:` y nunca en la base:
-
-| Referencia | Para qué |
-|---|---|
-| `referenciaTokenAcceso` | llamar a la Graph API: bajar media y enviar mensajes |
-| `referenciaSecretoAplicacion` | validar la firma `X-Hub-Signature-256` de cada entrega |
-| `referenciaTokenVerificacion` | responder el `hub.challenge` del alta de la suscripción |
-
-**La firma se valida sobre el cuerpo crudo**, antes de parsear el JSON. Sin firma válida el evento
-no toca la base: 401 y un `WEBHOOK_WHATSAPP_RECHAZADO` en auditoría. Un evento legítimo siempre
-responde 200 aunque el resultado sea un rechazo de negocio, porque Meta reintenta durante días
-cualquier respuesta que no sea 200 y no queremos reintentos infinitos de algo que ya decidimos.
-
-**Correlación sin adivinar.** El token `NDA-XXXX` se detecta en el texto del mensaje o en el epígrafe
-del archivo. WhatsApp tiene un problema que el email no tiene: la gente manda el token en un mensaje
-y las fotos en el siguiente. Por eso una solicitud queda **vinculada al número** cuando ese número
-manda el token o cuando la solicitud se le envía, y un envío posterior sin token se asocia a esa
-solicitud mientras siga dentro de `minutosVentanaCorrelacion`.
-
-| Situación | Qué hace el canal |
-|---|---|
-| Token vigente de esta línea | asocia al sujeto de la solicitud |
-| Token que no resuelve o venció | ingesta igual, deja el documento sin asociar y abre `WHATSAPP_SIN_CORRELACION` |
-| Sin token, una sola solicitud vinculada al número | asocia a esa |
-| Sin token, **dos o más** solicitudes vinculadas | ingesta igual y abre `WHATSAPP_CORRELACION_AMBIGUA`. No elige en silencio |
-| Sin token y la línea no exige correlación | ingesta libre, sin excepción |
-
-**A un número no autorizado no se le contesta.** El mensaje queda en la bandeja con su motivo, pero
-la línea no responde: abrir una conversación en WhatsApp se paga por Meta y además le confirmaría a
-quien sondea que el número está vivo.
-
-**La ventana de 24 horas es real.** Fuera de ella WhatsApp sólo acepta plantillas aprobadas. Si la
-línea no tiene `nombrePlantillaSolicitud` configurada, el saliente se registra `FALLIDO` con el
-motivo explícito en vez de intentar un envío que Meta va a rechazar.
-
-**Salud de la línea.** Un fallo de la Graph API al bajar media (token vencido es el caso típico)
-incrementa `fallosConsecutivos` y deja `ultimoError` en la línea; al llegar
-`NEXTDOCS_WHATSAPP_FALLOS_PAUSA` la línea pasa a `ERROR`. Una ingesta exitosa o una prueba de
-conexión que pasa lo limpian.
-
-**Sin cuenta de WhatsApp Business no se puede verificar de punta a punta.** Lo que sí es real y está
-probado: la firma HMAC, el handshake de verificación, el parseo de los payloads con la forma que
-documenta Meta, la descarga de media en dos pasos y el envío. Para eso hay un simulador de la Graph
-API en `infra/whatsapp/graph_falso.py`, que se levanta con
-`docker compose --profile whatsapp up -d graph-falso` y se apunta con
-`NEXTDOCS_WHATSAPP_URL_GRAPH`. **Nunca apuntes esa variable a un simulador en producción**: el
-validador de arranque rechaza un `urlGraph` por `http://`.
-
----
-
 ## Permisos
 
 | Permiso | Habilita |
@@ -913,8 +750,6 @@ validador de arranque rechaza un `urlGraph` por `http://`.
 | `excepciones.leer` / `excepciones.gestionar` | Exception Center |
 | `gobernanza.leer` / `gobernanza.administrar` | Auditoría, retención, proveedores, webhooks, monitor de integraciones y costo por tenant |
 | `tenant.administrar` | Usuarios, roles, cuentas de servicio |
-| `canales.leer` | Ver buzones, correlaciones y la bandeja de correo entrante y saliente |
-| `canales.administrar` | Crear buzones, lista blanca, correlaciones y forzar una lectura |
 
 Roles predefinidos al crear un tenant: `ADMINISTRADOR` (todos), `OPERADOR`, `REVISOR`, `AUDITOR`.
 
