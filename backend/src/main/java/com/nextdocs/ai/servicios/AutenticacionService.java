@@ -80,6 +80,10 @@ public class AutenticacionService {
 		return construirSesion(usuario);
 	}
 
+	public SesionResModel sesionDe(Usuario usuario) {
+		return construirSesion(usuario);
+	}
+
 	private SesionResModel construirSesion(Usuario usuario) {
 		Set<String> permisos = new LinkedHashSet<>();
 		for (Rol rol : usuario.getRoles()) {

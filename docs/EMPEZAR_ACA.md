@@ -24,7 +24,8 @@ Los códigos tipo `QA1-03` o `SEC-04` que vas a ver en tests y commits salen del
 
 ```bash
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE si vas a usar Gemini
-docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102 · GreenMail 3027/3145
+docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102
+                              # GreenMail 3027/3145 · Keycloak 8089
 cd backend
 docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
   -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
@@ -185,6 +186,19 @@ El canal acepta el token en `casos-acme+NDA-XXXX@dominio`, que es lo que hacen G
 al entregar. GreenMail no: crea una casilla literal con el `+` adentro y el buzón real nunca recibe
 nada. En `CanalCorreoIT` eso se simula como pasa de verdad — cabecera `To` con la etiqueta, sobre
 SMTP apuntando al buzón base — con `Transport.send(mensaje, destinatarioReal)`.
+
+---
+
+### 13. El backend no resuelve los mismos hosts que el navegador
+
+Un proveedor de identidad tiene dos URL que parecen la misma y no lo son. El `emisor` tiene que
+coincidir **exacto** con el `iss` que viene firmado en el token, que es el que ve el navegador
+(`http://localhost:8089/realms/...`). La `urlJwks` la baja el **backend**, que en Docker no llega a
+`localhost` del host: necesita `http://keycloak:8089/...`. Poner las dos iguales da un 401 con
+"no publica sus claves" y el código se ve perfecto.
+
+Por eso son dos campos separados, y por eso el error de JWKS ahora incluye la URL que intentó y la
+causa real en vez de un `null`.
 
 ---
 

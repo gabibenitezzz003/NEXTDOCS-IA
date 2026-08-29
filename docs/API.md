@@ -708,6 +708,79 @@ buzón pasa a `ERROR` y deja de leerse hasta que alguien lo reactive. Eventos ca
 
 ---
 
+### SSO federado y embed
+
+NEXT DOC AI mantiene su dominio, sus tenants, su autorización y su auditoría. Follow, CIMA y
+Valid360 actúan sólo como **fuentes de identidad**: no comparten base ni contraseñas.
+
+```
+POST   /api/v1/federacion/intercambio                     publico
+       { codigoTenant, proveedor, token, tipoObjeto, idObjeto, urlRetorno }
+POST   /api/v1/federacion/canje                           publico
+       { codigo }
+POST   /api/v1/federacion/proveedores                     permiso: tenant.administrar
+GET    /api/v1/federacion/proveedores                     permiso: tenant.administrar
+POST   /api/v1/federacion/proveedores/{id}/activo?activo  permiso: tenant.administrar
+DELETE /api/v1/federacion/proveedores/{id}                permiso: tenant.administrar
+```
+
+#### El flujo
+
+1. El usuario ya está autenticado en la app host.
+2. El backend del host manda su token OIDC a `/intercambio`, junto con el tenant, el proveedor y el
+   contexto (`tipoObjeto`, `idObjeto`, `urlRetorno`).
+3. NEXT DOC AI valida la firma contra el **JWKS del emisor**, el `iss`, la expiración y la audiencia.
+4. Resuelve el usuario por `(tenant, origen, sujeto externo)`. Si no existe, aplica la política de
+   JIT del proveedor.
+5. Devuelve un **código de un solo uso** con 60 s de vida. El token largo nunca llega al JavaScript
+   del host.
+6. El iframe llama a `/canje` y recibe la sesión de NEXT DOC AI.
+
+#### Lo que el host no puede hacer
+
+**Ampliar permisos.** Los roles salen del tenant de NEXT DOC AI, nunca del token. Un usuario
+aprovisionado por JIT recibe exactamente el `codigoRolPorDefecto` del proveedor, y sin ese rol
+configurado el aprovisionamiento se rechaza en vez de crear un usuario sin permisos definidos.
+
+**Revivir a un usuario dado de baja.** Si el usuario está `BLOQUEADO` o `INACTIVO`, ni el
+intercambio ni el canje pasan, aunque el host lo haya autenticado. El estado se revalida en las dos
+puntas: un bloqueo entre el intercambio y el canje corta igual.
+
+**Cruzar de tenant.** El proveedor está atado a un tenant y el token se valida contra *su* emisor y
+*su* audiencia. Un token válido del IdP de un tenant no abre nada en otro.
+
+**Secuestrar una cuenta local por email.** Si ya existe un usuario con ese email sin identidad
+federada, el intercambio se **rechaza** con un mensaje explícito. Vincular por email sólo ocurre si
+el administrador activa `permitirVinculoPorEmail`, que es aceptar que el emisor valida el correo.
+
+**Mandar al usuario a cualquier lado.** `urlRetorno` se compara contra `origenesEmbedPermitidos`. Si
+el proveedor no declara orígenes, no acepta `urlRetorno` en absoluto.
+
+#### Configuración del proveedor
+
+| Campo | Para qué |
+|---|---|
+| `emisor` | Tiene que coincidir exacto con el `iss` del token |
+| `urlJwks` | De dónde baja las claves **el backend**, que no siempre resuelve el mismo host que el navegador: en Docker el `iss` puede ser `http://localhost:8089` y el JWKS `http://keycloak:8089` |
+| `audiencia` | Se acepta si aparece en `aud` **o** si coincide con `azp`. Keycloak deja `aud` vacío y pone el cliente en `azp` |
+| `claimSujeto` / `claimEmail` / `claimNombre` | Por defecto `sub`, `email`, `name` |
+| `permitirJit` | Si es `false`, el usuario tiene que existir antes |
+| `dominiosPermitidos` | `@empresa.com, @filial.com`. Vacío acepta cualquiera |
+| `segundosVigenciaCodigo` | 0 usa el global (60 s) |
+
+El JWKS se cachea 10 minutos y se vuelve a bajar solo si aparece un `kid` desconocido, así que una
+rotación de claves del IdP no corta el servicio.
+
+**`emisor` y `urlJwks` exigen https.** Se acepta `localhost` para desarrollo; para un IdP alcanzado
+por red privada (`http://keycloak:8089`) hay que aceptarlo a propósito con
+`NEXTDOCS_FEDERACION_EXIGIR_HTTPS=false`, y el validador de arranque **impide bootear en producción**
+con ese flag apagado.
+
+Cada intercambio y cada canje se auditan con `proveedor`, `aplicacionOrigen`, `sujetoExterno` y el
+objeto de contexto, que es lo que pide el ANEXO_I para la auditoría multiaplicación.
+
+---
+
 ### Observabilidad y costo por tenant
 
 El N3 pide **costo efectivo por documento correcto**, no sólo tokens de inferencia. El costo de

@@ -71,6 +71,8 @@ nextdocs:
     jwtDuracionRefrescoDias: ${NEXTDOCS_JWT_DURACION_REFRESCO_DIAS:7}
     rutasPublicas:
       - /api/v1/autenticacion/**
+      - /api/v1/federacion/intercambio
+      - /api/v1/federacion/canje
       - /api-docs/**
       - /swagger-ui/**
       - /swagger-ui.html
@@ -147,6 +149,14 @@ nextdocs:
     documentosPorCiclo: ${NEXTDOCS_RETENCION_POR_CICLO:100}
     intervaloMilisegundos: ${NEXTDOCS_RETENCION_INTERVALO_MS:3600000}
     demoraInicialMilisegundos: 60000
+  federacion:
+    tiempoEsperaMilisegundos: ${NEXTDOCS_FEDERACION_TIMEOUT_MS:8000}
+    segundosCacheJwks: ${NEXTDOCS_FEDERACION_CACHE_JWKS:600}
+    toleranciaRelojSegundos: ${NEXTDOCS_FEDERACION_RELOJ:60}
+    segundosVigenciaCodigo: ${NEXTDOCS_FEDERACION_VIGENCIA_CODIGO:60}
+    exigirEmisorSeguro: ${NEXTDOCS_FEDERACION_EXIGIR_HTTPS:true}
+    intervaloLimpiezaMilisegundos: 900000
+    retrasoInicialMilisegundos: 60000
   correo:
     activo: ${NEXTDOCS_CORREO_ACTIVO:true}
     mensajesPorCiclo: ${NEXTDOCS_CORREO_POR_CICLO:25}

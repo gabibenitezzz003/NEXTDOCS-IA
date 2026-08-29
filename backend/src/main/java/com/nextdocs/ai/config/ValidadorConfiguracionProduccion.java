@@ -40,6 +40,7 @@ public class ValidadorConfiguracionProduccion
 		validarClave(entorno, "spring.datasource.password", "la clave de la base de datos", problemas);
 		validarAntivirus(entorno, problemas);
 		validarCredencialesEnClaro(entorno, problemas);
+		validarFederacion(entorno, problemas);
 
 		if (problemas.isEmpty()) {
 			log.info("Configuracion de produccion validada");
@@ -52,6 +53,13 @@ public class ValidadorConfiguracionProduccion
 		}
 		mensaje.append("\n\nEl detalle de cada variable esta en docs/DESPLIEGUE.md");
 		throw new ConfiguracionInseguraException(mensaje.toString());
+	}
+
+	private void validarFederacion(ConfigurableEnvironment entorno, List<String> problemas) {
+		if (!entorno.getProperty("nextdocs.federacion.exigirEmisorSeguro", Boolean.class, true)) {
+			problemas.add("NEXTDOCS_FEDERACION_EXIGIR_HTTPS=false permite registrar un proveedor de"
+					+ " identidad por http: en produccion el JWKS tiene que viajar cifrado");
+		}
 	}
 
 	private void validarSecretoJwt(ConfigurableEnvironment entorno, List<String> problemas) {

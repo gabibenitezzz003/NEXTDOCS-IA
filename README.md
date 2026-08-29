@@ -56,6 +56,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Archive & Export Center: ZIP con índice, manifiesto de hashes y TTL de 7 días | ✅ |
 | Channel Gateway: buzón dedicado por tenant, lista blanca y correlación por token | ✅ |
 | Pantalla del canal: bandeja de entrada, buzones con lista blanca y solicitudes | ✅ |
+| SSO federado y embed: token exchange OIDC, JIT por política y código de un solo uso | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -192,6 +193,18 @@ token inexistente    → SIN_CORRELACION, el documento igual entra pero sin suje
                        y con excepción ASOCIACION/CORREO_SIN_CORRELACION
 adjunto .xlsx        → RECHAZADO con código EXTENSION_NO_PERMITIDA y sin documento
 mismo Message-ID     → segunda lectura devuelve 0 mensajes, no duplica
+
+SSO federado (contra Keycloak 26 real)
+intercambio          → 200, usuario aprovisionado por JIT con el rol OPERADOR,
+                       codigo de un solo uso con 60 s de vida
+canje                → 200, sesion con 5 permisos: los del rol del tenant,
+                       ninguno del token del host
+sesion federada      → GET /documentos 200, GET /federacion/proveedores 403:
+                       el host no puede ampliar permisos
+codigo reusado       → 401 "El codigo de embed ya fue usado"
+redirect ajeno       → 403 "El origen https://atacante.com no esta permitido"
+token de otro cliente → 401 "El token no fue emitido para follow-host"
+dominio no habilitado → 403 "@otrodominio.com no esta habilitado en el proveedor"
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
@@ -207,7 +220,7 @@ docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
 ```
 
 - **73 tests unitarios** — no necesitan nada levantado
-- **152 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **168 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
@@ -288,7 +301,7 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 núcleo · … · V14 canal de correo
+│           └── db/migration/        V1 núcleo · … · V15 SSO federado
 ├── backend/Dockerfile               imagen multi-stage (Maven 3.9 → JRE 21)
 ├── .github/workflows/verificar.yml  mvn verify + build de imagen
 ├── .env.example                     plantilla de variables; copiala a .env
@@ -373,9 +386,9 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
 32 tareas en 4 fases, con criterios de aceptación y dependencias.
 
-La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 4 de 6: portal (15), panel de control (20),
-Archive & Export Center (19) y Channel Gateway de email (17).
-Quien retome el proyecto arranca por la **tarea 16**.
+La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 5 de 6: portal (15), panel de control (20),
+Archive & Export Center (19), Channel Gateway de email (17) y SSO federado (16).
+Quien retome el proyecto arranca por la **tarea 18**, el canal de WhatsApp.
 
 | Fase | Alcance | Tareas |
 |---|---|---|
