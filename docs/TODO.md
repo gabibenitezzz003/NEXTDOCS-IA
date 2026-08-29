@@ -90,18 +90,31 @@ umbral de exactitud y la comparación con la versión publicada.
 | 15 | Portal frontend standalone (bandeja, visor, Template Studio, Exception Center, gobernanza, monitor) |
 | ~~16~~ | ~~SSO y embed con Follow, CIMA y Valid360.ai por federación de identidad~~ ✅ |
 | ~~17~~ | ~~Channel Gateway de email dedicado por tenant~~ ✅ |
-| 18 | Canal de ingesta por WhatsApp |
+| ~~18~~ | ~~Canal de ingesta por WhatsApp~~ ✅ |
 | ~~19~~ | ~~Archive & Export Center~~ ✅ |
 | ~~20~~ | ~~Dashboard ejecutivo y panel de control de procesos~~ ✅ |
 
 **Dependencias:** 15 necesita 1 y 9 · 20 necesita 12 y 15
+
+La tarea 18 es la única de la fase que **no se puede verificar de punta a punta sin una cuenta de
+WhatsApp Business**. Lo que sí está probado contra HTTP real: la firma `X-Hub-Signature-256` sobre el
+cuerpo crudo, el handshake de verificación, el parseo de los payloads con la forma que documenta
+Meta, la descarga de media en dos pasos y el envío. El simulador de la Graph API está en
+`infra/whatsapp/graph_falso.py` (`--profile whatsapp`). Cuando haya una cuenta real, lo único que
+hay que revalidar es que Meta mande lo que dice su documentación: el resto del canal no cambia.
+
+**Deuda que dejó la 18.** `correlacion_correo` y `correlacion_whatsapp` son casi la misma tabla. Se
+dejaron separadas para no desestabilizar un canal de email ya verificado, pero el concepto real es
+uno solo: *una solicitud de documentación con un token, dirigida a alguien, por algún canal*. Cuando
+entre el Workflow (Fase 3) esa solicitud pasa a ser un nodo del proceso y conviene unificarlas ahí,
+con una migración que renombre y agregue el discriminador de canal.
 
 La tarea 20 se construyó sobre lo que existe hoy: los KPI de proceso del ANEXO_H que dependen del
 Workflow (Etapa 2) todavía no tienen de dónde salir, así que la unidad de agrupación es la
 **plantilla**, no el proceso. Cuando entre la Fase 3 hay que sumar los KPI por etapa de workflow.
 
 Con la Fase 2 cerrada, el **MVP 1** del resumen ejecutivo está completo:
-portal propio, motor documental, SSO embebido, KPI y export básico.
+portal propio, motor documental, SSO embebido, canales de email y WhatsApp, KPI y export básico.
 
 ---
 

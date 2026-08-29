@@ -427,3 +427,151 @@ export interface LecturaBuzon {
   error?: string;
   mensajes: MensajeCorreo[];
 }
+
+export type EstadoLineaWhatsapp = "ACTIVO" | "PAUSADO" | "ERROR";
+
+export type ResultadoMensajeWhatsapp =
+  | "INGESTADO"
+  | "PARCIAL"
+  | "SIN_MEDIA"
+  | "CONTACTO_NO_AUTORIZADO"
+  | "SIN_CORRELACION"
+  | "CORRELACION_AMBIGUA"
+  | "RECHAZADO"
+  | "ERROR";
+
+export type ResultadoMediaWhatsapp = "INGESTADO" | "EN_CUARENTENA" | "RECHAZADO" | "ERROR";
+
+export interface ContactoWhatsapp {
+  id: string;
+  patron: string;
+  descripcion?: string;
+  alta?: string;
+}
+
+export interface LineaWhatsapp {
+  id: string;
+  nombre: string;
+  numeroTelefono: string;
+  identificadorNumero: string;
+  identificadorCuenta?: string;
+  rutaWebhook: string;
+  urlWebhook: string;
+  estado: EstadoLineaWhatsapp;
+  codigoPlantillaPorDefecto?: string;
+  exigirContactoAutorizado: boolean;
+  exigirCorrelacion: boolean;
+  acusarRecibo: boolean;
+  maximoMediaPorMensaje: number;
+  minutosVentanaCorrelacion: number;
+  nombrePlantillaSolicitud?: string;
+  idiomaPlantillaSolicitud?: string;
+  puedeResponderFueraDeVentana: boolean;
+  ultimoMensaje?: string;
+  ultimoError?: string;
+  fallosConsecutivos: number;
+  alta?: string;
+  contactos: ContactoWhatsapp[];
+}
+
+export interface NuevaLineaWhatsapp {
+  nombre: string;
+  numeroTelefono: string;
+  identificadorNumero: string;
+  identificadorCuenta?: string;
+  referenciaTokenAcceso: string;
+  referenciaSecretoAplicacion: string;
+  referenciaTokenVerificacion: string;
+  codigoPlantillaPorDefecto?: string;
+  exigirContactoAutorizado: boolean;
+  exigirCorrelacion: boolean;
+  acusarRecibo: boolean;
+  maximoMediaPorMensaje: number;
+  minutosVentanaCorrelacion: number;
+  nombrePlantillaSolicitud?: string;
+  idiomaPlantillaSolicitud?: string;
+}
+
+export interface CorrelacionWhatsapp {
+  id: string;
+  token: string;
+  textoParaEnviar: string;
+  lineaId?: string;
+  numeroLinea?: string;
+  sujetoOrigen?: string;
+  sujetoTipoObjeto?: string;
+  sujetoIdObjeto?: string;
+  codigoPlantilla?: string;
+  numeroDestino?: string;
+  numeroVinculado?: string;
+  vinculadoEn?: string;
+  descripcion?: string;
+  venceEn?: string;
+  vigente: boolean;
+  documentosRecibidos: number;
+  ultimoUso?: string;
+  alta?: string;
+  mensajeSalienteId?: string;
+}
+
+export interface NuevaCorrelacionWhatsapp {
+  lineaId: string;
+  sujetoOrigen: string;
+  sujetoTipoObjeto: string;
+  sujetoIdObjeto: string;
+  codigoPlantilla?: string;
+  numeroDestino?: string;
+  descripcion?: string;
+  diasVigencia: number;
+  enviarSolicitud: boolean;
+}
+
+export interface MediaWhatsapp {
+  id: string;
+  documentoId?: string;
+  identificadorMedia?: string;
+  nombreArchivo?: string;
+  tipoMime?: string;
+  tamanoBytes: number;
+  sha256?: string;
+  resultado: ResultadoMediaWhatsapp;
+  codigoRechazo?: string;
+  motivo?: string;
+}
+
+export interface MensajeWhatsapp {
+  id: string;
+  lineaId?: string;
+  numeroLinea?: string;
+  identificadorMensaje: string;
+  numeroOrigen?: string;
+  nombrePerfil?: string;
+  tipo?: string;
+  texto?: string;
+  tokenDetectado?: string;
+  correlacionId?: string;
+  resultado: ResultadoMensajeWhatsapp;
+  motivo?: string;
+  media: number;
+  ingestados: number;
+  rechazados: number;
+  recibidoEn?: string;
+  alta?: string;
+  detalleMedia: MediaWhatsapp[];
+}
+
+export interface MensajeWhatsappSaliente {
+  id: string;
+  lineaId?: string;
+  correlacionId?: string;
+  plantilla: string;
+  numeroDestino: string;
+  identificadorMensaje?: string;
+  estado: EstadoMensajeSaliente;
+  dentroDeVentana: boolean;
+  nombrePlantillaMeta?: string;
+  cuerpo?: string;
+  detalleError?: string;
+  enviado?: string;
+  alta?: string;
+}

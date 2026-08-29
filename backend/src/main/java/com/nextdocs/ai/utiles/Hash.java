@@ -57,6 +57,16 @@ public final class Hash {
 		}
 	}
 
+	public static String hmacSha256(String secreto, byte[] contenido) {
+		try {
+			Mac mac = Mac.getInstance(HMAC_SHA_256);
+			mac.init(new SecretKeySpec(secreto.getBytes(StandardCharsets.UTF_8), HMAC_SHA_256));
+			return hexadecimal(mac.doFinal(contenido));
+		} catch (Exception e) {
+			throw new ValidacionException("No se pudo firmar el contenido");
+		}
+	}
+
 	public static boolean sonIguales(String primero, String segundo) {
 		if (primero == null || segundo == null) {
 			return false;

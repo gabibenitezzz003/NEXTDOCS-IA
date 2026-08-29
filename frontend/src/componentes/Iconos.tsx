@@ -274,3 +274,21 @@ export function IconoMas(props: PropsIcono) {
     </Base>
   );
 }
+
+export function IconoWhatsapp(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M3.5 20.5 4.9 16A8.2 8.2 0 1 1 8 19.1l-4.5 1.4Z" />
+      <path d="M9 9.2c.2 1 .7 2 1.5 2.8.8.8 1.8 1.3 2.8 1.5l.9-1.1 1.9.8-.3 1.4c-1.7.4-3.6-.3-5.1-1.8-1.5-1.5-2.2-3.4-1.8-5.1l1.4-.3.8 1.9-1.1.9Z" />
+    </Base>
+  );
+}
+
+export function IconoCopiar(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M15 6.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h1.5" />
+    </Base>
+  );
+}

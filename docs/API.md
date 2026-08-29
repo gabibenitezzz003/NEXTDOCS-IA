@@ -818,6 +818,88 @@ públicos; métricas no.
 
 ---
 
+### Canal de ingesta por WhatsApp
+
+Adaptador de la **WhatsApp Business Cloud API** de Meta. Los archivos que llegan por el chat entran
+por `IngestaDocumentalService.ingresar`, exactamente la misma puerta que la API: antivirus, tipo
+MIME real por contenido, tope de tamaño e idempotencia. No hay una segunda entrada con controles
+más flojos.
+
+```
+GET  /api/v1/canales/whatsapp/webhook/{ruta}        publico  (verificacion de Meta)
+POST /api/v1/canales/whatsapp/webhook/{ruta}        publico  (eventos firmados)
+
+POST   /api/v1/canales/whatsapp/lineas                      permiso: canales.administrar
+GET    /api/v1/canales/whatsapp/lineas                      permiso: canales.leer
+POST   /api/v1/canales/whatsapp/lineas/{id}/estado          permiso: canales.administrar
+POST   /api/v1/canales/whatsapp/lineas/{id}/prueba          permiso: canales.administrar
+DELETE /api/v1/canales/whatsapp/lineas/{id}                 permiso: canales.administrar
+POST   /api/v1/canales/whatsapp/lineas/{id}/contactos       permiso: canales.administrar
+DELETE /api/v1/canales/whatsapp/contactos/{id}              permiso: canales.administrar
+POST   /api/v1/canales/whatsapp/correlaciones               permiso: canales.administrar
+GET    /api/v1/canales/whatsapp/correlaciones               permiso: canales.leer
+DELETE /api/v1/canales/whatsapp/correlaciones/{id}          permiso: canales.administrar
+GET    /api/v1/canales/whatsapp/mensajes?resultado=         permiso: canales.leer
+GET    /api/v1/canales/whatsapp/mensajes/{id}               permiso: canales.leer
+GET    /api/v1/canales/whatsapp/salientes                   permiso: canales.leer
+```
+
+**Cada línea tiene su propia ruta de webhook**, un slug opaco de 32 caracteres que se genera al dar
+de alta. Meta permite una sola URL de callback por aplicación, y la práctica habitual es enrutar por
+el `metadata.phone_number_id` del cuerpo. Acá no: **el tenant no se deduce nunca del cuerpo del
+evento**, se deduce de la ruta, y el `phone_number_id` se usa después sólo para verificar que
+coincide con la línea. Un evento que no coincide se descarta.
+
+Los tres secretos se guardan como referencia `env:` y nunca en la base:
+
+| Referencia | Para qué |
+|---|---|
+| `referenciaTokenAcceso` | llamar a la Graph API: bajar media y enviar mensajes |
+| `referenciaSecretoAplicacion` | validar la firma `X-Hub-Signature-256` de cada entrega |
+| `referenciaTokenVerificacion` | responder el `hub.challenge` del alta de la suscripción |
+
+**La firma se valida sobre el cuerpo crudo**, antes de parsear el JSON. Sin firma válida el evento
+no toca la base: 401 y un `WEBHOOK_WHATSAPP_RECHAZADO` en auditoría. Un evento legítimo siempre
+responde 200 aunque el resultado sea un rechazo de negocio, porque Meta reintenta durante días
+cualquier respuesta que no sea 200 y no queremos reintentos infinitos de algo que ya decidimos.
+
+**Correlación sin adivinar.** El token `NDA-XXXX` se detecta en el texto del mensaje o en el epígrafe
+del archivo. WhatsApp tiene un problema que el email no tiene: la gente manda el token en un mensaje
+y las fotos en el siguiente. Por eso una solicitud queda **vinculada al número** cuando ese número
+manda el token o cuando la solicitud se le envía, y un envío posterior sin token se asocia a esa
+solicitud mientras siga dentro de `minutosVentanaCorrelacion`.
+
+| Situación | Qué hace el canal |
+|---|---|
+| Token vigente de esta línea | asocia al sujeto de la solicitud |
+| Token que no resuelve o venció | ingesta igual, deja el documento sin asociar y abre `WHATSAPP_SIN_CORRELACION` |
+| Sin token, una sola solicitud vinculada al número | asocia a esa |
+| Sin token, **dos o más** solicitudes vinculadas | ingesta igual y abre `WHATSAPP_CORRELACION_AMBIGUA`. No elige en silencio |
+| Sin token y la línea no exige correlación | ingesta libre, sin excepción |
+
+**A un número no autorizado no se le contesta.** El mensaje queda en la bandeja con su motivo, pero
+la línea no responde: abrir una conversación en WhatsApp se paga por Meta y además le confirmaría a
+quien sondea que el número está vivo.
+
+**La ventana de 24 horas es real.** Fuera de ella WhatsApp sólo acepta plantillas aprobadas. Si la
+línea no tiene `nombrePlantillaSolicitud` configurada, el saliente se registra `FALLIDO` con el
+motivo explícito en vez de intentar un envío que Meta va a rechazar.
+
+**Salud de la línea.** Un fallo de la Graph API al bajar media (token vencido es el caso típico)
+incrementa `fallosConsecutivos` y deja `ultimoError` en la línea; al llegar
+`NEXTDOCS_WHATSAPP_FALLOS_PAUSA` la línea pasa a `ERROR`. Una ingesta exitosa o una prueba de
+conexión que pasa lo limpian.
+
+**Sin cuenta de WhatsApp Business no se puede verificar de punta a punta.** Lo que sí es real y está
+probado: la firma HMAC, el handshake de verificación, el parseo de los payloads con la forma que
+documenta Meta, la descarga de media en dos pasos y el envío. Para eso hay un simulador de la Graph
+API en `infra/whatsapp/graph_falso.py`, que se levanta con
+`docker compose --profile whatsapp up -d graph-falso` y se apunta con
+`NEXTDOCS_WHATSAPP_URL_GRAPH`. **Nunca apuntes esa variable a un simulador en producción**: el
+validador de arranque rechaza un `urlGraph` por `http://`.
+
+---
+
 ## Permisos
 
 | Permiso | Habilita |

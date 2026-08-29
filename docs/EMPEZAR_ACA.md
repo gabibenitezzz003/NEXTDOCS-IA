@@ -26,6 +26,7 @@ Los códigos tipo `QA1-03` o `SEC-04` que vas a ver en tests y commits salen del
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE si vas a usar Gemini
 docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102
                               # GreenMail 3027/3145 · Keycloak 8089
+docker compose --profile whatsapp up -d graph-falso   # opcional: Graph API simulada 8091
 cd backend
 docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
   -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
@@ -199,6 +200,43 @@ coincidir **exacto** con el `iss` que viene firmado en el token, que es el que v
 
 Por eso son dos campos separados, y por eso el error de JWKS ahora incluye la URL que intentó y la
 causa real en vez de un `null`.
+
+---
+
+### 14. `normalizar` un teléfono no es lo mismo según de dónde venga
+
+Meta manda el número **sin `+`** (`5491133224455`), siempre con código de país, así que el canal
+tiene que agregárselo. Pero aplicar esa misma tolerancia a lo que carga una persona es peligroso:
+si alguien escribe `1133224455` pensando en un número argentino, prefijarle `+` produce un E.164
+válido de **otro país**, y ese número termina en una lista blanca autorizando a quien no es.
+
+Por eso hay dos funciones: `NumeroTelefono.normalizar` (tolerante, para lo que manda la red) y
+`normalizarDeclarado` (exige `+` o `00`, para lo que carga un humano). El alta de línea y el número
+de destino usan la segunda. Lo encontró un test que esperaba un rechazo y no lo recibía.
+
+---
+
+### 15. Responder un mensaje no autorizado cuesta plata
+
+En el canal de email, avisarle al remitente no autorizado es apenas discutible. En WhatsApp es un
+error: cada conversación que abre el negocio la factura Meta, y responderle a un número desconocido
+le confirma que la línea está viva. Se ve recién cuando mirás la corrida en vivo y notás un saliente
+que no debería existir.
+
+Ahora el canal **no contesta** a un contacto fuera de la lista blanca. El mensaje sigue visible en la
+bandeja con su motivo, que es lo que le importa al operador.
+
+---
+
+### 16. Declarar una propiedad de configuración y no usarla
+
+Pasó dos veces: `exigirEmisorSeguro` en federación y `fallosParaPausar` en WhatsApp. Se ve prolijo en
+el `application.yml`, y no hace absolutamente nada. Es peor que no tenerla, porque quien opera cree
+que tiene un control que no existe.
+
+Antes de cerrar una tarea: `grep` de cada propiedad nueva contra el código y confirmá que alguien la
+lee. Si no la usa nadie, o la cableás o la borrás.
+
 
 ---
 

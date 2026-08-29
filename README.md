@@ -46,7 +46,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Administración de tenant, usuarios, roles propios y cuentas de servicio | ✅ |
 | API de webhooks: suscripciones, prueba firmada y monitor de entregas | ✅ |
 | Costo por tenant: efectivo por documento correcto y presupuesto opcional | ✅ |
-| Suite de QA automatizada: 73 unitarios + 127 de integración | ✅ |
+| Suite de QA automatizada: 79 unitarios + 191 de integración | ✅ |
 | Imagen Docker, `compose --profile app` y CI en GitHub Actions | ✅ |
 | Arranque bloqueado con configuración insegura bajo el perfil `produccion` | ✅ |
 | Límite de uso por principal, tenant e ingesta con Redis (429 + `Retry-After`) | ✅ |
@@ -57,6 +57,8 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Channel Gateway: buzón dedicado por tenant, lista blanca y correlación por token | ✅ |
 | Pantalla del canal: bandeja de entrada, buzones con lista blanca y solicitudes | ✅ |
 | SSO federado y embed: token exchange OIDC, JIT por política y código de un solo uso | ✅ |
+| Canal de WhatsApp: webhook firmado por línea, lista blanca y ventana de correlación | ✅ |
+| Pantalla del canal de WhatsApp: bandeja, líneas con su URL de webhook y solicitudes | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -205,6 +207,19 @@ codigo reusado       → 401 "El codigo de embed ya fue usado"
 redirect ajeno       → 403 "El origen https://atacante.com no esta permitido"
 token de otro cliente → 401 "El token no fue emitido para follow-host"
 dominio no habilitado → 403 "@otrodominio.com no esta habilitado en el proveedor"
+
+Canal de WhatsApp (contra el simulador de la Graph API, sin cuenta Business)
+verificacion de Meta → 200 devuelve el hub.challenge; con otro token 401
+firma invalida       → 401, y con la cabecera ausente tambien: ningun documento
+contacto no          → CONTACTO_NO_AUTORIZADO, 0 documentos, y la linea no le
+autorizado             contesta: abrir conversacion se paga y confirma el numero
+documento con token  → INGESTADO, documento WHATSAPP asociado a Caso CASO-4477
+mismo wamid          → segunda entrega devuelve 0 mensajes, no duplica
+pdf que era un .exe  → RECHAZADO con MIME_NO_PERMITIDO, con su sha256 registrado
+media que excede     → RECHAZADO con MEDIA_EXCEDE_TAMANO sin bajar el binario:
+el tope                el tamano se mira en los metadatos, antes de descargar
+token y despues las  → la segunda entrega, sin token, se asocia igual a
+fotos                  CASO-9002 por la ventana de correlacion del numero
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
@@ -219,8 +234,8 @@ docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
   -w /app maven:3.9-eclipse-temurin-21 mvn verify     # no hay JDK ni mvnw: Maven corre por contenedor
 ```
 
-- **73 tests unitarios** — no necesitan nada levantado
-- **168 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **79 tests unitarios** — no necesitan nada levantado
+- **191 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
@@ -301,7 +316,7 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 núcleo · … · V15 SSO federado
+│           └── db/migration/        V1 núcleo · … · V16 canal de WhatsApp
 ├── backend/Dockerfile               imagen multi-stage (Maven 3.9 → JRE 21)
 ├── .github/workflows/verificar.yml  mvn verify + build de imagen
 ├── .env.example                     plantilla de variables; copiala a .env
@@ -386,9 +401,10 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
 32 tareas en 4 fases, con criterios de aceptación y dependencias.
 
-La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 5 de 6: portal (15), panel de control (20),
-Archive & Export Center (19), Channel Gateway de email (17) y SSO federado (16).
-Quien retome el proyecto arranca por la **tarea 18**, el canal de WhatsApp.
+La **Fase 1 está cerrada** (14 de 14) y la **Fase 2 también** (6 de 6): portal (15), panel de
+control (20), Archive & Export Center (19), Channel Gateway de email (17), SSO federado (16) y canal
+de WhatsApp (18). Con eso el **MVP 1 está completo** y lo que sigue es la Etapa 2, el Workflow.
+Quien retome el proyecto arranca por la **tarea 21**, el Workflow Definition Service.
 
 | Fase | Alcance | Tareas |
 |---|---|---|
@@ -397,16 +413,19 @@ Quien retome el proyecto arranca por la **tarea 18**, el canal de WhatsApp.
 | **3** | Etapa 2: Workflow Runtime y Process Studio | 21–27 |
 | **4** | Etapa 3: Sentinel, Simulation Lab y Process Copilot | 28–32 |
 
-Los tres bloqueantes de venta (plantillas, Gemini real, matching + `FollowConnector`) están
-cerrados, y el motor documental quedó endurecido para producción. Lo que falta del MVP 1 son los
-canales de entrada y la federación de identidad:
+El **MVP 1 está completo**: motor documental, portal propio, SSO embebido, canales de email y
+WhatsApp, KPI y export. Lo que sigue es la Etapa 2, el Workflow, que arranca por:
 
-1. SSO y embed con Follow, CIMA y Valid360.ai (tarea 16) — sólo existe el enum `OrigenIdentidad`
-2. Channel Gateway de email dedicado por tenant (17) — sin código
-3. Canal de ingesta por WhatsApp (18) — sin código
+1. Workflow Definition Service: nodos, aristas, versiones y validador de grafo (tarea 21)
+2. Workflow Runtime Service: tokens, ramas, joins, timers y reintentos (22)
+3. Task Service y Action Center (23)
+
+La regla de la Etapa 2 no se negocia: **apagar el Workflow no puede afectar** captura, extracción,
+validación ni integración documental.
 
 Pendiente no-código: cargar datasets gold reales, ensayar una restauración, correr una prueba de
-carga y **rotar la API key de Gemini**.
+carga, conseguir una cuenta de WhatsApp Business para validar el canal contra Meta de verdad y
+**rotar la API key de Gemini**.
 
 ---
 
