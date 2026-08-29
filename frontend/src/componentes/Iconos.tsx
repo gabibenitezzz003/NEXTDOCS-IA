@@ -64,16 +64,6 @@ export function IconoExcepciones(props: PropsIcono) {
   );
 }
 
-export function IconoPlantillas(props: PropsIcono) {
-  return (
-    <Base {...props}>
-      <rect x="3" y="3" width="18" height="18" rx="2.5" />
-      <path d="M3 9h18" />
-      <path d="M9 21V9" />
-    </Base>
-  );
-}
-
 export function IconoBuscar(props: PropsIcono) {
   return (
     <Base {...props}>

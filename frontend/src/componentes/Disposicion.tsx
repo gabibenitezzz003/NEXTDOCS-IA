@@ -6,7 +6,6 @@ import {
   IconoDocumentos,
   IconoExcepciones,
   IconoPanel,
-  IconoPlantillas,
   IconoResumen,
   IconoSalir,
 } from "./Iconos";
@@ -35,7 +34,6 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
   {
     titulo: "Configuracion",
     entradas: [
-      { a: "/plantillas", texto: "Plantillas", permiso: "plantillas.leer", icono: IconoPlantillas },
     ],
   },
 ];
@@ -45,7 +43,6 @@ const TITULOS: Record<string, string> = {
   "/panel": "Panel de control",
   "/documentos": "Documentos",
   "/excepciones": "Excepciones",
-  "/plantillas": "Plantillas",
 };
 
 export function Disposicion() {

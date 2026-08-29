@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
 import { InsigniaEstado } from "../componentes/Insignias";
-import { Boton, Pastilla, Selector, Tarjeta } from "../componentes/Interfaz";
+import { Boton, Pastilla, Tarjeta } from "../componentes/Interfaz";
 import {
   IconoBuscar,
   IconoCheck,
@@ -14,7 +14,6 @@ import {
 } from "../componentes/Iconos";
 import { VisorDocumento } from "./VisorDocumento";
 import { ingresarDocumento, listarDocumentos } from "../api/documentos";
-import { listarPlantillas } from "../api/plantillas";
 import { mensajeDeError } from "../api/cliente";
 import { useSesion } from "../contextos/ProveedorSesion";
 import type { EstadoDocumento } from "../tipos/api";
@@ -43,7 +42,6 @@ export function Documentos() {
   const [busqueda, setBusqueda] = useState("");
   const [pagina, setPagina] = useState(0);
   const [documentoAbierto, setDocumentoAbierto] = useState<string | null>(null);
-  const [plantillaSubida, setPlantillaSubida] = useState("");
   const [avisoSubida, setAvisoSubida] = useState<{ tono: "ok" | "error"; texto: string } | null>(null);
 
   const filtro = useMemo(
@@ -63,14 +61,8 @@ export function Documentos() {
     queryFn: () => listarDocumentos(filtro),
   });
 
-  const plantillas = useQuery({
-    queryKey: ["plantillas"],
-    queryFn: listarPlantillas,
-    enabled: tienePermiso("plantillas.leer"),
-  });
-
   const subida = useMutation({
-    mutationFn: (archivo: File) => ingresarDocumento(archivo, plantillaSubida || undefined),
+    mutationFn: (archivo: File) => ingresarDocumento(archivo),
     onSuccess: (documento) => {
       setAvisoSubida({
         tono: "ok",
@@ -103,21 +95,6 @@ export function Documentos() {
         acciones={
           tienePermiso("documentos.escribir") ? (
             <>
-              {plantillas.data?.length ? (
-                <Selector
-                  value={plantillaSubida}
-                  onChange={(evento) => setPlantillaSubida(evento.target.value)}
-                  aria-label="Plantilla para la subida"
-                  className="w-52"
-                >
-                  <option value="">Sin plantilla</option>
-                  {plantillas.data.map((plantilla) => (
-                    <option key={plantilla.id} value={plantilla.codigo}>
-                      {plantilla.nombre}
-                    </option>
-                  ))}
-                </Selector>
-              ) : null}
               <input
                 ref={entradaArchivo}
                 type="file"
@@ -243,7 +220,7 @@ export function Documentos() {
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-borde bg-lienzo/70">
-                    {["Documento", "Estado", "Plantilla", "Sujeto", "Recibido"].map((columna) => (
+                    {["Documento", "Estado", "Tipo detectado", "Sujeto", "Recibido"].map((columna) => (
                       <th
                         key={columna}
                         className="px-5 py-3 text-[11px] font-semibold uppercase tracking-wider text-tinta-suave"
@@ -276,14 +253,9 @@ export function Documentos() {
                       </td>
                       <td className="px-5 py-3.5">
                         {documento.codigoPlantilla ? (
-                          <span className="text-tinta-media">
-                            {documento.codigoPlantilla}
-                            <span className="ml-1 text-tinta-tenue">
-                              v{documento.numeroVersionPlantilla}
-                            </span>
-                          </span>
+                          <Pastilla tono="violeta">{documento.codigoPlantilla}</Pastilla>
                         ) : (
-                          <span className="text-tinta-tenue">—</span>
+                          <span className="text-tinta-tenue">sin detectar</span>
                         )}
                       </td>
                       <td className="px-5 py-3.5">
