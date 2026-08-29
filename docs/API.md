@@ -697,6 +697,11 @@ Todo correo que sale deja fila en `mensaje_correo_saliente` con `Message-ID` pro
 `CORREO_ENVIADO`. Plantillas: `SOLICITUD_DOCUMENTACION`, `ACUSE_RECIBO`,
 `AVISO_ADJUNTO_RECHAZADO`, `AVISO_REMITENTE_NO_AUTORIZADO`, `AVISO_SIN_CORRELACION`.
 
+Cuando un correo llega **sin cabecera `Message-ID`** —pasa con algunos remitentes automáticos— se
+sintetiza una: `sha256(remitente | asunto | fecha | nombre y hash de cada adjunto)`. Incluir los
+adjuntos evita que dos mensajes distintos del mismo remitente, con el mismo asunto y en el mismo
+segundo, se descarten como duplicados y se pierda documentación en silencio.
+
 El trabajador revisa los buzones `ACTIVO` cada 30 s. Tras `fallosParaPausar` fallos seguidos el
 buzón pasa a `ERROR` y deja de leerse hasta que alguien lo reactive. Eventos canónicos:
 `mail.received` y `mail.rejected`.

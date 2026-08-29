@@ -55,6 +55,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Panel de control: 11 KPI con fórmula visible y drill-down a su población | ✅ |
 | Archive & Export Center: ZIP con índice, manifiesto de hashes y TTL de 7 días | ✅ |
 | Channel Gateway: buzón dedicado por tenant, lista blanca y correlación por token | ✅ |
+| Pantalla del canal: bandeja de entrada, buzones con lista blanca y solicitudes | ✅ |
 
 ### Verificado con el sistema corriendo
 

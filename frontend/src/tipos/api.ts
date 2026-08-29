@@ -271,3 +271,159 @@ export interface ErrorApi {
   correlacionId?: string;
   campos?: Record<string, string>;
 }
+
+export type EstadoBuzonCorreo = "ACTIVO" | "PAUSADO" | "ERROR";
+
+export type ResultadoMensajeCorreo =
+  | "INGESTADO"
+  | "PARCIAL"
+  | "SIN_ADJUNTOS"
+  | "REMITENTE_NO_AUTORIZADO"
+  | "SIN_CORRELACION"
+  | "RECHAZADO"
+  | "ERROR";
+
+export type ResultadoAdjuntoCorreo = "INGESTADO" | "EN_CUARENTENA" | "RECHAZADO" | "ERROR";
+
+export type EstadoMensajeSaliente = "PENDIENTE" | "ENVIADO" | "FALLIDO";
+
+export interface RemitenteAutorizado {
+  id: string;
+  patron: string;
+  descripcion?: string;
+  alta?: string;
+}
+
+export interface BuzonCorreo {
+  id: string;
+  direccion: string;
+  nombre: string;
+  estado: EstadoBuzonCorreo;
+  hostEntrada: string;
+  puertoEntrada: number;
+  usuarioEntrada: string;
+  carpeta: string;
+  entradaSegura: boolean;
+  hostSalida?: string;
+  puertoSalida: number;
+  salidaSegura: boolean;
+  puedeResponder: boolean;
+  codigoPlantillaPorDefecto?: string;
+  exigirRemitenteAutorizado: boolean;
+  exigirCorrelacion: boolean;
+  acusarRecibo: boolean;
+  maximoAdjuntosPorMensaje: number;
+  ultimaLectura?: string;
+  ultimoError?: string;
+  fallosConsecutivos: number;
+  alta?: string;
+  remitentes: RemitenteAutorizado[];
+}
+
+export interface NuevoBuzonCorreo {
+  direccion: string;
+  nombre: string;
+  hostEntrada: string;
+  puertoEntrada: number;
+  usuarioEntrada: string;
+  referenciaSecretoEntrada: string;
+  carpeta?: string;
+  entradaSegura: boolean;
+  hostSalida?: string;
+  puertoSalida: number;
+  usuarioSalida?: string;
+  referenciaSecretoSalida?: string;
+  salidaSegura: boolean;
+  codigoPlantillaPorDefecto?: string;
+  exigirRemitenteAutorizado: boolean;
+  exigirCorrelacion: boolean;
+  acusarRecibo: boolean;
+  maximoAdjuntosPorMensaje: number;
+}
+
+export interface CorrelacionCorreo {
+  id: string;
+  token: string;
+  etiquetaAsunto: string;
+  direccionConEtiqueta?: string;
+  sujetoOrigen?: string;
+  sujetoTipoObjeto?: string;
+  sujetoIdObjeto?: string;
+  codigoPlantilla?: string;
+  destinatario?: string;
+  descripcion?: string;
+  venceEn?: string;
+  vigente: boolean;
+  documentosRecibidos: number;
+  ultimoUso?: string;
+  alta?: string;
+  mensajeSalienteId?: string;
+}
+
+export interface NuevaCorrelacionCorreo {
+  buzonId: string;
+  sujetoOrigen: string;
+  sujetoTipoObjeto: string;
+  sujetoIdObjeto: string;
+  codigoPlantilla?: string;
+  destinatario?: string;
+  descripcion?: string;
+  diasVigencia: number;
+  enviarSolicitud: boolean;
+}
+
+export interface AdjuntoCorreo {
+  id: string;
+  documentoId?: string;
+  nombreArchivo: string;
+  tipoMime?: string;
+  tamanoBytes: number;
+  sha256?: string;
+  resultado: ResultadoAdjuntoCorreo;
+  codigoRechazo?: string;
+  motivo?: string;
+}
+
+export interface MensajeCorreo {
+  id: string;
+  buzonId?: string;
+  buzonDireccion?: string;
+  identificadorMensaje: string;
+  remitente?: string;
+  destinatarios?: string;
+  asunto?: string;
+  tokenDetectado?: string;
+  correlacionId?: string;
+  resultado: ResultadoMensajeCorreo;
+  motivo?: string;
+  adjuntos: number;
+  ingestados: number;
+  rechazados: number;
+  enviadoEn?: string;
+  alta?: string;
+  detalleAdjuntos: AdjuntoCorreo[];
+}
+
+export interface MensajeSaliente {
+  id: string;
+  buzonId?: string;
+  correlacionId?: string;
+  plantilla: string;
+  destinatarios: string;
+  asunto?: string;
+  identificadorMensaje?: string;
+  estado: EstadoMensajeSaliente;
+  detalleError?: string;
+  enviado?: string;
+  alta?: string;
+}
+
+export interface LecturaBuzon {
+  buzonId: string;
+  direccion: string;
+  mensajesLeidos: number;
+  mensajesProcesados: number;
+  documentosIngestados: number;
+  error?: string;
+  mensajes: MensajeCorreo[];
+}

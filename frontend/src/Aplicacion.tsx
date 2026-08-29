@@ -6,6 +6,7 @@ import { Panel } from "./paginas/Panel";
 import { Documentos } from "./paginas/Documentos";
 import { Excepciones } from "./paginas/Excepciones";
 import { Plantillas } from "./paginas/Plantillas";
+import { CanalCorreo } from "./paginas/CanalCorreo";
 import { useSesion } from "./contextos/ProveedorSesion";
 import { Isotipo } from "./componentes/Marca";
 
@@ -43,6 +44,7 @@ export function Aplicacion() {
         <Route path="/documentos" element={<Documentos />} />
         <Route path="/excepciones" element={<Excepciones />} />
         <Route path="/plantillas" element={<Plantillas />} />
+        <Route path="/canales/correo" element={<CanalCorreo />} />
       </Route>
       <Route path="*" element={<Navigate to="/resumen" replace />} />
     </Routes>

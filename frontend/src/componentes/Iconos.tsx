@@ -231,3 +231,46 @@ export function IconoCandado(props: PropsIcono) {
     </Base>
   );
 }
+
+export function IconoCorreo(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <rect x="2.5" y="4.5" width="19" height="15" rx="2.5" />
+      <path d="M3.5 7 11 12.4a1.8 1.8 0 0 0 2 0L20.5 7" />
+    </Base>
+  );
+}
+
+export function IconoAdjunto(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M20 11.5 12.4 19a4.5 4.5 0 0 1-6.4-6.4l7.8-7.7a3 3 0 0 1 4.2 4.2l-7.7 7.8a1.5 1.5 0 0 1-2.2-2.1l7.1-7.1" />
+    </Base>
+  );
+}
+
+export function IconoEnlace(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M10 13.5a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1.5 1.5" />
+      <path d="M14 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5L12.5 17" />
+    </Base>
+  );
+}
+
+export function IconoEscudo(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M12 3 5 6v5.5c0 4.2 2.9 7.8 7 9.5 4.1-1.7 7-5.3 7-9.5V6l-7-3Z" />
+      <path d="m9.2 12 2 2 3.6-3.8" />
+    </Base>
+  );
+}
+
+export function IconoMas(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M12 5.5v13M5.5 12h13" />
+    </Base>
+  );
+}

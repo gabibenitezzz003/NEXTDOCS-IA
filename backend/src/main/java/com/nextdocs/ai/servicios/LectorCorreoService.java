@@ -101,8 +101,8 @@ public class LectorCorreoService {
 		correo.setRemitente(primeraDireccion(mensaje.getFrom()));
 		correo.setDestinatarios(direcciones(mensaje.getAllRecipients()));
 		correo.setEnviadoEn(mensaje.getSentDate() == null ? Instant.now() : mensaje.getSentDate().toInstant());
-		correo.setIdentificadorMensaje(identificadorDe(mensaje, correo));
 		recolectarAdjuntos(mensaje, correo.getAdjuntos());
+		correo.setIdentificadorMensaje(identificadorDe(mensaje, correo));
 		return correo;
 	}
 
@@ -111,8 +111,15 @@ public class LectorCorreoService {
 		if (cabecera != null && cabecera.length > 0 && cabecera[0] != null && !cabecera[0].isBlank()) {
 			return cabecera[0].trim();
 		}
-		return "<sin-id-" + Hash.sha256((correo.getRemitente() + "|" + correo.getAsunto() + "|"
-				+ correo.getEnviadoEn()).getBytes(java.nio.charset.StandardCharsets.UTF_8)) + "@nextdocs-ai>";
+		StringBuilder huella = new StringBuilder();
+		huella.append(correo.getRemitente()).append('|').append(correo.getAsunto()).append('|')
+				.append(correo.getEnviadoEn());
+		for (CorreoCrudoModel.AdjuntoCrudoModel adjunto : correo.getAdjuntos()) {
+			huella.append('|').append(adjunto.getNombre()).append(':')
+					.append(adjunto.getContenido() == null ? "vacio" : Hash.sha256(adjunto.getContenido()));
+		}
+		return "<sin-id-" + Hash.sha256(huella.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8))
+				+ "@nextdocs-ai>";
 	}
 
 	private void recolectarAdjuntos(Part parte, List<CorreoCrudoModel.AdjuntoCrudoModel> destino) throws Exception {
