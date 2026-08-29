@@ -577,6 +577,56 @@ del rango.
 
 ---
 
+### Archive & Export Center
+
+Migra el SPR039 histórico a la plataforma independiente. Un lote se pide, un trabajador lo genera
+en segundo plano y queda disponible **7 días**.
+
+```
+GET  /api/v1/exportaciones/configuracion
+POST /api/v1/exportaciones                                 permiso: documentos.exportar
+     { nombre, estados[], origen, codigoPlantilla, texto, tipoObjeto, idObjeto,
+       desde, hasta, soloRaiz, orden, incluirOriginales }
+GET  /api/v1/exportaciones?estado&pagina&tamano            permiso: documentos.exportar
+GET  /api/v1/exportaciones/{loteId}                        permiso: documentos.exportar
+GET  /api/v1/exportaciones/{loteId}/descarga               permiso: documentos.exportar
+GET  /api/v1/exportaciones/almacenamiento                  permiso: gobernanza.leer
+```
+
+Estados del lote: `SOLICITADO` → `GENERANDO` → `DISPONIBLE` → `VENCIDO`, o `FALLIDO`.
+Órdenes: `FECHA_DESC` (default), `FECHA_ASC`, `TAMANO_DESC`, `ESTADO_ASC`.
+
+Pedir una exportación **sin resultados se rechaza con 400** en vez de generar un ZIP vacío, y una
+que supere los 2000 documentos también: el mensaje pide acotar filtros.
+
+**Contenido del ZIP**
+
+| Entrada | Qué trae |
+|---|---|
+| `documentos/<id8>-<nombre>` | el original de cada documento incluido |
+| `indice.csv` | una fila por documento con los campos del ANEXO_D |
+| `manifiesto-sha256.txt` | `<sha256>  <ruta>` por archivo empaquetado |
+
+El índice trae `batch_id`, `object_type`, `object_id`, `document_type`, `document_version`,
+`document_id`, `created_at`, `closed_at`, `actors`, `archive_filename`, `size_bytes`, `sha256`,
+`status`, `findings` y `skipped_reason`.
+
+**Un archivo en cuarentena nunca entra al ZIP.** El documento igual aparece en el índice con su
+`skipped_reason`, así que la omisión queda auditada en vez de ser un silencio. Lo mismo con un
+documento sin archivo original almacenado. `cantidadOmitidos` los cuenta aparte de
+`cantidadDocumentos`.
+
+**Ciclo de vida.** Un trabajador emite `export.expiring` cuando faltan 2 días y `export.expired` al
+vencer, momento en que **borra el ZIP del object store** y limpia la clave. Pedir la descarga de un
+lote vencido devuelve 400 explicando que hay que volver a pedirla — no un 404 mudo.
+
+**Almacenamiento.** `/almacenamiento` separa `originalesPersistentes` de `exportacionesTemporales` y
+presenta el total en KB/MB/GB/TB. Con cuota configurada emite `storage.threshold` al cruzar 70, 85,
+95 y 100 %, una sola vez por umbral: si el uso baja, el aviso se limpia y puede volver a dispararse.
+Al llegar al tope **no se borra evidencia** — esa es la regla del ANEXO_D.
+
+---
+
 ### Observabilidad y costo por tenant
 
 El N3 pide **costo efectivo por documento correcto**, no sólo tokens de inferencia. El costo de
@@ -621,6 +671,7 @@ públicos; métricas no.
 | `documentos.leer` | Bandeja, visor, detalle, descarga del original |
 | `documentos.escribir` | Ingesta, reproceso, cierre |
 | `documentos.revisar` | Registrar revisiones y sobreescribir hallazgos |
+| `documentos.exportar` | pedir, listar y descargar lotes de exportación |
 | `documentos.eliminar` | Baja lógica |
 | `plantillas.leer` / `plantillas.escribir` / `plantillas.publicar` | Template Studio |
 | `excepciones.leer` / `excepciones.gestionar` | Exception Center |

@@ -53,6 +53,7 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Segundo proveedor de IA (`DEEPSEEK`) como respaldo del router | ✅ |
 | Portal React 19 standalone: bandeja, visor, excepciones y plantillas | ✅ |
 | Panel de control: 11 KPI con fórmula visible y drill-down a su población | ✅ |
+| Archive & Export Center: ZIP con índice, manifiesto de hashes y TTL de 7 días | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -270,7 +271,7 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 núcleo · … · V11 costo por tenant
+│           └── db/migration/        V1 núcleo · … · V13 export center
 ├── backend/Dockerfile               imagen multi-stage (Maven 3.9 → JRE 21)
 ├── .github/workflows/verificar.yml  mvn verify + build de imagen
 ├── .env.example                     plantilla de variables; copiala a .env
@@ -353,7 +354,8 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
 32 tareas en 4 fases, con criterios de aceptación y dependencias.
 
-La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 2 de 6: portal (15) y panel de control (20).
+La **Fase 1 está cerrada** (14 de 14) y de la Fase 2 van 3 de 6: portal (15), panel de control (20)
+y Archive & Export Center (19).
 Quien retome el proyecto arranca por la **tarea 16**.
 
 | Fase | Alcance | Tareas |
@@ -370,8 +372,6 @@ canales de entrada y la federación de identidad:
 1. SSO y embed con Follow, CIMA y Valid360.ai (tarea 16) — sólo existe el enum `OrigenIdentidad`
 2. Channel Gateway de email dedicado por tenant (17) — sin código
 3. Canal de ingesta por WhatsApp (18) — sin código
-4. Archive & Export Center (19) — hay `ExportadorCsv` y export de auditoría; falta ZIP, índice XLSX,
-   manifiesto de hashes y ciclo de vida
 
 Pendiente no-código: cargar datasets gold reales, ensayar una restauración, correr una prueba de
 carga y **rotar la API key de Gemini**.

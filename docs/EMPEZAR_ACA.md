@@ -159,6 +159,17 @@ así que un PDF partido en 10 sumaba 1 en la tarjeta y 11 en el detalle.
 `KpiIT.elConteoCoincideConSuPoblacion` fija la invariante e ingresa a propósito un lote segmentado.
 Si agregás un indicador a `KpiService.CON_POBLACION`, el test lo toma solo.
 
+### 10. Un permiso nuevo no se le da solo a los roles que ya existen
+
+`Permiso.todos()` sólo se lee **al crear un tenant**. Los roles predefinidos ya sembrados guardan sus
+permisos en `rol_permiso`, así que agregar una constante al código no habilita nada en un entorno
+existente: el endpoint devuelve 403 y el código se ve perfecto. Pasó al agregar
+`documentos.exportar`. La solución es una migración que haga el `INSERT ... WHERE NOT EXISTS` sobre
+los roles predefinidos, como `V13__permiso_exportar_roles_predefinidos.sql`.
+
+Y el corolario: **nunca edites una migración ya aplicada** para meter el arreglo. Rompe el checksum
+en todo entorno que la haya corrido. Siempre una migración nueva.
+
 ---
 
 ## 5. Dónde está cada cosa
@@ -181,10 +192,12 @@ La **Fase 1** cierra el producto vendible. Van 14 de 14.
 (5) · matching (6) · gobernanza (7) · retención (8) · administración (9) · webhooks (10) · original
 físico (11) · costo por tenant (12) · suite de QA (13) · imagen + CI (14)
 
-De la **Fase 2** van 2 de 6: portal frontend (15) y dashboard con panel de control (20).
+De la **Fase 2** van 3 de 6: portal frontend (15), dashboard y panel de control (20) y
+Archive & Export Center (19).
 
-**Siguiente:** SSO y embed (16), Channel Gateway de email (17), WhatsApp (18) y Archive & Export
-Center (19). Ninguna de las cuatro tiene código todavía.
+**Siguiente:** SSO y embed (16), Channel Gateway de email (17) y WhatsApp (18). Las tres necesitan
+infraestructura externa para verificarse de verdad: un IdP OIDC, un servidor de correo y un proveedor
+de WhatsApp Business. Levantalas en Docker antes de escribir el adaptador.
 
 Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
 criterio: está escrito.

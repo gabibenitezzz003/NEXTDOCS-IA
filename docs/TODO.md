@@ -91,7 +91,7 @@ umbral de exactitud y la comparación con la versión publicada.
 | 16 | SSO y embed con Follow, CIMA y Valid360.ai por federación de identidad |
 | 17 | Channel Gateway de email dedicado por tenant |
 | 18 | Canal de ingesta por WhatsApp |
-| 19 | Archive & Export Center |
+| ~~19~~ | ~~Archive & Export Center~~ ✅ |
 | ~~20~~ | ~~Dashboard ejecutivo y panel de control de procesos~~ ✅ |
 
 **Dependencias:** 15 necesita 1 y 9 · 20 necesita 12 y 15

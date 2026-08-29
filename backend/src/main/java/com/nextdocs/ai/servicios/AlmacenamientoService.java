@@ -86,12 +86,34 @@ public class AlmacenamientoService {
 		}
 	}
 
+	public void eliminarExportacion(String claveObjeto) {
+		try {
+			clienteS3.deleteObject(DeleteObjectRequest.builder().bucket(propiedades.getBucketExportaciones())
+					.key(claveObjeto).build());
+		} catch (S3Exception e) {
+			log.error("No se pudo eliminar la exportacion {}", claveObjeto, e);
+		}
+	}
+
+	public byte[] leerExportacion(String claveObjeto) {
+		try (ResponseInputStream<GetObjectResponse> flujo = clienteS3.getObject(GetObjectRequest.builder()
+				.bucket(propiedades.getBucketExportaciones()).key(claveObjeto).build())) {
+			return flujo.readAllBytes();
+		} catch (Exception e) {
+			throw new ValidacionException("No se pudo leer la exportacion " + claveObjeto);
+		}
+	}
+
 	public String bucketDocumentos() {
 		return propiedades.getBucketDocumentos();
 	}
 
 	public String bucketCuarentena() {
 		return propiedades.getBucketCuarentena();
+	}
+
+	public String bucketExportaciones() {
+		return propiedades.getBucketExportaciones();
 	}
 
 	private String guardar(String bucket, String claveObjeto, byte[] contenido, String tipoMime) {
