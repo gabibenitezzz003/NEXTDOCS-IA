@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Cargando, ErrorPanel } from "../componentes/Estados";
+import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
+import { Boton, Pastilla } from "../componentes/Interfaz";
+import { IconoCerrar, IconoDescargar, IconoRecargar } from "../componentes/Iconos";
 import { BarraConfianza, InsigniaEstado, InsigniaPresencia, InsigniaSeveridad } from "../componentes/Insignias";
 import { formatearFecha } from "./Documentos";
 import { mensajeDeError } from "../api/cliente";
@@ -100,12 +102,16 @@ export function VisorDocumento({
   const trabajando = decidir.isPending || reproceso.isPending || cierre.isPending;
 
   return (
-    <div className="fixed inset-0 z-40 flex justify-end bg-grafito/45" role="dialog" aria-modal="true">
+    <div
+      className="velo fixed inset-0 z-50 flex justify-end bg-grafito/45 backdrop-blur-[2px]"
+      role="dialog"
+      aria-modal="true"
+    >
       <button type="button" aria-label="Cerrar" className="flex-1 cursor-default" onClick={alCerrar} />
-      <section className="flex w-full max-w-3xl flex-col bg-lienzo shadow-2xl">
+      <section className="entrar-lateral flex w-full max-w-3xl flex-col border-l border-borde bg-lienzo shadow-flotante">
         <header className="flex items-start justify-between gap-4 border-b border-borde bg-white px-6 py-5">
           <div className="min-w-0">
-            <p className="truncate font-titulo text-lg text-tinta">
+            <p className="truncate font-titulo text-xl text-tinta">
               {documento?.nombre ?? "Documento"}
             </p>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-tinta-suave">
@@ -123,31 +129,24 @@ export function VisorDocumento({
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={abrirOriginal}
-              className="rounded-lg border border-borde px-3 py-1.5 text-sm text-tinta transition hover:border-violeta hover:text-violeta"
-            >
+            <Boton tamano="sm" onClick={abrirOriginal}>
+              <IconoDescargar tamano={14} />
               Ver original
-            </button>
-            <button
-              type="button"
-              onClick={alCerrar}
-              className="rounded-lg px-2.5 py-1.5 text-sm text-tinta-suave transition hover:bg-borde/40"
-            >
-              Cerrar
-            </button>
+            </Boton>
+            <Boton variante="fantasma" tamano="sm" onClick={alCerrar} aria-label="Cerrar">
+              <IconoCerrar tamano={16} />
+            </Boton>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5">
+        <div className="barra-desplazamiento-fina flex-1 overflow-y-auto px-6 py-5">
           {aviso ? (
             <div
               role="status"
-              className={`mb-4 rounded-lg px-3.5 py-2.5 text-sm ${
+              className={`aparecer mb-4 rounded-xl border px-4 py-3 text-sm ${
                 aviso.tono === "ok"
-                  ? "border border-exito/25 bg-exito-tenue text-exito"
-                  : "border border-rojo/25 bg-rojo-tenue text-rojo"
+                  ? "border-exito-borde bg-exito-tenue text-exito"
+                  : "border-rojo-borde bg-rojo-tenue text-rojo"
               }`}
             >
               {aviso.texto}
@@ -174,7 +173,7 @@ export function VisorDocumento({
                 />
               </div>
 
-              <nav className="mb-4 flex gap-1 border-b border-borde">
+              <nav className="mb-4 inline-flex rounded-xl border border-borde bg-white p-1 shadow-plano">
                 {(
                   [
                     ["campos", `Campos (${detalle.extraccion?.valores.length ?? 0})`],
@@ -187,10 +186,10 @@ export function VisorDocumento({
                     key={clave}
                     type="button"
                     onClick={() => setPestana(clave)}
-                    className={`-mb-px border-b-2 px-3 py-2 text-sm transition ${
+                    className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
                       pestana === clave
-                        ? "border-violeta font-medium text-violeta"
-                        : "border-transparent text-tinta-suave hover:text-tinta"
+                        ? "bg-grafito text-white shadow-plano"
+                        : "text-tinta-suave hover:text-tinta"
                     }`}
                   >
                     {texto}
@@ -236,7 +235,7 @@ export function VisorDocumento({
         {puedeRevisar && documento ? (
           <footer className="border-t border-borde bg-white px-6 py-4">
             {Object.keys(correcciones).length ? (
-              <p className="mb-2 text-xs text-violeta">
+              <p className="mb-2.5 inline-flex items-center gap-1.5 rounded-lg bg-violeta-tenue px-2.5 py-1 text-xs font-semibold text-violeta ring-1 ring-inset ring-violeta-borde">
                 {Object.keys(correcciones).length} campo(s) corregido(s) sin guardar
               </p>
             ) : null}
@@ -244,14 +243,14 @@ export function VisorDocumento({
               value={motivo}
               onChange={(evento) => setMotivo(evento.target.value)}
               placeholder="Motivo de la decision (obligatorio para rechazar, observar o corregir)"
-              className="w-full rounded-lg border border-borde px-3 py-2 text-sm outline-none transition focus:border-violeta focus:ring-2 focus:ring-violeta/15"
+              className="h-10 w-full rounded-xl border border-borde bg-white px-3 text-sm text-tinta outline-none transition placeholder:text-tinta-tenue focus:border-violeta focus:ring-[3px] focus:ring-violeta/15"
             />
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={trabajando || !documento.transicionesPosibles.includes("APROBADO")}
                 onClick={() => decidir.mutate("APROBAR")}
-                className="rounded-lg bg-exito px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                className="h-9.5 rounded-xl bg-exito px-4 text-sm font-semibold text-white shadow-[0_4px_14px_-3px_rgba(15,157,88,0.45)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-borde-fuerte disabled:text-white/70 disabled:shadow-none"
               >
                 Aprobar
               </button>
@@ -259,7 +258,7 @@ export function VisorDocumento({
                 type="button"
                 disabled={trabajando || !documento.transicionesPosibles.includes("OBSERVADO")}
                 onClick={() => decidir.mutate("OBSERVAR")}
-                className="rounded-lg bg-alerta px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                className="h-9.5 rounded-xl bg-alerta px-4 text-sm font-semibold text-white shadow-[0_4px_14px_-3px_rgba(194,118,10,0.45)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-borde-fuerte disabled:text-white/70 disabled:shadow-none"
               >
                 Observar
               </button>
@@ -267,29 +266,26 @@ export function VisorDocumento({
                 type="button"
                 disabled={trabajando || !documento.transicionesPosibles.includes("RECHAZADO")}
                 onClick={() => decidir.mutate("RECHAZAR")}
-                className="rounded-lg bg-rojo px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                className="h-9.5 rounded-xl bg-rojo px-4 text-sm font-semibold text-white shadow-[0_4px_14px_-3px_rgba(255,30,30,0.45)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-borde-fuerte disabled:text-white/70 disabled:shadow-none"
               >
                 Rechazar
               </button>
-              <button
-                type="button"
-                disabled={trabajando}
-                onClick={() => reproceso.mutate()}
-                className="rounded-lg border border-borde px-4 py-2 text-sm font-medium text-tinta transition hover:border-violeta hover:text-violeta disabled:opacity-40"
-              >
-                Reprocesar
-              </button>
-              <button
-                type="button"
-                disabled={trabajando || !documento.transicionesPosibles.includes("CERRADO")}
-                onClick={() => cierre.mutate()}
-                className="rounded-lg border border-borde px-4 py-2 text-sm font-medium text-tinta transition hover:border-grafito disabled:opacity-40"
-              >
-                Cerrar documento
-              </button>
+              <span className="ml-auto flex gap-2">
+                <Boton tamano="md" disabled={trabajando} onClick={() => reproceso.mutate()}>
+                  <IconoRecargar tamano={14} />
+                  Reprocesar
+                </Boton>
+                <Boton
+                  tamano="md"
+                  disabled={trabajando || !documento.transicionesPosibles.includes("CERRADO")}
+                  onClick={() => cierre.mutate()}
+                >
+                  Cerrar documento
+                </Boton>
+              </span>
             </div>
             {documento.transicionesPosibles.length === 0 ? (
-              <p className="mt-2 text-xs text-tinta-suave">
+              <p className="mt-2.5 text-xs text-tinta-suave">
                 Este documento esta en un estado final y no admite mas transiciones.
               </p>
             ) : null}
@@ -311,9 +307,9 @@ function Metrica({
 }) {
   const color = tono === "ok" ? "text-exito" : tono === "alerta" ? "text-alerta" : "text-tinta";
   return (
-    <div className="rounded-lg border border-borde bg-white px-3 py-2.5">
-      <p className="text-xs text-tinta-suave">{etiqueta}</p>
-      <p className={`mt-0.5 truncate font-titulo text-sm ${color}`}>{valor}</p>
+    <div className="rounded-xl border border-borde bg-white px-3.5 py-2.5 shadow-plano">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">{etiqueta}</p>
+      <p className={`mt-1 truncate font-titulo text-sm ${color}`}>{valor}</p>
     </div>
   );
 }
@@ -331,27 +327,32 @@ function PanelCampos({
 }) {
   if (!detalle.extraccion) {
     return (
-      <p className="rounded-lg border border-dashed border-borde bg-white px-4 py-8 text-center text-sm text-tinta-suave">
-        Todavia no se ejecuto ninguna extraccion sobre este documento.
-      </p>
+      <Vacio
+        titulo="Sin extraccion"
+        detalle="Todavia no se ejecuto ninguna extraccion sobre este documento."
+      />
     );
   }
   return (
-    <div className="overflow-hidden rounded-xl border border-borde bg-white">
+    <div className="overflow-hidden rounded-2xl border border-borde bg-white shadow-tarjeta">
       <table className="w-full text-left text-sm">
-        <thead className="border-b border-borde bg-lienzo text-xs uppercase tracking-wide text-tinta-suave">
-          <tr>
-            <th className="px-4 py-2.5 font-medium">Campo</th>
-            <th className="px-4 py-2.5 font-medium">Valor</th>
-            <th className="px-4 py-2.5 font-medium">Presencia</th>
-            <th className="px-4 py-2.5 font-medium">Confianza</th>
+        <thead>
+          <tr className="border-b border-borde bg-lienzo/70">
+            {["Campo", "Valor", "Presencia", "Confianza"].map((columna) => (
+              <th
+                key={columna}
+                className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-tinta-suave"
+              >
+                {columna}
+              </th>
+            ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y divide-borde">
           {detalle.extraccion.valores.map((valor) => {
             const corregido = correcciones[valor.claveCampo];
             return (
-              <tr key={valor.id} className="border-b border-borde/70 last:border-0">
+              <tr key={valor.id} className="transition hover:bg-lienzo/50">
                 <td className="px-4 py-2.5">
                   <p className="font-medium text-tinta">{valor.etiqueta ?? valor.claveCampo}</p>
                   <p className="text-xs text-tinta-suave">{valor.claveCampo}</p>
@@ -364,10 +365,10 @@ function PanelCampos({
                         const nuevo = evento.target.value;
                         alCorregir(valor.claveCampo, nuevo === (valor.valorNormalizado ?? "") ? null : nuevo);
                       }}
-                      className={`w-full rounded-md border px-2 py-1 text-sm outline-none transition ${
+                      className={`w-full rounded-lg border px-2.5 py-1.5 text-sm outline-none transition ${
                         corregido !== undefined
-                          ? "border-violeta bg-violeta-tenue/40"
-                          : "border-transparent hover:border-borde focus:border-violeta"
+                          ? "border-violeta bg-violeta-tenue font-medium text-violeta"
+                          : "border-transparent hover:border-borde focus:border-violeta focus:ring-[3px] focus:ring-violeta/15"
                       }`}
                     />
                   ) : (
@@ -400,7 +401,7 @@ function PanelHallazgos({
   const hallazgos = detalle.validacion?.hallazgos ?? [];
   if (!hallazgos.length) {
     return (
-      <p className="rounded-lg border border-exito/25 bg-exito-tenue px-4 py-6 text-center text-sm text-exito">
+      <p className="rounded-2xl border border-exito-borde bg-exito-tenue px-4 py-8 text-center text-sm font-medium text-exito">
         La validacion no encontro hallazgos.
       </p>
     );
@@ -408,7 +409,7 @@ function PanelHallazgos({
   return (
     <ul className="space-y-2">
       {hallazgos.map((hallazgo) => (
-        <li key={hallazgo.id} className="rounded-lg border border-borde bg-white px-4 py-3">
+        <li key={hallazgo.id} className="rounded-xl border border-borde bg-white px-4 py-3 shadow-plano">
           <div className="flex flex-wrap items-center gap-2">
             <InsigniaSeveridad severidad={hallazgo.severidad} />
             <span className="font-mono text-xs text-tinta-suave">{hallazgo.codigoRegla}</span>
@@ -441,9 +442,10 @@ function PanelAsociacion({
 }) {
   if (!detalle.candidatos.length) {
     return (
-      <p className="rounded-lg border border-dashed border-borde bg-white px-4 py-8 text-center text-sm text-tinta-suave">
-        Ningun conector devolvio candidatos para este documento.
-      </p>
+      <Vacio
+        titulo="Sin candidatos"
+        detalle="Ningun conector devolvio candidatos para este documento."
+      />
     );
   }
   return (
@@ -451,8 +453,8 @@ function PanelAsociacion({
       {detalle.candidatos.map((candidato) => (
         <li
           key={candidato.id}
-          className={`rounded-lg border bg-white px-4 py-3 ${
-            candidato.seleccionado ? "border-exito ring-1 ring-exito/25" : "border-borde"
+          className={`rounded-xl border bg-white px-4 py-3 shadow-plano transition ${
+            candidato.seleccionado ? "border-exito ring-1 ring-exito/25" : "border-borde hover:border-borde-fuerte"
           } ${candidato.descartado ? "opacity-50" : ""}`}
         >
           <div className="flex items-center justify-between gap-3">
@@ -466,18 +468,11 @@ function PanelAsociacion({
               </p>
             </div>
             {candidato.seleccionado ? (
-              <span className="shrink-0 rounded-full bg-exito-tenue px-2.5 py-0.5 text-xs font-medium text-exito ring-1 ring-exito/25">
-                Seleccionado
-              </span>
+              <Pastilla tono="exito">Seleccionado</Pastilla>
             ) : puedeElegir && !candidato.descartado ? (
-              <button
-                type="button"
-                disabled={eligiendo}
-                onClick={() => alElegir(candidato.id)}
-                className="shrink-0 rounded-lg border border-borde px-3 py-1.5 text-xs font-medium transition hover:border-violeta hover:text-violeta disabled:opacity-40"
-              >
+              <Boton tamano="sm" disabled={eligiendo} onClick={() => alElegir(candidato.id)}>
                 Elegir
-              </button>
+              </Boton>
             ) : null}
           </div>
         </li>
@@ -493,15 +488,16 @@ function PanelActividad({
 }) {
   if (!detalle.revisiones.length) {
     return (
-      <p className="rounded-lg border border-dashed border-borde bg-white px-4 py-8 text-center text-sm text-tinta-suave">
-        Todavia no hubo revisiones humanas sobre este documento.
-      </p>
+      <Vacio
+        titulo="Sin actividad"
+        detalle="Todavia no hubo revisiones humanas sobre este documento."
+      />
     );
   }
   return (
     <ol className="space-y-3">
       {detalle.revisiones.map((revision) => (
-        <li key={revision.id} className="rounded-lg border border-borde bg-white px-4 py-3">
+        <li key={revision.id} className="rounded-xl border border-borde bg-white px-4 py-3 shadow-plano">
           <div className="flex flex-wrap items-center gap-2 text-sm">
             <span className="font-medium text-tinta">{revision.decision}</span>
             <span className="text-tinta-suave">

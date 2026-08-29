@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Encabezado } from "../componentes/Disposicion";
-import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
+import { Contenido, Encabezado } from "../componentes/Disposicion";
+import { CargandoTarjetas, ErrorPanel, Vacio } from "../componentes/Estados";
+import { Pastilla } from "../componentes/Interfaz";
+import { IconoPlantillas } from "../componentes/Iconos";
 import { listarPlantillas } from "../api/plantillas";
 import { mensajeDeError } from "../api/cliente";
 
@@ -13,9 +15,10 @@ export function Plantillas() {
         titulo="Plantillas documentales"
         descripcion="Cada plantilla define los campos que se extraen y las reglas que deciden."
       />
-      <div className="px-8 py-6">
+
+      <Contenido>
         {consulta.isPending ? (
-          <Cargando filas={4} />
+          <CargandoTarjetas cantidad={6} />
         ) : consulta.isError ? (
           <ErrorPanel mensaje={mensajeDeError(consulta.error)} reintentar={() => consulta.refetch()} />
         ) : !consulta.data?.length ? (
@@ -26,36 +29,52 @@ export function Plantillas() {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {consulta.data.map((plantilla) => (
-              <article key={plantilla.id} className="rounded-xl border border-borde bg-white p-5">
+              <article
+                key={plantilla.id}
+                className="group relative overflow-hidden rounded-2xl border border-borde bg-white p-5 shadow-tarjeta transition duration-200 hover:-translate-y-0.5 hover:border-violeta-borde hover:shadow-elevado"
+              >
+                <span className="absolute inset-x-0 top-0 h-0.5 scale-x-0 bg-gradient-to-r from-violeta to-rojo transition-transform duration-300 group-hover:scale-x-100" />
+
                 <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="truncate font-titulo text-base text-tinta">{plantilla.nombre}</h2>
-                    <p className="font-mono text-xs text-tinta-suave">{plantilla.codigo}</p>
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-lienzo text-tinta-suave ring-1 ring-borde transition group-hover:bg-violeta-tenue group-hover:text-violeta group-hover:ring-violeta-borde">
+                      <IconoPlantillas tamano={17} />
+                    </span>
+                    <div className="min-w-0">
+                      <h2 className="truncate font-titulo text-[15px] text-tinta">{plantilla.nombre}</h2>
+                      <p className="mt-0.5 truncate font-mono text-[11px] text-tinta-tenue">
+                        {plantilla.codigo}
+                      </p>
+                    </div>
                   </div>
                   {plantilla.numeroVersionPublicada ? (
-                    <span className="shrink-0 rounded-full bg-exito-tenue px-2.5 py-0.5 text-xs font-medium text-exito ring-1 ring-exito/25">
-                      v{plantilla.numeroVersionPublicada}
-                    </span>
+                    <Pastilla tono="exito">v{plantilla.numeroVersionPublicada}</Pastilla>
                   ) : (
-                    <span className="shrink-0 rounded-full bg-alerta-tenue px-2.5 py-0.5 text-xs font-medium text-alerta ring-1 ring-alerta/25">
-                      sin publicar
-                    </span>
+                    <Pastilla tono="alerta">sin publicar</Pastilla>
                   )}
                 </div>
+
                 {plantilla.descripcion ? (
-                  <p className="mt-2 line-clamp-2 text-sm text-tinta-suave">{plantilla.descripcion}</p>
+                  <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-tinta-suave">
+                    {plantilla.descripcion}
+                  </p>
                 ) : null}
-                <div className="mt-3 flex items-center gap-3 text-xs text-tinta-suave">
-                  {plantilla.familia ? <span>{plantilla.familia}</span> : null}
+
+                <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-borde pt-3 text-xs text-tinta-suave">
+                  {plantilla.familia ? (
+                    <span className="rounded-md bg-lienzo px-2 py-0.5 font-medium ring-1 ring-inset ring-borde">
+                      {plantilla.familia}
+                    </span>
+                  ) : null}
                   {plantilla.cantidadVersiones ? (
-                    <span>{plantilla.cantidadVersiones} versiones</span>
+                    <span className="tabular-nums">{plantilla.cantidadVersiones} versiones</span>
                   ) : null}
                 </div>
               </article>
             ))}
           </div>
         )}
-      </div>
+      </Contenido>
     </>
   );
 }

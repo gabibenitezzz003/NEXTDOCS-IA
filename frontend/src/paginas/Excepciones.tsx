@@ -1,16 +1,26 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Encabezado } from "../componentes/Disposicion";
+import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
 import { InsigniaSeveridad } from "../componentes/Insignias";
+import { Boton, GrupoSegmentado, Pastilla } from "../componentes/Interfaz";
+import { IconoCheck, IconoDerecha, IconoIzquierda, IconoReloj } from "../componentes/Iconos";
 import { listarExcepciones, resolverExcepcion } from "../api/excepciones";
 import { mensajeDeError } from "../api/cliente";
 import { formatearFecha } from "./Documentos";
 import { VisorDocumento } from "./VisorDocumento";
 import { useSesion } from "../contextos/ProveedorSesion";
-import type { EstadoExcepcion } from "../tipos/api";
+import type { EstadoExcepcion, PrioridadExcepcion } from "../tipos/api";
+import type { Tono } from "../componentes/Interfaz";
 
 const ESTADOS: EstadoExcepcion[] = ["ABIERTA", "EN_CURSO", "RESUELTA", "DESCARTADA"];
+
+const TONO_PRIORIDAD: Record<PrioridadExcepcion, Tono> = {
+  BAJA: "neutro",
+  MEDIA: "informacion",
+  ALTA: "alerta",
+  CRITICA: "rojo",
+};
 
 export function Excepciones() {
   const { tienePermiso } = useSesion();
@@ -34,11 +44,13 @@ export function Excepciones() {
       setResolucion("");
       setError(null);
       clienteConsultas.invalidateQueries({ queryKey: ["excepciones"] });
+      clienteConsultas.invalidateQueries({ queryKey: ["kpi"] });
     },
     onError: (fallo) => setError(mensajeDeError(fallo)),
   });
 
   const excepciones = consulta.data?.content ?? [];
+  const total = consulta.data?.totalElements ?? 0;
   const totalPaginas = consulta.data?.totalPages ?? 0;
 
   return (
@@ -46,36 +58,30 @@ export function Excepciones() {
       <Encabezado
         titulo="Centro de excepciones"
         descripcion="Todo lo que necesita intervencion humana, con su prioridad y su vencimiento."
+        acciones={
+          <GrupoSegmentado
+            opciones={ESTADOS.map((candidato) => ({
+              valor: candidato,
+              texto: candidato.replace(/_/g, " "),
+            }))}
+            valor={estado}
+            alCambiar={(nuevo) => {
+              setEstado(nuevo);
+              setPagina(0);
+            }}
+          />
+        }
       />
-      <div className="px-8 py-6">
-        <div className="mb-5 flex flex-wrap gap-1.5">
-          {ESTADOS.map((candidato) => (
-            <button
-              key={candidato}
-              type="button"
-              onClick={() => {
-                setEstado(candidato);
-                setPagina(0);
-              }}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                estado === candidato
-                  ? "bg-grafito text-white"
-                  : "border border-borde bg-white text-tinta-suave hover:border-grafito hover:text-tinta"
-              }`}
-            >
-              {candidato.replace(/_/g, " ")}
-            </button>
-          ))}
-        </div>
 
+      <Contenido>
         {error ? (
-          <div className="mb-4 rounded-lg border border-rojo/25 bg-rojo-tenue px-3.5 py-2.5 text-sm text-rojo">
+          <div className="aparecer mb-4 rounded-xl border border-rojo-borde bg-rojo-tenue px-4 py-3 text-sm text-rojo">
             {error}
           </div>
         ) : null}
 
         {consulta.isPending ? (
-          <Cargando filas={5} />
+          <Cargando filas={5} alto="h-28" />
         ) : consulta.isError ? (
           <ErrorPanel mensaje={mensajeDeError(consulta.error)} reintentar={() => consulta.refetch()} />
         ) : excepciones.length === 0 ? (
@@ -85,50 +91,62 @@ export function Excepciones() {
           />
         ) : (
           <>
-            <ul className="space-y-2.5">
+            <ul className="space-y-3">
               {excepciones.map((excepcion) => (
-                <li key={excepcion.id} className="rounded-xl border border-borde bg-white px-5 py-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+                <li
+                  key={excepcion.id}
+                  className={`overflow-hidden rounded-2xl border bg-white shadow-tarjeta transition hover:shadow-elevado ${
+                    excepcion.vencida ? "border-rojo-borde" : "border-borde hover:border-borde-fuerte"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-4 px-5 py-4">
                     <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <InsigniaSeveridad severidad={excepcion.severidad} />
-                        <span className="rounded-full bg-lienzo px-2.5 py-0.5 text-xs text-tinta-suave">
+                        <Pastilla tono={TONO_PRIORIDAD[excepcion.prioridad] ?? "neutro"}>
+                          {excepcion.prioridad}
+                        </Pastilla>
+                        <span className="rounded-full bg-lienzo px-2.5 py-0.5 text-[11px] font-medium text-tinta-suave ring-1 ring-inset ring-borde">
                           {excepcion.tipo}
                         </span>
-                        <span className="text-xs text-tinta-suave">{excepcion.prioridad}</span>
                         {excepcion.vencida ? (
-                          <span className="rounded-full bg-rojo-tenue px-2.5 py-0.5 text-xs font-medium text-rojo">
+                          <Pastilla tono="rojo" solido>
                             SLA vencido
-                          </span>
+                          </Pastilla>
                         ) : null}
                       </div>
-                      <p className="mt-2 text-sm text-tinta">{excepcion.detalle}</p>
-                      <p className="mt-1 text-xs text-tinta-suave">
-                        {excepcion.nombreDocumento ? `${excepcion.nombreDocumento} · ` : ""}
-                        vence {formatearFecha(excepcion.venceEn)}
+
+                      <p className="mt-2.5 text-sm leading-relaxed text-tinta">{excepcion.detalle}</p>
+
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-tinta-suave">
+                        {excepcion.nombreDocumento ? (
+                          <span className="font-medium text-tinta-media">{excepcion.nombreDocumento}</span>
+                        ) : null}
+                        <span className="flex items-center gap-1">
+                          <IconoReloj tamano={12} />
+                          vence {formatearFecha(excepcion.venceEn)}
+                        </span>
                       </p>
                     </div>
+
                     <div className="flex shrink-0 gap-2">
                       {excepcion.documentoId ? (
-                        <button
-                          type="button"
-                          onClick={() => setDocumentoAbierto(excepcion.documentoId!)}
-                          className="rounded-lg border border-borde px-3 py-1.5 text-xs font-medium transition hover:border-violeta hover:text-violeta"
-                        >
+                        <Boton tamano="sm" onClick={() => setDocumentoAbierto(excepcion.documentoId!)}>
                           Ver documento
-                        </button>
+                        </Boton>
                       ) : null}
                       {tienePermiso("excepciones.gestionar") && excepcion.estado !== "RESUELTA" ? (
-                        <button
-                          type="button"
+                        <Boton
+                          tamano="sm"
+                          variante={resolviendo === excepcion.id ? "primario" : "secundario"}
                           onClick={() => {
                             setResolviendo(resolviendo === excepcion.id ? null : excepcion.id);
                             setResolucion("");
                           }}
-                          className="rounded-lg border border-borde px-3 py-1.5 text-xs font-medium transition hover:border-exito hover:text-exito"
                         >
+                          <IconoCheck tamano={14} />
                           Resolver
-                        </button>
+                        </Boton>
                       ) : null}
                     </div>
                   </div>
@@ -139,54 +157,57 @@ export function Excepciones() {
                         evento.preventDefault();
                         resolver.mutate({ id: excepcion.id, texto: resolucion });
                       }}
-                      className="mt-3 flex gap-2 border-t border-borde pt-3"
+                      className="aparecer flex gap-2 border-t border-borde bg-lienzo/60 px-5 py-3.5"
                     >
                       <input
                         value={resolucion}
                         onChange={(evento) => setResolucion(evento.target.value)}
                         required
+                        autoFocus
                         placeholder="Como se resolvio"
-                        className="flex-1 rounded-lg border border-borde px-3 py-1.5 text-sm outline-none focus:border-violeta"
+                        className="h-9.5 flex-1 rounded-xl border border-borde bg-white px-3 text-sm text-tinta outline-none transition placeholder:text-tinta-tenue focus:border-violeta focus:ring-[3px] focus:ring-violeta/15"
                       />
-                      <button
-                        type="submit"
-                        disabled={resolver.isPending}
-                        className="rounded-lg bg-exito px-4 py-1.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
-                      >
-                        Confirmar
-                      </button>
+                      <Boton type="submit" variante="primario" disabled={resolver.isPending}>
+                        {resolver.isPending ? "Guardando..." : "Confirmar"}
+                      </Boton>
                     </form>
                   ) : null}
                 </li>
               ))}
             </ul>
 
-            {totalPaginas > 1 ? (
-              <div className="mt-4 flex items-center justify-end gap-2 text-sm text-tinta-suave">
-                <button
-                  type="button"
-                  disabled={pagina === 0}
-                  onClick={() => setPagina((actual) => actual - 1)}
-                  className="rounded-lg border border-borde bg-white px-3 py-1.5 disabled:opacity-40"
-                >
-                  Anterior
-                </button>
-                <span>
-                  {pagina + 1} de {totalPaginas}
-                </span>
-                <button
-                  type="button"
-                  disabled={pagina + 1 >= totalPaginas}
-                  onClick={() => setPagina((actual) => actual + 1)}
-                  className="rounded-lg border border-borde bg-white px-3 py-1.5 disabled:opacity-40"
-                >
-                  Siguiente
-                </button>
-              </div>
-            ) : null}
+            <div className="mt-4 flex items-center justify-between text-sm">
+              <span className="text-tinta-suave">
+                <span className="font-semibold tabular-nums text-tinta">{total}</span> excepcion
+                {total === 1 ? "" : "es"}
+              </span>
+              {totalPaginas > 1 ? (
+                <div className="flex items-center gap-2">
+                  <Boton
+                    tamano="sm"
+                    disabled={pagina === 0}
+                    onClick={() => setPagina((actual) => actual - 1)}
+                  >
+                    <IconoIzquierda tamano={14} />
+                    Anterior
+                  </Boton>
+                  <span className="px-1 text-xs tabular-nums text-tinta-suave">
+                    {pagina + 1} de {totalPaginas}
+                  </span>
+                  <Boton
+                    tamano="sm"
+                    disabled={pagina + 1 >= totalPaginas}
+                    onClick={() => setPagina((actual) => actual + 1)}
+                  >
+                    Siguiente
+                    <IconoDerecha tamano={14} />
+                  </Boton>
+                </div>
+              ) : null}
+            </div>
           </>
         )}
-      </div>
+      </Contenido>
 
       {documentoAbierto ? (
         <VisorDocumento documentoId={documentoAbierto} alCerrar={() => setDocumentoAbierto(null)} />
