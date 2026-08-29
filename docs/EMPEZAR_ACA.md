@@ -240,6 +240,32 @@ lee. Si no la usa nadie, o la cableás o la borrás.
 
 ---
 
+### 17. Borrar una constante de un enum que ya se guardó en la base
+
+Al sacar la respuesta automática al contacto no autorizado quité también
+`PlantillaWhatsapp.AVISO_CONTACTO_NO_AUTORIZADO`. El código quedó limpio, los 270 tests en verde, y
+`GET /canales/whatsapp/salientes` empezó a devolver **500** en el entorno de desarrollo: había filas
+con ese texto en `mensaje_whatsapp_saliente.plantilla` y Hibernate no puede mapearlas.
+
+No lo vieron los tests porque cada uno arranca con un tenant nuevo y ninguno había escrito esa fila.
+Lo vio la corrida en vivo, sobre una base que sí tenía historia. Y no rompe una fila: rompe **el
+listado entero**, para siempre, para ese tenant.
+
+Un `@Enumerated(EnumType.STRING)` es un contrato de datos. Sacarle un valor es una migración, no un
+refactor: primero un `UPDATE` que reescriba las filas viejas, después el cambio de código. Si el
+valor ya salió a producción, no se borra nunca.
+
+En este caso las filas sucias son sólo del entorno local, porque el commit que crea `V16` ya no tiene
+la constante: quien clone el repo arranca limpio. Para limpiar una base que corrió la versión
+intermedia:
+
+```sql
+DELETE FROM mensaje_whatsapp_saliente WHERE plantilla = 'AVISO_CONTACTO_NO_AUTORIZADO';
+```
+
+
+---
+
 ## 5. Dónde está cada cosa
 
 | Necesitás | Andá a |
