@@ -19,6 +19,19 @@ nextdocs:
     intentosMaximos: 3
   retencion:
     trabajadorActivo: false
+  federacion:
+    tiempoEsperaMilisegundos: 8000
+    segundosCacheJwks: 600
+    toleranciaRelojSegundos: 60
+    segundosVigenciaCodigo: 60
+    exigirEmisorSeguro: true
+  correo:
+    activo: false
+    mensajesPorCiclo: 25
+    tiempoEsperaMilisegundos: 8000
+    fallosParaPausar: 3
+    diasVigenciaCorrelacion: 30
+    tamanoMaximoAdjuntoBytes: 67108864
   proveedor-ia:
     proveedorPorDefecto: ABBYY
     intentosMaximos: 3

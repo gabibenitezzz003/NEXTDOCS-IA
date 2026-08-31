@@ -88,13 +88,39 @@ umbral de exactitud y la comparación con la versión publicada.
 | # | Tarea |
 |---|---|
 | 15 | Portal frontend standalone (bandeja, visor, Template Studio, Exception Center, gobernanza, monitor) |
-| 16 | SSO y embed con Follow, CIMA y Valid360.ai por federación de identidad |
-| 17 | Channel Gateway de email dedicado por tenant |
-| 18 | Canal de ingesta por WhatsApp |
-| 19 | Archive & Export Center |
-| 20 | Dashboard ejecutivo y panel de control de procesos |
+| ~~16~~ | ~~SSO y embed con Follow, CIMA y Valid360.ai por federación de identidad~~ ✅ |
+| ~~17~~ | ~~Channel Gateway de email dedicado por tenant~~ ❌ **retirado** |
+| ~~18~~ | ~~Canal de ingesta por WhatsApp~~ ❌ **retirado** |
+| ~~19~~ | ~~Archive & Export Center~~ ✅ |
+| ~~20~~ | ~~Dashboard ejecutivo y panel de control de procesos~~ ✅ |
 
 **Dependencias:** 15 necesita 1 y 9 · 20 necesita 12 y 15
+
+**Por qué se retiraron 17 y 18.** Los dos canales se construyeron y funcionaban, y se sacaron del
+producto igual. Tres razones, en orden de peso:
+
+1. **No son del MVP.** En el N3 el Channel Gateway está en *"§19. Backlog V7"*, no en el alcance de
+   la Etapa 1. WhatsApp en la spec aparece **sólo** dentro de `S7 Signature adapter`, como canal de
+   entrega del enlace de firma; nunca como canal de ingesta documental. La tarea 18 fue una lectura
+   equivocada de la spec.
+2. **Rompían la experiencia.** Pedirle a un operador el host IMAP de su buzón, o que pegue una URL de
+   webhook en la app de Meta, es configuración de plataforma metida en el portal de trabajo. Quien
+   entra a NEXT DOC AI viene a mirar documentos, no a administrar la infraestructura de un canal.
+3. **No se podían verificar de verdad.** WhatsApp necesita una cuenta Business real; lo mejor que se
+   podía hacer localmente era un simulador.
+
+El código está completo en la historia de git y se puede recuperar entero:
+
+| Qué | Commit |
+|---|---|
+| Channel Gateway de email | `0b681d3` |
+| Pantalla del canal de email | `a50dd7c` |
+| Canal de WhatsApp | `07dd80c` |
+| Remoción de los dos | ver `V17__quitar_canales_entrada.sql` |
+
+Cuando entre el **Signature Adapter (27)** y el **Notification Service (25)**, WhatsApp vuelve en el
+lugar que le da la spec: entrega del enlace seguro de firma. El email, si vuelve, entra como
+configuración de tenant en administración, no como una sección del portal operativo.
 
 Con la Fase 2 cerrada, el **MVP 1** del resumen ejecutivo está completo:
 portal propio, motor documental, SSO embebido, KPI y export básico.

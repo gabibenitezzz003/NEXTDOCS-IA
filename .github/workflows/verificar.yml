@@ -49,6 +49,22 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Levantar Keycloak con el realm de pruebas
+        run: |
+          docker run -d --name keycloak-prueba -p 8089:8089 \
+            -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+            -v "$PWD/infra/keycloak":/opt/keycloak/data/import:ro \
+            quay.io/keycloak/keycloak:26.0 start-dev --import-realm --http-port=8089
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8089/realms/nextdocs-prueba/.well-known/openid-configuration > /dev/null; then
+              exit 0
+            fi
+            sleep 3
+          done
+          echo "Keycloak no respondio" >&2
+          docker logs keycloak-prueba >&2
+          exit 1
+
       - name: Esperar MinIO
         run: |
           for i in $(seq 1 30); do
@@ -70,6 +86,8 @@ jobs:
           NEXTDOCS_PRUEBA_REDIS_HOST: 127.0.0.1
           NEXTDOCS_PRUEBA_REDIS_PUERTO: "6381"
           NEXTDOCS_PRUEBA_S3_ENDPOINT: http://127.0.0.1:9102
+          NEXTDOCS_PRUEBA_KEYCLOAK_HOST: 127.0.0.1
+          NEXTDOCS_PRUEBA_KEYCLOAK_PUERTO: "8089"
         run: |
           curl -fsSL https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz \
             | tar -xz -C "$RUNNER_TEMP"

@@ -29,4 +29,10 @@ public interface ValorExtraidoRepository extends JpaRepository<ValorExtraido, St
 
 	@Query("SELECT v FROM ValorExtraido v WHERE v.documento.id = :documentoId ORDER BY v.claveCampo")
 	List<ValorExtraido> listarPorDocumento(@Param("documentoId") String documentoId);
+
+	@Query("SELECT p.codigo, v.presencia, COUNT(v) FROM ValorExtraido v JOIN v.documento d JOIN d.plantilla p "
+			+ "WHERE v.tenant.id = :tenantId AND d.recibido >= :desde AND d.recibido <= :hasta "
+			+ "GROUP BY p.codigo, v.presencia")
+	List<Object[]> agruparPresenciaPorPlantilla(@Param("tenantId") String tenantId,
+			@Param("desde") java.time.Instant desde, @Param("hasta") java.time.Instant hasta);
 }

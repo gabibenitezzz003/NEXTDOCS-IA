@@ -107,8 +107,11 @@ public class RetencionService {
 		ResumenRetencionModel resumen = new ResumenRetencionModel();
 		resumen.setEjecutado(Instant.now());
 		int tope = Math.min(Math.max(limite, 1), DOCUMENTOS_MAXIMOS_POR_CICLO);
-		Page<Documento> vencidos = documentoRepository.listarVencidosPorRetencion(Instant.now(),
+		Instant ahora = Instant.now();
+		Page<Documento> vencidos = documentoRepository.listarVencidosPorRetencion(ahora,
 				PageRequest.of(0, tope));
+		long retenidos = documentoRepository.contarVencidosConRetencionLegal(ahora);
+		resumen.setRetenidosPorRetencionLegal((int) retenidos);
 		Map<String, ResumenRetencionModel> porTenant = new LinkedHashMap<>();
 		for (Documento documento : vencidos.getContent()) {
 			ResultadoRetencionModel resultado = evaluar(documento, false);
@@ -116,6 +119,8 @@ public class RetencionService {
 			acumular(porTenant.computeIfAbsent(documento.getTenant().getId(), id -> new ResumenRetencionModel()),
 					resultado);
 		}
+		porTenant.forEach((tenantId, parcial) -> parcial.setRetenidosPorRetencionLegal(
+				(int) documentoRepository.contarVencidosConRetencionLegalPorTenant(tenantId, ahora)));
 		resumen.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
 		porTenant.forEach(this::auditarCiclo);
 		if (resumen.getEvaluados() > 0) {

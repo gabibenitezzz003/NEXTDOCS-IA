@@ -17,6 +17,10 @@ public enum TipoEventoCanonico {
 	PLANTILLA_PUBLICADA("template.published"),
 	PLANTILLA_DEPRECADA("template.deprecated"),
 	ACCION_CONECTOR_FALLIDA("connector.action.failed"),
+	EXPORTACION_LISTA("export.ready"),
+	EXPORTACION_POR_VENCER("export.expiring"),
+	EXPORTACION_VENCIDA("export.expired"),
+	ALMACENAMIENTO_EN_UMBRAL("storage.threshold"),
 	WEBHOOK_PRUEBA("webhook.test");
 
 	private final String clave;

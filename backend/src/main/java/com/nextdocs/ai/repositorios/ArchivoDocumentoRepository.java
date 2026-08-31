@@ -24,4 +24,8 @@ public interface ArchivoDocumentoRepository extends JpaRepository<ArchivoDocumen
 
 	@Query("SELECT COALESCE(SUM(a.tamano), 0) FROM ArchivoDocumento a WHERE a.baja IS NULL AND a.tenant.id = :tenantId")
 	long sumarTamanoPorTenant(@Param("tenantId") String tenantId);
+
+	@Query("SELECT a FROM ArchivoDocumento a WHERE a.baja IS NULL AND a.documento.id = :documentoId "
+			+ "AND a.original = TRUE ORDER BY a.version DESC LIMIT 1")
+	Optional<ArchivoDocumento> buscarOriginalVigente(@Param("documentoId") String documentoId);
 }

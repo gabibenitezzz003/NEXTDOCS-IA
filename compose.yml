@@ -66,6 +66,19 @@ services:
       exit 0;
       "
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: nextdocs-keycloak
+    command: ["start-dev", "--import-realm", "--http-port=8089"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ./infra/keycloak:/opt/keycloak/data/import:ro
+    ports:
+      - "8089:8089"
+
   app:
     profiles: ["app"]
     build:
@@ -86,6 +99,7 @@ services:
       NEXTDOCS_S3_CLAVE_ACCESO: nextdocs
       NEXTDOCS_S3_CLAVE_SECRETA: nextdocs123
       NEXTDOCS_ANTIVIRUS_HOST: clamav
+      NEXTDOCS_FEDERACION_EXIGIR_HTTPS: "false"
     ports:
       - "8090:8090"
     depends_on:

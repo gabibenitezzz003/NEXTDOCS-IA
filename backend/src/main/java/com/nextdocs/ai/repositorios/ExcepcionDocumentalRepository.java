@@ -37,4 +37,27 @@ public interface ExcepcionDocumentalRepository extends JpaRepository<ExcepcionDo
 	@Query("SELECT COUNT(e) FROM ExcepcionDocumental e WHERE e.baja IS NULL AND e.tenant.id = :tenantId "
 			+ "AND e.estado = :estado")
 	long contarPorEstado(@Param("tenantId") String tenantId, @Param("estado") EstadoExcepcion estado);
+
+	@Query("SELECT COUNT(e) FROM ExcepcionDocumental e WHERE e.baja IS NULL AND e.tenant.id = :tenantId "
+			+ "AND e.estado <> com.nextdocs.ai.enumeraciones.EstadoExcepcion.RESUELTA "
+			+ "AND e.venceEn IS NOT NULL AND e.venceEn < :ahora")
+	long contarAbiertasVencidas(@Param("tenantId") String tenantId, @Param("ahora") Instant ahora);
+
+	@Query("SELECT COUNT(e) FROM ExcepcionDocumental e WHERE e.baja IS NULL AND e.tenant.id = :tenantId "
+			+ "AND e.resuelta IS NOT NULL AND e.resuelta >= :desde AND e.resuelta <= :hasta")
+	long contarResueltasEntre(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT COUNT(e) FROM ExcepcionDocumental e WHERE e.baja IS NULL AND e.tenant.id = :tenantId "
+			+ "AND e.resuelta IS NOT NULL AND e.resuelta >= :desde AND e.resuelta <= :hasta "
+			+ "AND (e.venceEn IS NULL OR e.resuelta <= e.venceEn)")
+	long contarResueltasDentroDeSla(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT p.codigo, COUNT(DISTINCT d.id) FROM ExcepcionDocumental e JOIN e.documento d JOIN d.plantilla p "
+			+ "WHERE e.baja IS NULL AND e.tenant.id = :tenantId AND d.baja IS NULL "
+			+ "AND e.estado <> com.nextdocs.ai.enumeraciones.EstadoExcepcion.RESUELTA "
+			+ "AND d.recibido >= :desde AND d.recibido <= :hasta GROUP BY p.codigo")
+	List<Object[]> agruparDocumentosConAbiertasPorPlantilla(@Param("tenantId") String tenantId,
+			@Param("desde") Instant desde, @Param("hasta") Instant hasta);
 }

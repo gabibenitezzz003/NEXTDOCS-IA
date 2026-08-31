@@ -46,8 +46,16 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Administración de tenant, usuarios, roles propios y cuentas de servicio | ✅ |
 | API de webhooks: suscripciones, prueba firmada y monitor de entregas | ✅ |
 | Costo por tenant: efectivo por documento correcto y presupuesto opcional | ✅ |
-| Suite de QA automatizada: 57 unitarios + 104 de integración | ✅ |
+| Suite de QA automatizada: 73 unitarios + 154 de integración | ✅ |
 | Imagen Docker, `compose --profile app` y CI en GitHub Actions | ✅ |
+| Arranque bloqueado con configuración insegura bajo el perfil `produccion` | ✅ |
+| Límite de uso por principal, tenant e ingesta con Redis (429 + `Retry-After`) | ✅ |
+| Segundo proveedor de IA (`DEEPSEEK`) como respaldo del router | ✅ |
+| Portal React 19 standalone: bandeja, visor, excepciones y plantillas | ✅ |
+| Sistema visual con profundidad y movimiento sobre la identidad V2 de marca | ✅ |
+| Panel de control: 11 KPI con fórmula visible y drill-down a su población | ✅ |
+| Archive & Export Center: ZIP con índice, manifiesto de hashes y TTL de 7 días | ✅ |
+| SSO federado y embed: token exchange OIDC, JIT por política y código de un solo uso | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -171,6 +179,19 @@ cuenta con tenant.administrar → 400, es vía de escalada
 cuenta revocada      → deja de autenticar de inmediato
 clave propia         → exige la actual y rechaza repetirla
 reset por admin      → auditado con el email de quien lo hizo
+
+SSO federado (contra Keycloak 26 real)
+intercambio          → 200, usuario aprovisionado por JIT con el rol OPERADOR,
+                       codigo de un solo uso con 60 s de vida
+canje                → 200, sesion con 5 permisos: los del rol del tenant,
+                       ninguno del token del host
+sesion federada      → GET /documentos 200, GET /federacion/proveedores 403:
+                       el host no puede ampliar permisos
+codigo reusado       → 401 "El codigo de embed ya fue usado"
+redirect ajeno       → 403 "El origen https://atacante.com no esta permitido"
+token de otro cliente → 401 "El token no fue emitido para follow-host"
+dominio no habilitado → 403 "@otrodominio.com no esta habilitado en el proveedor"
+
 ```
 
 Hibernate arranca con `ddl-auto: validate`, así que el arranque limpio **prueba** que las entidades
@@ -180,11 +201,13 @@ y las migraciones Flyway coinciden exactamente.
 
 ```bash
 docker compose up -d      # PostgreSQL, Redis y MinIO
-cd backend && ./mvnw verify
+cd backend
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn verify     # no hay JDK ni mvnw: Maven corre por contenedor
 ```
 
-- **57 tests unitarios** — no necesitan nada levantado
-- **104 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
+- **73 tests unitarios** — no necesitan nada levantado
+- **154 tests de integración** (`*IT`) — usan la base `nextdocs_prueba`, que se crea sola
 
 Los de integración cubren los casos del N3: `QA1-01` idempotencia, `QA1-02` split de 10 remitos,
 `QA1-03` la confianza no aprueba, `QA1-04` cuota del proveedor, `QA1-05` timeout ≠ cero candidatos,
@@ -265,7 +288,7 @@ nextdocs-ai/
 │       │   └── utiles/              correlación, seguridad, hash, máquina de estados
 │       └── resources/
 │           ├── application.yml
-│           └── db/migration/        V1 núcleo · … · V11 costo por tenant
+│           └── db/migration/        V1 núcleo · … · V17 sin canales de entrada
 ├── backend/Dockerfile               imagen multi-stage (Maven 3.9 → JRE 21)
 ├── .github/workflows/verificar.yml  mvn verify + build de imagen
 ├── .env.example                     plantilla de variables; copiala a .env
@@ -274,7 +297,7 @@ nextdocs-ai/
 │   │   ├── api/                     cliente axios con refresco y manejo de errores
 │   │   ├── componentes/             marca, insignias, estados y disposicion
 │   │   ├── contextos/               sesion
-│   │   ├── paginas/                 resumen, bandeja, visor, excepciones, plantillas
+│   │   ├── paginas/                 resumen, panel de control, bandeja, visor, excepciones, plantillas
 │   │   └── tipos/                   contratos de la API
 │   └── package.json
 ├── docs/
@@ -324,7 +347,9 @@ Reglas invariantes:
 ```bash
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE
 docker compose up -d
-cd backend && ./mvnw spring-boot:run
+cd backend
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
 Sin `NEXTDOCS_GEMINI_CLAVE` el sistema arranca igual y usa el proveedor `SIMULADO`.
@@ -348,23 +373,31 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
 32 tareas en 4 fases, con criterios de aceptación y dependencias.
 
-Quien retome el proyecto arranca por la **primera tarea sin marcar de la Fase 1**.
+La **Fase 1 está cerrada** (14 de 14) y la **Fase 2 también**: portal (15), SSO federado (16),
+Archive & Export Center (19) y panel de control (20). Los canales de entrada (17 y 18) se
+**retiraron del producto** — el porqué está en [`docs/TODO.md`](docs/TODO.md). Con eso el **MVP 1
+está completo** y lo que sigue es la Etapa 2, el Workflow.
+Quien retome el proyecto arranca por la **tarea 21**, el Workflow Definition Service.
 
 | Fase | Alcance | Tareas |
 |---|---|---|
 | **1** | Cerrar la Etapa 1 vendible (motor documental standalone) | 1–14 |
-| **2** | Portal, canales y KPI → completa el MVP 1 | 15–20 |
+| **2** | Portal, SSO y KPI → completa el MVP 1 | 15–20 |
 | **3** | Etapa 2: Workflow Runtime y Process Studio | 21–27 |
 | **4** | Etapa 3: Sentinel, Simulation Lab y Process Copilot | 28–32 |
 
-Bloqueantes inmediatos para poder vender:
+El **MVP 1 está completo**: motor documental, portal propio, SSO embebido, KPI y export. Lo que
+sigue es la Etapa 2, el Workflow, que arranca por:
 
-1. ~~API de plantillas con ciclo de vida y rollback~~ — **terminado**
-2. ~~Adaptador Gemini real~~ — **terminado**, verificado contra Gemini de verdad
-3. ~~Matching + `FollowConnector`~~ — **terminado**
+1. Workflow Definition Service: nodos, aristas, versiones y validador de grafo (tarea 21)
+2. Workflow Runtime Service: tokens, ramas, joins, timers y reintentos (22)
+3. Task Service y Action Center (23)
 
-Los tres bloqueantes de venta están cerrados. Lo que sigue es endurecer y completar:
-seguimiento del original físico, gobernanza y la suite de QA automatizada.
+La regla de la Etapa 2 no se negocia: **apagar el Workflow no puede afectar** captura, extracción,
+validación ni integración documental.
+
+Pendiente no-código: cargar datasets gold reales, ensayar una restauración, correr una prueba de
+carga y **rotar la API key de Gemini**.
 
 ---
 

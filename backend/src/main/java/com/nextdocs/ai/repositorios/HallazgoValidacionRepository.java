@@ -16,4 +16,8 @@ public interface HallazgoValidacionRepository extends JpaRepository<HallazgoVali
 
 	@Query("SELECT h FROM HallazgoValidacion h WHERE h.id = :id AND h.tenant.id = :tenantId")
 	Optional<HallazgoValidacion> buscarPorIdYTenant(@Param("id") String id, @Param("tenantId") String tenantId);
+
+	@Query("SELECT COUNT(h) FROM HallazgoValidacion h WHERE h.ejecucion.documento.id = :documentoId "
+			+ "AND h.sobreescrito = FALSE")
+	long contarPorDocumento(@Param("documentoId") String documentoId);
 }

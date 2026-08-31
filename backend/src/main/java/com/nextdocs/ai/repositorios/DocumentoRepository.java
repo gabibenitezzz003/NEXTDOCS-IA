@@ -39,8 +39,19 @@ public interface DocumentoRepository extends JpaRepository<Documento, String>, J
 			@Param("limite") Instant limite, Pageable paginado);
 
 	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.retencionAplicada IS NULL "
-			+ "AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora ORDER BY d.retenerHasta")
+			+ "AND d.retencionLegal = FALSE AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora "
+			+ "ORDER BY d.retenerHasta")
 	Page<Documento> listarVencidosPorRetencion(@Param("ahora") Instant ahora, Pageable paginado);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.retencionAplicada IS NULL "
+			+ "AND d.retencionLegal = TRUE AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora")
+	long contarVencidosConRetencionLegal(@Param("ahora") Instant ahora);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.retencionAplicada IS NULL AND d.retencionLegal = TRUE AND d.retenerHasta IS NOT NULL "
+			+ "AND d.retenerHasta < :ahora")
+	long contarVencidosConRetencionLegalPorTenant(@Param("tenantId") String tenantId,
+			@Param("ahora") Instant ahora);
 
 	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
 			+ "AND d.retencionAplicada IS NULL AND d.retenerHasta IS NOT NULL AND d.retenerHasta < :ahora "
@@ -60,4 +71,49 @@ public interface DocumentoRepository extends JpaRepository<Documento, String>, J
 			+ "AND d.tenant.id = :tenantId AND d.alta >= :desde AND d.alta < :hasta")
 	long contarRecibidosEntre(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
 			@Param("hasta") Instant hasta);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.cerrado IS NOT NULL AND d.cerrado >= :desde AND d.cerrado <= :hasta")
+	long contarCerradosEntre(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.cerrado IS NOT NULL AND d.cerrado >= :desde AND d.cerrado <= :hasta "
+			+ "AND NOT EXISTS (SELECT 1 FROM RevisionDocumento r WHERE r.documento = d)")
+	long contarCerradosSinIntervencion(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.cerrado IS NOT NULL AND d.recibido IS NOT NULL "
+			+ "AND d.cerrado >= :desde AND d.cerrado <= :hasta ORDER BY d.cerrado")
+	List<Documento> listarCerradosConCiclo(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.retenerHasta IS NOT NULL AND d.retenerHasta >= :ahora AND d.retenerHasta <= :limite")
+	long contarPorVencerEntre(@Param("tenantId") String tenantId, @Param("ahora") Instant ahora,
+			@Param("limite") Instant limite);
+
+	@Query("SELECT d.plantilla.codigo, d.plantilla.nombre, d.estado, COUNT(d) FROM Documento d "
+			+ "WHERE d.baja IS NULL AND d.tenant.id = :tenantId AND d.plantilla IS NOT NULL "
+			+ "AND d.recibido >= :desde AND d.recibido <= :hasta "
+			+ "GROUP BY d.plantilla.codigo, d.plantilla.nombre, d.estado")
+	List<Object[]> agruparPorPlantillaYEstado(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT COUNT(d) FROM Documento d WHERE d.baja IS NULL AND d.documentoPadre IS NULL "
+			+ "AND d.tenant.id = :tenantId AND d.recibido >= :desde AND d.recibido <= :hasta")
+	long contarRaicesRecibidasEntre(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta);
+
+	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.documentoPadre IS NULL "
+			+ "AND d.tenant.id = :tenantId AND d.recibido >= :desde AND d.recibido <= :hasta "
+			+ "ORDER BY d.recibido DESC")
+	List<Documento> listarRaicesRecibidasEntre(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta, Pageable paginado);
+
+	@Query("SELECT d FROM Documento d WHERE d.baja IS NULL AND d.tenant.id = :tenantId "
+			+ "AND d.cerrado IS NOT NULL AND d.cerrado >= :desde AND d.cerrado <= :hasta ORDER BY d.cerrado DESC")
+	List<Documento> listarCerradosEntre(@Param("tenantId") String tenantId, @Param("desde") Instant desde,
+			@Param("hasta") Instant hasta, Pageable paginado);
 }

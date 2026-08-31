@@ -14,6 +14,7 @@ import com.nextdocs.ai.entidades.EjecucionExtraccion;
 import com.nextdocs.ai.entidades.EjecucionValidacion;
 import com.nextdocs.ai.entidades.ValorExtraido;
 import com.nextdocs.ai.entidades.VersionPlantilla;
+import com.nextdocs.ai.enumeraciones.OrigenTipoDocumento;
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
 import com.nextdocs.ai.enumeraciones.EstadoDocumento;
 import com.nextdocs.ai.enumeraciones.EstadoEjecucion;
@@ -81,6 +82,8 @@ public class ExtractorDocumentalService {
 
 	private final ColaExtraccionService colaExtraccionService;
 
+	private final ClasificadorDocumentalService clasificadorDocumentalService;
+
 	private final AuditoriaService auditoriaService;
 
 	private final EventoSalidaService eventoSalidaService;
@@ -96,7 +99,8 @@ public class ExtractorDocumentalService {
 			AlmacenamientoService almacenamientoService, ValidacionDocumentalService validacionDocumentalService,
 			AsociacionService asociacionService, SegmentacionDocumentalService segmentacionDocumentalService,
 			EstadoDocumentalService estadoDocumentalService, ExcepcionDocumentalService excepcionDocumentalService,
-			ColaExtraccionService colaExtraccionService, AuditoriaService auditoriaService,
+			ColaExtraccionService colaExtraccionService,
+			ClasificadorDocumentalService clasificadorDocumentalService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesProveedorIa propiedades,
 			ObservabilidadService observabilidadService) {
 		this.documentoRepository = documentoRepository;
@@ -112,6 +116,7 @@ public class ExtractorDocumentalService {
 		this.estadoDocumentalService = estadoDocumentalService;
 		this.excepcionDocumentalService = excepcionDocumentalService;
 		this.colaExtraccionService = colaExtraccionService;
+		this.clasificadorDocumentalService = clasificadorDocumentalService;
 		this.auditoriaService = auditoriaService;
 		this.eventoSalidaService = eventoSalidaService;
 		this.propiedades = propiedades;
@@ -132,6 +137,10 @@ public class ExtractorDocumentalService {
 		}
 		estadoDocumentalService.transicionar(documento, EstadoDocumento.PROCESANDO);
 
+		if (clasificadorDocumentalService.corresponde(documento) && !resolverTipo(documento)) {
+			return;
+		}
+
 		EjecucionExtraccion ejecucion = iniciarEjecucion(documento);
 		try {
 			ResultadoExtraccionModel resultado = ejecutarConProveedor(documento, ejecucion);
@@ -150,6 +159,55 @@ public class ExtractorDocumentalService {
 					SeveridadHallazgo.REQUIERE_REVISION, "EXTRACCION_FALLIDA", e.getMessage());
 			estadoDocumentalService.transicionar(documento, EstadoDocumento.OBSERVADO);
 		}
+	}
+
+	private boolean resolverTipo(Documento documento) {
+		ClasificadorDocumentalService.Veredicto veredicto;
+		try {
+			veredicto = clasificadorDocumentalService.clasificar(documento);
+		} catch (ProveedorNoDisponibleException e) {
+			gestionarReintento(documento, e);
+			return false;
+		} catch (Exception e) {
+			log.error("Fallo la clasificacion del documento {}", documento.getId(), e);
+			return observarSinTipo(documento, "CLASIFICACION_FALLIDA", e.getMessage());
+		}
+
+		if (veredicto.loResolvio()) {
+			documento.setPlantilla(veredicto.plantilla());
+			documento.setVersionPlantilla(veredicto.plantilla().getVersionPublicada());
+			documento.setOrigenTipo(veredicto.origen());
+			documento.setConfianzaTipo(veredicto.resultado().getConfianza());
+			documento.setMotivoTipo(veredicto.resultado().getMotivo());
+			documentoRepository.save(documento);
+			log.info("El documento {} se clasifico como {} con confianza {}", documento.getId(),
+					veredicto.plantilla().getCodigo(), veredicto.resultado().getConfianza());
+			return true;
+		}
+
+		return switch (veredicto.estado()) {
+			case INCIERTO -> observarSinTipo(documento, ClasificadorDocumentalService.CODIGO_TIPO_INCIERTO,
+					"El clasificador propuso " + veredicto.plantilla().getCodigo() + " con confianza "
+							+ veredicto.resultado().getConfianza() + ", por debajo del umbral. "
+							+ nota(veredicto.resultado().getMotivo()));
+			case NO_RECONOCIDO -> observarSinTipo(documento,
+					ClasificadorDocumentalService.CODIGO_TIPO_NO_RECONOCIDO,
+					"El documento no corresponde a ningun tipo del catalogo. "
+							+ nota(veredicto.resultado().getMotivo()));
+			default -> observarSinTipo(documento, ClasificadorDocumentalService.CODIGO_SIN_CATALOGO,
+					"El tenant no tiene ninguna plantilla publicada contra la cual clasificar");
+		};
+	}
+
+	private String nota(String motivo) {
+		return motivo == null || motivo.isBlank() ? "" : "El clasificador dijo: " + motivo;
+	}
+
+	private boolean observarSinTipo(Documento documento, String codigo, String detalle) {
+		excepcionDocumentalService.abrir(documento.getTenant(), documento, TipoExcepcion.TECNICA,
+				SeveridadHallazgo.REQUIERE_REVISION, codigo, detalle);
+		estadoDocumentalService.transicionar(documento, EstadoDocumento.OBSERVADO);
+		return false;
 	}
 
 	private boolean segmentar(Documento documento) {

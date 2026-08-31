@@ -3,6 +3,7 @@ package com.nextdocs.ai.servicios.proveedores;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -13,10 +14,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nextdocs.ai.clientes.GeminiCliente;
 import com.nextdocs.ai.entidades.ConfiguracionProveedor;
 import com.nextdocs.ai.enumeraciones.PresenciaCampo;
+import com.nextdocs.ai.enumeraciones.TipoDatoCampo;
 import com.nextdocs.ai.enumeraciones.ProveedorDocumentalIa;
 import com.nextdocs.ai.exceptions.ProveedorNoDisponibleException;
 import com.nextdocs.ai.interfaces.ProveedorDocumentalIaInt;
 import com.nextdocs.ai.modelos.CampoEsquemaModel;
+import com.nextdocs.ai.modelos.CampoSugeridoModel;
+import com.nextdocs.ai.modelos.ResultadoClasificacionModel;
+import com.nextdocs.ai.modelos.SolicitudClasificacionModel;
 import com.nextdocs.ai.modelos.ResultadoExtraccionModel;
 import com.nextdocs.ai.modelos.SolicitudExtraccionModel;
 import com.nextdocs.ai.modelos.ValorCanonicoModel;
@@ -89,6 +94,76 @@ public class ProveedorGeminiService implements ProveedorDocumentalIaInt {
 		completarValores(resultado, respuesta, solicitud, parametros);
 		resultado.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
 		return resultado;
+	}
+
+	@Override
+	public ResultadoClasificacionModel clasificar(SolicitudClasificacionModel solicitud) {
+		long inicio = System.currentTimeMillis();
+		Optional<ConfiguracionProveedor> configuracion = configuracionProveedorRepository
+				.buscarPorProveedor(solicitud.getTenantId(), ProveedorDocumentalIa.GEMINI);
+		String modelo = configuracion.map(ConfiguracionProveedor::getModelo).filter(valor -> !valor.isBlank())
+				.orElse(MODELO_POR_DEFECTO);
+		String claveApi = resolverClave(configuracion);
+		JsonNode parametros = leerParametros(configuracion);
+
+		String cuerpo = constructorSolicitud.construirClasificacion(solicitud, temperatura(parametros));
+		JsonNode respuesta = geminiCliente.generarContenido(modelo, claveApi, cuerpo);
+		JsonNode contenido = extraerContenido(respuesta);
+
+		ResultadoClasificacionModel resultado = new ResultadoClasificacionModel();
+		resultado.setProveedor(tipo());
+		resultado.setModelo(modelo);
+		resultado.setCodigoPropuesto(normalizarCodigo(
+				contenido.path(InstruccionClasificacion.CAMPO_TIPO).asText(null)));
+		resultado.setConfianza(recortarConfianza(
+				contenido.path(InstruccionClasificacion.CAMPO_CONFIANZA).asDouble(0)));
+		resultado.setMotivo(recortar(contenido.path(InstruccionClasificacion.CAMPO_MOTIVO).asText(null), 400));
+		resultado.setNombreSugerido(
+				recortar(contenido.path(InstruccionClasificacion.CAMPO_NOMBRE_SUGERIDO).asText(null), 128));
+		for (JsonNode nodo : contenido.path(InstruccionClasificacion.CAMPO_CAMPOS_SUGERIDOS)) {
+			CampoSugeridoModel campo = leerCampoSugerido(nodo);
+			if (campo != null) {
+				resultado.getCamposSugeridos().add(campo);
+			}
+		}
+		JsonNode uso = respuesta.path("usageMetadata");
+		resultado.setTokensEntrada(uso.path("promptTokenCount").asLong(0));
+		resultado.setTokensSalida(uso.path("candidatesTokenCount").asLong(0));
+		resultado.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
+		return resultado;
+	}
+
+	private CampoSugeridoModel leerCampoSugerido(JsonNode nodo) {
+		String clave = nodo.path("clave").asText(null);
+		if (clave == null || clave.isBlank()) {
+			return null;
+		}
+		CampoSugeridoModel campo = new CampoSugeridoModel();
+		campo.setClave(recortar(clave, 64));
+		campo.setEtiqueta(recortar(nodo.path("etiqueta").asText(clave), 128));
+		campo.setTipoDato(TipoDatoCampo.desde(nodo.path("tipoDato").asText(null)));
+		campo.setRequerido(nodo.path("requerido").asBoolean(false));
+		campo.setEjemplo(recortar(nodo.path("ejemplo").asText(null), 256));
+		return campo;
+	}
+
+	private String normalizarCodigo(String crudo) {
+		if (crudo == null || crudo.isBlank()) {
+			return ResultadoClasificacionModel.CODIGO_DESCONOCIDO;
+		}
+		return crudo.trim().toUpperCase(Locale.ROOT).replaceAll("[\\s-]+", "_");
+	}
+
+	private BigDecimal recortarConfianza(double crudo) {
+		double acotada = Math.max(0, Math.min(1, crudo));
+		return BigDecimal.valueOf(acotada).setScale(4, RoundingMode.HALF_UP);
+	}
+
+	private String recortar(String valor, int largo) {
+		if (valor == null || valor.isBlank()) {
+			return null;
+		}
+		return valor.length() <= largo ? valor : valor.substring(0, largo);
 	}
 
 	private String resolverModelo(SolicitudExtraccionModel solicitud, Optional<ConfiguracionProveedor> configuracion) {

@@ -532,6 +532,174 @@ resultado (`APLICADA`, `OMITIDA_POR_RETENCION_LEGAL`, `OMITIDA_SIN_POLITICA`, `O
 `OMITIDA_YA_APLICADA`) con su motivo. A diferencia del ciclo, sí audita las omisiones, porque hubo
 alguien que preguntó.
 
+### KPI y panel de control
+
+El ANEXO_H exige dos cosas de todo indicador: **fórmula documentada** y **población auditable**.
+Las dos viajan en la respuesta, así que el portal nunca muestra un número que no pueda explicar.
+
+```
+GET  /api/v1/kpi/configuracion
+GET  /api/v1/kpi/resumen?desde&hasta                       permiso: documentos.leer
+GET  /api/v1/kpi/plantillas?desde&hasta                    permiso: documentos.leer
+GET  /api/v1/kpi/poblacion?indicador&desde&hasta           permiso: documentos.leer
+```
+
+Sin `desde`/`hasta` la ventana son los últimos 30 días. Un rango invertido se ordena solo en vez de
+devolver todo en cero. Cada indicador se compara contra el período inmediatamente anterior de la
+misma longitud; si ese período no tiene datos, `tendencia` es `SIN_COMPARACION` y `variacion` viaja
+nula: no se inventa un salto del 100 %.
+
+| Indicador | Fórmula |
+|---|---|
+| `documentosRecibidos` | documentos recibidos en el rango, **sin contar segmentos** de un PDF partido |
+| `documentosCerrados` | documentos con `cerrado` dentro del rango |
+| `automatizacion` | cerrados sin ninguna `RevisionDocumento` / cerrados |
+| `cumplimientoSla` | excepciones resueltas antes de `venceEn` / excepciones resueltas |
+| `tiempoCicloP50` · `tiempoCicloP90` | percentil de `cerrado - recibido`, en horas |
+| `excepcionesAbiertas` | excepciones en `ABIERTA` o `EN_CURSO` |
+| `excepcionesVencidas` | excepciones sin resolver con `venceEn` pasado |
+| `documentosPorVencer` | retención venciendo en los próximos 30 días |
+| `almacenamientoUtilizado` | bytes almacenados / cuota del tenant |
+| `entregaDeEventos` | entregas `ENTREGADO` / entregas intentadas |
+
+Los que traen `tienePoblacion: true` aceptan el drill-down por `/kpi/poblacion` (tope 200
+documentos); el resto responde 400 con el motivo. **El valor de la tarjeta es el tamaño exacto de su
+población** — conteo y listado comparten predicado, y `KpiIT` lo verifica.
+
+Una razón sin denominador (`0/0`) devuelve `valor: null` y el portal muestra "Sin datos": no se
+divide por cero ni se disfraza de 0 %.
+
+**Panel por plantilla.** `/kpi/plantillas` agrupa por plantilla porque los KPI por *proceso* del
+ANEXO_H dependen del Workflow, que es Etapa 2. Cada plantilla trae cuatro barras con semáforo
+(`VERDE` ≥ 0.85 · `AMBAR` ≥ 0.60 · `ROJO`) y una `salud` que toma la peor barra. `porEstado` del
+resumen es el **backlog actual del tenant**, sin recorte de fechas: no se suma con los indicadores
+del rango.
+
+---
+
+### Archive & Export Center
+
+Migra el SPR039 histórico a la plataforma independiente. Un lote se pide, un trabajador lo genera
+en segundo plano y queda disponible **7 días**.
+
+```
+GET  /api/v1/exportaciones/configuracion
+POST /api/v1/exportaciones                                 permiso: documentos.exportar
+     { nombre, estados[], origen, codigoPlantilla, texto, tipoObjeto, idObjeto,
+       desde, hasta, soloRaiz, orden, incluirOriginales }
+GET  /api/v1/exportaciones?estado&pagina&tamano            permiso: documentos.exportar
+GET  /api/v1/exportaciones/{loteId}                        permiso: documentos.exportar
+GET  /api/v1/exportaciones/{loteId}/descarga               permiso: documentos.exportar
+GET  /api/v1/exportaciones/almacenamiento                  permiso: gobernanza.leer
+```
+
+Estados del lote: `SOLICITADO` → `GENERANDO` → `DISPONIBLE` → `VENCIDO`, o `FALLIDO`.
+Órdenes: `FECHA_DESC` (default), `FECHA_ASC`, `TAMANO_DESC`, `ESTADO_ASC`.
+
+Pedir una exportación **sin resultados se rechaza con 400** en vez de generar un ZIP vacío, y una
+que supere los 2000 documentos también: el mensaje pide acotar filtros.
+
+**Contenido del ZIP**
+
+| Entrada | Qué trae |
+|---|---|
+| `documentos/<id8>-<nombre>` | el original de cada documento incluido |
+| `indice.csv` | una fila por documento con los campos del ANEXO_D |
+| `manifiesto-sha256.txt` | `<sha256>  <ruta>` por archivo empaquetado |
+
+El índice trae `batch_id`, `object_type`, `object_id`, `document_type`, `document_version`,
+`document_id`, `created_at`, `closed_at`, `actors`, `archive_filename`, `size_bytes`, `sha256`,
+`status`, `findings` y `skipped_reason`.
+
+**Un archivo en cuarentena nunca entra al ZIP.** El documento igual aparece en el índice con su
+`skipped_reason`, así que la omisión queda auditada en vez de ser un silencio. Lo mismo con un
+documento sin archivo original almacenado. `cantidadOmitidos` los cuenta aparte de
+`cantidadDocumentos`.
+
+**Ciclo de vida.** Un trabajador emite `export.expiring` cuando faltan 2 días y `export.expired` al
+vencer, momento en que **borra el ZIP del object store** y limpia la clave. Pedir la descarga de un
+lote vencido devuelve 400 explicando que hay que volver a pedirla — no un 404 mudo.
+
+**Almacenamiento.** `/almacenamiento` separa `originalesPersistentes` de `exportacionesTemporales` y
+presenta el total en KB/MB/GB/TB. Con cuota configurada emite `storage.threshold` al cruzar 70, 85,
+95 y 100 %, una sola vez por umbral: si el uso baja, el aviso se limpia y puede volver a dispararse.
+Al llegar al tope **no se borra evidencia** — esa es la regla del ANEXO_D.
+
+---
+
+### SSO federado y embed
+
+NEXT DOC AI mantiene su dominio, sus tenants, su autorización y su auditoría. Follow, CIMA y
+Valid360 actúan sólo como **fuentes de identidad**: no comparten base ni contraseñas.
+
+```
+POST   /api/v1/federacion/intercambio                     publico
+       { codigoTenant, proveedor, token, tipoObjeto, idObjeto, urlRetorno }
+POST   /api/v1/federacion/canje                           publico
+       { codigo }
+POST   /api/v1/federacion/proveedores                     permiso: tenant.administrar
+GET    /api/v1/federacion/proveedores                     permiso: tenant.administrar
+POST   /api/v1/federacion/proveedores/{id}/activo?activo  permiso: tenant.administrar
+DELETE /api/v1/federacion/proveedores/{id}                permiso: tenant.administrar
+```
+
+#### El flujo
+
+1. El usuario ya está autenticado en la app host.
+2. El backend del host manda su token OIDC a `/intercambio`, junto con el tenant, el proveedor y el
+   contexto (`tipoObjeto`, `idObjeto`, `urlRetorno`).
+3. NEXT DOC AI valida la firma contra el **JWKS del emisor**, el `iss`, la expiración y la audiencia.
+4. Resuelve el usuario por `(tenant, origen, sujeto externo)`. Si no existe, aplica la política de
+   JIT del proveedor.
+5. Devuelve un **código de un solo uso** con 60 s de vida. El token largo nunca llega al JavaScript
+   del host.
+6. El iframe llama a `/canje` y recibe la sesión de NEXT DOC AI.
+
+#### Lo que el host no puede hacer
+
+**Ampliar permisos.** Los roles salen del tenant de NEXT DOC AI, nunca del token. Un usuario
+aprovisionado por JIT recibe exactamente el `codigoRolPorDefecto` del proveedor, y sin ese rol
+configurado el aprovisionamiento se rechaza en vez de crear un usuario sin permisos definidos.
+
+**Revivir a un usuario dado de baja.** Si el usuario está `BLOQUEADO` o `INACTIVO`, ni el
+intercambio ni el canje pasan, aunque el host lo haya autenticado. El estado se revalida en las dos
+puntas: un bloqueo entre el intercambio y el canje corta igual.
+
+**Cruzar de tenant.** El proveedor está atado a un tenant y el token se valida contra *su* emisor y
+*su* audiencia. Un token válido del IdP de un tenant no abre nada en otro.
+
+**Secuestrar una cuenta local por email.** Si ya existe un usuario con ese email sin identidad
+federada, el intercambio se **rechaza** con un mensaje explícito. Vincular por email sólo ocurre si
+el administrador activa `permitirVinculoPorEmail`, que es aceptar que el emisor valida el correo.
+
+**Mandar al usuario a cualquier lado.** `urlRetorno` se compara contra `origenesEmbedPermitidos`. Si
+el proveedor no declara orígenes, no acepta `urlRetorno` en absoluto.
+
+#### Configuración del proveedor
+
+| Campo | Para qué |
+|---|---|
+| `emisor` | Tiene que coincidir exacto con el `iss` del token |
+| `urlJwks` | De dónde baja las claves **el backend**, que no siempre resuelve el mismo host que el navegador: en Docker el `iss` puede ser `http://localhost:8089` y el JWKS `http://keycloak:8089` |
+| `audiencia` | Se acepta si aparece en `aud` **o** si coincide con `azp`. Keycloak deja `aud` vacío y pone el cliente en `azp` |
+| `claimSujeto` / `claimEmail` / `claimNombre` | Por defecto `sub`, `email`, `name` |
+| `permitirJit` | Si es `false`, el usuario tiene que existir antes |
+| `dominiosPermitidos` | `@empresa.com, @filial.com`. Vacío acepta cualquiera |
+| `segundosVigenciaCodigo` | 0 usa el global (60 s) |
+
+El JWKS se cachea 10 minutos y se vuelve a bajar solo si aparece un `kid` desconocido, así que una
+rotación de claves del IdP no corta el servicio.
+
+**`emisor` y `urlJwks` exigen https.** Se acepta `localhost` para desarrollo; para un IdP alcanzado
+por red privada (`http://keycloak:8089`) hay que aceptarlo a propósito con
+`NEXTDOCS_FEDERACION_EXIGIR_HTTPS=false`, y el validador de arranque **impide bootear en producción**
+con ese flag apagado.
+
+Cada intercambio y cada canje se auditan con `proveedor`, `aplicacionOrigen`, `sujetoExterno` y el
+objeto de contexto, que es lo que pide el ANEXO_I para la auditoría multiaplicación.
+
+---
+
 ### Observabilidad y costo por tenant
 
 El N3 pide **costo efectivo por documento correcto**, no sólo tokens de inferencia. El costo de
@@ -576,6 +744,7 @@ públicos; métricas no.
 | `documentos.leer` | Bandeja, visor, detalle, descarga del original |
 | `documentos.escribir` | Ingesta, reproceso, cierre |
 | `documentos.revisar` | Registrar revisiones y sobreescribir hallazgos |
+| `documentos.exportar` | pedir, listar y descargar lotes de exportación |
 | `documentos.eliminar` | Baja lógica |
 | `plantillas.leer` / `plantillas.escribir` / `plantillas.publicar` | Template Studio |
 | `excepciones.leer` / `excepciones.gestionar` | Exception Center |
@@ -641,7 +810,9 @@ Eventos canónicos emitidos hoy: `document.received`, `document.extracted`, `doc
 
 ```bash
 docker compose up -d
-cd backend && ./mvnw spring-boot:run     # crea el tenant demo automáticamente
+cd backend                               # crea el tenant demo automáticamente
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 
 TOKEN=$(curl -s -X POST localhost:8090/api/v1/autenticacion/ingresar \
   -H 'Content-Type: application/json' \

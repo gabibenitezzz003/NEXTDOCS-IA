@@ -24,20 +24,17 @@ Los códigos tipo `QA1-03` o `SEC-04` que vas a ver en tests y commits salen del
 
 ```bash
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE si vas a usar Gemini
-docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102
-cd backend && ./mvnw spring-boot:run
+docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102 · Keycloak 8089
+cd backend
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
 ```
 
 Arranca el tenant `demo` con `admin@nextdocs.ai` / `nextdocs123`.
 Swagger en `http://localhost:8090/swagger-ui.html`.
 
-**Sin JDK local** (fue el caso en la máquina donde se construyó):
-
-```bash
-docker run --rm --network host --env-file ../.env \
-  -v "$PWD":/app -v nextdocs-m2:/root/.m2 -w /app \
-  maven:3.9-eclipse-temurin-21 mvn spring-boot:run
-```
+En la máquina donde se construyó **no hay JDK ni `mvnw`**: Maven siempre corre por contenedor, y
+por eso los comandos de arriba son así. Agregale `--env-file ../.env` si necesitás las claves de IA.
 
 **Stack completo** (imagen + infra, sin JDK):
 
@@ -140,6 +137,91 @@ se agrega cuando el valor existe, así que el parámetro nulo nunca llega a Post
 `INICIO_DE_LOS_TIEMPOS` / `FIN_DE_LOS_TIEMPOS` del `EventoAuditoriaRepository` son el otro camino, y
 siguen ahí para las consultas de rango simple.
 
+### 8. Un `Assumptions.abort()` en un bloque `static` no saltea, revienta
+
+`PruebaIntegracion` saltea la clase entera cuando no hay infraestructura. Eso **sólo funciona desde
+`@BeforeAll`**: si el chequeo vive en un bloque `static`, JUnit lo envuelve en
+`ExceptionInInitializerError` y cada test falla con `NoClassDefFoundError` en vez de saltarse. Nos
+dio 14 tests en rojo sin ninguna causa visible. Si agregás una precondición de entorno, ponela en un
+método de ciclo de vida, nunca en el inicializador estático.
+
+### 9. Un número del panel tiene que ser el tamaño exacto de su población
+
+Los KPI con drill-down (`documentosRecibidos`, `documentosCerrados`) usan **dos** consultas: una que
+cuenta y otra que lista. Si los predicados no son idénticos, la tarjeta dice 20 y el detalle muestra
+30 — que es exactamente el indicador sin explicación que el ANEXO_H prohíbe. Ya pasó: el conteo
+filtraba `documentoPadre IS NULL` y usaba `alta`, y el listado ni filtraba padres ni usaba `recibido`,
+así que un PDF partido en 10 sumaba 1 en la tarjeta y 11 en el detalle.
+
+`KpiIT.elConteoCoincideConSuPoblacion` fija la invariante e ingresa a propósito un lote segmentado.
+Si agregás un indicador a `KpiService.CON_POBLACION`, el test lo toma solo.
+
+### 10. Un permiso nuevo no se le da solo a los roles que ya existen
+
+`Permiso.todos()` sólo se lee **al crear un tenant**. Los roles predefinidos ya sembrados guardan sus
+permisos en `rol_permiso`, así que agregar una constante al código no habilita nada en un entorno
+existente: el endpoint devuelve 403 y el código se ve perfecto. Pasó al agregar
+`documentos.exportar`. La solución es una migración que haga el `INSERT ... WHERE NOT EXISTS` sobre
+los roles predefinidos, como `V13__permiso_exportar_roles_predefinidos.sql`.
+
+Y el corolario: **nunca edites una migración ya aplicada** para meter el arreglo. Rompe el checksum
+en todo entorno que la haya corrido. Siempre una migración nueva.
+
+---
+
+### 11. `REQUIRES_NEW` no ve lo que su llamador todavía no commiteó
+
+Un servicio guardaba una fila con FK a un registro recién creado por quien lo llamaba. Estaba
+anotado `@Transactional(REQUIRES_NEW)` para que la auditoría sobreviviera a un rollback del llamador,
+y eso rompía el alta entera: la transacción de afuera todavía no había commiteado el padre, así que
+el `INSERT` de adentro violaba la foreign key.
+
+Si una operación tiene que ver filas que su llamador todavía no commiteó, **no puede correr en una
+transacción nueva**. O se une a la del llamador, o se difiere con `afterCommit`. Lo agarró un test de
+integración contra PostgreSQL real; con un mock del repositorio nunca hubiera aparecido.
+
+---
+
+### 12. El backend no resuelve los mismos hosts que el navegador
+
+Un proveedor de identidad tiene dos URL que parecen la misma y no lo son. El `emisor` tiene que
+coincidir **exacto** con el `iss` que viene firmado en el token, que es el que ve el navegador
+(`http://localhost:8089/realms/...`). La `urlJwks` la baja el **backend**, que en Docker no llega a
+`localhost` del host: necesita `http://keycloak:8089/...`. Poner las dos iguales da un 401 con
+"no publica sus claves" y el código se ve perfecto.
+
+Por eso son dos campos separados, y por eso el error de JWKS ahora incluye la URL que intentó y la
+causa real en vez de un `null`.
+
+---
+
+### 13. Declarar una propiedad de configuración y no usarla
+
+Pasó más de una vez, `exigirEmisorSeguro` en federación entre otras. Se ve prolijo en
+el `application.yml`, y no hace absolutamente nada. Es peor que no tenerla, porque quien opera cree
+que tiene un control que no existe.
+
+Antes de cerrar una tarea: `grep` de cada propiedad nueva contra el código y confirmá que alguien la
+lee. Si no la usa nadie, o la cableás o la borrás.
+
+
+---
+
+### 14. Borrar una constante de un enum que ya se guardó en la base
+
+Quitamos una constante de un enum persistido con `@Enumerated(EnumType.STRING)`. El código quedó
+limpio y toda la suite en verde, pero el listado que leía esa tabla empezó a devolver **500**: había
+filas con ese texto y Hibernate no puede mapearlas.
+
+No lo vieron los tests porque cada uno arranca con un tenant nuevo y ninguno había escrito esa fila.
+Lo vio la corrida en vivo, sobre una base con historia. Y no rompe una fila: rompe **el listado
+entero**, para siempre, para ese tenant.
+
+Un `@Enumerated(EnumType.STRING)` es un contrato de datos. Sacarle un valor es una migración, no un
+refactor: primero un `UPDATE` que reescriba las filas viejas, después el cambio de código. Si el
+valor ya salió a producción, no se borra nunca.
+
+
 ---
 
 ## 5. Dónde está cada cosa
@@ -162,9 +244,11 @@ La **Fase 1** cierra el producto vendible. Van 14 de 14.
 (5) · matching (6) · gobernanza (7) · retención (8) · administración (9) · webhooks (10) · original
 físico (11) · costo por tenant (12) · suite de QA (13) · imagen + CI (14)
 
-**Siguiente:** **Fase 2**, que empieza por el portal frontend (tarea 15).
+De la **Fase 2** está todo lo que hoy entra en el producto: portal frontend (15), SSO y embed (16),
+Archive & Export Center (19) y dashboard con panel de control (20). Los canales de entrada (17 y 18)
+se sacaron: ver el porqué en `TODO.md`.
 
-Después de eso arranca la **Fase 2**, que empieza por el portal frontend (tarea 15).
+**Siguiente:** la Etapa 2, que arranca por el Workflow Definition Service (21).
 
 Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
 criterio: está escrito.

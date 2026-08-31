@@ -201,6 +201,60 @@ export interface Excepcion {
   alta?: string;
 }
 
+export type UnidadKpi = "CONTEO" | "PORCENTAJE" | "HORAS";
+
+export type TendenciaKpi = "SUBE" | "BAJA" | "ESTABLE" | "SIN_COMPARACION";
+
+export type SemaforoKpi = "VERDE" | "AMBAR" | "ROJO" | "SIN_DATOS";
+
+export type SaludPlantilla = "OK" | "ATENCION" | "CRITICO" | "SIN_DATOS";
+
+export interface RangoKpiResuelto {
+  desde: string;
+  hasta: string;
+  dias: number;
+}
+
+export interface IndicadorKpi {
+  clave: string;
+  etiqueta: string;
+  unidad: UnidadKpi;
+  valor?: number | null;
+  valorAnterior?: number | null;
+  variacion?: number | null;
+  tendencia: TendenciaKpi;
+  numerador?: number | null;
+  denominador?: number | null;
+  formula: string;
+  detalle?: string | null;
+  tienePoblacion: boolean;
+}
+
+export interface KpiResumen {
+  rango: RangoKpiResuelto;
+  indicadores: IndicadorKpi[];
+  porEstado: Record<string, number>;
+}
+
+export interface BarraKpi {
+  clave: string;
+  etiqueta: string;
+  valor?: number | null;
+  porcentaje?: number | null;
+  semaforo: SemaforoKpi;
+  formula: string;
+}
+
+export interface KpiPlantilla {
+  codigo: string;
+  nombre?: string;
+  volumen: number;
+  documentosConExcepciones: number;
+  salud: SaludPlantilla;
+  porEstado: Record<string, number>;
+  barras: BarraKpi[];
+}
+
 export interface Pagina<T> {
   content: T[];
   totalElements: number;

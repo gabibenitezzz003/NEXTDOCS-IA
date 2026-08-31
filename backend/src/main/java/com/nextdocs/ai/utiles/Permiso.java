@@ -14,6 +14,8 @@ public final class Permiso {
 
 	public static final String DOCUMENTOS_ELIMINAR = "documentos.eliminar";
 
+	public static final String DOCUMENTOS_EXPORTAR = "documentos.exportar";
+
 	public static final String PLANTILLAS_LEER = "plantillas.leer";
 
 	public static final String PLANTILLAS_ESCRIBIR = "plantillas.escribir";
@@ -43,7 +45,7 @@ public final class Permiso {
 
 	public static Set<String> todos() {
 		return new LinkedHashSet<>(List.of(DOCUMENTOS_LEER, DOCUMENTOS_ESCRIBIR, DOCUMENTOS_REVISAR,
-				DOCUMENTOS_ELIMINAR, PLANTILLAS_LEER, PLANTILLAS_ESCRIBIR, PLANTILLAS_PUBLICAR, EXCEPCIONES_LEER,
+				DOCUMENTOS_ELIMINAR, DOCUMENTOS_EXPORTAR, PLANTILLAS_LEER, PLANTILLAS_ESCRIBIR, PLANTILLAS_PUBLICAR, EXCEPCIONES_LEER,
 				EXCEPCIONES_GESTIONAR, GOBERNANZA_LEER, GOBERNANZA_ADMINISTRAR, TENANT_ADMINISTRAR));
 	}
 
@@ -59,6 +61,7 @@ public final class Permiso {
 
 	public static Set<String> deAuditor() {
 		return new LinkedHashSet<>(
-				List.of(DOCUMENTOS_LEER, PLANTILLAS_LEER, EXCEPCIONES_LEER, GOBERNANZA_LEER));
+				List.of(DOCUMENTOS_LEER, DOCUMENTOS_EXPORTAR, PLANTILLAS_LEER, EXCEPCIONES_LEER,
+						GOBERNANZA_LEER));
 	}
 }

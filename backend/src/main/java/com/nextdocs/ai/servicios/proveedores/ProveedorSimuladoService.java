@@ -9,6 +9,9 @@ import com.nextdocs.ai.enumeraciones.PresenciaCampo;
 import com.nextdocs.ai.enumeraciones.ProveedorDocumentalIa;
 import com.nextdocs.ai.interfaces.ProveedorDocumentalIaInt;
 import com.nextdocs.ai.modelos.CampoEsquemaModel;
+import com.nextdocs.ai.modelos.ResultadoClasificacionModel;
+import com.nextdocs.ai.modelos.SolicitudClasificacionModel;
+import com.nextdocs.ai.modelos.TipoCandidatoModel;
 import com.nextdocs.ai.modelos.ResultadoExtraccionModel;
 import com.nextdocs.ai.modelos.SolicitudExtraccionModel;
 import com.nextdocs.ai.modelos.ValorCanonicoModel;
@@ -53,6 +56,34 @@ public class ProveedorSimuladoService implements ProveedorDocumentalIaInt {
 		}
 		resultado.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
 		return resultado;
+	}
+
+	@Override
+	public ResultadoClasificacionModel clasificar(SolicitudClasificacionModel solicitud) {
+		long inicio = System.currentTimeMillis();
+		ResultadoClasificacionModel resultado = new ResultadoClasificacionModel();
+		resultado.setProveedor(tipo());
+		resultado.setModelo(MODELO);
+		resultado.setConfianza(CONFIANZA_BASE);
+		resultado.setCodigoPropuesto(elegirPorNombre(solicitud));
+		resultado.setMotivo("Clasificacion simulada a partir del nombre del archivo");
+		if (resultado.esDesconocido()) {
+			resultado.setConfianza(new BigDecimal("0.3000"));
+			resultado.setNombreSugerido("Tipo sin catalogar");
+		}
+		resultado.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
+		return resultado;
+	}
+
+	private String elegirPorNombre(SolicitudClasificacionModel solicitud) {
+		String nombre = solicitud.getNombreArchivo() == null ? ""
+				: solicitud.getNombreArchivo().toUpperCase(Locale.ROOT);
+		for (TipoCandidatoModel candidato : solicitud.getCandidatos()) {
+			if (candidato.getCodigo() != null && nombre.contains(candidato.getCodigo())) {
+				return candidato.getCodigo();
+			}
+		}
+		return ResultadoClasificacionModel.CODIGO_DESCONOCIDO;
 	}
 
 	private ValorCanonicoModel simularValor(CampoEsquemaModel campo, Random aleatorio) {

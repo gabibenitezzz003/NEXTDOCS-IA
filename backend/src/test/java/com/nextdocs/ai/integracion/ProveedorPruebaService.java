@@ -12,7 +12,9 @@ import com.nextdocs.ai.enumeraciones.ProveedorDocumentalIa;
 import com.nextdocs.ai.exceptions.ProveedorNoDisponibleException;
 import com.nextdocs.ai.interfaces.ProveedorDocumentalIaInt;
 import com.nextdocs.ai.modelos.CampoEsquemaModel;
+import com.nextdocs.ai.modelos.ResultadoClasificacionModel;
 import com.nextdocs.ai.modelos.ResultadoExtraccionModel;
+import com.nextdocs.ai.modelos.SolicitudClasificacionModel;
 import com.nextdocs.ai.modelos.SolicitudExtraccionModel;
 import com.nextdocs.ai.modelos.ValorCanonicoModel;
 
@@ -29,6 +31,12 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 
 	private final List<SolicitudExtraccionModel> solicitudes = new ArrayList<>();
 
+	private final List<SolicitudClasificacionModel> clasificaciones = new ArrayList<>();
+
+	private String tipoProgramado;
+
+	private BigDecimal confianzaClasificacion = new BigDecimal("0.9500");
+
 	private int fallosPendientes;
 
 	private boolean falloReintentable = true;
@@ -40,6 +48,28 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 	private long tokensSalida = 50;
 
 	private BigDecimal costo = BigDecimal.ZERO;
+
+	public void programarClasificacion(String codigo, BigDecimal confianza) {
+		this.tipoProgramado = codigo;
+		this.confianzaClasificacion = confianza;
+	}
+
+	public List<SolicitudClasificacionModel> clasificaciones() {
+		return clasificaciones;
+	}
+
+	@Override
+	public ResultadoClasificacionModel clasificar(SolicitudClasificacionModel solicitud) {
+		clasificaciones.add(solicitud);
+		ResultadoClasificacionModel resultado = new ResultadoClasificacionModel();
+		resultado.setProveedor(tipo());
+		resultado.setModelo("prueba");
+		resultado.setConfianza(confianzaClasificacion);
+		resultado.setCodigoPropuesto(tipoProgramado == null
+				? ResultadoClasificacionModel.CODIGO_DESCONOCIDO : tipoProgramado);
+		resultado.setMotivo("Clasificacion programada por la prueba");
+		return resultado;
+	}
 
 	@Override
 	public ProveedorDocumentalIa tipo() {
@@ -130,6 +160,9 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 	public synchronized void reiniciar() {
 		valoresProgramados.clear();
 		solicitudes.clear();
+		clasificaciones.clear();
+		tipoProgramado = null;
+		confianzaClasificacion = new BigDecimal("0.9500");
 		llamadas.set(0);
 		fallosPendientes = 0;
 		falloReintentable = true;
