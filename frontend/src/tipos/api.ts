@@ -271,3 +271,25 @@ export interface ErrorApi {
   correlacionId?: string;
   campos?: Record<string, string>;
 }
+
+export type EstadoTipoPropuesto = "PENDIENTE" | "APROBADO" | "DESCARTADO";
+
+export interface CampoSugerido {
+  clave: string;
+  etiqueta?: string;
+  tipoDato?: string;
+  requerido: boolean;
+  ejemplo?: string;
+}
+
+export interface TipoPropuesto {
+  id: string;
+  codigoSugerido: string;
+  nombreSugerido?: string;
+  motivo?: string;
+  veces: number;
+  estado: EstadoTipoPropuesto;
+  codigoAprobado?: string;
+  campos: CampoSugerido[];
+  alta?: string;
+}

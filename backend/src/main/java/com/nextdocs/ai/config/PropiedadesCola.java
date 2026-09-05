@@ -12,7 +12,7 @@ public class PropiedadesCola {
 
 	private String nombreReintento;
 
-	private int concurrenciaTrabajadores;
+	private int documentosPorCiclo;
 
 	private long intervaloSondeoMilisegundos;
 }

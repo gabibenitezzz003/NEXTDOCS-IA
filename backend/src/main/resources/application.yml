@@ -136,7 +136,7 @@ nextdocs:
   cola:
     nombreExtraccion: nextdocs:cola:extraccion
     nombreReintento: nextdocs:cola:reintento
-    concurrenciaTrabajadores: ${NEXTDOCS_COLA_CONCURRENCIA:4}
+    documentosPorCiclo: ${NEXTDOCS_COLA_POR_CICLO:8}
     intervaloSondeoMilisegundos: 1000
   webhooks:
     despachadorActivo: ${NEXTDOCS_WEBHOOK_DESPACHADOR:true}

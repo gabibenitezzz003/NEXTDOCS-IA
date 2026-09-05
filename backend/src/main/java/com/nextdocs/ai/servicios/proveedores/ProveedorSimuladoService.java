@@ -7,6 +7,7 @@ import java.util.Random;
 
 import com.nextdocs.ai.enumeraciones.PresenciaCampo;
 import com.nextdocs.ai.enumeraciones.ProveedorDocumentalIa;
+import com.nextdocs.ai.enumeraciones.TipoDatoCampo;
 import com.nextdocs.ai.interfaces.ProveedorDocumentalIaInt;
 import com.nextdocs.ai.modelos.CampoEsquemaModel;
 import com.nextdocs.ai.modelos.ResultadoClasificacionModel;
@@ -69,10 +70,36 @@ public class ProveedorSimuladoService implements ProveedorDocumentalIaInt {
 		resultado.setMotivo("Clasificacion simulada a partir del nombre del archivo");
 		if (resultado.esDesconocido()) {
 			resultado.setConfianza(new BigDecimal("0.3000"));
-			resultado.setNombreSugerido("Tipo sin catalogar");
+			resultado.setNombreSugerido(nombreDelArchivo(solicitud));
+			resultado.getCamposSugeridos().add(sugerir("numero", "Numero o identificador",
+					TipoDatoCampo.TEXTO, true));
+			resultado.getCamposSugeridos().add(sugerir("fechaEmision", "Fecha del documento",
+					TipoDatoCampo.FECHA, true));
+			resultado.getCamposSugeridos().add(sugerir("contraparte", "Contraparte",
+					TipoDatoCampo.TEXTO, false));
 		}
 		resultado.setDuracionMilisegundos(System.currentTimeMillis() - inicio);
 		return resultado;
+	}
+
+	private String nombreDelArchivo(SolicitudClasificacionModel solicitud) {
+		String nombre = solicitud.getNombreArchivo();
+		if (nombre == null || nombre.isBlank()) {
+			return "Tipo sin catalogar";
+		}
+		int punto = nombre.lastIndexOf('.');
+		String base = punto > 0 ? nombre.substring(0, punto) : nombre;
+		return base.replace('-', ' ').replace('_', ' ').trim();
+	}
+
+	private com.nextdocs.ai.modelos.CampoSugeridoModel sugerir(String clave, String etiqueta,
+			TipoDatoCampo tipo, boolean requerido) {
+		com.nextdocs.ai.modelos.CampoSugeridoModel campo = new com.nextdocs.ai.modelos.CampoSugeridoModel();
+		campo.setClave(clave);
+		campo.setEtiqueta(etiqueta);
+		campo.setTipoDato(tipo);
+		campo.setRequerido(requerido);
+		return campo;
 	}
 
 	private String elegirPorNombre(SolicitudClasificacionModel solicitud) {
