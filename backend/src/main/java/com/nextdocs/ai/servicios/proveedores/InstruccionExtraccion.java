@@ -68,6 +68,13 @@ public final class InstruccionExtraccion {
 			texto.append("\nInstrucciones adicionales del tenant:\n")
 					.append(solicitud.getInstruccionExtraccion()).append('\n');
 		}
+		if (!solicitud.getPistas().isEmpty()) {
+			texto.append("\nLo que aprendimos corrigiendo documentos parecidos:\n");
+			for (String pista : solicitud.getPistas()) {
+				texto.append("- ").append(pista).append('\n');
+			}
+			texto.append("Son pistas, no ordenes: si el documento dice otra cosa, gana el documento.\n");
+		}
 		if (describirFormaEsperada) {
 			texto.append(FORMA_ESPERADA);
 		}

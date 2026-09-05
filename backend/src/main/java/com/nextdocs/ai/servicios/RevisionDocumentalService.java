@@ -38,6 +38,8 @@ public class RevisionDocumentalService {
 
 	private final CambioCampoRevisionRepository cambioCampoRevisionRepository;
 
+	private final AprendizajeService aprendizajeService;
+
 	private final ValorExtraidoRepository valorExtraidoRepository;
 
 	private final HallazgoValidacionRepository hallazgoValidacionRepository;
@@ -54,12 +56,14 @@ public class RevisionDocumentalService {
 
 	public RevisionDocumentalService(RevisionDocumentoRepository revisionDocumentoRepository,
 			CambioCampoRevisionRepository cambioCampoRevisionRepository,
+			AprendizajeService aprendizajeService,
 			ValorExtraidoRepository valorExtraidoRepository,
 			HallazgoValidacionRepository hallazgoValidacionRepository, DocumentoRepository documentoRepository,
 			EstadoDocumentalService estadoDocumentalService, ColaExtraccionService colaExtraccionService,
 			AuditoriaService auditoriaService, ExcepcionConverter excepcionConverter) {
 		this.revisionDocumentoRepository = revisionDocumentoRepository;
 		this.cambioCampoRevisionRepository = cambioCampoRevisionRepository;
+		this.aprendizajeService = aprendizajeService;
 		this.valorExtraidoRepository = valorExtraidoRepository;
 		this.hallazgoValidacionRepository = hallazgoValidacionRepository;
 		this.documentoRepository = documentoRepository;
@@ -163,6 +167,7 @@ public class RevisionDocumentalService {
 			cambio.setMotivo(datos.getMotivo());
 			cambio.setAlta(Instant.now());
 			cambios.add(cambio);
+			aprendizajeService.registrar(documento, correccion.getKey(), anterior, correccion.getValue());
 			aplicadas++;
 		}
 		cambioCampoRevisionRepository.saveAll(cambios);

@@ -87,6 +87,8 @@ public class ExtractorDocumentalService {
 
 	private final TipoPropuestoService tipoPropuestoService;
 
+	private final AprendizajeService aprendizajeService;
+
 	private final AuditoriaService auditoriaService;
 
 	private final EventoSalidaService eventoSalidaService;
@@ -104,7 +106,7 @@ public class ExtractorDocumentalService {
 			EstadoDocumentalService estadoDocumentalService, ExcepcionDocumentalService excepcionDocumentalService,
 			ColaExtraccionService colaExtraccionService,
 			ClasificadorDocumentalService clasificadorDocumentalService,
-			TipoPropuestoService tipoPropuestoService, AuditoriaService auditoriaService,
+			TipoPropuestoService tipoPropuestoService, AprendizajeService aprendizajeService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesProveedorIa propiedades,
 			ObservabilidadService observabilidadService) {
 		this.documentoRepository = documentoRepository;
@@ -122,6 +124,7 @@ public class ExtractorDocumentalService {
 		this.colaExtraccionService = colaExtraccionService;
 		this.clasificadorDocumentalService = clasificadorDocumentalService;
 		this.tipoPropuestoService = tipoPropuestoService;
+		this.aprendizajeService = aprendizajeService;
 		this.auditoriaService = auditoriaService;
 		this.eventoSalidaService = eventoSalidaService;
 		this.propiedades = propiedades;
@@ -311,6 +314,11 @@ public class ExtractorDocumentalService {
 		if (documento.getPlantilla() != null) {
 			solicitud.setCodigoPlantilla(documento.getPlantilla().getCodigo());
 		}
+		if (documento.getPlantilla() != null) {
+			solicitud.getPistas().addAll(aprendizajeService.pistas(aprendizajeService.correccionesDe(
+					documento.getTenant().getId(), documento.getPlantilla().getCodigo(),
+					AprendizajeService.EMISOR_GENERICO)));
+		}
 		if (version != null) {
 			solicitud.setInstruccionExtraccion(version.getInstruccionExtraccion());
 			solicitud.setVersionPrompt(version.getVersionPrompt());
@@ -375,10 +383,27 @@ public class ExtractorDocumentalService {
 			valor.setAlta(Instant.now());
 			valores.add(valor);
 		}
+		int aprendidas = aplicarAprendizaje(documento, valores, resultado);
 		valorExtraidoRepository.saveAll(valores);
+
+		Map<String, Object> detalle = new java.util.LinkedHashMap<>();
+		detalle.put("proveedor", resultado.getProveedor());
+		detalle.put("modelo", resultado.getModelo() == null ? "" : resultado.getModelo());
+		detalle.put("campos", valores.size());
+		detalle.put("pistasAplicadas", aprendidas);
 		auditoriaService.registrarConDetalle(documento.getTenant().getId(), AccionAuditoria.EXTRACCION_EJECUTADA,
-				ENTIDAD, ejecucion.getId(), Map.of("proveedor", resultado.getProveedor(), "modelo",
-						resultado.getModelo() == null ? "" : resultado.getModelo(), "campos", valores.size()));
+				ENTIDAD, ejecucion.getId(), detalle);
+	}
+
+	private int aplicarAprendizaje(Documento documento, List<ValorExtraido> valores,
+			ResultadoExtraccionModel resultado) {
+		if (documento.getPlantilla() == null) {
+			return 0;
+		}
+		String emisor = aprendizajeService.claveDeEmisor(valores);
+		return aprendizajeService.aplicar(valores, aprendizajeService.correccionesDe(
+				documento.getTenant().getId(), documento.getPlantilla().getCodigo(), emisor),
+				resultado.getAdvertencias());
 	}
 
 	private void validarYResolver(Documento documento, EjecucionExtraccion ejecucion) {
