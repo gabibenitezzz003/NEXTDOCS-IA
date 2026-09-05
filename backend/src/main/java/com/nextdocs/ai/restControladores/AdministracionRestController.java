@@ -17,6 +17,8 @@ import com.nextdocs.ai.modelos.UsuarioModel;
 import com.nextdocs.ai.modelos.UsuarioReqModel;
 import com.nextdocs.ai.servicios.CuentaServicioService;
 import com.nextdocs.ai.servicios.RolService;
+import com.nextdocs.ai.servicios.SembradorCatalogoService;
+import com.nextdocs.ai.servicios.catalogo.CatalogoDocumentalBase;
 import com.nextdocs.ai.servicios.TenantService;
 import com.nextdocs.ai.servicios.UsuarioService;
 import com.nextdocs.ai.utiles.Permiso;
@@ -49,12 +51,16 @@ public class AdministracionRestController extends ControladorRest<Administracion
 
 	private final TenantService tenantService;
 
+	private final SembradorCatalogoService sembradorCatalogoService;
+
 	public AdministracionRestController(UsuarioService usuarioService, RolService rolService,
-			CuentaServicioService cuentaServicioService, TenantService tenantService) {
+			CuentaServicioService cuentaServicioService, TenantService tenantService,
+			SembradorCatalogoService sembradorCatalogoService) {
 		this.usuarioService = usuarioService;
 		this.rolService = rolService;
 		this.cuentaServicioService = cuentaServicioService;
 		this.tenantService = tenantService;
+		this.sembradorCatalogoService = sembradorCatalogoService;
 	}
 
 	@GetMapping("/configuracion")
@@ -88,6 +94,14 @@ public class AdministracionRestController extends ControladorRest<Administracion
 	@PutMapping("/tenant")
 	public ResponseEntity<TenantModel> actualizarTenant(@Valid @RequestBody TenantReqModel datos) {
 		return new ResponseEntity<>(tenantService.actualizar(tenantId(), datos), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('tenant.administrar')")
+	@PostMapping("/tenant/catalogo")
+	public ResponseEntity<Map<String, Object>> sembrarCatalogo() {
+		List<String> creados = sembradorCatalogoService.sembrar(tenant());
+		return new ResponseEntity<>(Map.of("catalogo", CatalogoDocumentalBase.VERSION, "creados", creados,
+				"yaExistian", CatalogoDocumentalBase.TIPOS.size() - creados.size()), HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasAuthority('tenant.administrar')")

@@ -224,6 +224,28 @@ valor ya salió a producción, no se borra nunca.
 
 ---
 
+### 18. La suite dice BUILD SUCCESS con la infraestructura apagada
+
+`PruebaIntegracion` llama a `Assumptions.abort` cuando no encuentra PostgreSQL. En JUnit eso no es un
+fallo: la clase se saltea. Con los contenedores caidos, las 163 pruebas de integracion corren en
+cero, Maven imprime **BUILD SUCCESS** y no hay una sola linea roja.
+
+Pasa exactamente cuando mas duele: despues de reiniciar la maquina, o cuando `docker compose` se
+llevo puesto un contenedor. Uno cree que valido un cambio y no valido nada.
+
+La red de seguridad ya existe, hay que usarla. Corre siempre asi:
+
+```bash
+docker run --rm --network host -e NEXTDOCS_PRUEBA_OBLIGATORIA=true \
+  -v "$PWD":/app -v nextdocs-m2:/root/.m2 -w /app maven:3.9-eclipse-temurin-21 mvn verify
+```
+
+Con esa variable, la falta de infraestructura revienta en vez de saltearse. La CI ya la tiene puesta.
+Y ante la duda, mira el numero: si el total de integracion no es el que esperas, no corrio todo.
+
+
+---
+
 ## 5. Dónde está cada cosa
 
 | Necesitás | Andá a |

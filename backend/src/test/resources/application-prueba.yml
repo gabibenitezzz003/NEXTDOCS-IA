@@ -7,6 +7,8 @@ spring:
     clean-disabled: false
 
 nextdocs:
+  catalogo:
+    sembrarTenantsNuevos: false
   arranque:
     crearTenantDemostracion: false
   cola:

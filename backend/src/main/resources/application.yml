@@ -157,6 +157,8 @@ nextdocs:
     exigirEmisorSeguro: ${NEXTDOCS_FEDERACION_EXIGIR_HTTPS:true}
     intervaloLimpiezaMilisegundos: 900000
     retrasoInicialMilisegundos: 60000
+  catalogo:
+    sembrarTenantsNuevos: ${NEXTDOCS_CATALOGO_SEMBRAR:true}
   clasificacion:
     activa: ${NEXTDOCS_CLASIFICACION_ACTIVA:true}
     confianzaMinima: ${NEXTDOCS_CLASIFICACION_CONFIANZA_MINIMA:0.60}
