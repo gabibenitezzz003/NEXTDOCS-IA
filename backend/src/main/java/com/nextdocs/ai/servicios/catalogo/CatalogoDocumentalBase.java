@@ -41,8 +41,34 @@ public final class CatalogoDocumentalBase {
 
 	public record TipoBase(String codigo, String nombre, String familia, String descripcion,
 			BigDecimal umbralAutoaprobacion, PoliticaOriginalFisico politicaFisica, List<CampoBase> campos,
-			List<ReglaBase> reglas) {
+			List<ReglaBase> reglas, boolean clasificable) {
+
+		public TipoBase(String codigo, String nombre, String familia, String descripcion,
+				BigDecimal umbralAutoaprobacion, PoliticaOriginalFisico politicaFisica, List<CampoBase> campos,
+				List<ReglaBase> reglas) {
+			this(codigo, nombre, familia, descripcion, umbralAutoaprobacion, politicaFisica, campos, reglas, true);
+		}
 	}
+
+	public static final String CODIGO_GENERICO = "GENERICO";
+
+	public static final TipoBase GENERICO = new TipoBase(CODIGO_GENERICO, "Captura generica", "GENERAL",
+			"Esquema de respaldo para documentos que no encajan en ningun tipo del catalogo",
+			new BigDecimal("0.9900"), PoliticaOriginalFisico.NO_REQUIERE,
+			List.of(
+					CampoBase.con("tipoAparente", "Tipo aparente del documento", TipoDatoCampo.TEXTO, false, BAJA,
+							"como se llama a si mismo el documento"),
+					CampoBase.de("fechaEmision", "Fecha del documento", TipoDatoCampo.FECHA, false, BAJA),
+					CampoBase.con("numeroComprobante", "Numero o identificador", TipoDatoCampo.TEXTO, false, BAJA,
+							"numero, codigo, expediente, poliza"),
+					CampoBase.con("cuitEmisor", "CUIT de quien lo emite", TipoDatoCampo.CUIT, false, BAJA,
+							"CUIT, CUIL"),
+					CampoBase.de("razonSocialEmisor", "Quien lo emite", TipoDatoCampo.TEXTO, false, BAJA),
+					CampoBase.de("razonSocialContraparte", "A quien esta dirigido", TipoDatoCampo.TEXTO, false, BAJA),
+					CampoBase.de("importeTotal", "Importe total", TipoDatoCampo.MONEDA, false, BAJA),
+					CampoBase.de("fechaVencimiento", "Fecha de vencimiento", TipoDatoCampo.FECHA, false, BAJA),
+					CampoBase.de("resumen", "De que se trata", TipoDatoCampo.TEXTO, false, BAJA)),
+			List.of(), false);
 
 	private static ReglaBase vencimiento(String campo) {
 		return new ReglaBase("VENCIDO", "Documento vencido", TipoReglaValidacion.VIGENCIA,
@@ -202,5 +228,5 @@ public final class CatalogoDocumentalBase {
 			List.of(vencimiento("fechaVencimiento")));
 
 	public static final List<TipoBase> TIPOS = List.of(REMITO, FACTURA, NOTA_CREDITO, NOTA_DEBITO,
-			CONSTANCIA_CUIT, DNI, LICENCIA_CONDUCIR, CEDULA_VEHICULAR, VTV, SEGURO_VEHICULAR);
+			CONSTANCIA_CUIT, DNI, LICENCIA_CONDUCIR, CEDULA_VEHICULAR, VTV, SEGURO_VEHICULAR, GENERICO);
 }

@@ -43,6 +43,8 @@ public class PlantillaDocumental implements Serializable {
 	@Column(length = 1024)
 	private String descripcion;
 
+	private boolean clasificable = true;
+
 	private boolean exigirQualityGate;
 
 	@Column(precision = 5, scale = 4)

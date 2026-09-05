@@ -78,7 +78,8 @@ class CatalogoBaseIT extends PruebaIntegracion {
 		List<String> creados = sembradorCatalogoService.sembrar(tenant);
 
 		assertThat(creados).hasSize(CatalogoDocumentalBase.TIPOS.size());
-		assertThat(creados).contains("REMITO", "FACTURA", "DNI", "VTV", "CONSTANCIA_CUIT");
+		assertThat(creados).contains("REMITO", "FACTURA", "DNI", "VTV", "CONSTANCIA_CUIT",
+				CatalogoDocumentalBase.CODIGO_GENERICO);
 
 		for (String codigo : creados) {
 			PlantillaDocumental plantilla = plantillaDocumentalRepository
@@ -135,7 +136,9 @@ class CatalogoBaseIT extends PruebaIntegracion {
 		assertThat(documentoService.obtener(tenant.getId(), documento.getId()).getCodigoPlantilla())
 				.isEqualTo("REMITO");
 		assertThat(proveedor.clasificaciones().get(0).getCandidatos())
-				.as("el clasificador tiene que ver todo el catalogo, no una parte")
-				.hasSize(CatalogoDocumentalBase.TIPOS.size());
+				.as("el clasificador ve todo el catalogo menos el generico, que es el respaldo y no compite")
+				.hasSize(CatalogoDocumentalBase.TIPOS.size() - 1)
+				.extracting("codigo")
+				.doesNotContain(CatalogoDocumentalBase.CODIGO_GENERICO);
 	}
 }

@@ -13,6 +13,7 @@ import com.nextdocs.ai.entidades.Documento;
 import com.nextdocs.ai.entidades.EjecucionExtraccion;
 import com.nextdocs.ai.entidades.EjecucionValidacion;
 import com.nextdocs.ai.entidades.ValorExtraido;
+import com.nextdocs.ai.entidades.PlantillaDocumental;
 import com.nextdocs.ai.entidades.VersionPlantilla;
 import com.nextdocs.ai.enumeraciones.OrigenTipoDocumento;
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
@@ -84,6 +85,8 @@ public class ExtractorDocumentalService {
 
 	private final ClasificadorDocumentalService clasificadorDocumentalService;
 
+	private final TipoPropuestoService tipoPropuestoService;
+
 	private final AuditoriaService auditoriaService;
 
 	private final EventoSalidaService eventoSalidaService;
@@ -100,7 +103,8 @@ public class ExtractorDocumentalService {
 			AsociacionService asociacionService, SegmentacionDocumentalService segmentacionDocumentalService,
 			EstadoDocumentalService estadoDocumentalService, ExcepcionDocumentalService excepcionDocumentalService,
 			ColaExtraccionService colaExtraccionService,
-			ClasificadorDocumentalService clasificadorDocumentalService, AuditoriaService auditoriaService,
+			ClasificadorDocumentalService clasificadorDocumentalService,
+			TipoPropuestoService tipoPropuestoService, AuditoriaService auditoriaService,
 			EventoSalidaService eventoSalidaService, PropiedadesProveedorIa propiedades,
 			ObservabilidadService observabilidadService) {
 		this.documentoRepository = documentoRepository;
@@ -117,6 +121,7 @@ public class ExtractorDocumentalService {
 		this.excepcionDocumentalService = excepcionDocumentalService;
 		this.colaExtraccionService = colaExtraccionService;
 		this.clasificadorDocumentalService = clasificadorDocumentalService;
+		this.tipoPropuestoService = tipoPropuestoService;
 		this.auditoriaService = auditoriaService;
 		this.eventoSalidaService = eventoSalidaService;
 		this.propiedades = propiedades;
@@ -186,20 +191,49 @@ public class ExtractorDocumentalService {
 		}
 
 		return switch (veredicto.estado()) {
-			case INCIERTO -> observarSinTipo(documento, ClasificadorDocumentalService.CODIGO_TIPO_INCIERTO,
+			case INCIERTO -> capturarGenerico(documento, veredicto,
+					ClasificadorDocumentalService.CODIGO_TIPO_INCIERTO,
 					"El clasificador propuso " + veredicto.plantilla().getCodigo() + " con confianza "
-							+ veredicto.resultado().getConfianza() + ", por debajo del umbral. "
-							+ nota(veredicto.resultado().getMotivo()));
-			case NO_RECONOCIDO -> observarSinTipo(documento,
+							+ veredicto.resultado().getConfianza() + ", por debajo del umbral, asi que el "
+							+ "documento se capturo con el esquema generico. " + nota(veredicto.resultado()));
+			case NO_RECONOCIDO -> capturarGenerico(documento, veredicto,
 					ClasificadorDocumentalService.CODIGO_TIPO_NO_RECONOCIDO,
-					"El documento no corresponde a ningun tipo del catalogo. "
-							+ nota(veredicto.resultado().getMotivo()));
+					"El documento no corresponde a ningun tipo del catalogo, asi que se capturo con el "
+							+ "esquema generico para que igual sea util y buscable. "
+							+ nota(veredicto.resultado()));
 			default -> observarSinTipo(documento, ClasificadorDocumentalService.CODIGO_SIN_CATALOGO,
 					"El tenant no tiene ninguna plantilla publicada contra la cual clasificar");
 		};
 	}
 
-	private String nota(String motivo) {
+	private boolean capturarGenerico(Documento documento, ClasificadorDocumentalService.Veredicto veredicto,
+			String codigo, String detalle) {
+		PlantillaDocumental generico = clasificadorDocumentalService
+				.respaldoGenerico(documento.getTenant().getId());
+		if (generico == null) {
+			return observarSinTipo(documento, codigo, detalle
+					+ " El tenant no tiene publicado el tipo GENERICO, asi que no se pudo capturar nada.");
+		}
+
+		if (veredicto.estado() == ClasificadorDocumentalService.Veredicto.Estado.NO_RECONOCIDO) {
+			tipoPropuestoService.registrar(documento, veredicto.resultado());
+		}
+
+		documento.setPlantilla(generico);
+		documento.setVersionPlantilla(generico.getVersionPublicada());
+		documento.setOrigenTipo(OrigenTipoDocumento.GENERICO);
+		documento.setConfianzaTipo(veredicto.resultado().getConfianza());
+		documento.setMotivoTipo(veredicto.resultado().getMotivo());
+		documentoRepository.save(documento);
+
+		excepcionDocumentalService.abrir(documento.getTenant(), documento, TipoExcepcion.TECNICA,
+				SeveridadHallazgo.REQUIERE_REVISION, codigo, detalle);
+		log.info("El documento {} se capturo con el esquema generico por {}", documento.getId(), codigo);
+		return true;
+	}
+
+	private String nota(com.nextdocs.ai.modelos.ResultadoClasificacionModel resultado) {
+		String motivo = resultado == null ? null : resultado.getMotivo();
 		return motivo == null || motivo.isBlank() ? "" : "El clasificador dijo: " + motivo;
 	}
 

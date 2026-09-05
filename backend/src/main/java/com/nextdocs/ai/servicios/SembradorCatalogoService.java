@@ -84,6 +84,15 @@ public class SembradorCatalogoService {
 		return creados;
 	}
 
+	@Transactional
+	public void crearTipo(Tenant tenant, TipoBase tipo) {
+		if (plantillaDocumentalRepository.buscarPorCodigo(tenant.getId(), tipo.codigo()).isPresent()) {
+			throw new com.nextdocs.ai.exceptions.ValidacionException(
+					"Ya existe una plantilla con el codigo " + tipo.codigo() + " en el tenant");
+		}
+		crear(tenant, tipo);
+	}
+
 	private void crear(Tenant tenant, TipoBase tipo) {
 		Instant ahora = Instant.now();
 
@@ -93,6 +102,7 @@ public class SembradorCatalogoService {
 		plantilla.setNombre(tipo.nombre());
 		plantilla.setFamilia(tipo.familia());
 		plantilla.setDescripcion(tipo.descripcion());
+		plantilla.setClasificable(tipo.clasificable());
 		plantilla.setAlta(ahora);
 		plantillaDocumentalRepository.save(plantilla);
 
