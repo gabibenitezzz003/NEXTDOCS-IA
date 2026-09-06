@@ -121,6 +121,9 @@ export function VisorDocumento({
                   {documento.codigoPlantilla} v{documento.numeroVersionPlantilla}
                 </span>
               ) : null}
+              {documento?.origenTipo === "GENERICO" ? (
+                <Pastilla tono="alerta">Captura generica</Pastilla>
+              ) : null}
               {documento?.sujetoIdObjeto ? (
                 <span>
                   {documento.sujetoOrigen} · {documento.sujetoTipoObjeto} {documento.sujetoIdObjeto}
@@ -159,6 +162,20 @@ export function VisorDocumento({
             <ErrorPanel mensaje={mensajeDeError(consulta.error)} reintentar={() => consulta.refetch()} />
           ) : !detalle ? null : (
             <>
+              {documento?.origenTipo === "GENERICO" ? (
+                <div
+                  role="status"
+                  className="aparecer mb-4 rounded-xl border border-alerta-borde bg-alerta-tenue px-4 py-3 text-sm text-alerta"
+                >
+                  <p className="font-semibold">
+                    Este documento no correspondia a ningun tipo del catalogo y se capturo con el
+                    esquema generico
+                  </p>
+                  {documento.motivoTipo ? (
+                    <p className="mt-1 text-xs text-alerta/80">{documento.motivoTipo}</p>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
                 <Metrica etiqueta="Proveedor" valor={detalle.extraccion?.proveedor ?? "—"} />
                 <Metrica etiqueta="Modelo" valor={detalle.extraccion?.modelo ?? "—"} />

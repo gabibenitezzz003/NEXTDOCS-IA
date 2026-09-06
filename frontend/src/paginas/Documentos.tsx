@@ -252,7 +252,9 @@ export function Documentos() {
                         <InsigniaEstado estado={documento.estado} />
                       </td>
                       <td className="px-5 py-3.5">
-                        {documento.codigoPlantilla ? (
+                        {documento.origenTipo === "GENERICO" ? (
+                          <Pastilla tono="alerta">Captura generica</Pastilla>
+                        ) : documento.codigoPlantilla ? (
                           <Pastilla tono="violeta">{documento.codigoPlantilla}</Pastilla>
                         ) : (
                           <span className="text-tinta-tenue">sin detectar</span>

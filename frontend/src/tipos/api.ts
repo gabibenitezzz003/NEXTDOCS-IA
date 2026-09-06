@@ -59,6 +59,9 @@ export interface Documento {
   nombrePlantilla?: string;
   versionPlantillaId?: string;
   numeroVersionPlantilla?: number;
+  origenTipo?: "DECLARADO" | "DETECTADO" | "GENERICO" | "REVISION";
+  confianzaTipo?: number;
+  motivoTipo?: string;
   documentoPadreId?: string;
   paginaDesde?: number;
   paginaHasta?: number;
