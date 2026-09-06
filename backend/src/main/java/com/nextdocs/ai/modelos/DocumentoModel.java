@@ -30,6 +30,12 @@ public class DocumentoModel implements Serializable {
 
 	private String codigoPlantilla;
 
+	private String origenTipo;
+
+	private java.math.BigDecimal confianzaTipo;
+
+	private String motivoTipo;
+
 	private String nombrePlantilla;
 
 	private String versionPlantillaId;

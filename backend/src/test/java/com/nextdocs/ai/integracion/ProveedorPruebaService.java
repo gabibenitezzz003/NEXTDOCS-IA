@@ -37,6 +37,10 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 
 	private BigDecimal confianzaClasificacion = new BigDecimal("0.9500");
 
+	private String nombreSugerido;
+
+	private List<com.nextdocs.ai.modelos.CampoSugeridoModel> camposSugeridos = new ArrayList<>();
+
 	private int fallosPendientes;
 
 	private boolean falloReintentable = true;
@@ -52,6 +56,16 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 	public void programarClasificacion(String codigo, BigDecimal confianza) {
 		this.tipoProgramado = codigo;
 		this.confianzaClasificacion = confianza;
+		this.nombreSugerido = null;
+		this.camposSugeridos = new ArrayList<>();
+	}
+
+	public void programarClasificacionDesconocida(String nombreSugerido,
+			List<com.nextdocs.ai.modelos.CampoSugeridoModel> campos) {
+		this.tipoProgramado = ResultadoClasificacionModel.CODIGO_DESCONOCIDO;
+		this.confianzaClasificacion = new BigDecimal("0.2000");
+		this.nombreSugerido = nombreSugerido;
+		this.camposSugeridos = new ArrayList<>(campos);
 	}
 
 	public List<SolicitudClasificacionModel> clasificaciones() {
@@ -68,6 +82,8 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 		resultado.setCodigoPropuesto(tipoProgramado == null
 				? ResultadoClasificacionModel.CODIGO_DESCONOCIDO : tipoProgramado);
 		resultado.setMotivo("Clasificacion programada por la prueba");
+		resultado.setNombreSugerido(nombreSugerido);
+		resultado.getCamposSugeridos().addAll(camposSugeridos);
 		return resultado;
 	}
 
@@ -163,6 +179,8 @@ public class ProveedorPruebaService implements ProveedorDocumentalIaInt {
 		clasificaciones.clear();
 		tipoProgramado = null;
 		confianzaClasificacion = new BigDecimal("0.9500");
+		nombreSugerido = null;
+		camposSugeridos = new ArrayList<>();
 		llamadas.set(0);
 		fallosPendientes = 0;
 		falloReintentable = true;

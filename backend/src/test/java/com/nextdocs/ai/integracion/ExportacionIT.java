@@ -220,7 +220,9 @@ class ExportacionIT extends PruebaIntegracion {
 		loteExportacionRepository.save(lote);
 		int vencidos = trabajadorExportacionService.vencer();
 
-		assertThat(vencidos).isEqualTo(1);
+		assertThat(vencidos)
+				.as("el ciclo es global: puede vencer lotes de otras corridas, lo que importa es que venza el nuestro")
+				.isGreaterThanOrEqualTo(1);
 		LoteExportacion recargado = loteExportacionRepository.findById(lote.getId()).orElseThrow();
 		assertThat(recargado.getEstado()).isEqualTo(EstadoLoteExportacion.VENCIDO);
 		assertThat(recargado.getClaveObjeto()).isNull();

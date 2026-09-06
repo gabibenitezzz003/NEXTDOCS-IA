@@ -5,6 +5,7 @@ import { Logotipo } from "./Marca";
 import {
   IconoDocumentos,
   IconoExcepciones,
+  IconoInfo,
   IconoPanel,
   IconoResumen,
   IconoSalir,
@@ -34,6 +35,12 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
   {
     titulo: "Configuracion",
     entradas: [
+      {
+        a: "/tipos-propuestos",
+        texto: "Tipos nuevos",
+        permiso: "tenant.administrar",
+        icono: IconoInfo,
+      },
     ],
   },
 ];
@@ -43,6 +50,7 @@ const TITULOS: Record<string, string> = {
   "/panel": "Panel de control",
   "/documentos": "Documentos",
   "/excepciones": "Excepciones",
+  "/tipos-propuestos": "Tipos nuevos",
 };
 
 export function Disposicion() {

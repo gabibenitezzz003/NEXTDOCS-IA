@@ -17,6 +17,11 @@ import com.nextdocs.ai.modelos.UsuarioModel;
 import com.nextdocs.ai.modelos.UsuarioReqModel;
 import com.nextdocs.ai.servicios.CuentaServicioService;
 import com.nextdocs.ai.servicios.RolService;
+import com.nextdocs.ai.entidades.TipoPropuesto;
+import com.nextdocs.ai.enumeraciones.EstadoTipoPropuesto;
+import com.nextdocs.ai.servicios.SembradorCatalogoService;
+import com.nextdocs.ai.servicios.TipoPropuestoService;
+import com.nextdocs.ai.servicios.catalogo.CatalogoDocumentalBase;
 import com.nextdocs.ai.servicios.TenantService;
 import com.nextdocs.ai.servicios.UsuarioService;
 import com.nextdocs.ai.utiles.Permiso;
@@ -49,12 +54,19 @@ public class AdministracionRestController extends ControladorRest<Administracion
 
 	private final TenantService tenantService;
 
+	private final SembradorCatalogoService sembradorCatalogoService;
+
+	private final TipoPropuestoService tipoPropuestoService;
+
 	public AdministracionRestController(UsuarioService usuarioService, RolService rolService,
-			CuentaServicioService cuentaServicioService, TenantService tenantService) {
+			CuentaServicioService cuentaServicioService, TenantService tenantService,
+			SembradorCatalogoService sembradorCatalogoService, TipoPropuestoService tipoPropuestoService) {
 		this.usuarioService = usuarioService;
 		this.rolService = rolService;
 		this.cuentaServicioService = cuentaServicioService;
 		this.tenantService = tenantService;
+		this.sembradorCatalogoService = sembradorCatalogoService;
+		this.tipoPropuestoService = tipoPropuestoService;
 	}
 
 	@GetMapping("/configuracion")
@@ -88,6 +100,50 @@ public class AdministracionRestController extends ControladorRest<Administracion
 	@PutMapping("/tenant")
 	public ResponseEntity<TenantModel> actualizarTenant(@Valid @RequestBody TenantReqModel datos) {
 		return new ResponseEntity<>(tenantService.actualizar(tenantId(), datos), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('tenant.administrar')")
+	@PostMapping("/tenant/catalogo")
+	public ResponseEntity<Map<String, Object>> sembrarCatalogo() {
+		List<String> creados = sembradorCatalogoService.sembrar(tenant());
+		return new ResponseEntity<>(Map.of("catalogo", CatalogoDocumentalBase.VERSION, "creados", creados,
+				"yaExistian", CatalogoDocumentalBase.TIPOS.size() - creados.size()), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('tenant.administrar')")
+	@GetMapping("/tipos-propuestos")
+	public ResponseEntity<List<Map<String, Object>>> listarTiposPropuestos(
+			@RequestParam(required = false) EstadoTipoPropuesto estado) {
+		List<Map<String, Object>> respuesta = tipoPropuestoService.listar(tenantId(), estado).stream()
+				.map(this::aMapa).toList();
+		return new ResponseEntity<>(respuesta, HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('tenant.administrar')")
+	@PostMapping("/tipos-propuestos/{propuestoId}/aprobar")
+	public ResponseEntity<Map<String, Object>> aprobarTipoPropuesto(@PathVariable String propuestoId) {
+		return new ResponseEntity<>(aMapa(tipoPropuestoService.aprobar(tenant(), propuestoId)), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('tenant.administrar')")
+	@PostMapping("/tipos-propuestos/{propuestoId}/descartar")
+	public ResponseEntity<Map<String, Object>> descartarTipoPropuesto(@PathVariable String propuestoId) {
+		return new ResponseEntity<>(aMapa(tipoPropuestoService.descartar(tenantId(), propuestoId)),
+				HttpStatus.OK);
+	}
+
+	private Map<String, Object> aMapa(TipoPropuesto propuesto) {
+		Map<String, Object> mapa = new java.util.LinkedHashMap<>();
+		mapa.put("id", propuesto.getId());
+		mapa.put("codigoSugerido", propuesto.getCodigoSugerido());
+		mapa.put("nombreSugerido", propuesto.getNombreSugerido());
+		mapa.put("motivo", propuesto.getMotivo());
+		mapa.put("veces", propuesto.getVeces());
+		mapa.put("estado", propuesto.getEstado().name());
+		mapa.put("codigoAprobado", propuesto.getCodigoAprobado());
+		mapa.put("campos", tipoPropuestoService.camposDe(propuesto));
+		mapa.put("alta", propuesto.getAlta());
+		return mapa;
 	}
 
 	@PreAuthorize("hasAuthority('tenant.administrar')")

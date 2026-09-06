@@ -36,4 +36,6 @@ public class SolicitudExtraccionModel implements Serializable {
 	private String correlacionId;
 
 	private List<CampoEsquemaModel> campos = new ArrayList<>();
+
+	private List<String> pistas = new ArrayList<>();
 }

@@ -21,6 +21,7 @@ import com.nextdocs.ai.modelos.TipoCandidatoModel;
 import com.nextdocs.ai.repositorios.ArchivoDocumentoRepository;
 import com.nextdocs.ai.repositorios.CampoPlantillaRepository;
 import com.nextdocs.ai.repositorios.PlantillaDocumentalRepository;
+import com.nextdocs.ai.servicios.catalogo.CatalogoDocumentalBase;
 import com.nextdocs.ai.servicios.proveedores.RuteadorProveedorService;
 
 import org.slf4j.Logger;
@@ -106,16 +107,16 @@ public class ClasificadorDocumentalService {
 	}
 
 	private List<PlantillaDocumental> publicadasDe(String tenantId) {
-		List<PlantillaDocumental> publicadas = new ArrayList<>();
-		for (PlantillaDocumental plantilla : plantillaDocumentalRepository.listarPorTenant(tenantId, null)) {
-			if (plantilla.getVersionPublicada() != null) {
-				publicadas.add(plantilla);
-			}
-			if (publicadas.size() >= propiedades.getMaximoCandidatos()) {
-				break;
-			}
-		}
-		return publicadas;
+		List<PlantillaDocumental> clasificables = plantillaDocumentalRepository.listarClasificables(tenantId);
+		return clasificables.size() <= propiedades.getMaximoCandidatos() ? clasificables
+				: clasificables.subList(0, propiedades.getMaximoCandidatos());
+	}
+
+	public PlantillaDocumental respaldoGenerico(String tenantId) {
+		return plantillaDocumentalRepository
+				.buscarPorCodigo(tenantId, CatalogoDocumentalBase.CODIGO_GENERICO)
+				.filter(plantilla -> plantilla.getVersionPublicada() != null)
+				.orElse(null);
 	}
 
 	private SolicitudClasificacionModel construirSolicitud(Documento documento,

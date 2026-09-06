@@ -18,6 +18,10 @@ public interface PlantillaDocumentalRepository extends JpaRepository<PlantillaDo
 	@Query("SELECT p FROM PlantillaDocumental p WHERE p.baja IS NULL AND p.id = :id AND p.tenant.id = :tenantId")
 	Optional<PlantillaDocumental> buscarPorIdYTenant(@Param("id") String id, @Param("tenantId") String tenantId);
 
+	@Query("SELECT p FROM PlantillaDocumental p WHERE p.baja IS NULL AND p.tenant.id = :tenantId "
+			+ "AND p.clasificable = TRUE AND p.versionPublicada IS NOT NULL ORDER BY p.codigo")
+	List<PlantillaDocumental> listarClasificables(@Param("tenantId") String tenantId);
+
 	@Query("SELECT p FROM PlantillaDocumental p WHERE p.baja IS NULL AND p.tenant.id = :tenantId AND p.codigo = :codigo")
 	Optional<PlantillaDocumental> buscarPorCodigo(@Param("tenantId") String tenantId, @Param("codigo") String codigo);
 

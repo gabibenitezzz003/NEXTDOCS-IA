@@ -50,6 +50,11 @@ public class DocumentoConverter {
 		modelo.setTransicionesPosibles(new ArrayList<>(MaquinaEstadoDocumento.siguientes(documento.getEstado())));
 		if (documento.getPlantilla() != null) {
 			modelo.setCodigoPlantilla(documento.getPlantilla().getCodigo());
+		}
+		if (documento.getOrigenTipo() != null) {
+			modelo.setOrigenTipo(documento.getOrigenTipo().name());
+			modelo.setConfianzaTipo(documento.getConfianzaTipo());
+			modelo.setMotivoTipo(documento.getMotivoTipo());
 			modelo.setNombrePlantilla(documento.getPlantilla().getNombre());
 		}
 		if (documento.getVersionPlantilla() != null) {

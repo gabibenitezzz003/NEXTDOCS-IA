@@ -2,6 +2,8 @@ package com.nextdocs.ai.servicios;
 
 import java.util.Optional;
 
+import com.nextdocs.ai.config.PropiedadesCola;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -18,16 +20,25 @@ public class TrabajadorExtraccionService {
 
 	private final ExtractorDocumentalService extractorDocumentalService;
 
+	private final PropiedadesCola propiedades;
+
 	public TrabajadorExtraccionService(ColaExtraccionService colaExtraccionService,
-			ExtractorDocumentalService extractorDocumentalService) {
+			ExtractorDocumentalService extractorDocumentalService, PropiedadesCola propiedades) {
 		this.colaExtraccionService = colaExtraccionService;
 		this.extractorDocumentalService = extractorDocumentalService;
+		this.propiedades = propiedades;
 	}
 
 	@Scheduled(fixedDelayString = "${nextdocs.cola.intervaloSondeoMilisegundos:1000}")
 	public void consumirCola() {
-		Optional<String> documentoId = colaExtraccionService.desencolar();
-		documentoId.ifPresent(this::procesarSeguro);
+		int tope = Math.max(propiedades.getDocumentosPorCiclo(), 1);
+		for (int procesados = 0; procesados < tope; procesados++) {
+			Optional<String> documentoId = colaExtraccionService.desencolar();
+			if (documentoId.isEmpty()) {
+				return;
+			}
+			procesarSeguro(documentoId.get());
+		}
 	}
 
 	@Scheduled(fixedDelay = 5000)

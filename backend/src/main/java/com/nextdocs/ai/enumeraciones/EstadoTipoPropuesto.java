@@ -1,17 +1,16 @@
 package com.nextdocs.ai.enumeraciones;
 
-public enum OrigenTipoDocumento {
+public enum EstadoTipoPropuesto {
 
-	DECLARADO,
-	DETECTADO,
-	GENERICO,
-	REVISION;
+	PENDIENTE,
+	APROBADO,
+	DESCARTADO;
 
-	public static OrigenTipoDocumento desde(String valor) {
+	public static EstadoTipoPropuesto desde(String valor) {
 		if (valor == null) {
 			return null;
 		}
-		for (OrigenTipoDocumento elemento : values()) {
+		for (EstadoTipoPropuesto elemento : values()) {
 			if (elemento.name().equalsIgnoreCase(valor.trim())) {
 				return elemento;
 			}
