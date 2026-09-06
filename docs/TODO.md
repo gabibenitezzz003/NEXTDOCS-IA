@@ -1,5 +1,10 @@
 # TO-DO de NEXT DOC AI
 
+> **Rebaseline 06/09/2026 (MVP0 Comercial).** En alcance de producto manda
+> [`TODO_MVP0_COMERCIAL.md`](TODO_MVP0_COMERCIAL.md): las tareas 21–27 de la Fase 3 se
+> reabsorbieron ahí con numeración nueva. Este documento queda como registro de lo construido
+> (Fases 1 y 2, "MVP0 técnico").
+
 Plan de trabajo hasta terminar el producto completo. **Este es el documento de referencia:
 quien retome el proyecto arranca por la primera tarea sin marcar de la Fase 1.**
 

@@ -270,7 +270,9 @@ De la **Fase 2** está todo lo que hoy entra en el producto: portal frontend (15
 Archive & Export Center (19) y dashboard con panel de control (20). Los canales de entrada (17 y 18)
 se sacaron: ver el porqué en `TODO.md`.
 
-**Siguiente:** la Etapa 2, que arranca por el Workflow Definition Service (21).
+**Siguiente (rebaseline 06/09/2026):** el cierre del **MVP0 Comercial**. El plan maestro de
+alcance ahora es `TODO_MVP0_COMERCIAL.md`: Workflow Core, Studio guiado, terceros, IA Supervisora
+v0, biblioteca COMEX y partner foundation. La especificación está en `MVP/`.
 
 Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
 criterio: está escrito.
