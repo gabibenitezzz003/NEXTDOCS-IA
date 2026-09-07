@@ -7,6 +7,7 @@ import {
   IconoExcepciones,
   IconoInfo,
   IconoPanel,
+  IconoProceso,
   IconoResumen,
   IconoSalir,
 } from "./Iconos";
@@ -41,6 +42,12 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         permiso: "tenant.administrar",
         icono: IconoInfo,
       },
+      {
+        a: "/procesos",
+        texto: "Plantillas de proceso",
+        permiso: "plantillas.publicar",
+        icono: IconoProceso,
+      },
     ],
   },
 ];
@@ -51,6 +58,7 @@ const TITULOS: Record<string, string> = {
   "/documentos": "Documentos",
   "/excepciones": "Excepciones",
   "/tipos-propuestos": "Tipos nuevos",
+  "/procesos": "Plantillas de proceso",
 };
 
 export function Disposicion() {

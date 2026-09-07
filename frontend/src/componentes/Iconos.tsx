@@ -166,6 +166,18 @@ export function IconoDescargar(props: PropsIcono) {
   );
 }
 
+export function IconoProceso(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <circle cx="5" cy="12" r="2.2" />
+      <circle cx="19" cy="6" r="2.2" />
+      <circle cx="19" cy="18" r="2.2" />
+      <path d="M7 11l9.7-4.3" />
+      <path d="M7 13l9.7 4.3" />
+    </Base>
+  );
+}
+
 export function IconoFiltro(props: PropsIcono) {
   return (
     <Base {...props}>
