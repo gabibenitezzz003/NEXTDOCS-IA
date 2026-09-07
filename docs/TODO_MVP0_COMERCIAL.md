@@ -1,10 +1,72 @@
 # TO-DO — MVP0 Comercial
 
-Plan de cierre del **MVP0 Comercial**, con baseline del 6 de septiembre de 2026. Este documento
-reordena el plan maestro de [`TODO.md`](TODO.md) en función del rebaseline de producto definido en
-`MVP/NEXT_DOC_AI_Analisis_Desvios_Cierre_MVP0_Comercial_2026-09-06.docx` y su anexo de biblioteca
-COMEX. La especificación funcional completa vive fuera del repo (Base V7); acá queda el tablero
-de trabajo.
+Plan de cierre del **MVP0 Comercial**. Este documento reordena el plan maestro de
+[`TODO.md`](TODO.md) en función del rebaseline de producto. La especificación funcional completa
+vive fuera del repo (Base V7); acá queda el tablero de trabajo.
+
+---
+
+## 0. Guía normativa: paquete V11 (precedencia máxima)
+
+> **Rebaseline 07/09/2026.** El paquete **`NEXT_DOC_AI_V11_COMPLETA/`** (versionado en este repo)
+> es la guía normativa de este tablero: **no se construye nada que contradiga la V11**. Los
+> documentos `MVP/` (análisis de desvíos del 06/09) quedan como antecedente; si algo difiere,
+> manda la V11.
+
+- **N0-V11-SISTEMA**: 17 módulos, backlog **E00–E29**, precedencia N0 → N1 → N2 → N3.
+- **MVP0 Comercial = épicas E00–E14**, gates **0A–0H** (más `G-DEMO` para el core existente).
+- Cada N3 trae **32 casos CP/QA verificables** (módulo); la matriz `QA_MAESTRA_V11.json` lista los
+  **544 casos** con precondición/acción/resultado; `BACKLOG_V11.json` las **136 historias**. Estado
+  oficial de las matrices: `ESPECIFICACION_NO_EJECUTADA` — los casos son la especificación, no
+  pruebas aprobadas.
+- Regla de oro del paquete (RG-06): la evidencia de aceptación se obtiene **ejecutando** los casos.
+
+### Mapeo de lo ya construido contra la V11
+
+| Nuestro PR | Épica V11 | Gate | Estado |
+|---|---|---|---|
+| workflow #1 (Definition) | E02 Schema de proceso/template | 0B | Mayormente conforme |
+| workflow #2 (Runtime) | E03 Dominio + E04 Runtime | 0B/0C | **Con desvíos** (ver Fase C) |
+| #6 (compose/infra) | REL | 0G | Conforme |
+| #7 (Studio guiado) | E05 Studio guiado | 0D | **Con desvíos** (ver Fase C) |
+
+### Fase C — Conformidad V11 de lo ya construido (arranca antes que todo lo nuevo)
+
+Desvíos detectados al contrastar el código contra `N3-MVP0-V11-WFL` y `N3-MVP0-V11-STU`:
+
+- [ ] **C1 · Idempotencia de inicio** (CP-WFL-04): misma clave de inicio repetida → una sola
+  instancia con la misma referencia. Hoy no existe clave de idempotencia en `iniciar`.
+- [ ] **C2 · Activación lógica persistida** (RE-WFL-03, CP-WFL-09..12): registrar cada activación
+  de nodo; replay/reinicio/concurrencia de workers no duplica tareas ni efectos confirmados.
+- [ ] **C3 · Decisión sin dato faltante** (CP-WFL-14, RE-STU-03): un fact requerido ausente
+  **bloquea** la decisión ("ninguna ruta asumida"). Hoy caemos a la arista sin condición.
+- [ ] **C4 · Ambigüedad de condiciones** (CP-WFL-07): el validador rechaza decisiones con dos
+  rutas true sin precedencia. Hoy sólo exigimos ≥2 salidas.
+- [ ] **C5 · Rechazo exige motivo** (CP-WFL-18): completar con decisión `RECHAZADO` y motivo
+  vacío → no se guarda, la tarea queda abierta. Hoy el motivo es opcional.
+- [ ] **C6 · Bloqueo optimista** (CP-WFL-20): dos revisores sobre la misma revisión → uno gana,
+  el otro recibe CONFLICTO. Falta `@Version` en instancia/tarea (el patrón ya existe en el core,
+  migración `V2` de plantillas).
+- [ ] **C7 · Catálogo de nodos MVP0 acotado** (RE-WFL-02, CP-WFL-08): el MVP0 admite inicio,
+  requisito documental, regla determinista, decisión exclusiva, tarea humana, espera/SLA y fin.
+  Publicar con un nodo de capacidad no habilitada (p. ej. firma) → bloqueado.
+- [ ] **C8 · Estados del vocabulario V11** (N3.9): mapear `ESPERANDO` (tarea externa activa) y
+  `BLOQUEADA` (regla bloqueante) sin renombrar datos por etiqueta.
+- [ ] **C9 · Actor autorizado en la tarea** (CP-WFL-19): completar sin asignación ni delegación →
+  DENEGADO. Depende del IAM real (E06); con el placeholder `X-Tenant-Id` queda anotado, no cerrado.
+- [ ] **C10 · Pausa con motivo y reloj del tenant** (RE-WFL-06): pausar exige motivo y política
+  explícita de cómputo del plazo; vencimientos con zona del tenant.
+- [ ] **C11 · Fixtures antes de publicar** (RE-STU-05): la versión candidata ejecuta fixtures
+  representativos y casos negativos ligados al hash de la definición; una edición invalida la
+  prueba anterior. El patrón existe en el core documental (quality gate); falta en el workflow.
+- [ ] **C12 · Provenance mínimo en la definición** (RE-STU-01): owner, tenant autor, fuente y
+  versión origen desde la creación (se completa con E07).
+
+Lo que la V11 confirma de nuestro diseño: inicio versionado con hash (RE-WFL-01 ✅), publicación
+inmutable (RE-STU-06 ✅), instancia v1 sigue en v1 tras publicar v2 (CP-WFL-03 ✅), cancelación
+invalida pendientes con motivo (CP-WFL-27 ✅), bitácora inalterable (RG-02 ✅).
+
+---
 
 **Precedencia (P0-01).** En alcance manda este documento. `TODO.md` queda como registro de lo
 construido (Fases 1 y 2, "MVP0 técnico"): sus tareas 21–27 se reabsorben acá con numeración nueva;
@@ -52,23 +114,23 @@ cierre es construir el eje de procesos sobre esa base sin desestabilizarla.
 
 ## 3. Tablero de tareas
 
-Fuente: matriz de desvíos §12 del análisis. La columna "en el repo" ancla cada ítem al estado
-actual del código.
+Fuente: matriz de desvíos §12 del análisis + **backlog V11** (épica/gate entre paréntesis). La
+columna "en el repo" ancla cada ítem al estado actual del código.
 
 ### P0 — cierra el MVP0 Comercial
 
-- [ ] **P0-01 · Baseline único y nomenclatura** · *Esfuerzo: S*
+- [ ] **P0-01 · Baseline único y nomenclatura** (E00 · gate 0A) · *Esfuerzo: S*
   Marcar los documentos V7 contradictorios como superseded-for-scope y adoptar la numeración
   MVP0–MVP4. Este documento es ese paso; falta la contraparte en la Base V7 (fuera del repo) y
   un pase de revista de `README.md` y `EMPEZAR_ACA.md` cuando cierre el P0-02.
 
-- [ ] **P0-02 · Cerrar la validación del MVP0 técnico** · *Esfuerzo: S*
+- [ ] **P0-02 · Cerrar la validación del MVP0 técnico** (E01 · gate G-DEMO) · *Esfuerzo: S*
   Los cuatro puntos de `ESTADO_MVP0.md`: (1) recorrido humano punta a punta en el navegador,
   (2) confirmar que el visor muestra los datos de la captura genérica, (3) cargar 10–15
   documentos reales, (4) rotar la clave de Gemini. **Nada de lo demás importa si esto no sale
   bien: es la base sobre la que se vende.**
 
-- [ ] **P0-03 · Workflow Definition + Runtime** · *Esfuerzo: L* · *Depende de: nada (arranca ya)*
+- [ ] **P0-03 · Workflow Definition + Runtime** (E02+E03+E04 · gates 0B/0C) · *Esfuerzo: L* · *Depende de: nada (arranca ya)*
   Definitions/versiones, instancias fijadas a versión, tareas, responsables, decisiones,
   timers/SLA, cierre y auditoría. Nodos del MVP0: START/END, DOCUMENT REQUEST, FORM, AI VALIDATE,
   HUMAN REVIEW, DECISION, EXTERNAL TASK, NOTIFICATION, TIMER/SLA, API/WEBHOOK ACTION, SUBPROCESS.
@@ -78,19 +140,19 @@ actual del código.
   en el core (regla de `EMPEZAR_ACA.md` §7: el núcleo documental no depende del motor de
   procesos, y apagar Workflow no puede afectar captura/extracción/validación).
 
-- [ ] **P0-04 · Studio guiado** · *Esfuerzo: M/L* · *Depende de: P0-03*
+- [ ] **P0-04 · Studio guiado** (E05 · gate 0D) · *Esfuerzo: M/L* · *Depende de: P0-03*
   Editor lista/timeline con panel lateral de configuración y vista previa; crear desde cero o
   duplicar, definir pasos/documentos/roles/SLA/controles/notificaciones, probar y publicar con
   versionado. **Mismo JSON/schema de definición que usará el Canvas de MVP1** (no migrar después).
   *En el repo:* reutiliza el ciclo publish/versionado/quality gate ya construido para plantillas
   documentales (tarea 1/2 del plan viejo) como referencia de diseño.
 
-- [ ] **P0-05 · External Collaboration** · *Esfuerzo: M* · *Depende de: P0-03*
+- [ ] **P0-05 · External Collaboration** (E06 · gate 0D) · *Esfuerzo: M* · *Depende de: P0-03*
   Cuenta externa limitada (sólo tareas/documentos/estado asignados) + Secure Action Link con
   scope y TTL para cargas/aprobaciones puntuales. Aislamiento cross-tenant verificado por test.
   *En el repo:* viejas tareas 23 (Task Service y Action Center) y 24 (Secure Action Links).
 
-- [ ] **P0-06 · IA Supervisora v0** · *Esfuerzo: M/L* · *Depende de: P0-03*
+- [ ] **P0-06 · IA Supervisora v0** (E08 · gate 0E) · *Esfuerzo: M/L* · *Depende de: P0-03*
   Supervisor acotado por la plantilla, no agente autónomo. Controles: completitud, calidad IA
   (umbral de confidence), cross-document (identificadores/ítems/cantidades/Incoterm/parties),
   secuencia, SLA, duplicados/versiones, regla externa. Acciones configurables: solicitar /
@@ -102,13 +164,13 @@ actual del código.
   excepciones con SLA ya existen para lo documental; la Supervisora v0 es la capa de proceso que
   reacciona a los mismos hechos.
 
-- [ ] **P0-07 · Partner Foundation** · *Esfuerzo: M*
+- [ ] **P0-07 · Partner Foundation** (E07 · gates 0B/0D) · *Esfuerzo: M*
   `partner_organization`, `delegated_access_grant` (partner_user → client_tenant + scopes +
   expiración + aprobador), roles Partner Consultant y Partner Publisher. Delegación explícita por
   tenant/scope: sin superusuario transversal, sin visibilidad de otros clientes.
   *En el repo:* nuevo bounded context con tenant-filtering como el resto; migración nueva (V21+).
 
-- [ ] **P0-08 · Template marketplace-ready** · *Esfuerzo: M* · *Depende de: P0-03, P0-07*
+- [ ] **P0-08 · Template marketplace-ready** (E07 · gate 0B) · *Esfuerzo: M* · *Depende de: P0-03, P0-07*
   `template_definition` (owner_type/owner_org_id/visibility), `template_version` (semver, manifest,
   hash), `template_provenance` (created_from/forked_from/overlay_of), `template_installation`
   (pin/update policy), `tenant_template_override`, `marketplace_listing` y `commercial_terms`
@@ -118,7 +180,7 @@ actual del código.
   *En el repo:* modelar esto desde el día uno en el dominio de plantillas de proceso; agregarlo
   después rompe trazabilidad y propiedad intelectual de los partners.
 
-- [ ] **P0-09 · Biblioteca COMEX** · *Esfuerzo: M* · *Depende de: P0-03, P0-04*
+- [ ] **P0-09 · Biblioteca COMEX** (E09 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-03, P0-04*
   Las 10 plantillas base V7 (EX/IM × Mar FCL/LCL, Air, Road FTL/LTL) + 4 multimodales nuevas
   (EX-MM-ROAD-SEA, IM-MM-SEA-ROAD, EX-MM-ROAD-AIR, IM-MM-AIR-ROAD) + overlays (REEFER, DG, FOOD,
   OVERSIZE, CONT-RETURN, SP03-VOLUME, RECOLLECTION, POD/LASTMILE) + fixtures + role maps.
@@ -126,7 +188,7 @@ actual del código.
   aduaneros se parametrizan por país; los IDs de tipos de carga Follow vienen por Connector, no
   se duplican maestros.
 
-- [ ] **P0-10 · Follow Context/Template Recommender** · *Esfuerzo: M* · *Depende de: P0-09*
+- [ ] **P0-10 · Follow Context/Template Recommender** (E10 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-09*
   Contrato canónico de contexto (scope/direction/mode/logistic_unit/cargo_profile/follow_operation/
   flags/subject_ref), `POST /template-recommendations`, `POST /workflow-instances`, eventos
   `document.*`/`task.*`/`workflow.completed`. Follow no hardcodea nombres de plantilla: envía
@@ -135,21 +197,28 @@ actual del código.
   es el que traduce IDs canónicos de Follow al manifest. Prohibido acoplar el core a tablas
   internas de Follow.
 
-- [ ] **P0-11 · E2E y seguridad** · *Esfuerzo: M*
+- [ ] **P0-11 · E2E y seguridad** (E12 · gate 0G) · *Esfuerzo: M*
   Playwright cubriendo recorridos críticos de Docs + Flow + tercero + partner; cross-tenant,
   secure link y publicación versionada en CI. *En el repo:* ya hay un plan de QA con Playwright
   escrito y sin implementar (commits `e88ba76`/`b08d1b5`) — es el punto de partida.
 
-- [ ] **P0-12 · Dataset real** · *Esfuerzo: M*
+- [ ] **P0-12 · Dataset real** (E01/E09 · gate 0G) · *Esfuerzo: M*
   Piloto COMEX + documentos variados por vertical; gold fields y reglas; variantes por
   emisor/formato y casos negativos. Para salida comercial se pide un corpus gold más amplio que
   los 10–15 documentos de la demo (§13 del análisis de desvíos). Incluye suite por plantilla del
   anexo: happy path, variantes layout, missing docs, low confidence, cross-doc mismatch, new
   version, external isolation, template version, overlay merge, follow mapping.
 
-- [ ] **P0-13 · Load y operaciones** · *Esfuerzo: M*
+- [ ] **P0-13 · Load y operaciones** (E13 · gate 0G) · *Esfuerzo: M*
   Baseline p95/throughput/colas/costo por documento y por proceso; backup/restore probado;
   observabilidad, alertas, runbooks y rotación de secretos. Sin esto no hay salida a producción.
+
+- [ ] **P0-14 · KPI operativo de procesos** (E11 · gate 0H) — nueva en V11
+  Población, fórmulas visibles y drill-down de procesos (tareas en plazo, ciclo del proceso,
+  bloqueos) sobre `GOV`, con la misma invariante del `KpiIT` del core: el número es el tamaño
+  exacto de su población.
+- [ ] **P0-15 · Release comercial** (E14 · gate 0H) — nueva en V11
+  Demo de proceso completa, runbook, soporte, rollback y acta de salida (0A–0G con evidencia).
 
 ### P1 — apenas cierre el MVP0 (hacia MVP1)
 
@@ -165,6 +234,7 @@ actual del código.
 ## 4. Orden de ejecución sugerido
 
 ```
+FASE C (conformidad V11 de lo ya construido) ── va primero: C1..C12
 P0-01 ─┬─> P0-02 (validar lo que existe)
        └─> P0-03 (Workflow Definition + Runtime) ─┬─> P0-04 (Studio guiado) ──> P0-09 (COMEX) ──> P0-10 (Follow)
                                                    ├─> P0-05 (terceros)
@@ -174,7 +244,8 @@ P0-11 (Playwright) ── cierra al final, cubriendo Docs + Flow + tercero + par
 P0-12 (dataset) y P0-13 (load/ops) ── en paralelo con el tramo final
 ```
 
-**Primer sprint:** P0-01 + P0-02 son días, no semanas, y son la precondition de todo lo demás.
+**Primera entrega:** la Fase C. Nada de lo nuevo debe ampliarse sobre un runtime que contradice
+la spec (la V11 es la guía, no el análisis de desvíos).
 P0-03 es el bloque largo: arrancarlo apenas se valida lo existente. P0-07 no depende de P0-03 y
 puede avanzar en paralelo.
 

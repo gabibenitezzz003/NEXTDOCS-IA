@@ -1,0 +1,2803 @@
+{
+  "epics": [
+    {
+      "id": "E00",
+      "mvp": 0,
+      "title": "Baseline y gobierno",
+      "dependencies": "—",
+      "gate": "0A",
+      "modules": "REL",
+      "result": "Alcance, estados reportados y responsables conciliados"
+    },
+    {
+      "id": "E01",
+      "mvp": 0,
+      "title": "Certificación IA Docs",
+      "dependencies": "E00",
+      "gate": "G-DEMO / 0G",
+      "modules": "DOC,REL",
+      "result": "Navegador, captura genérica, corpus y seguridad con evidencia"
+    },
+    {
+      "id": "E02",
+      "mvp": 0,
+      "title": "Schema de proceso/template",
+      "dependencies": "E00",
+      "gate": "0B",
+      "modules": "STU",
+      "result": "Definición versionada y validación de grafo"
+    },
+    {
+      "id": "E03",
+      "mvp": 0,
+      "title": "Dominio Workflow",
+      "dependencies": "E02",
+      "gate": "0B",
+      "modules": "WFL",
+      "result": "Entidades y persistencia con concurrencia e historia"
+    },
+    {
+      "id": "E04",
+      "mvp": 0,
+      "title": "Runtime Workflow Core",
+      "dependencies": "E03",
+      "gate": "0C",
+      "modules": "WFL",
+      "result": "Instancias, tareas, condiciones, SLA y replay probado"
+    },
+    {
+      "id": "E05",
+      "mvp": 0,
+      "title": "Studio guiado",
+      "dependencies": "E02,E04",
+      "gate": "0D",
+      "modules": "STU",
+      "result": "Crear/fork/adaptar/probar/publicar desde interfaz"
+    },
+    {
+      "id": "E06",
+      "mvp": 0,
+      "title": "Actores internos y externos",
+      "dependencies": "E03",
+      "gate": "0D",
+      "modules": "IAM",
+      "result": "Acciones externas con scope, TTL y revocación"
+    },
+    {
+      "id": "E07",
+      "mvp": 0,
+      "title": "Partner Foundation",
+      "dependencies": "E02,E03",
+      "gate": "0B/0D",
+      "modules": "IAM,STU",
+      "result": "Grants, ownership y provenance sin privilegios implícitos"
+    },
+    {
+      "id": "E08",
+      "mvp": 0,
+      "title": "Supervisor v0",
+      "dependencies": "E04,DOC",
+      "gate": "0E",
+      "modules": "SUP",
+      "result": "Completitud, confianza, consistencia y SLA con políticas"
+    },
+    {
+      "id": "E09",
+      "mvp": 0,
+      "title": "COMEX: catorce bases y overlays",
+      "dependencies": "E02,E04,E08",
+      "gate": "0F",
+      "modules": "COM",
+      "result": "Registro, composición y fixtures de cada base"
+    },
+    {
+      "id": "E10",
+      "mvp": 0,
+      "title": "Contexto y conector Follow",
+      "dependencies": "E09",
+      "gate": "0F",
+      "modules": "COM",
+      "result": "Mapping y readiness idempotentes con contrato probado"
+    },
+    {
+      "id": "E11",
+      "mvp": 0,
+      "title": "KPI operativo de procesos",
+      "dependencies": "E04,E08",
+      "gate": "0H",
+      "modules": "GOV",
+      "result": "Población, fórmulas y drill-down auditables"
+    },
+    {
+      "id": "E12",
+      "mvp": 0,
+      "title": "Seguridad y aislamiento",
+      "dependencies": "E03,E06,E07",
+      "gate": "0G",
+      "modules": "IAM,REL",
+      "result": "Core preservado y nuevas rutas autorizadas"
+    },
+    {
+      "id": "E13",
+      "mvp": 0,
+      "title": "Rendimiento y resiliencia",
+      "dependencies": "E04,E08",
+      "gate": "0G",
+      "modules": "REL",
+      "result": "Carga medida, cero pérdida/duplicación y observabilidad"
+    },
+    {
+      "id": "E14",
+      "mvp": 0,
+      "title": "Release comercial",
+      "dependencies": "E01–E13",
+      "gate": "0H",
+      "modules": "REL",
+      "result": "Demo de proceso, rollback, soporte y aprobación de salida"
+    },
+    {
+      "id": "E15",
+      "mvp": 1,
+      "title": "Process Canvas",
+      "dependencies": "E02,E05",
+      "gate": "1A",
+      "modules": "CAN",
+      "result": "Equivalencia con schema guiado"
+    },
+    {
+      "id": "E16",
+      "mvp": 1,
+      "title": "Partner Workspace",
+      "dependencies": "E07",
+      "gate": "1B",
+      "modules": "PAR",
+      "result": "Multi-cliente por grants y aceptación cliente"
+    },
+    {
+      "id": "E17",
+      "mvp": 1,
+      "title": "Email/WhatsApp por adapters",
+      "dependencies": "E04,E06",
+      "gate": "1C",
+      "modules": "CHN",
+      "result": "Reincorporación explícita; no restauración automática"
+    },
+    {
+      "id": "E18",
+      "mvp": 1,
+      "title": "Firma por adapter",
+      "dependencies": "E04,E06",
+      "gate": "1C",
+      "modules": "CHN",
+      "result": "Hash, identidad, callback y evidencia controlados"
+    },
+    {
+      "id": "E19",
+      "mvp": 1,
+      "title": "Schema Studio avanzado",
+      "dependencies": "DOC,E15",
+      "gate": "1D",
+      "modules": "CAN",
+      "result": "Versionado y compatibilidad de schemas"
+    },
+    {
+      "id": "E20",
+      "mvp": 1,
+      "title": "Archive/Export y experiencia ampliada",
+      "dependencies": "GOV,E15",
+      "gate": "1D",
+      "modules": "GOV,CHN",
+      "result": "Lifecycle, búsqueda y móvil sin pérdida de permisos"
+    },
+    {
+      "id": "E21",
+      "mvp": 2,
+      "title": "Catálogo Marketplace",
+      "dependencies": "E07,E16",
+      "gate": "2A",
+      "modules": "MKT",
+      "result": "Oferta pública/privada autorizada"
+    },
+    {
+      "id": "E22",
+      "mvp": 2,
+      "title": "Certificación publisher",
+      "dependencies": "E21",
+      "gate": "2A",
+      "modules": "MKT",
+      "result": "Versión exacta certificada con pruebas"
+    },
+    {
+      "id": "E23",
+      "mvp": 2,
+      "title": "Licencias, precios y checkout",
+      "dependencies": "E21,E22",
+      "gate": "2B",
+      "modules": "MKT",
+      "result": "Orden, pago y entitlement conciliados"
+    },
+    {
+      "id": "E24",
+      "mvp": 2,
+      "title": "Revenue share y liquidación",
+      "dependencies": "E23",
+      "gate": "2C",
+      "modules": "MKT",
+      "result": "Ledger y compensaciones reproducibles"
+    },
+    {
+      "id": "E25",
+      "mvp": 2,
+      "title": "Updates y compatibilidad",
+      "dependencies": "E21,E23",
+      "gate": "2C",
+      "modules": "UPG",
+      "result": "Upgrade, fork, migración y rollback explícitos"
+    },
+    {
+      "id": "E26",
+      "mvp": 3,
+      "title": "Sentinel y dependencias",
+      "dependencies": "E08",
+      "gate": "3A",
+      "modules": "SEN",
+      "result": "Diff de facts, edges y evaluación mínima"
+    },
+    {
+      "id": "E27",
+      "mvp": 3,
+      "title": "Simulation Lab",
+      "dependencies": "E26,E15",
+      "gate": "3B",
+      "modules": "COP",
+      "result": "Sin efectos productivos; regresión por corpus"
+    },
+    {
+      "id": "E28",
+      "mvp": 3,
+      "title": "Process Copilot",
+      "dependencies": "E27",
+      "gate": "3C",
+      "modules": "COP",
+      "result": "SOP a propuesta con evidencia y aprobación"
+    },
+    {
+      "id": "E29",
+      "mvp": 4,
+      "title": "Despliegue enterprise",
+      "dependencies": "Demanda validada + REL",
+      "gate": "4A",
+      "modules": "ENT,DR",
+      "result": "Residencia, identidad, capacidad y recuperación medidas"
+    }
+  ],
+  "workstreams": [
+    [
+      "WS-01",
+      "Baseline y gobierno",
+      "REL",
+      "E00",
+      "0A"
+    ],
+    [
+      "WS-02",
+      "Domain Model Workflow/Template",
+      "WFL,STU",
+      "E02,E03",
+      "0B"
+    ],
+    [
+      "WS-03",
+      "Partner Foundation",
+      "IAM,STU",
+      "E07",
+      "0B/0D"
+    ],
+    [
+      "WS-04",
+      "Runtime Workflow Core",
+      "WFL",
+      "E04",
+      "0C"
+    ],
+    [
+      "WS-05",
+      "Studio guiado",
+      "STU",
+      "E05",
+      "0D"
+    ],
+    [
+      "WS-06",
+      "Colaboración interna/externa",
+      "IAM,WFL",
+      "E06",
+      "0D"
+    ],
+    [
+      "WS-07",
+      "IA Supervisora v0",
+      "SUP",
+      "E08",
+      "0E"
+    ],
+    [
+      "WS-08",
+      "COMEX y Follow",
+      "COM",
+      "E09,E10",
+      "0F"
+    ],
+    [
+      "WS-09",
+      "KPI y operación",
+      "GOV",
+      "E11",
+      "0F"
+    ],
+    [
+      "WS-10",
+      "QA, seguridad y rendimiento",
+      "REL,DOC,IAM",
+      "E01,E12,E13",
+      "G-DEMO/0G"
+    ],
+    [
+      "WS-11",
+      "Release comercial",
+      "REL",
+      "E14",
+      "0H"
+    ]
+  ],
+  "stories": [
+    {
+      "id": "HU-DOC-01",
+      "title": "Ingesta segura",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "Aceptar sólo archivos dentro de la política de tamaño, con contenido real permitido y antivirus satisfactorio. Un original rechazado no inicia extracción. Los límites son configuración existente a registrar antes de la prueba.",
+      "rule": "RE-DOC-01",
+      "qa": [
+        "QA-DOC-01",
+        "QA-DOC-02",
+        "QA-DOC-03",
+        "QA-DOC-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DOC-02",
+      "title": "Idempotencia documental",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "La repetición de la misma solicitud dentro del mismo tenant retorna su resultado previo. Un archivo semejante o perteneciente a otro tenant no se deduplica como si fuera el mismo recurso autorizado.",
+      "rule": "RE-DOC-02",
+      "qa": [
+        "QA-DOC-05",
+        "QA-DOC-06",
+        "QA-DOC-07",
+        "QA-DOC-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DOC-03",
+      "title": "Clasificación y captura genérica",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "Clasificar sin selección previa entre los tipos activos. Un documento fuera del catálogo conserva texto y facts genéricos; ausencia de tipo no equivale a documento vacío.",
+      "rule": "RE-DOC-03",
+      "qa": [
+        "QA-DOC-09",
+        "QA-DOC-10",
+        "QA-DOC-11",
+        "QA-DOC-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DOC-04",
+      "title": "Extracción multiproveedor",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "Gemini es el proveedor reportado y DeepSeek el respaldo. Registrar proveedor usado y separar indisponibilidad de baja confianza. El fallback respeta política de datos y presupuesto.",
+      "rule": "RE-DOC-04",
+      "qa": [
+        "QA-DOC-13",
+        "QA-DOC-14",
+        "QA-DOC-15",
+        "QA-DOC-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DOC-05",
+      "title": "Umbrales y reglas",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "La política determina qué campos críticos necesitan revisión. Para QA usar umbral sintético 0,90; no declarar ese valor como umbral vigente del producto. Una regla sensible prevalece sobre la confianza.",
+      "rule": "RE-DOC-05",
+      "qa": [
+        "QA-DOC-17",
+        "QA-DOC-18",
+        "QA-DOC-19",
+        "QA-DOC-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DOC-06",
+      "title": "Corrección concurrente",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "Toda corrección requiere permiso, motivo y versión leída. Un segundo revisor no puede sobrescribir silenciosamente una corrección posterior. La evidencia original se conserva.",
+      "rule": "RE-DOC-06",
+      "qa": [
+        "QA-DOC-21",
+        "QA-DOC-22",
+        "QA-DOC-23",
+        "QA-DOC-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DOC-07",
+      "title": "Aprendizaje y tipos nuevos",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "La corrección alimenta evidencia de aprendizaje; no autoriza publicar automáticamente reglas, prompts o tipos. Registrar el candidato y aplicar aprobación/regresión al activar una nueva configuración.",
+      "rule": "RE-DOC-07",
+      "qa": [
+        "QA-DOC-25",
+        "QA-DOC-26",
+        "QA-DOC-27",
+        "QA-DOC-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DOC-08",
+      "title": "Certificación del recorrido",
+      "module": "DOC",
+      "mvp": 0,
+      "description": "El cierre requiere evidencia del navegador y documentos reales autorizados. Las 247 pruebas reportadas son una línea de partida, no un resultado ejecutado en esta V11.",
+      "rule": "RE-DOC-08",
+      "qa": [
+        "QA-DOC-29",
+        "QA-DOC-30",
+        "QA-DOC-31",
+        "QA-DOC-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-01",
+      "title": "Aislamiento efectivo",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "Derivar tenant autorizado de sesión y membresía. Aplicar control a lectura, escritura, búsqueda y descarga; rechazar cruces aunque el recurso exista.",
+      "rule": "RE-IAM-01",
+      "qa": [
+        "QA-IAM-01",
+        "QA-IAM-02",
+        "QA-IAM-03",
+        "QA-IAM-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-02",
+      "title": "SSO y contexto host",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "Conservar SSO reportado con Follow, CIMA y Valid360. Validar emisor, audiencia, vigencia y usuario local habilitado; el host no concede permisos internos.",
+      "rule": "RE-IAM-02",
+      "qa": [
+        "QA-IAM-05",
+        "QA-IAM-06",
+        "QA-IAM-07",
+        "QA-IAM-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-03",
+      "title": "Delegación explícita",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "El tenant cliente concede scopes y expiración a un partner. Sólo esos scopes habilitan configuración; propiedad comercial no otorga acceso permanente a datos.",
+      "rule": "RE-IAM-03",
+      "qa": [
+        "QA-IAM-09",
+        "QA-IAM-10",
+        "QA-IAM-11",
+        "QA-IAM-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-04",
+      "title": "Acción externa de propósito único",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "Vincular token a una tarea y acción autorizada. TTL se evalúa en servidor; fixture de QA usa 15 minutos. Token no permite abrir listado de expedientes.",
+      "rule": "RE-IAM-04",
+      "qa": [
+        "QA-IAM-13",
+        "QA-IAM-14",
+        "QA-IAM-15",
+        "QA-IAM-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-05",
+      "title": "Revocación y consumo atómico",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "Consultar revocación antes del efecto. El token de un uso se consume en la misma unidad de consistencia que la acción; reintento no repite efectos.",
+      "rule": "RE-IAM-05",
+      "qa": [
+        "QA-IAM-17",
+        "QA-IAM-18",
+        "QA-IAM-19",
+        "QA-IAM-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-06",
+      "title": "Mínimo privilegio visible",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "Separar el contenido de la tarea de notas internas, otras tareas, métricas de costos y reglas administrativas. El control se aplica a API además de UI.",
+      "rule": "RE-IAM-06",
+      "qa": [
+        "QA-IAM-21",
+        "QA-IAM-22",
+        "QA-IAM-23",
+        "QA-IAM-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-07",
+      "title": "Invitación y reemisión",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "La reemisión invalida el token anterior cuando la política sea single-active. Destinatario debe estar asociado a la tarea; cambios quedan auditados.",
+      "rule": "RE-IAM-07",
+      "qa": [
+        "QA-IAM-25",
+        "QA-IAM-26",
+        "QA-IAM-27",
+        "QA-IAM-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-IAM-08",
+      "title": "Sesión y seguridad de navegador",
+      "module": "IAM",
+      "mvp": 0,
+      "description": "No introducir claves permanentes de servicio en navegador. Expiración, logout y autorización de deep links deben preservar la frontera entre host y NEXT.",
+      "rule": "RE-IAM-08",
+      "qa": [
+        "QA-IAM-29",
+        "QA-IAM-30",
+        "QA-IAM-31",
+        "QA-IAM-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-01",
+      "title": "Inicio versionado",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "Una instancia sólo usa definición publicada y fija versión, tenant, datos iniciales y overlays. Publicar v2 no migra una instancia activa v1.",
+      "rule": "RE-WFL-01",
+      "qa": [
+        "QA-WFL-01",
+        "QA-WFL-02",
+        "QA-WFL-03",
+        "QA-WFL-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-02",
+      "title": "Catálogo de nodos acotado",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "MVP0 admite inicio, requisito documental, regla determinista, decisión exclusiva, tarea humana, espera/SLA y fin. Firma y automatización general se resuelven en etapas posteriores.",
+      "rule": "RE-WFL-02",
+      "qa": [
+        "QA-WFL-05",
+        "QA-WFL-06",
+        "QA-WFL-07",
+        "QA-WFL-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-03",
+      "title": "Activaciones idempotentes",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "Cada nodo registra su activación lógica. Reinicio del worker o replay de evento no crea otra tarea ni ejecuta de nuevo un efecto confirmado.",
+      "rule": "RE-WFL-03",
+      "qa": [
+        "QA-WFL-09",
+        "QA-WFL-10",
+        "QA-WFL-11",
+        "QA-WFL-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-04",
+      "title": "Dependencias y decisiones",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "Evaluar condiciones sobre facts y políticas de la versión fijada. La ausencia de un fact requerido bloquea la decisión; no se interpreta null como falso ni cero.",
+      "rule": "RE-WFL-04",
+      "qa": [
+        "QA-WFL-13",
+        "QA-WFL-14",
+        "QA-WFL-15",
+        "QA-WFL-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-05",
+      "title": "Asignación y resultado de tarea",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "Una tarea sólo la completa un actor autorizado sobre su revisión vigente. Aprobación o rechazo deja resultado y evidencia; rechazo siempre requiere motivo.",
+      "rule": "RE-WFL-05",
+      "qa": [
+        "QA-WFL-17",
+        "QA-WFL-18",
+        "QA-WFL-19",
+        "QA-WFL-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-06",
+      "title": "SLA y suspensión",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "Calcular vencimientos con calendario y zona del tenant; los timers son idempotentes. La pausa requiere motivo y política explícita sobre cómputo del plazo.",
+      "rule": "RE-WFL-06",
+      "qa": [
+        "QA-WFL-21",
+        "QA-WFL-22",
+        "QA-WFL-23",
+        "QA-WFL-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-07",
+      "title": "Finales consistentes",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "Completar sólo cuando requisitos y tareas bloqueantes estén resueltos. Cancelar invalida trabajo pendiente; COMPLETADA no transiciona a RECHAZADA por enumeración de estados.",
+      "rule": "RE-WFL-07",
+      "qa": [
+        "QA-WFL-25",
+        "QA-WFL-26",
+        "QA-WFL-27",
+        "QA-WFL-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-WFL-08",
+      "title": "Recuperación y evolución",
+      "module": "WFL",
+      "mvp": 0,
+      "description": "La reapertura o migración es una acción explícita y auditada, no una actualización directa de estado. El historial de una ejecución se reconstruye con sus versiones.",
+      "rule": "RE-WFL-08",
+      "qa": [
+        "QA-WFL-29",
+        "QA-WFL-30",
+        "QA-WFL-31",
+        "QA-WFL-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-01",
+      "title": "Autoría y pertenencia",
+      "module": "STU",
+      "mvp": 0,
+      "description": "Guardar owner, tenant autor, fuente y versión origen desde la creación. Un fork preserva provenance y no da acceso al tenant original.",
+      "rule": "RE-STU-01",
+      "qa": [
+        "QA-STU-01",
+        "QA-STU-02",
+        "QA-STU-03",
+        "QA-STU-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-02",
+      "title": "Schema funcional estable",
+      "module": "STU",
+      "mvp": 0,
+      "description": "El formato guiado representa la misma definición que ejecuta WFL. Requisitos, decisiones y roles deben poder reconstruirse sin instrucciones manuales fuera del schema.",
+      "rule": "RE-STU-02",
+      "qa": [
+        "QA-STU-05",
+        "QA-STU-06",
+        "QA-STU-07",
+        "QA-STU-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-03",
+      "title": "Validación de grafo",
+      "module": "STU",
+      "mvp": 0,
+      "description": "Exigir inicio y fin alcanzable, sin referencias huérfanas ni ciclos no permitidos. Cada decisión debe definir una ruta de error o dato faltante.",
+      "rule": "RE-STU-03",
+      "qa": [
+        "QA-STU-09",
+        "QA-STU-10",
+        "QA-STU-11",
+        "QA-STU-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-04",
+      "title": "Overlays compatibles",
+      "module": "STU",
+      "mvp": 0,
+      "description": "Aplicar overlays en orden declarado. Un conflicto entre obligaciones requiere resolución explícita; no gana silenciosamente el último overlay.",
+      "rule": "RE-STU-04",
+      "qa": [
+        "QA-STU-13",
+        "QA-STU-14",
+        "QA-STU-15",
+        "QA-STU-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-05",
+      "title": "Pruebas antes de publicar",
+      "module": "STU",
+      "mvp": 0,
+      "description": "Cada plantilla candidata debe ejecutar fixtures representativos y casos negativos. El resultado queda ligado al hash lógico de la definición; una edición invalida la prueba anterior.",
+      "rule": "RE-STU-05",
+      "qa": [
+        "QA-STU-17",
+        "QA-STU-18",
+        "QA-STU-19",
+        "QA-STU-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-06",
+      "title": "Publicación y versionado",
+      "module": "STU",
+      "mvp": 0,
+      "description": "Publicar genera versión inmutable. Requiere rol, validación, tests y registro de cambio; no permite sobrescribir versión usada.",
+      "rule": "RE-STU-06",
+      "qa": [
+        "QA-STU-21",
+        "QA-STU-22",
+        "QA-STU-23",
+        "QA-STU-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-07",
+      "title": "Retiro y compatibilidad",
+      "module": "STU",
+      "mvp": 0,
+      "description": "Retirar impide nuevas instalaciones/inicios según política; no destruye ejecuciones existentes. Describir qué cambia antes de adoptar una nueva versión.",
+      "rule": "RE-STU-07",
+      "qa": [
+        "QA-STU-25",
+        "QA-STU-26",
+        "QA-STU-27",
+        "QA-STU-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-STU-08",
+      "title": "UX guiada reproducible",
+      "module": "STU",
+      "mvp": 0,
+      "description": "La operación se realiza en interfaz, sin editar base de datos. Presentar errores por nodo, vista previa de terceros y resumen de publicación.",
+      "rule": "RE-STU-08",
+      "qa": [
+        "QA-STU-29",
+        "QA-STU-30",
+        "QA-STU-31",
+        "QA-STU-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-01",
+      "title": "Políticas publicadas",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Sólo evaluar políticas aprobadas y compatibles con la versión de proceso. Política inexistente no habilita acciones sensibles por defecto.",
+      "rule": "RE-SUP-01",
+      "qa": [
+        "QA-SUP-01",
+        "QA-SUP-02",
+        "QA-SUP-03",
+        "QA-SUP-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-02",
+      "title": "Confianza por campo",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Los campos críticos de baja confianza crean revisión, aunque la confianza promedio del documento sea alta. Umbrales de QA no sustituyen configuración cliente.",
+      "rule": "RE-SUP-02",
+      "qa": [
+        "QA-SUP-05",
+        "QA-SUP-06",
+        "QA-SUP-07",
+        "QA-SUP-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-03",
+      "title": "Consistencia entre documentos",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Comparar valores normalizados con unidades, moneda y tolerancia declaradas. Ausencia de dato genera faltante; no afirmar contradicción entre null y un valor.",
+      "rule": "RE-SUP-03",
+      "qa": [
+        "QA-SUP-09",
+        "QA-SUP-10",
+        "QA-SUP-11",
+        "QA-SUP-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-04",
+      "title": "Severidad y acciones",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Severidad warning no bloquea; blocking impide transición concreta. Una sugerencia IA no firma, envía ni cambia outcome sin política.",
+      "rule": "RE-SUP-04",
+      "qa": [
+        "QA-SUP-13",
+        "QA-SUP-14",
+        "QA-SUP-15",
+        "QA-SUP-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-05",
+      "title": "SLA y escalación",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Evaluar tiempo con calendario tenant y emitir una acción por vencimiento lógico. Repetir scheduler no multiplica hallazgos.",
+      "rule": "RE-SUP-05",
+      "qa": [
+        "QA-SUP-17",
+        "QA-SUP-18",
+        "QA-SUP-19",
+        "QA-SUP-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-06",
+      "title": "Resolución y dispensa",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Cerrar hallazgo exige corrección verificable o dispensa autorizada con motivo. Un ACK de lectura no resuelve un bloqueo.",
+      "rule": "RE-SUP-06",
+      "qa": [
+        "QA-SUP-21",
+        "QA-SUP-22",
+        "QA-SUP-23",
+        "QA-SUP-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-07",
+      "title": "Reevaluación idempotente",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Usar identidad estable de hallazgo por regla, sujeto y versión evaluada. Nuevas evidencias actualizan el caso; no producen ruido duplicado.",
+      "rule": "RE-SUP-07",
+      "qa": [
+        "QA-SUP-25",
+        "QA-SUP-26",
+        "QA-SUP-27",
+        "QA-SUP-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SUP-08",
+      "title": "Explicación y límites IA",
+      "module": "SUP",
+      "mvp": 0,
+      "description": "Mostrar documentos, campos, valores comparados, regla y versión. Si falta evidencia, derivar; el supervisor v0 no se presenta como Sentinel avanzado.",
+      "rule": "RE-SUP-08",
+      "qa": [
+        "QA-SUP-29",
+        "QA-SUP-30",
+        "QA-SUP-31",
+        "QA-SUP-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-01",
+      "title": "Contexto canónico",
+      "module": "COM",
+      "mvp": 0,
+      "description": "Exigir source, tenant y subject_ref inequívocos; los códigos externos conservan significado de Follow. No usar nombre libre de carga como identificador.",
+      "rule": "RE-COM-01",
+      "qa": [
+        "QA-COM-01",
+        "QA-COM-02",
+        "QA-COM-03",
+        "QA-COM-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-02",
+      "title": "Biblioteca de catorce bases",
+      "module": "COM",
+      "mvp": 0,
+      "description": "Mantener un registro de las catorce bases del pack con dirección, modo, documentos y pruebas. No multiplicar bases por cada atributo de carga.",
+      "rule": "RE-COM-02",
+      "qa": [
+        "QA-COM-05",
+        "QA-COM-06",
+        "QA-COM-07",
+        "QA-COM-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-03",
+      "title": "Overlays por atributos",
+      "module": "COM",
+      "mvp": 0,
+      "description": "Reefer, peligrosa y demás atributos agregan obligaciones compatibles sobre base. La recomendación muestra por qué cada overlay fue elegido.",
+      "rule": "RE-COM-03",
+      "qa": [
+        "QA-COM-09",
+        "QA-COM-10",
+        "QA-COM-11",
+        "QA-COM-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-04",
+      "title": "Composición multimodal",
+      "module": "COM",
+      "mvp": 0,
+      "description": "Cada tramo conserva documentos, actores y transferencia de responsabilidad. El cierre de un tramo no cierra los pendientes del siguiente.",
+      "rule": "RE-COM-04",
+      "qa": [
+        "QA-COM-13",
+        "QA-COM-14",
+        "QA-COM-15",
+        "QA-COM-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-05",
+      "title": "Correspondencia SRP126 y SRP127",
+      "module": "COM",
+      "mvp": 0,
+      "description": "SRP126 refiere selección/configuración de plantillas; SRP127 refiere verificaciones. NEXT mantiene definición, evidencia y resultado documental; Follow conserva operación logística.",
+      "rule": "RE-COM-05",
+      "qa": [
+        "QA-COM-17",
+        "QA-COM-18",
+        "QA-COM-19",
+        "QA-COM-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-06",
+      "title": "Duplicados y reconciliación",
+      "module": "COM",
+      "mvp": 0,
+      "description": "La misma intención externa produce una instancia. Eventos fuera de orden no revierten una revisión más nueva; reconciliar por versión y referencia, no por hora de llegada.",
+      "rule": "RE-COM-06",
+      "qa": [
+        "QA-COM-21",
+        "QA-COM-22",
+        "QA-COM-23",
+        "QA-COM-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-07",
+      "title": "Resultado explicable",
+      "module": "COM",
+      "mvp": 0,
+      "description": "Readiness expresa obligaciones cumplidas y faltantes por documento/tramo. Una dispensa se devuelve explícitamente, no como documento válido inexistente.",
+      "rule": "RE-COM-07",
+      "qa": [
+        "QA-COM-25",
+        "QA-COM-26",
+        "QA-COM-27",
+        "QA-COM-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COM-08",
+      "title": "Entregas a Follow",
+      "module": "COM",
+      "mvp": 0,
+      "description": "Usar entrega firmada y reintentos existentes; el estado de entrega se separa del resultado documental. La caída del receptor no revierte la validación.",
+      "rule": "RE-COM-08",
+      "qa": [
+        "QA-COM-29",
+        "QA-COM-30",
+        "QA-COM-31",
+        "QA-COM-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-01",
+      "title": "Original y versionado",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Conservar original inmutable y cadena supersedes. Una corrección de facts no reemplaza los bytes originales ni altera el hash de origen.",
+      "rule": "RE-GOV-01",
+      "qa": [
+        "QA-GOV-01",
+        "QA-GOV-02",
+        "QA-GOV-03",
+        "QA-GOV-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-02",
+      "title": "Retención y legal hold",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Legal hold suspende purga normal. Comprobar hold de nuevo inmediatamente antes del borrado; el vencimiento de export temporal no borra originales.",
+      "rule": "RE-GOV-02",
+      "qa": [
+        "QA-GOV-05",
+        "QA-GOV-06",
+        "QA-GOV-07",
+        "QA-GOV-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-03",
+      "title": "Exportación reproducible",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Export incluye índice, manifiesto por archivo y hashes calculados sobre bytes entregados. Revalidar permisos al construir y descargar.",
+      "rule": "RE-GOV-03",
+      "qa": [
+        "QA-GOV-09",
+        "QA-GOV-10",
+        "QA-GOV-11",
+        "QA-GOV-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-04",
+      "title": "Auditoría útil",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Cada mutación sensible exige identidad, instante, recurso y motivo cuando corresponda. Logs técnicos no reemplazan la evidencia funcional.",
+      "rule": "RE-GOV-04",
+      "qa": [
+        "QA-GOV-13",
+        "QA-GOV-14",
+        "QA-GOV-15",
+        "QA-GOV-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-05",
+      "title": "KPI con población auditable",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Cada indicador identifica fórmula, numerador, denominador, filtros y versión. Drill-down devuelve IDs autorizados que explican el agregado.",
+      "rule": "RE-GOV-05",
+      "qa": [
+        "QA-GOV-17",
+        "QA-GOV-18",
+        "QA-GOV-19",
+        "QA-GOV-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-06",
+      "title": "Tiempo y corrección retrospectiva",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Registrar zona, calendario y corte histórico. Recalcular una métrica crea versión de cálculo; no reemplaza silenciosamente el valor previo.",
+      "rule": "RE-GOV-06",
+      "qa": [
+        "QA-GOV-21",
+        "QA-GOV-22",
+        "QA-GOV-23",
+        "QA-GOV-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-07",
+      "title": "Presupuesto y consumo",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Preservar límite mensual por tenant. Reservar o comprobar capacidad de gasto antes de llamadas; evitar doble imputación de un intento confirmado.",
+      "rule": "RE-GOV-07",
+      "qa": [
+        "QA-GOV-25",
+        "QA-GOV-26",
+        "QA-GOV-27",
+        "QA-GOV-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-GOV-08",
+      "title": "Búsqueda y perfiles de columnas",
+      "module": "GOV",
+      "mvp": 0,
+      "description": "Guardar preferencias de columnas por rol/usuario sin ampliar permisos. Buscar por metadata y texto cuando el índice exista; comunicar retraso de indexación.",
+      "rule": "RE-GOV-08",
+      "qa": [
+        "QA-GOV-29",
+        "QA-GOV-30",
+        "QA-GOV-31",
+        "QA-GOV-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-01",
+      "title": "Infraestructura obligatoria",
+      "module": "REL",
+      "mvp": 0,
+      "description": "Ejecutar integración con NEXTDOCS_PRUEBA_OBLIGATORIA=true. PostgreSQL, Redis, MinIO y Keycloak deben estar disponibles; omitir pruebas no cuenta como éxito.",
+      "rule": "RE-REL-01",
+      "qa": [
+        "QA-REL-01",
+        "QA-REL-02",
+        "QA-REL-03",
+        "QA-REL-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-02",
+      "title": "Regresión del core",
+      "module": "REL",
+      "mvp": 0,
+      "description": "Usar 73 unitarias y 174 de integración reportadas como inventario inicial, verificando el conteo real en repo. Agregar pruebas no autoriza perder cobertura existente.",
+      "rule": "RE-REL-02",
+      "qa": [
+        "QA-REL-05",
+        "QA-REL-06",
+        "QA-REL-07",
+        "QA-REL-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-03",
+      "title": "Recorrido humano",
+      "module": "REL",
+      "mvp": 0,
+      "description": "Antes de demo ejecutar login, carga, tipo, visor, corrección, excepción y dashboard. Repetir específicamente captura genérica.",
+      "rule": "RE-REL-03",
+      "qa": [
+        "QA-REL-09",
+        "QA-REL-10",
+        "QA-REL-11",
+        "QA-REL-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-04",
+      "title": "Corpus real",
+      "module": "REL",
+      "mvp": 0,
+      "description": "Procesar 10–15 documentos autorizados para primera prueba; no extrapolar a precisión industrial. Gold corpus de release tiene etiquetas revisadas y métricas por tipo/campo.",
+      "rule": "RE-REL-04",
+      "qa": [
+        "QA-REL-13",
+        "QA-REL-14",
+        "QA-REL-15",
+        "QA-REL-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-05",
+      "title": "Secretos y acceso",
+      "module": "REL",
+      "mvp": 0,
+      "description": "Rotar la clave Gemini antes de datos cliente; registrar evidencia de revocación y funcionamiento sin guardar valor. Revisar también que los artefactos de UI no contengan secretos.",
+      "rule": "RE-REL-05",
+      "qa": [
+        "QA-REL-17",
+        "QA-REL-18",
+        "QA-REL-19",
+        "QA-REL-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-06",
+      "title": "Carga y resiliencia",
+      "module": "REL",
+      "mvp": 0,
+      "description": "No se conoce la capacidad productiva. Registrar perfil acordado antes de medir; el gate exige cero pérdidas/duplicados y comparar latencia con objetivo aprobado.",
+      "rule": "RE-REL-06",
+      "qa": [
+        "QA-REL-21",
+        "QA-REL-22",
+        "QA-REL-23",
+        "QA-REL-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-07",
+      "title": "Dos hitos distintos",
+      "module": "REL",
+      "mvp": 0,
+      "description": "G-DEMO certifica sólo IA Docs existente. 0H requiere Workflow, Studio, Supervisor, terceros y COMEX probados además del core. No exigir módulos nuevos para validar demo documental.",
+      "rule": "RE-REL-07",
+      "qa": [
+        "QA-REL-25",
+        "QA-REL-26",
+        "QA-REL-27",
+        "QA-REL-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-REL-08",
+      "title": "Despliegue y rollback",
+      "module": "REL",
+      "mvp": 0,
+      "description": "Fijar build, migraciones compatibles, backup, observabilidad y reversa. El rollback de app no implica borrar datos ni revertir migraciones destructivas sin plan.",
+      "rule": "RE-REL-08",
+      "qa": [
+        "QA-REL-29",
+        "QA-REL-30",
+        "QA-REL-31",
+        "QA-REL-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-01",
+      "title": "Equivalencia lista/Canvas",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "Abrir y guardar en Canvas debe conservar semántica de definiciones creadas en Studio guiado. Posiciones no son reglas.",
+      "rule": "RE-CAN-01",
+      "qa": [
+        "QA-CAN-01",
+        "QA-CAN-02",
+        "QA-CAN-03",
+        "QA-CAN-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-02",
+      "title": "Conexiones válidas",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "El editor impide enlaces huérfanos, ciclos no soportados y múltiples rutas exclusivas ambiguas; error señala nodos y recuperación.",
+      "rule": "RE-CAN-02",
+      "qa": [
+        "QA-CAN-05",
+        "QA-CAN-06",
+        "QA-CAN-07",
+        "QA-CAN-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-03",
+      "title": "Schema documental",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "Campos poseen tipo, obligatoriedad y normalización. Un cambio incompatible crea versión y requiere revisar consumidores.",
+      "rule": "RE-CAN-03",
+      "qa": [
+        "QA-CAN-09",
+        "QA-CAN-10",
+        "QA-CAN-11",
+        "QA-CAN-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-04",
+      "title": "Diff comprensible",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "Separar cambios en layout, reglas, roles, SLA y documentos; mostrar impacto antes de publicar.",
+      "rule": "RE-CAN-04",
+      "qa": [
+        "QA-CAN-13",
+        "QA-CAN-14",
+        "QA-CAN-15",
+        "QA-CAN-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-05",
+      "title": "Migración explícita",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "No migrar instancias por publicar Canvas. El plan determina estado elegible, equivalencias y rollback antes de aplicar.",
+      "rule": "RE-CAN-05",
+      "qa": [
+        "QA-CAN-17",
+        "QA-CAN-18",
+        "QA-CAN-19",
+        "QA-CAN-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-06",
+      "title": "Simulación aislada",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "Ejecutar fixtures sin enviar comunicaciones ni mutar expedientes productivos. Comparar resultado con definición publicada anterior.",
+      "rule": "RE-CAN-06",
+      "qa": [
+        "QA-CAN-21",
+        "QA-CAN-22",
+        "QA-CAN-23",
+        "QA-CAN-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-07",
+      "title": "Edición colaborativa",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "Controlar revisiones del borrador; conservar cambios locales ante conflicto sin sobrescribir a otro editor.",
+      "rule": "RE-CAN-07",
+      "qa": [
+        "QA-CAN-25",
+        "QA-CAN-26",
+        "QA-CAN-27",
+        "QA-CAN-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CAN-08",
+      "title": "Accesibilidad y operación",
+      "module": "CAN",
+      "mvp": 1,
+      "description": "Canvas tiene navegación por teclado y alternativa estructurada. No depender sólo del color ni de arrastrar con mouse.",
+      "rule": "RE-CAN-08",
+      "qa": [
+        "QA-CAN-29",
+        "QA-CAN-30",
+        "QA-CAN-31",
+        "QA-CAN-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-01",
+      "title": "Lista de clientes autorizada",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "La lista se deriva de grants activos; no mostrar clientes históricos revocados como si siguieran accesibles.",
+      "rule": "RE-PAR-01",
+      "qa": [
+        "QA-PAR-01",
+        "QA-PAR-02",
+        "QA-PAR-03",
+        "QA-PAR-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-02",
+      "title": "Contexto inequívoco",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "Cada acción muestra y valida tenant cliente. Cambiar cliente invalida selecciones de recursos previos.",
+      "rule": "RE-PAR-02",
+      "qa": [
+        "QA-PAR-05",
+        "QA-PAR-06",
+        "QA-PAR-07",
+        "QA-PAR-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-03",
+      "title": "Instalación y adaptación",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "Instalar base autorizada conserva fuente, versión y owner; cambios del cliente quedan como fork/overlay explícito.",
+      "rule": "RE-PAR-03",
+      "qa": [
+        "QA-PAR-09",
+        "QA-PAR-10",
+        "QA-PAR-11",
+        "QA-PAR-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-04",
+      "title": "Aceptación de implantación",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "Cliente valida fixture y alcance antes de activar configuración. Partner no se autoaprueba cuando se exige segregación.",
+      "rule": "RE-PAR-04",
+      "qa": [
+        "QA-PAR-13",
+        "QA-PAR-14",
+        "QA-PAR-15",
+        "QA-PAR-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-05",
+      "title": "Asignación de consultores",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "Delegar dentro de scopes concedidos; un administrador de partner no amplía el alcance del grant cliente.",
+      "rule": "RE-PAR-05",
+      "qa": [
+        "QA-PAR-17",
+        "QA-PAR-18",
+        "QA-PAR-19",
+        "QA-PAR-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-06",
+      "title": "Métricas de productividad",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "Medir tiempos y calidad por implantación autorizada; no revelar costos o documentos de clientes a otros clientes.",
+      "rule": "RE-PAR-06",
+      "qa": [
+        "QA-PAR-21",
+        "QA-PAR-22",
+        "QA-PAR-23",
+        "QA-PAR-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-07",
+      "title": "Retiro y continuidad",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "Revocar partner no detiene plantillas ya publicadas por el cliente. Transferir mantenimiento requiere owner autorizado.",
+      "rule": "RE-PAR-07",
+      "qa": [
+        "QA-PAR-25",
+        "QA-PAR-26",
+        "QA-PAR-27",
+        "QA-PAR-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-PAR-08",
+      "title": "Publicación futura",
+      "module": "PAR",
+      "mvp": 1,
+      "description": "Preparar metadata catalog-ready sin activar cobros de Marketplace en MVP1. Certificación comercial ocurre en MVP2.",
+      "rule": "RE-PAR-08",
+      "qa": [
+        "QA-PAR-29",
+        "QA-PAR-30",
+        "QA-PAR-31",
+        "QA-PAR-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-01",
+      "title": "Activación explícita de canal",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Reincorporar código histórico sólo tras revisar contrato y seguridad. Flag por tenant; ningún canal futuro se anuncia como disponible en core.",
+      "rule": "RE-CHN-01",
+      "qa": [
+        "QA-CHN-01",
+        "QA-CHN-02",
+        "QA-CHN-03",
+        "QA-CHN-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-02",
+      "title": "Routing de mensajes",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Resolver tenant, proceso y sujeto antes de efecto. Mensaje ambiguo pide contexto; no crea múltiples instancias por inferencia.",
+      "rule": "RE-CHN-02",
+      "qa": [
+        "QA-CHN-05",
+        "QA-CHN-06",
+        "QA-CHN-07",
+        "QA-CHN-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-03",
+      "title": "Adjuntos y duplicados",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Aplicar controles DOC en todos los canales. Duplicidad por mensaje no elimina archivos diferentes dentro de un hilo.",
+      "rule": "RE-CHN-03",
+      "qa": [
+        "QA-CHN-09",
+        "QA-CHN-10",
+        "QA-CHN-11",
+        "QA-CHN-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-04",
+      "title": "Firma de documento exacto",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Vincular solicitud al hash y versión del documento. Un cambio de bytes requiere una nueva solicitud; no trasladar firma.",
+      "rule": "RE-CHN-04",
+      "qa": [
+        "QA-CHN-13",
+        "QA-CHN-14",
+        "QA-CHN-15",
+        "QA-CHN-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-05",
+      "title": "Callbacks de proveedor",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Validar autenticidad, correlación y estado; sólo evidencia positiva válida marca firmada. Callback duplicado no repite cierre de tarea.",
+      "rule": "RE-CHN-05",
+      "qa": [
+        "QA-CHN-17",
+        "QA-CHN-18",
+        "QA-CHN-19",
+        "QA-CHN-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-06",
+      "title": "Método y evidencia",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Elegir método según política aprobada por caso y jurisdicción. WhatsApp entrega enlace; no equivale por sí mismo a acto de firma calificado.",
+      "rule": "RE-CHN-06",
+      "qa": [
+        "QA-CHN-21",
+        "QA-CHN-22",
+        "QA-CHN-23",
+        "QA-CHN-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-07",
+      "title": "Móvil y continuidad",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Mantener misma instancia entre portal y canal con identidad verificada. Acciones sensibles requieren conexión y revisión actual del servidor.",
+      "rule": "RE-CHN-07",
+      "qa": [
+        "QA-CHN-25",
+        "QA-CHN-26",
+        "QA-CHN-27",
+        "QA-CHN-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-CHN-08",
+      "title": "Operación de entregas",
+      "module": "CHN",
+      "mvp": 1,
+      "description": "Separar recibido, asociado, procesado y entregado. Reintentos transitorios no reejecutan negocio; errores permanentes requieren corrección.",
+      "rule": "RE-CHN-08",
+      "qa": [
+        "QA-CHN-29",
+        "QA-CHN-30",
+        "QA-CHN-31",
+        "QA-CHN-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-01",
+      "title": "Publisher verificado",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Publisher activo y propietario/licenciado del contenido puede solicitar certificación; declarar soporte y países aplicables.",
+      "rule": "RE-MKT-01",
+      "qa": [
+        "QA-MKT-01",
+        "QA-MKT-02",
+        "QA-MKT-03",
+        "QA-MKT-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-02",
+      "title": "Certificación por versión",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Certificar versión exacta con fixtures y dependencias. Edición posterior exige nueva revisión; insignia no cubre versiones diferentes.",
+      "rule": "RE-MKT-02",
+      "qa": [
+        "QA-MKT-05",
+        "QA-MKT-06",
+        "QA-MKT-07",
+        "QA-MKT-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-03",
+      "title": "Visibilidad del catálogo",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Catálogo público y privado aplican permisos y disponibilidad por tenant/país; buscador no filtra metadata de ofertas privadas.",
+      "rule": "RE-MKT-03",
+      "qa": [
+        "QA-MKT-09",
+        "QA-MKT-10",
+        "QA-MKT-11",
+        "QA-MKT-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-04",
+      "title": "Términos fijados",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Fijar precio, moneda, impuestos aplicables y versión de términos antes de confirmar. Cambio de precio requiere nueva aceptación.",
+      "rule": "RE-MKT-04",
+      "qa": [
+        "QA-MKT-13",
+        "QA-MKT-14",
+        "QA-MKT-15",
+        "QA-MKT-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-05",
+      "title": "Pago y derecho separados",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Sólo confirmación válida de pago o licencia gratuita aprobada genera entitlement. Timeout de pago no equivale a rechazo definitivo ni a éxito.",
+      "rule": "RE-MKT-05",
+      "qa": [
+        "QA-MKT-17",
+        "QA-MKT-18",
+        "QA-MKT-19",
+        "QA-MKT-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-06",
+      "title": "Licencias vigentes",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Licencia define tenant, versión/alcance y vigencia. Expirar licencia no borra documentos; afecta nuevos usos según términos aceptados.",
+      "rule": "RE-MKT-06",
+      "qa": [
+        "QA-MKT-21",
+        "QA-MKT-22",
+        "QA-MKT-23",
+        "QA-MKT-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-07",
+      "title": "Reparto y compensación",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Ledger inmutable con términos de reparto versionados. Reembolso genera movimiento compensatorio, no edición del ingreso original.",
+      "rule": "RE-MKT-07",
+      "qa": [
+        "QA-MKT-25",
+        "QA-MKT-26",
+        "QA-MKT-27",
+        "QA-MKT-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-MKT-08",
+      "title": "Conciliación y disputa",
+      "module": "MKT",
+      "mvp": 2,
+      "description": "Conciliar orden, pago, derecho y ledger; una diferencia queda en cola con owner. No instalar por simple recibo no validado.",
+      "rule": "RE-MKT-08",
+      "qa": [
+        "QA-MKT-29",
+        "QA-MKT-30",
+        "QA-MKT-31",
+        "QA-MKT-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-01",
+      "title": "Preflight",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Verificar derecho, certificación y dependencias antes de instalar; falla no deja instalación parcialmente activa.",
+      "rule": "RE-UPG-01",
+      "qa": [
+        "QA-UPG-01",
+        "QA-UPG-02",
+        "QA-UPG-03",
+        "QA-UPG-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-02",
+      "title": "Instalación idempotente",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Clave de intención, tenant y versión identifican instalación. Reintento no duplica plantillas.",
+      "rule": "RE-UPG-02",
+      "qa": [
+        "QA-UPG-05",
+        "QA-UPG-06",
+        "QA-UPG-07",
+        "QA-UPG-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-03",
+      "title": "Personalización y provenance",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Guardar fork/overlays locales separados de fuente; update no sobrescribe edición cliente.",
+      "rule": "RE-UPG-03",
+      "qa": [
+        "QA-UPG-09",
+        "QA-UPG-10",
+        "QA-UPG-11",
+        "QA-UPG-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-04",
+      "title": "Instancias fijadas",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Nuevas instancias usan versión adoptada; activas permanecen en su versión salvo plan explícito.",
+      "rule": "RE-UPG-04",
+      "qa": [
+        "QA-UPG-13",
+        "QA-UPG-14",
+        "QA-UPG-15",
+        "QA-UPG-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-05",
+      "title": "Simulación previa",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Plan de upgrade compara corpus y estados, con adaptadores sin efectos productivos.",
+      "rule": "RE-UPG-05",
+      "qa": [
+        "QA-UPG-17",
+        "QA-UPG-18",
+        "QA-UPG-19",
+        "QA-UPG-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-06",
+      "title": "Rollback seguro",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Volver versión para nuevos inicios sólo si compatible; instancias nacidas en nueva versión conservan su definición.",
+      "rule": "RE-UPG-06",
+      "qa": [
+        "QA-UPG-21",
+        "QA-UPG-22",
+        "QA-UPG-23",
+        "QA-UPG-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-07",
+      "title": "Desinstalación y retiro",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Desinstalar impide nuevos usos sin borrar ejecuciones ni originales; dependencia activa puede bloquear retiro.",
+      "rule": "RE-UPG-07",
+      "qa": [
+        "QA-UPG-25",
+        "QA-UPG-26",
+        "QA-UPG-27",
+        "QA-UPG-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-UPG-08",
+      "title": "Métricas y permisos",
+      "module": "UPG",
+      "mvp": 2,
+      "description": "Medir éxito, fallos y duración de instalaciones con referencias; sólo tenant o delegado puede adoptar.",
+      "rule": "RE-UPG-08",
+      "qa": [
+        "QA-UPG-29",
+        "QA-UPG-30",
+        "QA-UPG-31",
+        "QA-UPG-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-01",
+      "title": "Diff de facts",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "Comparar versiones normalizadas; cambio de formato equivalente no dispara impacto funcional.",
+      "rule": "RE-SEN-01",
+      "qa": [
+        "QA-SEN-01",
+        "QA-SEN-02",
+        "QA-SEN-03",
+        "QA-SEN-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-02",
+      "title": "Dependencias mínimas",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "Reevaluar sólo consumidores alcanzables de los facts cambiados; no reprocesar todo expediente por defecto.",
+      "rule": "RE-SEN-02",
+      "qa": [
+        "QA-SEN-05",
+        "QA-SEN-06",
+        "QA-SEN-07",
+        "QA-SEN-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-03",
+      "title": "Comparadores deterministas",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "Usar comparador determinista cuando resuelve la regla; IA sólo para comparaciones semánticas autorizadas.",
+      "rule": "RE-SEN-03",
+      "qa": [
+        "QA-SEN-09",
+        "QA-SEN-10",
+        "QA-SEN-11",
+        "QA-SEN-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-04",
+      "title": "Hallazgo explicable",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "Assessment indica origen, destino, regla y motivo; separar posible impacto de error comprobado.",
+      "rule": "RE-SEN-04",
+      "qa": [
+        "QA-SEN-13",
+        "QA-SEN-14",
+        "QA-SEN-15",
+        "QA-SEN-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-05",
+      "title": "Tareas idempotentes",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "Crear/actualizar tarea por regla y objetivo; resolución posterior cierra la misma tarea cuando corresponda.",
+      "rule": "RE-SEN-05",
+      "qa": [
+        "QA-SEN-17",
+        "QA-SEN-18",
+        "QA-SEN-19",
+        "QA-SEN-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-06",
+      "title": "Orden y concurrencia",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "La última versión válida gobierna evaluación vigente; callbacks obsoletos no reemplazan hechos más recientes.",
+      "rule": "RE-SEN-06",
+      "qa": [
+        "QA-SEN-21",
+        "QA-SEN-22",
+        "QA-SEN-23",
+        "QA-SEN-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-07",
+      "title": "Calidad medible",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "Separar precisión y recall con etiquetas humanas; umbral de release se aprueba antes del piloto y no se fabrica desde pocos ejemplos.",
+      "rule": "RE-SEN-07",
+      "qa": [
+        "QA-SEN-25",
+        "QA-SEN-26",
+        "QA-SEN-27",
+        "QA-SEN-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-SEN-08",
+      "title": "Seguridad y decisión",
+      "module": "SEN",
+      "mvp": 3,
+      "description": "Sentinel propone y supervisa bajo policy; no modifica reglas ni ejecuta acciones sensibles a partir de texto documental.",
+      "rule": "RE-SEN-08",
+      "qa": [
+        "QA-SEN-29",
+        "QA-SEN-30",
+        "QA-SEN-31",
+        "QA-SEN-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-01",
+      "title": "SOP autorizado",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Conservar versión y segmentos del SOP; documento sin permiso no se envía al modelo.",
+      "rule": "RE-COP-01",
+      "qa": [
+        "QA-COP-01",
+        "QA-COP-02",
+        "QA-COP-03",
+        "QA-COP-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-02",
+      "title": "Propuesta con evidencia",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Cada regla/nodo propuesto enlaza fragmento fuente o se marca como supuesto a resolver.",
+      "rule": "RE-COP-02",
+      "qa": [
+        "QA-COP-05",
+        "QA-COP-06",
+        "QA-COP-07",
+        "QA-COP-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-03",
+      "title": "Seguridad de contenido",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Instrucciones del documento son datos del proceso; no autorizan herramientas, extracción de secretos o cambios de política del asistente.",
+      "rule": "RE-COP-03",
+      "qa": [
+        "QA-COP-09",
+        "QA-COP-10",
+        "QA-COP-11",
+        "QA-COP-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-04",
+      "title": "Simulación sin efectos",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Mocks y datos aislados; nunca enviar firmas, pagos, mensajes o mutaciones productivas durante simulación.",
+      "rule": "RE-COP-04",
+      "qa": [
+        "QA-COP-13",
+        "QA-COP-14",
+        "QA-COP-15",
+        "QA-COP-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-05",
+      "title": "Regresión comparada",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Comparar resultado candidato contra baseline y etiqueta esperada; no limitar validación a que el grafo compile.",
+      "rule": "RE-COP-05",
+      "qa": [
+        "QA-COP-17",
+        "QA-COP-18",
+        "QA-COP-19",
+        "QA-COP-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-06",
+      "title": "Aprobación humana",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Autoridad de publicación decide sobre versión exacta; aprobación parcial no publica cambios rechazados.",
+      "rule": "RE-COP-06",
+      "qa": [
+        "QA-COP-21",
+        "QA-COP-22",
+        "QA-COP-23",
+        "QA-COP-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-07",
+      "title": "Feedback controlado",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Feedback de error genera propuesta; no altera modelo/regla activa de inmediato. Registrar etiqueta y responsable.",
+      "rule": "RE-COP-07",
+      "qa": [
+        "QA-COP-25",
+        "QA-COP-26",
+        "QA-COP-27",
+        "QA-COP-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-COP-08",
+      "title": "Publicación y reversa",
+      "module": "COP",
+      "mvp": 3,
+      "description": "Usar STU para publicar; conservar source, propuesta, simulación y decisión. Revertir selección default no cambia instancias históricas.",
+      "rule": "RE-COP-08",
+      "qa": [
+        "QA-COP-29",
+        "QA-COP-30",
+        "QA-COP-31",
+        "QA-COP-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-01",
+      "title": "Perfil contractual",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "Definir requisitos antes de diseñar despliegue; sin contrato de objetivos no prometer SLA ni residencia específica.",
+      "rule": "RE-ENT-01",
+      "qa": [
+        "QA-ENT-01",
+        "QA-ENT-02",
+        "QA-ENT-03",
+        "QA-ENT-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-02",
+      "title": "Residencia integral",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "Residencia incluye originales, derivados, índices, logs sensibles y backups; política se aplica también a proveedores IA.",
+      "rule": "RE-ENT-02",
+      "qa": [
+        "QA-ENT-05",
+        "QA-ENT-06",
+        "QA-ENT-07",
+        "QA-ENT-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-03",
+      "title": "SSO enterprise",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "Mapear grupos a roles gobernados sin confiar en grupos arbitrarios; mantener revocación y administrador de emergencia controlado.",
+      "rule": "RE-ENT-03",
+      "qa": [
+        "QA-ENT-09",
+        "QA-ENT-10",
+        "QA-ENT-11",
+        "QA-ENT-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-04",
+      "title": "Acceso de emergencia",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "Acceso excepcional tiene motivo, TTL y revisión posterior; no cuenta compartida sin trazabilidad.",
+      "rule": "RE-ENT-04",
+      "qa": [
+        "QA-ENT-13",
+        "QA-ENT-14",
+        "QA-ENT-15",
+        "QA-ENT-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-05",
+      "title": "Conectividad privada",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "Validar origen y autorización funcional; red privada no sustituye tenant/rol. Failover mantiene restricciones.",
+      "rule": "RE-ENT-05",
+      "qa": [
+        "QA-ENT-17",
+        "QA-ENT-18",
+        "QA-ENT-19",
+        "QA-ENT-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-06",
+      "title": "Gobierno de datos",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "Aplicar retención, export y hold al perfil sin debilitar obligaciones superiores; resolver conflictos explícitamente.",
+      "rule": "RE-ENT-06",
+      "qa": [
+        "QA-ENT-21",
+        "QA-ENT-22",
+        "QA-ENT-23",
+        "QA-ENT-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-07",
+      "title": "FinOps enterprise",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "Imputar costos y cuotas por servicio/tenant sin mezclar presupuestos; dashboards explican períodos y fuentes.",
+      "rule": "RE-ENT-07",
+      "qa": [
+        "QA-ENT-25",
+        "QA-ENT-26",
+        "QA-ENT-27",
+        "QA-ENT-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-ENT-08",
+      "title": "Aceptación verificable",
+      "module": "ENT",
+      "mvp": 4,
+      "description": "El perfil se acepta contra controles ejecutados, no sólo documento de arquitectura. Registrar límites y decisiones contractuales pendientes.",
+      "rule": "RE-ENT-08",
+      "qa": [
+        "QA-ENT-29",
+        "QA-ENT-30",
+        "QA-ENT-31",
+        "QA-ENT-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-01",
+      "title": "Objetivos medibles",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Acordar RPO/RTO antes del ejercicio; medir recuperación real y pérdida máxima con reloj y corte documentados.",
+      "rule": "RE-DR-01",
+      "qa": [
+        "QA-DR-01",
+        "QA-DR-02",
+        "QA-DR-03",
+        "QA-DR-04"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-02",
+      "title": "Backup consistente",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Respaldar objetos y referencias de DB en corte compatible; incluir configuración necesaria y procedimiento de acceso a secretos sin copiarlos al documento.",
+      "rule": "RE-DR-02",
+      "qa": [
+        "QA-DR-05",
+        "QA-DR-06",
+        "QA-DR-07",
+        "QA-DR-08"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-03",
+      "title": "Orden de recuperación",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Restaurar identidad, datos y objetos antes de habilitar workers y tráfico. Evitar procesamiento con dependencias parciales.",
+      "rule": "RE-DR-03",
+      "qa": [
+        "QA-DR-09",
+        "QA-DR-10",
+        "QA-DR-11",
+        "QA-DR-12"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-04",
+      "title": "Reconciliación de eventos",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Comparar outbox, entregas y efectos antes de replay. No generar IDs nuevos para eventos ya confirmados.",
+      "rule": "RE-DR-04",
+      "qa": [
+        "QA-DR-13",
+        "QA-DR-14",
+        "QA-DR-15",
+        "QA-DR-16"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-05",
+      "title": "Failover y residencia",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Conmutar sólo a topología autorizada y ensayada; evitar dos escritores no coordinados y pérdida de autorización.",
+      "rule": "RE-DR-05",
+      "qa": [
+        "QA-DR-17",
+        "QA-DR-18",
+        "QA-DR-19",
+        "QA-DR-20"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-06",
+      "title": "Capacidad y degradación",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Definir umbrales a partir de mediciones; aplicar cuotas y backpressure conservando solicitudes aceptadas.",
+      "rule": "RE-DR-06",
+      "qa": [
+        "QA-DR-21",
+        "QA-DR-22",
+        "QA-DR-23",
+        "QA-DR-24"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-07",
+      "title": "Ejercicio y evidencia",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Registrar restore real, pruebas DOC/IAM/WFL/GOV y resultados de integridad. Simular sobre entorno aislado.",
+      "rule": "RE-DR-07",
+      "qa": [
+        "QA-DR-25",
+        "QA-DR-26",
+        "QA-DR-27",
+        "QA-DR-28"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    },
+    {
+      "id": "HU-DR-08",
+      "title": "Cierre de incidente",
+      "module": "DR",
+      "mvp": 4,
+      "description": "Cerrar cuando servicio, integridad y backlog estén reconciliados; registrar acciones preventivas y owners.",
+      "rule": "RE-DR-08",
+      "qa": [
+        "QA-DR-29",
+        "QA-DR-30",
+        "QA-DR-31",
+        "QA-DR-32"
+      ],
+      "status": "POR_REVISAR",
+      "jira_url": null,
+      "owner": null,
+      "estimate": null
+    }
+  ]
+}
