@@ -14,9 +14,16 @@ Un solo proceso Java (`nextdocs-ai.jar`) y tres dependencias:
 | Redis 7 | 6381 | 6379 |
 | MinIO | 9102 API / 9101 consola | 9000 / 9101 |
 | ClamAV | 3310 | 3310, profile `antivirus` |
+| Workflow (profile `workflow`) | 8091 | 8091 |
 
 Flyway corre al arrancar. Hibernate valida el esquema: si la imagen y la base no coinciden, el
 proceso no queda `UP`.
+
+El servicio `workflow` es el microservicio de procesos del MVP0 Comercial (repositorio hermano
+`../workflow`). Arranca con `--profile workflow`; necesita el repo del workflow clonado al lado
+del core porque el contexto de build apunta ahí. Usa la base `nextdocs_workflow` del mismo
+PostgreSQL, que el servicio `postgres-init` crea de forma idempotente (también sobre volúmenes ya
+existentes). Apagarlo no afecta a la API documental.
 
 ## Máquina de desarrollo (infra sola)
 
@@ -35,6 +42,9 @@ La API se corre con Maven (o el contenedor Maven si no hay JDK).
 cp .env.example .env          # JWT y Gemini si aplica
 docker compose --profile app up -d --build
 curl -fsS http://localhost:8090/actuator/health
+
+docker compose --profile workflow up -d --build    # microservicio de procesos (repo ../workflow)
+curl -fsS http://localhost:8091/actuator/health
 ```
 
 Compose pisa las URLs de `.env` que apuntan a `localhost`: adentro de la red Docker la base es
