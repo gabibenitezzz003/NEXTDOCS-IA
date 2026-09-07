@@ -14,7 +14,10 @@ No es un módulo de Follow: Follow, CIMA y Valid360.ai son **consumidores opcion
 
 ## Estado actual
 
-El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado contra infraestructura real**.
+**Rebaseline 06/09/2026 (MVP0 Comercial).** El plan maestro de alcance es
+**[docs/TODO_MVP0_COMERCIAL.md](docs/TODO_MVP0_COMERCIAL.md)**. El "MVP0 técnico" (núcleo
+documental de la Etapa 1) está **funcionando end-to-end y verificado contra infraestructura real**,
+y el **Workflow Core (P0-03)** del MVP0 Comercial también.
 
 | Área | Estado |
 |---|---|
@@ -56,6 +59,10 @@ El núcleo documental de la Etapa 1 está **funcionando end-to-end y verificado 
 | Panel de control: 11 KPI con fórmula visible y drill-down a su población | ✅ |
 | Archive & Export Center: ZIP con índice, manifiesto de hashes y TTL de 7 días | ✅ |
 | SSO federado y embed: token exchange OIDC, JIT por política y código de un solo uso | ✅ |
+| Clasificación automática + captura genérica + tipos propuestos + aprendizaje de correcciones | ✅ |
+| **Workflow Core (P0-03)**: Definition Service + Runtime en microservicio aparte (`Follow-Hub/workflow`), instancias fijadas a versión, tareas con SLA, decisiones, temporizadores y subprocesos | ✅ |
+| **Studio guiado (P0-04)**: plantillas de proceso en el portal con editor de pasos, publicar versionada y prueba en vivo | ✅ |
+| Servicio `workflow` en el compose con perfil propio + base `nextdocs_workflow` creada idempotente | ✅ |
 
 ### Verificado con el sistema corriendo
 
@@ -346,22 +353,32 @@ Reglas invariantes:
 
 ```bash
 cp .env.example .env          # completá NEXTDOCS_GEMINI_CLAVE
-docker compose up -d
+docker compose up -d          # PostgreSQL 5434 · Redis 6381 · MinIO 9102
+                              # postgres-init crea la base nextdocs_workflow solo
 cd backend
 docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
   -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
+
+# Microservicio de procesos (repo hermano ../workflow)
+cd ../workflow
+docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 \
+  -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run
+
+# Portal (repo raíz)
+cd ../frontend && npm run dev
 ```
 
 Sin `NEXTDOCS_GEMINI_CLAVE` el sistema arranca igual y usa el proveedor `SIMULADO`.
 La credencial **nunca** se guarda en base: `ConfiguracionProveedor.referenciaSecreto` guarda
 `env:NEXTDOCS_GEMINI_CLAVE` y se resuelve en runtime.
 
-- API: `http://localhost:8090`
-- Swagger: `http://localhost:8090/swagger-ui.html`
-- Consola MinIO: `http://localhost:9101` (`nextdocs` / `nextdocs123`)
+- API: `http://localhost:8090` · Swagger: `http://localhost:8090/swagger-ui.html`
+- Workflow: `http://localhost:8091` · Swagger: `http://localhost:8091/swagger-ui.html` (se identifica con el encabezado `X-Tenant-Id` hasta que llegue la integración de autenticación)
+- Portal: `http://localhost:5175` · Consola MinIO: `http://localhost:9101` (`nextdocs` / `nextdocs123`)
+- Stack completo por imagen: `docker compose --profile app up -d --build`, y el workflow con `--profile workflow`
 
-Al arrancar se crea el tenant `demo` con el usuario `admin@nextdocs.ai` / `nextdocs123`.
-Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
+Credenciales del arranque: tenant `demo` con `admin@nextdocs.ai` / `nextdocs123`
+(se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`).
 
 > Sin JDK local se puede compilar y ejecutar con Docker:
 > `docker run --rm --network host -v "$PWD":/app -v nextdocs-m2:/root/.m2 -w /app maven:3.9-eclipse-temurin-21 mvn spring-boot:run`
@@ -370,31 +387,28 @@ Se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`.
 
 ## Próximos pasos
 
-El plan completo hasta terminar el producto está en **[docs/TODO.md](docs/TODO.md)**:
-32 tareas en 4 fases, con criterios de aceptación y dependencias.
+El plan maestro de alcance es **[docs/TODO_MVP0_COMERCIAL.md](docs/TODO_MVP0_COMERCIAL.md)**:
+el rebaseline de producto en cinco niveles (MVP0 Comercial → MVP4 Enterprise), con el tablero
+P0-01..P0-13, dependencias y criterios de salida.
 
-La **Fase 1 está cerrada** (14 de 14) y la **Fase 2 también**: portal (15), SSO federado (16),
-Archive & Export Center (19) y panel de control (20). Los canales de entrada (17 y 18) se
-**retiraron del producto** — el porqué está en [`docs/TODO.md`](docs/TODO.md). Con eso el **MVP 1
-está completo** y lo que sigue es la Etapa 2, el Workflow.
-Quien retome el proyecto arranca por la **tarea 21**, el Workflow Definition Service.
+Lo cerrado hasta acá:
 
-| Fase | Alcance | Tareas |
-|---|---|---|
-| **1** | Cerrar la Etapa 1 vendible (motor documental standalone) | 1–14 |
-| **2** | Portal, SSO y KPI → completa el MVP 1 | 15–20 |
-| **3** | Etapa 2: Workflow Runtime y Process Studio | 21–27 |
-| **4** | Etapa 3: Sentinel, Simulation Lab y Process Copilot | 28–32 |
+- **MVP0 técnico completo** (Fases 1 y 2 del plan viejo): motor documental, portal, SSO, KPI, export.
+- **P0-03 Workflow Core**: Definition Service + Runtime en `Follow-Hub/workflow`, verificado
+  end-to-end contra PostgreSQL real (publicar → instancia → tareas → decisión → COMPLETADA,
+  aislamiento cross-tenant 404).
+- **P0-04 Studio guiado**: plantillas de proceso editables desde el portal, con prueba en vivo.
 
-El **MVP 1 está completo**: motor documental, portal propio, SSO embebido, KPI y export. Lo que
-sigue es la Etapa 2, el Workflow, que arranca por:
+Lo que sigue, en orden de dependencias:
 
-1. Workflow Definition Service: nodos, aristas, versiones y validador de grafo (tarea 21)
-2. Workflow Runtime Service: tokens, ramas, joins, timers y reintentos (22)
-3. Task Service y Action Center (23)
+1. **P0-05** External Collaboration: cuenta externa limitada + Secure Action Link con TTL
+2. **P0-06** IA Supervisora v0: controles configurables por plantilla
+3. **P0-07/P0-08** Partner foundation y template marketplace-ready
+4. **P0-09/P0-10** Biblioteca COMEX y Follow Recommender
+5. **P0-11..P0-13** Playwright E2E, dataset real del piloto y baseline de carga/operaciones
 
-La regla de la Etapa 2 no se negocia: **apagar el Workflow no puede afectar** captura, extracción,
-validación ni integración documental.
+La regla del Workflow no se negocia: **apagarlo no puede afectar** captura, extracción, validación
+ni integración documental.
 
 Pendiente no-código: cargar datasets gold reales, ensayar una restauración, correr una prueba de
 carga y **rotar la API key de Gemini**.
@@ -406,7 +420,7 @@ carga y **rotar la API key de Gemini**.
 | Servicio | Rol | Repositorio |
 |---|---|---|
 | **NEXTDOCS-AI** | Core documental. Este repositorio. | `gabibenitezzz003/NEXTDOCS-IA` |
-| **workflow** | Motor de procesos. Microservicio aparte, Etapa 2. | `Follow-Hub/workflow` rama `NEXT-DOCS-AI` |
+| **workflow** | Motor de procesos del MVP0 Comercial (P0-03). Microservicio aparte sobre stack nuevo; el módulo legado de Follow queda como referencia en la rama `NEXT-DOCS-AI`. | `Follow-Hub/workflow` rama `main` |
 | **docvance-ai** | Servicio auxiliar de IA documental. | `gabibenitezzz003/docvance-ai` rama `next-ai` |
 | **follow-backend** | Consumidor vía conector. **No es dependencia.** | `Follow-Hub/follow-backend` rama `integraciones-pedidos` |
 | **follow-front** | Consumidor embebido vía SSO. **No es dependencia.** | `Follow-Hub/follow-front` rama `Integraciones-front` |

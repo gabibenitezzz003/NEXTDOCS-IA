@@ -8,6 +8,7 @@ import {
   leerTokenRefresco,
   registrarExpiracion,
 } from "../api/cliente";
+import { fijarTenantProcesos } from "../api/procesos";
 import type { Sesion } from "../tipos/api";
 
 interface ContextoSesion {
@@ -26,6 +27,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
 
   const salir = useCallback(() => {
     fijarTokenAcceso(null);
+    fijarTenantProcesos(null);
     guardarTokenRefresco(null);
     setSesion(null);
   }, []);
@@ -44,6 +46,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       .post<Sesion>("/api/v1/autenticacion/refrescar", { tokenRefresco })
       .then(({ data }) => {
         fijarTokenAcceso(data.tokenAcceso);
+        fijarTenantProcesos(data.tenantId);
         guardarTokenRefresco(data.tokenRefresco);
         setSesion(data);
       })
@@ -58,6 +61,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       clave,
     });
     fijarTokenAcceso(data.tokenAcceso);
+    fijarTenantProcesos(data.tenantId);
     guardarTokenRefresco(data.tokenRefresco);
     setSesion(data);
   }, []);
