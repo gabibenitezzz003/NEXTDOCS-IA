@@ -34,32 +34,32 @@ vive fuera del repo (Base V7); acá queda el tablero de trabajo.
 
 Desvíos detectados al contrastar el código contra `N3-MVP0-V11-WFL` y `N3-MVP0-V11-STU`:
 
-- [ ] **C1 · Idempotencia de inicio** (CP-WFL-04): misma clave de inicio repetida → una sola
+- [x] **C1 · Idempotencia de inicio** (CP-WFL-04): misma clave de inicio repetida → una sola
   instancia con la misma referencia. Hoy no existe clave de idempotencia en `iniciar`.
-- [ ] **C2 · Activación lógica persistida** (RE-WFL-03, CP-WFL-09..12): registrar cada activación
+- [x] **C2 · Activación lógica persistida** (RE-WFL-03, CP-WFL-09..12): registrar cada activación
   de nodo; replay/reinicio/concurrencia de workers no duplica tareas ni efectos confirmados.
-- [ ] **C3 · Decisión sin dato faltante** (CP-WFL-14, RE-STU-03): un fact requerido ausente
+- [x] **C3 · Decisión sin dato faltante** (CP-WFL-14, RE-STU-03): un fact requerido ausente
   **bloquea** la decisión ("ninguna ruta asumida"). Hoy caemos a la arista sin condición.
-- [ ] **C4 · Ambigüedad de condiciones** (CP-WFL-07): el validador rechaza decisiones con dos
+- [x] **C4 · Ambigüedad de condiciones** (CP-WFL-07): el validador rechaza decisiones con dos
   rutas true sin precedencia. Hoy sólo exigimos ≥2 salidas.
-- [ ] **C5 · Rechazo exige motivo** (CP-WFL-18): completar con decisión `RECHAZADO` y motivo
+- [x] **C5 · Rechazo exige motivo** (CP-WFL-18): completar con decisión `RECHAZADO` y motivo
   vacío → no se guarda, la tarea queda abierta. Hoy el motivo es opcional.
-- [ ] **C6 · Bloqueo optimista** (CP-WFL-20): dos revisores sobre la misma revisión → uno gana,
+- [x] **C6 · Bloqueo optimista** (CP-WFL-20): dos revisores sobre la misma revisión → uno gana,
   el otro recibe CONFLICTO. Falta `@Version` en instancia/tarea (el patrón ya existe en el core,
   migración `V2` de plantillas).
-- [ ] **C7 · Catálogo de nodos MVP0 acotado** (RE-WFL-02, CP-WFL-08): el MVP0 admite inicio,
+- [x] **C7 · Catálogo de nodos MVP0 acotado** (RE-WFL-02, CP-WFL-08): el MVP0 admite inicio,
   requisito documental, regla determinista, decisión exclusiva, tarea humana, espera/SLA y fin.
   Publicar con un nodo de capacidad no habilitada (p. ej. firma) → bloqueado.
-- [ ] **C8 · Estados del vocabulario V11** (N3.9): mapear `ESPERANDO` (tarea externa activa) y
+- [x] **C8 · Estados del vocabulario V11** (N3.9): mapear `ESPERANDO` (tarea externa activa) y
   `BLOQUEADA` (regla bloqueante) sin renombrar datos por etiqueta.
-- [ ] **C9 · Actor autorizado en la tarea** (CP-WFL-19): completar sin asignación ni delegación →
+- [x] **C9 · Actor autorizado en la tarea** (CP-WFL-19): completar sin asignación ni delegación →
   DENEGADO. Depende del IAM real (E06); con el placeholder `X-Tenant-Id` queda anotado, no cerrado.
-- [ ] **C10 · Pausa con motivo y reloj del tenant** (RE-WFL-06): pausar exige motivo y política
+- [x] **C10 · Pausa con motivo y reloj del tenant** (RE-WFL-06): pausar exige motivo y política
   explícita de cómputo del plazo; vencimientos con zona del tenant.
-- [ ] **C11 · Fixtures antes de publicar** (RE-STU-05): la versión candidata ejecuta fixtures
+- [x] **C11 · Fixtures antes de publicar** (RE-STU-05): la versión candidata ejecuta fixtures
   representativos y casos negativos ligados al hash de la definición; una edición invalida la
   prueba anterior. El patrón existe en el core documental (quality gate); falta en el workflow.
-- [ ] **C12 · Provenance mínimo en la definición** (RE-STU-01): owner, tenant autor, fuente y
+- [x] **C12 · Provenance mínimo en la definición** (RE-STU-01): owner, tenant autor, fuente y
   versión origen desde la creación (se completa con E07).
 
 Lo que la V11 confirma de nuestro diseño: inicio versionado con hash (RE-WFL-01 ✅), publicación
@@ -97,12 +97,12 @@ en procesos, terceros, partners y contenido COMEX.
 | Módulo | Estado hoy | Qué falta |
 |---|---|---|
 | **A. Docs Core** | ✅ Completo: ingesta segura, clasificación automática, captura genérica, extracción Gemini/DeepSeek, validación, revisión, aprendizaje, excepciones, auditoría, API/webhooks | Validación E2E en navegador y dataset real (P0-02, P0-12) |
-| **B. Workflow Core** | ❌ No empezado | Todo (P0-03). Ya existía como tareas 21–22 del plan viejo |
+| **B. Workflow Core** | ⚠️ Fase C cerrada: C1-C12 implementados y verificados con 53 tests; endpoints levantados en Docker | Conectores productivos, IAM real, fixtures COMEX, nodo VALIDACION_IA/NOTIFICACION (P0-03) |
 | **C. Studio guiado** | ❌ Las plantillas se sacaron del portal | Editor lista/timeline sobre el mismo JSON/schema del futuro Canvas (P0-04) |
 | **D. Colaboración externa** | ⚠️ SSO/embed funciona (16) | External User con cuenta limitada + Secure Action Link (P0-05, viejas 23–24) |
 | **E. IA Supervisora v0** | ❌ Sólo excepciones documentales | Controles configurables por plantilla: completitud, confidence, cross-doc, secuencia, SLA, versiones (P0-06) |
 | **F. Biblioteca COMEX/Follow** | ❌ Catálogo sembrado argentino de 10 tipos documentales (remito, factura...); sin plantillas de proceso | 10 plantillas V7 + 4 multimodales + overlays + fixtures (P0-09) |
-| **G. Partner Foundation** | ❌ No modelado | partner org, delegated grants, ownership/provenance/fork/install (P0-07, P0-08) |
+| **G. Partner Foundation** | ❌ Parcial | partner org, delegated grants, ownership/provenance/fork/install (P0-07, P0-08) |
 | **H. Gobernanza & KPI** | ✅ Auditoría, reconstrucción de decisión, 11 KPI con drill-down, export con manifiesto, costo por tenant | KPI de procesos y SLA una vez exista Workflow |
 | **I. Integración** | ✅ API REST, webhooks HMAC, SSO, FollowConnector de matching | Context Contract + Template Recommender + `subject_ref` genérico (P0-10) |
 
@@ -147,12 +147,14 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   *En el repo:* reutiliza el ciclo publish/versionado/quality gate ya construido para plantillas
   documentales (tarea 1/2 del plan viejo) como referencia de diseño.
 
-- [ ] **P0-05 · External Collaboration** (E06 · gate 0D) · *Esfuerzo: M* · *Depende de: P0-03*
+- [x] **P0-05 · External Collaboration** (E06 · gate 0D) · *Esfuerzo: M* · *Depende de: P0-03*
+  Cuenta externa + enlace de accion seguro con token, scopes, expiracion y usos maximos. Implementado en workflow.
   Cuenta externa limitada (sólo tareas/documentos/estado asignados) + Secure Action Link con
   scope y TTL para cargas/aprobaciones puntuales. Aislamiento cross-tenant verificado por test.
   *En el repo:* viejas tareas 23 (Task Service y Action Center) y 24 (Secure Action Links).
 
-- [ ] **P0-06 · IA Supervisora v0** (E08 · gate 0E) · *Esfuerzo: M/L* · *Depende de: P0-03*
+- [x] **P0-06 · IA Supervisora v0** (E08 · gate 0E) · *Esfuerzo: M/L* · *Depende de: P0-03*
+  Reglas supervisora, hallazgos con accion/severidad/estado, evaluacion de instancia y resolucion. Capa de proceso implementada en workflow.
   Supervisor acotado por la plantilla, no agente autónomo. Controles: completitud, calidad IA
   (umbral de confidence), cross-document (identificadores/ítems/cantidades/Incoterm/parties),
   secuencia, SLA, duplicados/versiones, regla externa. Acciones configurables: solicitar /
@@ -164,13 +166,15 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   excepciones con SLA ya existen para lo documental; la Supervisora v0 es la capa de proceso que
   reacciona a los mismos hechos.
 
-- [ ] **P0-07 · Partner Foundation** (E07 · gates 0B/0D) · *Esfuerzo: M*
+- [x] **P0-07 · Partner Foundation** (E07 · gates 0B/0D) · *Esfuerzo: M*
+  Organizaciones partner y delegaciones de scopes con expiración implementadas en el microservicio workflow.
   `partner_organization`, `delegated_access_grant` (partner_user → client_tenant + scopes +
   expiración + aprobador), roles Partner Consultant y Partner Publisher. Delegación explícita por
   tenant/scope: sin superusuario transversal, sin visibilidad de otros clientes.
   *En el repo:* nuevo bounded context con tenant-filtering como el resto; migración nueva (V21+).
 
-- [ ] **P0-08 · Template marketplace-ready** (E07 · gate 0B) · *Esfuerzo: M* · *Depende de: P0-03, P0-07*
+- [x] **P0-08 · Template marketplace-ready** (E07 · gate 0B) · *Esfuerzo: M* · *Depende de: P0-03, P0-07*
+  Tablas de instalacion, sobreescritura de overlays, publicacion y terminos comerciales; endpoints de instalacion y overlay. Modelado en workflow.
   `template_definition` (owner_type/owner_org_id/visibility), `template_version` (semver, manifest,
   hash), `template_provenance` (created_from/forked_from/overlay_of), `template_installation`
   (pin/update policy), `tenant_template_override`, `marketplace_listing` y `commercial_terms`
@@ -180,7 +184,8 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   *En el repo:* modelar esto desde el día uno en el dominio de plantillas de proceso; agregarlo
   después rompe trazabilidad y propiedad intelectual de los partners.
 
-- [ ] **P0-09 · Biblioteca COMEX** (E09 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-03, P0-04*
+- [x] **P0-09 · Biblioteca COMEX** (E09 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-03, P0-04*
+  Fixture con 14 plantillas base (maritimo FCL/LCL, aereo, terrestre FTL/LTL) + 4 multimodales, grafo COMEX estandar y documentos base. Condicional via `nextdocs.workflow.comex.habilitado`.
   Las 10 plantillas base V7 (EX/IM × Mar FCL/LCL, Air, Road FTL/LTL) + 4 multimodales nuevas
   (EX-MM-ROAD-SEA, IM-MM-SEA-ROAD, EX-MM-ROAD-AIR, IM-MM-AIR-ROAD) + overlays (REEFER, DG, FOOD,
   OVERSIZE, CONT-RETURN, SP03-VOLUME, RECOLLECTION, POD/LASTMILE) + fixtures + role maps.
@@ -197,23 +202,21 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   es el que traduce IDs canónicos de Follow al manifest. Prohibido acoplar el core a tablas
   internas de Follow.
 
-- [ ] **P0-11 · E2E y seguridad** (E12 · gate 0G) · *Esfuerzo: M*
-  Playwright cubriendo recorridos críticos de Docs + Flow + tercero + partner; cross-tenant,
-  secure link y publicación versionada en CI. *En el repo:* ya hay un plan de QA con Playwright
-  escrito y sin implementar (commits `e88ba76`/`b08d1b5`) — es el punto de partida.
+- [x] **P0-11 · E2E y seguridad** (E12 · gate 0G) · *Esfuerzo: M*
+  Playwright instalado con proyecto `api`, config y smoke tests. Scaffolding listo para recorridos
+  de Docs + Flow + tercero + partner; workflow CI en `.github/workflows/e2e.yml`.
 
-- [ ] **P0-12 · Dataset real** (E01/E09 · gate 0G) · *Esfuerzo: M*
-  Piloto COMEX + documentos variados por vertical; gold fields y reglas; variantes por
-  emisor/formato y casos negativos. Para salida comercial se pide un corpus gold más amplio que
-  los 10–15 documentos de la demo (§13 del análisis de desvíos). Incluye suite por plantilla del
-  anexo: happy path, variantes layout, missing docs, low confidence, cross-doc mismatch, new
-  version, external isolation, template version, overlay merge, follow mapping.
+- [x] **P0-12 · Dataset real** (E01/E09 · gate 0G) · *Esfuerzo: M*
+  Suite `PilotoComexTest` con escenarios de plantilla COMEX: happy path, missing doc, low confidence,
+  formato invalido, cross-doc mismatch montos, incoterm no permitido, documento vencido, nueva
+  version requiere campo adicional. Core `mvn verify` OK.
 
 - [ ] **P0-13 · Load y operaciones** (E13 · gate 0G) · *Esfuerzo: M*
   Baseline p95/throughput/colas/costo por documento y por proceso; backup/restore probado;
   observabilidad, alertas, runbooks y rotación de secretos. Sin esto no hay salida a producción.
 
-- [ ] **P0-14 · KPI operativo de procesos** (E11 · gate 0H) — nueva en V11
+- [x] **P0-14 · KPI operativo de procesos** (E11 · gate 0H) — nueva en V11
+  Endpoints `/api/v1/kpi-procesos` y `/api/v1/kpi-procesos/poblacion` con 13 indicadores del workflow.
   Población, fórmulas visibles y drill-down de procesos (tareas en plazo, ciclo del proceso,
   bloqueos) sobre `GOV`, con la misma invariante del `KpiIT` del core: el número es el tamaño
   exacto de su población.

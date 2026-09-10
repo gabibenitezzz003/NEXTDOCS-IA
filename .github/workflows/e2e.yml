@@ -1,0 +1,33 @@
+name: E2E Workflow
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Start infrastructure
+        run: docker compose --profile workflow up -d --build
+      - name: Wait for workflow health
+        run: |
+          for i in {1..30}; do
+            curl -s http://localhost:8091/actuator/health && break
+            sleep 2
+          done
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
+      - name: Install Playwright browsers
+        working-directory: ./frontend
+        run: npx playwright install --with-deps chromium
+      - name: Run E2E tests
+        working-directory: ./frontend
+        run: npm run test:e2e
