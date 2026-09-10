@@ -1,18 +1,7 @@
 import type { EstadoDocumento, PresenciaCampo, SeveridadHallazgo } from "../tipos/api";
 import { Pastilla } from "./Interfaz";
 import type { Tono } from "./Interfaz";
-
-const TONO_ESTADO: Record<EstadoDocumento, Tono> = {
-  RECIBIDO: "neutro",
-  PROCESANDO: "violeta",
-  EXTRAIDO: "violeta",
-  VALIDADO: "informacion",
-  OBSERVADO: "alerta",
-  APROBADO: "exito",
-  RECHAZADO: "rojo",
-  CERRADO: "neutro",
-  DIVIDIDO: "informacion",
-};
+import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
 
 const TONO_SEVERIDAD: Record<SeveridadHallazgo, Tono> = {
   INFORMATIVO: "neutro",
@@ -28,7 +17,12 @@ const TONO_PRESENCIA: Record<PresenciaCampo, Tono> = {
 };
 
 export function InsigniaEstado({ estado }: { estado: EstadoDocumento }) {
-  return <Pastilla tono={TONO_ESTADO[estado] ?? "neutro"}>{estado}</Pastilla>;
+  const presentacion = ESTADOS_DOCUMENTALES[estado];
+  return (
+    <Pastilla tono={presentacion?.tono ?? "neutro"}>
+      {presentacion?.etiqueta ?? estado}
+    </Pastilla>
+  );
 }
 
 export function InsigniaSeveridad({ severidad }: { severidad: SeveridadHallazgo }) {
