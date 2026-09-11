@@ -2,29 +2,31 @@ import type {
   ButtonHTMLAttributes,
   CSSProperties,
   InputHTMLAttributes,
+  ReactElement,
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
-import { useEffect } from "react";
+import { useEffect, useId } from "react";
 import { IconoCerrar } from "./Iconos";
 
-export type Tono = "neutro" | "violeta" | "exito" | "alerta" | "rojo" | "informacion";
+export type Tono =
+  "neutro" | "violeta" | "exito" | "alerta" | "rojo" | "informacion";
 
 const TONO_SUAVE: Record<Tono, string> = {
-  neutro: "bg-lienzo text-tinta-suave ring-borde",
+  neutro: "bg-lienzo text-neutro-texto ring-borde",
   violeta: "bg-violeta-tenue text-violeta ring-violeta-borde",
-  exito: "bg-exito-tenue text-exito ring-exito-borde",
-  alerta: "bg-alerta-tenue text-alerta ring-alerta-borde",
-  rojo: "bg-rojo-tenue text-rojo ring-rojo-borde",
-  informacion: "bg-informacion-tenue text-informacion ring-informacion-borde",
+  exito: "bg-exito-tenue text-exito-texto ring-exito-borde",
+  alerta: "bg-alerta-tenue text-alerta-texto ring-alerta-borde",
+  rojo: "bg-rojo-tenue text-rojo-alto ring-rojo-borde",
+  informacion: "bg-informacion-tenue text-tinta-media ring-informacion-borde",
 };
 
 const TONO_SOLIDO: Record<Tono, string> = {
   neutro: "bg-tinta-suave text-white",
   violeta: "bg-violeta text-white",
-  exito: "bg-exito text-white",
-  alerta: "bg-alerta text-white",
-  rojo: "bg-rojo text-white",
+  exito: "bg-exito-texto text-white",
+  alerta: "bg-alerta-texto text-white",
+  rojo: "bg-rojo-alto text-white",
   informacion: "bg-informacion text-white",
 };
 
@@ -40,7 +42,7 @@ export const TONO_BARRA: Record<Tono, string> = {
 export function Tarjeta({
   children,
   className = "",
-  padding = "p-5",
+  padding = "p-espacio-5",
   indice,
   interactiva = false,
 }: {
@@ -50,13 +52,16 @@ export function Tarjeta({
   indice?: number;
   interactiva?: boolean;
 }) {
-  const cascada = indice == null ? undefined : ({ "--retraso": `${indice * 55}ms` } as CSSProperties);
+  const cascada =
+    indice == null
+      ? undefined
+      : ({ "--retraso": `${indice * 55}ms` } as CSSProperties);
   return (
     <section
       style={cascada}
-      className={`relative rounded-3xl border border-borde bg-white relieve ${
+      className={`relative min-w-0 rounded-tarjeta border border-borde bg-superficie shadow-superficie ${
         indice == null ? "" : "subir"
-      } ${interactiva ? "elevar hover:border-borde-fuerte" : ""} ${padding} ${className}`}
+      } ${interactiva ? "transition-shadow hover:border-borde-fuerte hover:shadow-superficie-elevada motion-reduce:transition-none" : ""} ${padding} ${className}`}
     >
       {children}
     </section>
@@ -73,12 +78,22 @@ export function CabeceraTarjeta({
   acciones?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-3">
+    <div className="flex flex-wrap items-start justify-between gap-espacio-3">
       <div className="min-w-0">
-        <h2 className="font-titulo text-base text-tinta">{titulo}</h2>
-        {descripcion ? <p className="mt-0.5 text-xs text-tinta-suave">{descripcion}</p> : null}
+        <h2 className="font-titulo text-titulo-panel text-tinta break-words">
+          {titulo}
+        </h2>
+        {descripcion ? (
+          <p className="mt-espacio-1 text-pequeno text-tinta-suave">
+            {descripcion}
+          </p>
+        ) : null}
       </div>
-      {acciones ? <div className="flex shrink-0 items-center gap-2">{acciones}</div> : null}
+      {acciones ? (
+        <div className="flex flex-wrap items-center gap-espacio-2">
+          {acciones}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -99,29 +114,36 @@ export function Pastilla({
     : `ring-1 ring-inset ${TONO_SUAVE[tono]}`;
   return (
     <span
-      className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase ${estilo} ${className}`}
+      className={`inline-flex items-center gap-espacio-1 whitespace-nowrap rounded-insignia px-espacio-3 py-espacio-1 font-cuerpo text-micro font-bold uppercase ${estilo} ${className}`}
     >
       {children}
     </span>
   );
 }
 
-type VarianteBoton = "primario" | "secundario" | "fantasma" | "peligro";
+export type VarianteBoton = "primario" | "secundario" | "fantasma" | "peligro";
 
 const VARIANTE_BOTON: Record<VarianteBoton, string> = {
   primario:
-    "bg-violeta text-white shadow-violeta hover:bg-violeta-alto hover:shadow-violeta-alto hover:-translate-y-px active:translate-y-0 active:bg-violeta-alto disabled:bg-violeta/45 disabled:shadow-none disabled:hover:translate-y-0",
+    "bg-accion-primaria text-blanco enabled:hover:bg-accion-primaria-presionada enabled:active:bg-accion-primaria-presionada",
   secundario:
-    "border border-borde bg-white text-tinta shadow-plano hover:border-borde-fuerte hover:bg-lienzo hover:shadow-tarjeta disabled:text-tinta-tenue",
-  fantasma: "text-tinta-suave hover:bg-lienzo hover:text-tinta disabled:text-tinta-tenue",
+    "border border-borde bg-superficie text-tinta enabled:hover:border-borde-fuerte enabled:hover:bg-lienzo enabled:active:bg-borde",
+  fantasma:
+    "bg-transparent text-accion-primaria enabled:hover:bg-violeta-tenue enabled:active:bg-violeta-borde",
   peligro:
-    "border border-rojo-borde bg-rojo-tenue text-rojo hover:bg-rojo hover:text-white hover:border-rojo disabled:opacity-50",
+    "border border-rojo-alto bg-rojo-alto text-blanco enabled:hover:brightness-95 enabled:active:brightness-90",
 };
 
 const TAMANO_BOTON = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-9.5 px-4 text-sm",
-  lg: "h-11 px-5 text-sm",
+  sm: "h-control-pequeno px-espacio-3",
+  md: "h-control-mediano px-espacio-4",
+  lg: "h-control-grande px-espacio-5",
+};
+
+type PropsBoton = ButtonHTMLAttributes<HTMLButtonElement> & {
+  variante?: VarianteBoton;
+  tamano?: keyof typeof TAMANO_BOTON;
+  cargando?: boolean;
 };
 
 export function Boton({
@@ -129,62 +151,198 @@ export function Boton({
   variante = "secundario",
   tamano = "md",
   className = "",
+  cargando = false,
+  disabled,
   ...resto
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
-  variante?: VarianteBoton;
-  tamano?: keyof typeof TAMANO_BOTON;
-}) {
+}: PropsBoton) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-1.5 rounded-xl font-semibold transition-[background-color,color,border-color,box-shadow,transform] duration-200 disabled:cursor-not-allowed ${VARIANTE_BOTON[variante]} ${TAMANO_BOTON[tamano]} ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-control font-cuerpo text-pequeno font-semibold transition-colors focus-visible:outline-foco motion-reduce:transition-none disabled:cursor-not-allowed disabled:opacity-40 ${VARIANTE_BOTON[variante]} ${TAMANO_BOTON[tamano]} ${className}`}
       {...resto}
+      disabled={disabled || cargando}
+      aria-busy={cargando || resto["aria-busy"]}
     >
-      {children}
+      <span
+        className={`inline-flex items-center justify-center gap-espacio-2 ${cargando ? "opacity-0" : ""}`}
+      >
+        {children}
+      </span>
+      {cargando ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 grid place-items-center"
+        >
+          <span className="size-espacio-4 animate-spin rounded-insignia border-2 border-current border-t-transparent motion-reduce:animate-none" />
+        </span>
+      ) : null}
     </button>
   );
 }
 
+export function BotonIcono({
+  children,
+  tamano = "md",
+  type = "button",
+  className = "",
+  ...resto
+}: Omit<PropsBoton, "children"> & {
+  children: ReactElement;
+  "aria-label": string;
+}) {
+  const ancho = {
+    sm: "w-control-pequeno",
+    md: "w-control-mediano",
+    lg: "w-control-grande",
+  };
+  return (
+    <Boton
+      {...resto}
+      type={type}
+      tamano={tamano}
+      className={`${ancho[tamano]} px-0! ${className}`}
+    >
+      <span aria-hidden="true" className="inline-flex">
+        {children}
+      </span>
+    </Boton>
+  );
+}
+
 const CAMPO_BASE =
-  "w-full rounded-xl border border-borde bg-white text-sm text-tinta shadow-plano outline-none transition placeholder:text-tinta-tenue focus:border-violeta focus:ring-[3px] focus:ring-violeta/15 disabled:bg-lienzo disabled:text-tinta-tenue";
+  "h-control-mediano w-full min-w-0 rounded-control border border-borde bg-superficie px-espacio-3 font-cuerpo text-pequeno text-tinta transition-colors placeholder:text-tinta-suave enabled:hover:border-borde-fuerte focus:border-foco focus-visible:outline-foco aria-invalid:border-rojo-alto disabled:cursor-not-allowed disabled:bg-lienzo disabled:text-tinta-tenue";
+
+interface MensajesCampo {
+  etiqueta?: string;
+  ayuda?: string;
+  error?: string;
+}
+
+function MarcoCampo({
+  id,
+  etiqueta,
+  ayuda,
+  error,
+  children,
+}: MensajesCampo & { id: string; children: ReactNode }) {
+  if (!etiqueta && !ayuda && !error) return children;
+  return (
+    <div className="min-w-0">
+      {etiqueta ? (
+        <label
+          htmlFor={id}
+          className="mb-espacio-2 block text-pequeno font-semibold text-tinta-media"
+        >
+          {etiqueta}
+        </label>
+      ) : null}
+      {children}
+      {ayuda ? (
+        <p
+          id={`${id}-ayuda`}
+          className="mt-espacio-1 text-pequeno text-tinta-suave"
+        >
+          {ayuda}
+        </p>
+      ) : null}
+      {error ? (
+        <p
+          id={`${id}-error`}
+          className="mt-espacio-1 text-pequeno text-rojo-alto"
+        >
+          {error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function useDescripcionCampo(
+  id: string | undefined,
+  ayuda: string | undefined,
+  error: string | undefined,
+  descripcion: string | undefined,
+) {
+  const generado = useId();
+  const identificador = id ?? generado;
+  const descritoPor =
+    [
+      descripcion,
+      ayuda && `${identificador}-ayuda`,
+      error && `${identificador}-error`,
+    ]
+      .filter(Boolean)
+      .join(" ") || undefined;
+  return { identificador, descritoPor };
+}
 
 export function Campo({
   etiqueta,
   ayuda,
+  error,
+  id,
+  "aria-describedby": descripcion,
+  "aria-invalid": invalido,
   className = "",
   ...resto
-}: InputHTMLAttributes<HTMLInputElement> & { etiqueta?: string; ayuda?: string }) {
-  const entrada = <input className={`${CAMPO_BASE} h-10 px-3 ${className}`} {...resto} />;
-  if (!etiqueta) {
-    return entrada;
-  }
+}: InputHTMLAttributes<HTMLInputElement> & MensajesCampo) {
+  const { identificador, descritoPor } = useDescripcionCampo(
+    id,
+    ayuda,
+    error,
+    descripcion,
+  );
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-tinta-media">{etiqueta}</span>
-      {entrada}
-      {ayuda ? <span className="mt-1 block text-xs text-tinta-suave">{ayuda}</span> : null}
-    </label>
+    <MarcoCampo
+      id={identificador}
+      etiqueta={etiqueta}
+      ayuda={ayuda}
+      error={error}
+    >
+      <input
+        {...resto}
+        id={identificador}
+        aria-describedby={descritoPor}
+        aria-invalid={error ? true : invalido}
+        className={`${CAMPO_BASE} ${className}`}
+      />
+    </MarcoCampo>
   );
 }
 
 export function Selector({
   etiqueta,
+  ayuda,
+  error,
+  id,
+  "aria-describedby": descripcion,
+  "aria-invalid": invalido,
   children,
   className = "",
   ...resto
-}: SelectHTMLAttributes<HTMLSelectElement> & { etiqueta?: string }) {
-  const entrada = (
-    <select className={`${CAMPO_BASE} h-10 cursor-pointer px-3 pr-8 ${className}`} {...resto}>
-      {children}
-    </select>
+}: SelectHTMLAttributes<HTMLSelectElement> & MensajesCampo) {
+  const { identificador, descritoPor } = useDescripcionCampo(
+    id,
+    ayuda,
+    error,
+    descripcion,
   );
-  if (!etiqueta) {
-    return entrada;
-  }
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold text-tinta-media">{etiqueta}</span>
-      {entrada}
-    </label>
+    <MarcoCampo
+      id={identificador}
+      etiqueta={etiqueta}
+      ayuda={ayuda}
+      error={error}
+    >
+      <select
+        {...resto}
+        id={identificador}
+        aria-describedby={descritoPor}
+        aria-invalid={error ? true : invalido}
+        className={`${CAMPO_BASE} cursor-pointer pr-espacio-8 ${className}`}
+      >
+        {children}
+      </select>
+    </MarcoCampo>
   );
 }
 
@@ -192,23 +350,32 @@ export function GrupoSegmentado<T extends string | number>({
   opciones,
   valor,
   alCambiar,
+  etiqueta,
+  disabled = false,
 }: {
   opciones: { valor: T; texto: string }[];
   valor: T;
   alCambiar: (valor: T) => void;
+  etiqueta?: string;
+  disabled?: boolean;
 }) {
   return (
-    <div className="inline-flex rounded-xl border border-borde bg-white p-1 shadow-plano">
+    <div
+      role={etiqueta?.trim() ? "group" : undefined}
+      aria-label={etiqueta?.trim() || undefined}
+      className="inline-flex max-w-full flex-wrap gap-espacio-1 rounded-control bg-lienzo p-espacio-1"
+    >
       {opciones.map((opcion) => (
         <button
           key={String(opcion.valor)}
           type="button"
+          disabled={disabled}
           onClick={() => alCambiar(opcion.valor)}
           aria-pressed={valor === opcion.valor}
-          className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+          className={`min-h-control-pequeno rounded-control px-espacio-3 py-espacio-2 text-pequeno font-semibold transition-colors focus-visible:outline-foco disabled:cursor-not-allowed disabled:opacity-40 ${
             valor === opcion.valor
-              ? "bg-grafito text-white shadow-plano"
-              : "text-tinta-suave hover:text-tinta"
+              ? "bg-superficie text-tinta shadow-plano"
+              : "text-tinta-suave enabled:hover:text-tinta enabled:active:bg-borde"
           }`}
         >
           {opcion.texto}
@@ -229,7 +396,9 @@ export function Barra({
 }) {
   const ancho = porcentaje == null ? 0 : Math.min(Math.max(porcentaje, 0), 100);
   return (
-    <div className={`${alto} w-full overflow-hidden rounded-full bg-lienzo shadow-hundido`}>
+    <div
+      className={`${alto} w-full overflow-hidden rounded-full bg-lienzo shadow-hundido`}
+    >
       <div
         className={`h-full rounded-full transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${TONO_BARRA[tono]}`}
         style={{
@@ -254,6 +423,7 @@ export function Panel({
   children: ReactNode;
   pie?: ReactNode;
 }) {
+  const identificador = useId();
   useEffect(() => {
     function alTeclear(evento: KeyboardEvent) {
       if (evento.key === "Escape") {
@@ -276,21 +446,47 @@ export function Panel({
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label={titulo}
-        className="entrar-lateral flex h-full w-full max-w-2xl flex-col border-l border-borde bg-white shadow-flotante sm:rounded-l-3xl"
+        aria-labelledby={`${identificador}-titulo`}
+        aria-describedby={
+          descripcion ? `${identificador}-descripcion` : undefined
+        }
+        className="entrar-lateral flex h-full w-full max-w-2xl flex-col rounded-panel-lateral border-l border-borde bg-superficie shadow-panel-lateral"
         onClick={(evento) => evento.stopPropagation()}
       >
-        <header className="flex items-start justify-between gap-4 border-b border-borde px-6 py-5">
+        <header className="flex items-start justify-between gap-espacio-4 border-b border-borde px-espacio-6 py-espacio-5">
           <div className="min-w-0">
-            <h2 className="font-titulo text-lg text-tinta">{titulo}</h2>
-            {descripcion ? <p className="mt-1 text-xs text-tinta-suave">{descripcion}</p> : null}
+            <h2
+              id={`${identificador}-titulo`}
+              className="font-titulo text-titulo-panel text-tinta break-words"
+            >
+              {titulo}
+            </h2>
+            {descripcion ? (
+              <p
+                id={`${identificador}-descripcion`}
+                className="mt-espacio-1 text-pequeno text-tinta-suave"
+              >
+                {descripcion}
+              </p>
+            ) : null}
           </div>
-          <Boton variante="fantasma" tamano="sm" onClick={alCerrar} aria-label="Cerrar">
+          <BotonIcono
+            variante="fantasma"
+            tamano="sm"
+            onClick={alCerrar}
+            aria-label="Cerrar"
+          >
             <IconoCerrar tamano={16} />
-          </Boton>
+          </BotonIcono>
         </header>
-        <div className="barra-desplazamiento-fina flex-1 overflow-y-auto px-6 py-5">{children}</div>
-        {pie ? <footer className="border-t border-borde bg-lienzo px-6 py-4">{pie}</footer> : null}
+        <div className="barra-desplazamiento-fina min-h-0 flex-1 overflow-y-auto px-espacio-6 py-espacio-5">
+          {children}
+        </div>
+        {pie ? (
+          <footer className="border-t border-borde bg-lienzo px-espacio-6 py-espacio-4">
+            {pie}
+          </footer>
+        ) : null}
       </aside>
     </div>
   );
@@ -311,15 +507,23 @@ export function Metrica({
 }) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-tinta-suave">{etiqueta}</p>
+      <p className="text-micro uppercase tracking-wider text-tinta-suave">
+        {etiqueta}
+      </p>
       <p
-        className={`cifra mt-2 leading-none ${
-          destacada ? "cifra-degradada text-[34px]" : "text-3xl text-tinta"
+        className={`cifra mt-espacio-2 break-words ${
+          destacada
+            ? "cifra-degradada text-metrica-destacada"
+            : "text-metrica-compacta text-tinta"
         }`}
       >
         {valor}
       </p>
-      {detalle ? <div className="mt-2.5 text-xs text-tinta-suave">{detalle}</div> : null}
+      {detalle ? (
+        <div className="mt-espacio-3 text-pequeno text-tinta-suave">
+          {detalle}
+        </div>
+      ) : null}
       {children}
     </div>
   );

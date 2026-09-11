@@ -74,7 +74,7 @@ export function TiposPropuestos() {
         titulo="Tipos que encontro el sistema"
         descripcion="Documentos que no encajaron en ningun tipo conocido. Se capturaron igual, y aca decidis si vale la pena modelarlos."
         acciones={
-          <GrupoSegmentado opciones={FILTROS} valor={estado} alCambiar={setEstado} />
+          <GrupoSegmentado etiqueta="Estado de los tipos propuestos" opciones={FILTROS} valor={estado} alCambiar={setEstado} />
         }
       />
       <Contenido>

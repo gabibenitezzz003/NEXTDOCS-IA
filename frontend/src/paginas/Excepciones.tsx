@@ -60,6 +60,7 @@ export function Excepciones() {
         descripcion="Todo lo que necesita intervencion humana, con su prioridad y su vencimiento."
         acciones={
           <GrupoSegmentado
+            etiqueta="Estado de las excepciones"
             opciones={ESTADOS.map((candidato) => ({
               valor: candidato,
               texto: candidato.replace(/_/g, " "),

@@ -125,6 +125,7 @@ export function Panel() {
         descripcion="Cada indicador expone la formula con la que se calcula y, cuando aplica, la poblacion exacta que lo compone."
         acciones={
           <GrupoSegmentado
+            etiqueta="Período de los indicadores"
             opciones={VENTANAS.map((ventana) => ({ valor: ventana.valor, texto: ventana.texto }))}
             valor={dias}
             alCambiar={setDias}

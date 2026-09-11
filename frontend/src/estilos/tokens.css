@@ -38,6 +38,9 @@
   --color-accion-primaria: var(--color-violeta);
   --color-accion-primaria-presionada: var(--color-violeta-alto);
   --color-foco: var(--color-violeta);
+  --color-neutro-texto: #596170;
+  --color-exito-texto: #087540;
+  --color-alerta-texto: #9a5c05;
 
   --color-exito: #0f9d58;
   --color-exito-tenue: #e7f6ee;
