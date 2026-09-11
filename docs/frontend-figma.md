@@ -2,9 +2,9 @@
 
 ## Alcance
 
-Esta corrección corresponde a FASE 1, CHECKPOINT 1, sobre `3c7bfab`. Sólo ajusta las
-fundaciones y esta documentación. CHECKPOINT 2 y FASE 2 permanecen pausados; no se migran
-páginas, shell, APIs, permisos ni transiciones.
+FASE 1 quedó cerrada con las fundaciones de `1d2ae93` y las primitivas de `c53cfcc`.
+FASE 2 moderniza exclusivamente el shell y la navegación. No rediseña el contenido interno
+de las páginas ni modifica APIs, permisos o transiciones.
 
 Antes de editar se preservó el trabajo incompleto de CHECKPOINT 2:
 
@@ -102,7 +102,8 @@ Los bordes y sombras de Product UX no se convierten en reglas globales sin migra
 Product UX UX-05 usa sidebar 220 px y barra superior 64 px. Se definen como objetivos futuros:
 `--layout-sidebar-desktop: 220px` y `--layout-topbar-height: 64px`. El shell actual conserva
 `--ancho-barra-lateral: 248px`, 64 px compactos, margen 32 px, gutters 24 px y grilla de 12
-columnas. `Disposicion.tsx` no se modifica; FASE 2 hará la migración explícita.
+columnas como referencia de compatibilidad de FASE 1. FASE 2 aplica los objetivos de 220/64
+al shell mediante sus tokens; ya no utiliza 248 px como ancho efectivo de la sidebar.
 
 ## Tipografía
 
@@ -164,5 +165,75 @@ El gestor es npm y no se instalaron dependencias. Se ejecutan desde `frontend/`:
 --branch`. Los smoke sólo cubren health y Workflow con tenant; no certifican portal, permisos,
 accesibilidad, fidelidad visual ni Follow.
 
-Después de este commit no se restaura el stash, no se inicia CHECKPOINT 2 ni FASE 2. La migración
-del shell, responsive y componentes corporativos requiere autorización y validación visual aparte.
+El stash continúa intacto. Tras FASE 2 se detiene el trabajo: Login, Resumen, Documentos y las
+demás superficies requieren autorización independiente para su rediseño interno.
+
+## FASE 2 — Application shell y navegación
+
+La implementación se concentra en `Disposicion.tsx`. `Navegacion` se comparte entre la barra
+lateral y el drawer; ambos reciben los mismos grupos filtrados. `IdentidadLateral` comparte
+la presentación del usuario y su organización. No se modifica `Aplicacion.tsx` ni se crean rutas.
+
+| Destino | Permiso conservado |
+|---|---|
+| `/resumen`, `/documentos`, `/panel` | `documentos.leer` |
+| `/excepciones` | `excepciones.leer` |
+| `/tipos-propuestos` | `tenant.administrar` |
+| `/procesos` | `plantillas.publicar` |
+
+Los grupos vacíos se omiten. No se cambian los permisos de los endpoints ni se agregan guards.
+`NavLink` conserva la coincidencia por segmento de ruta y genera `aria-current="page"` para
+el módulo activo. El contexto de la topbar usa la misma tabla y reconoce prefijos delimitados
+por `/`, sin confundir nombres de rutas que sólo coincidan parcialmente.
+
+### Composición y decisiones de diseño
+
+- Desde 80 rem, sidebar completa de `--layout-sidebar-desktop` (220 px). Marca, grupos
+  Operación/Análisis/Configuración e identidad al pie. El activo usa violeta sólido del sistema.
+- Entre 48 y 80 rem, navegación compacta de `--ancho-barra-lateral-compacta` (64 px), con
+  nombres accesibles y títulos de enlaces. Los seis destinos siguen disponibles según permisos.
+- Por debajo de 48 rem, se retira la sidebar permanente. Un botón abre el drawer con todos los
+  destinos permitidos. Los umbrales se eligen por espacio disponible, no como copia de frames.
+- La topbar mide `--layout-topbar-height` (64 px) y permanece visible durante el scroll.
+  Muestra módulo, organización disponible y acceso al usuario. No hay cifras ni perfiles ficticios.
+- El menú de usuario permite Tab, Enter/Espacio, Escape, cierre explícito y clic exterior.
+  Es un desplegable con botones nativos, sin atribuirle el patrón ARIA de menú de aplicación.
+  Al cerrar mediante Escape o el botón, el foco vuelve al disparador. Logout conserva
+  exactamente `salir()` y la navegación a `/ingresar`.
+- El drawer de navegación usa `dialog.showModal()`: el navegador gestiona modalidad, foco y
+  Escape. Cierra al seleccionar un destino o pasar al breakpoint de navegación permanente.
+  Su semántica y apertura lateral difieren del `Panel` documental; no se modifica esa primitiva.
+- Grid con columnas `minmax(0,1fr)` y contenido con desbordamiento horizontal local permite
+  que las tablas preexistentes sigan desplazándose. La altura crece con el contenido, sin 900 px
+  fijos. `Encabezado` deja de ser otra barra sticky para no competir con la topbar; `Contenido`
+  y `Encabezado` usan padding menor en móvil. Sus props y el contenido de páginas se conservan.
+
+Evidencia: Product UX `2:291` para composición 220/64; Design System `126:3616` para navegación
+compacta, `123:9715` para apertura lateral y `123:9813` para móvil. El drawer conceptual de
+768 tiene texto genérico y la barra inferior de 390 sólo incluye tres destinos: se conserva
+la dirección visual, pero se usa el inventario real completo. No se agregan Tareas, Studio,
+Integraciones, Sentinel ni otros módulos conceptuales.
+
+Los colores permanecen en el Design System NEXT DOC AI: grafito `#0D0F12`, violeta `#6C38FF`,
+lienzo `#F5F6F8`, bordes y superficies existentes. No se copian `#6C35FF` ni `#F8FAFC` de UX-05.
+No se agregan tokens, fuentes ni dependencias de JavaScript. La instalación autorizada de Chromium
+usa el mecanismo de Playwright existente y no cambia `package.json` ni el lockfile.
+
+### Verificación del shell
+
+La comparación visual usa Chromium con respuestas de sesión y datos interceptadas únicamente
+en el navegador de prueba. No representa datos de producción ni valida el backend. Se revisan
+1440, 1024, 768 y 390 px, además de permisos reducidos, nombres largos, scroll y cierre de menús.
+Los smoke HTTP de `npm run test:e2e` siguen dependiendo del Workflow real en `localhost:8091`;
+su resultado se informa por separado. Esta fase no certifica WCAG completo ni validación de Follow.
+
+La verificación en Chromium pasó en los cuatro anchos: topbar de 64 px, sidebar de
+220/64/64/0 px respectivamente, seis destinos navegables, estado activo, menú de usuario,
+Escape, retorno de foco, scroll largo y logout. No hubo desbordamiento horizontal del documento
+en los escenarios revisados. También pasaron las sesiones con tres, uno y cero destinos
+permitidos, organización larga y cierre del drawer al ampliar el viewport.
+
+`npm run build` y `git diff --check` pasaron. `npm run test:e2e` tuvo dos fallos de conexión:
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`, al consultar health y procesos de
+Workflow. E2E no está verde: debe repetirse con ese servicio disponible antes del PR. Este
+resultado no demuestra una regresión del shell ni de las fundaciones de FASE 1.
