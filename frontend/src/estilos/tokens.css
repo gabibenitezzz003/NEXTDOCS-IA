@@ -25,6 +25,19 @@
   --color-tinta-tenue: #9aa1b1;
   --color-borde: #e6e9ef;
   --color-borde-fuerte: #d3d8e2;
+  --color-blanco: #ffffff;
+}
+
+@theme static {
+  --color-superficie: var(--color-blanco);
+  --color-superficie-navegacion: var(--color-grafito);
+  --color-superficie-navegacion-elevada: var(--color-grafito-alto);
+  --color-superficie-navegacion-activa: var(--color-grafito-claro);
+  --color-borde-navegacion: var(--color-grafito-borde);
+  --color-texto-navegacion-secundario: var(--color-grafito-texto);
+  --color-accion-primaria: var(--color-violeta);
+  --color-accion-primaria-presionada: var(--color-violeta-alto);
+  --color-foco: var(--color-violeta);
 
   --color-exito: #0f9d58;
   --color-exito-tenue: #e7f6ee;
@@ -35,7 +48,9 @@
   --color-informacion: #1d6fe0;
   --color-informacion-tenue: #e9f1fd;
   --color-informacion-borde: #c3dbf8;
+}
 
+@theme static {
   --radius-xl: 14px;
   --radius-2xl: 18px;
   --radius-3xl: 24px;
@@ -57,8 +72,9 @@
   --shadow-hundido:
     inset 0 1px 3px rgba(16, 18, 33, 0.1),
     inset 0 0 0 1px rgba(16, 18, 33, 0.03);
-  --color-blanco: #ffffff;
+}
 
+@theme static {
   --spacing-espacio-1: 4px;
   --spacing-espacio-2: 8px;
   --spacing-espacio-3: 12px;
@@ -71,8 +87,17 @@
   --spacing-espacio-16: 64px;
   --spacing-espacio-20: 80px;
   --spacing-espacio-24: 96px;
+}
+
+@theme static {
+  --spacing-control-pequeno: 34px;
+  --spacing-control-mediano: 42px;
+  --spacing-control-grande: 50px;
 
   --radius-control: 12px;
+  --radius-metrica: 14px;
+  --radius-panel: 16px;
+  --radius-panel-lateral: 0px;
   --radius-tarjeta: 20px;
   --radius-tarjeta-principal: 24px;
   --radius-insignia: 9999px;
@@ -84,6 +109,9 @@
 }
 
 :root {
+  --layout-sidebar-desktop: 220px;
+  --layout-topbar-height: 64px;
+
   --ancho-barra-lateral: 248px;
   --ancho-barra-lateral-compacta: 64px;
   --margen-contenido: 32px;
