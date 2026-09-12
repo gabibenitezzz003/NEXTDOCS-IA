@@ -4,8 +4,9 @@
 
 FASE 1 quedó cerrada con las fundaciones de `1d2ae93` y las primitivas de `c53cfcc`.
 FASE 2 quedó aceptada en `dd52b90` con el shell y la navegación. FASE 3 quedó aceptada en
-`9b1fdd5` con Login y restauración de sesión. FASE 4 trabaja únicamente la presentación de
-`/resumen`, conservando las consultas, poblaciones y fórmulas existentes.
+`9b1fdd5` con Login y restauración de sesión. FASE 4 quedó aceptada en `74437b8` con Resumen.
+FASE 5 trabaja únicamente la presentación de `/documentos`, conservando consultas, filtros,
+búsqueda, paginación, carga individual y apertura del visor existente.
 
 Antes de editar se preservó el trabajo incompleto de CHECKPOINT 2:
 
@@ -396,3 +397,95 @@ La integración real no está verificada: el backend en `127.0.0.1:8090` no resp
 `ECONNREFUSED 127.0.0.1:8091`; debe repetirse con Workflow disponible antes del PR.
 `npm run build` y `git diff --check` pasaron. No se declara E2E verde.
 FASE 4 termina sin iniciar Documentos ni Visor y conserva el stash.
+
+## FASE 5 — Bandeja documental
+
+### Contratos inspeccionados antes de modificar
+
+| Aspecto | Contrato funcional preservado |
+|---|---|
+| Consulta | `listarDocumentos(filtro)`; query key `["documentos", filtro]` |
+| Endpoint | `GET /api/v1/documentos`; respuesta `Pagina<Documento>` |
+| Parámetros | `estados`, `texto`, `soloRaiz: true`, `pagina`, `tamano: 25`, `orden: "alta,desc"` |
+| Búsqueda | Texto local al escribir; al enviar el formulario se aplica `texto.trim()` y página 0, sin debounce |
+| Semántica del backend | Coincidencia parcial sin distinguir mayúsculas sobre nombre, remitente o ID del objeto referenciado por el sujeto |
+| Filtros | Selección múltiple de los nueve estados documentales; se serializan separados por comas y reinician página 0 |
+| Población | `DocumentoSpecificationBuilder` exige tenant, `baja IS NULL` y documento padre nulo cuando `soloRaiz` es verdadero |
+| Paginación | 25 por página, índice desde 0; total y páginas provienen de `totalElements` y `totalPages` |
+| Carga | `ingresarDocumento(archivo)`; un archivo, sin selección múltiple ni cola local |
+| Payload | `POST /api/v1/documentos` multipart con `archivo` y parte JSON `datos` con `origen: "WEB"`; sin plantilla elegida |
+| Extensiones del selector | `.pdf,.png,.jpg,.jpeg,.tif,.tiff,.webp` |
+| Validación del servidor | Extensiones anteriores y MIME real: `application/pdf`, `image/png`, `image/jpeg`, `image/tiff`, `image/webp`; se mantienen sus rechazos de contenido, tamaño y archivo vacío |
+| Permisos | Backend: `documentos.leer` para GET y `documentos.escribir` para POST. El frontend conserva la condición de escritura para ofrecer la carga |
+| Visor | `documentoAbierto` contiene el mismo ID y monta `VisorDocumento`; cierre mediante `setDocumentoAbierto(null)` |
+| Éxito de carga | Aviso con nombre y estado recibido; invalidaciones de `["documentos"]`, `["resumen"]` y `["kpi"]` |
+| Posición tras cargar | Se conservan búsqueda, filtros y página; no se abre el visor ni se inserta una fila optimista |
+| Error de carga | `mensajeDeError(error)`; el selector se vacía tras seleccionar, como antes |
+| Estados de consulta | `isPending`, `isError` y colección vacía se tratan por separado; Reintentar usa el mismo `refetch` |
+
+Las cinco columnas siguen siendo Documento, Estado, Tipo detectado, Sujeto y Recibido.
+Documento conserva nombre, origen y cantidad de segmentos. Tipo conserva captura genérica,
+código de plantilla o «sin detectar». Sujeto conserva tipo e ID, con «—» si no está asociado.
+`formatearFecha` mantiene exactamente su implementación, también utilizada por el visor.
+
+### Diseño y diferencias deliberadas
+
+Se inspeccionaron con Figma MCP los contextos de diseño de UX-03 `2:123` y UX-04 `2:207` del
+Product UX. También se inspeccionaron contexto e imágenes del Design System: normal `40:9138`,
+filtrada `40:9326`, documento ingresado `40:9444`, vacía `40:9635`, sin resultados `40:9725`,
+cargando `40:9817` y error `126:3289`.
+
+- UX-03 orienta título, acción principal y lectura de la bandeja. No se incorporan KPI,
+  tendencias, insights, responsables ni estados ilustrativos. «Sujeto» conserva su entidad real.
+- UX-04 sigue siendo conceptual: cargar es una acción de `/documentos`; no se crean rutas,
+  validación anticipada, selección múltiple, drag & drop, lote o modal de procesamiento.
+- El Design System orienta tabla con cabecera grafito, superficie clara, filtros de selección
+  violeta y estados separados. Algunas instancias muestran «Guardar», filtros verticales y
+  encabezados superpuestos: se adaptan al flujo real y al espacio disponible, sin copiarlos.
+- Se reutilizan `Boton`, `Campo`, `Pastilla`, `InsigniaEstado`, `Tarjeta`, `Cargando`, `Vacio`
+  y `ErrorPanel`. No se modifica su API ni se agregan tokens, fuentes o dependencias.
+- `ESTADOS_DOCUMENTALES` determina el catálogo de filtros, sus etiquetas y la etiqueta del
+  aviso de ingreso; las insignias siguen usando esa misma fuente. No hay mapas locales de tonos.
+- Desde 64 rem se presenta una tabla nativa con cinco columnas de ancho proporcional. Bajo
+  ese ancho se usa una lista de tarjetas: dos columnas desde 40 rem y una en móvil. Cada
+  tarjeta conserva todos los datos de la fila; el nombre abre el mismo visor.
+- La tabla conserva clic sobre la fila y agrega botón de nombre con foco visible, Enter y
+  Espacio nativos. Las presentaciones comparten funciones locales de nombre, tipo y sujeto;
+  CSS oculta la variante que no corresponde, sin duplicar consultas.
+- Búsqueda tiene label asociado y región `search`; filtros usan `fieldset`, `legend` y
+  botones con `aria-pressed`. La tabla tiene caption y headers `scope="col"`. La paginación
+  tiene nombre accesible y botones realmente deshabilitados en los extremos.
+- Carga usa `Boton` con `cargando`, dimensiones estables, `aria-busy`, bloqueo del botón y
+  del selector mientras espera, y anuncio de «Subiendo documento». No se amplía su contrato.
+- El éxito usa `role="status"`; el error de carga, `role="alert"`. Ambos conservan el mensaje
+  funcional y los iconos decorativos quedan fuera del árbol accesible.
+- Loading usa seis skeletons decorativos. Una lista vacía sin criterios muestra «Todavía no
+  hay documentos»; con búsqueda o estados seleccionados muestra «No hay documentos que
+  coincidan». Esto describe la consulta actual, sin una petición adicional para inferir el
+  tamaño global. Limpiar filtros reutiliza los cuatro cambios locales existentes.
+- El error de listado muestra `ErrorPanel` y el mensaje real, sin convertirlo en una lista
+  vacía. La pantalla no agrega un CTA de carga adicional en el vacío.
+
+No se declara pixel-perfect ni validación corporativa contra Follow. El shell y el interior
+del visor permanecen sin cambios; sus mejoras posteriores quedan fuera de FASE 5.
+
+### Verificación
+
+La comparación de AST contra `74437b8` verifica filtro, query, tamaño de página, totales,
+alternancia de estados, envío de búsqueda, selección de archivo, formatos, invalidaciones,
+ID entregado al visor y función de fecha. No se modifican cliente API, sesión, tipos ni backend.
+
+Chromium verifica normal en 1440, 1024, 768 y 390; filtrada; sin resultados; loading; vacío;
+error con recuperación; carga pendiente, éxito y rechazo; usuario sin escritura; paginación
+de 25; apertura del visor por teclado y clic de fila. Las respuestas se controlan en el
+navegador: una carga simulada verifica presentación y peticiones frontend, no integración real.
+También pasan nombres, tipos y referencias extensos sin overflow en 1024 y 390 px, datos
+ausentes y navegación por Tab. `npm run build` y `git diff --check` pasan.
+
+El browser de Chromium no estaba presente en esta sesión y se descargó con el mecanismo de
+Playwright ya instalado, sin cambios en `package.json` ni lockfile.
+
+La integración real está pendiente: `127.0.0.1:8090` rechaza la conexión. `npm run test:e2e`
+falla en sus dos smoke por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`.
+No se declara E2E verde; se debe repetir con Workflow disponible antes del PR.
+FASE 5 termina sin iniciar el rediseño del visor, sin push y conservando el stash de CHECKPOINT 2.
