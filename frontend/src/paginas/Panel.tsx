@@ -1,14 +1,20 @@
-import type { RefObject } from "react";
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
-import { Cargando, CargandoTarjetas, ErrorPanel, Vacio } from "../componentes/Estados";
+import {
+  Cargando,
+  CargandoTarjetas,
+  ErrorPanel,
+  Vacio,
+} from "../componentes/Estados";
 import { InsigniaEstado } from "../componentes/Insignias";
 import {
   Boton,
   CabeceraTarjeta,
   GrupoSegmentado,
+  Metrica,
   Panel as PanelLateral,
   Pastilla,
   Tarjeta,
@@ -18,6 +24,7 @@ import {
   AnilloApilado,
   BarraAnimada,
   Columnas,
+  COLOR_GRAFICO,
   Embudo,
   useContador,
   useVisible,
@@ -30,10 +37,23 @@ import {
   IconoIgual,
   IconoInfo,
 } from "../componentes/Iconos";
-import { listarKpiPorPlantilla, obtenerKpi, obtenerPoblacionKpi } from "../api/kpi";
+import {
+  listarKpiPorPlantilla,
+  obtenerKpi,
+  obtenerPoblacionKpi,
+} from "../api/kpi";
 import { mensajeDeError } from "../api/cliente";
 import { formatearFecha } from "./Documentos";
-import type { BarraKpi, IndicadorKpi, KpiPlantilla, SaludPlantilla, SemaforoKpi } from "../tipos/api";
+import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
+import type { Tono } from "../componentes/Interfaz";
+import type {
+  EstadoDocumento,
+  BarraKpi,
+  IndicadorKpi,
+  KpiPlantilla,
+  SaludPlantilla,
+  SemaforoKpi,
+} from "../tipos/api";
 
 const VENTANAS = [
   { valor: 7, texto: "7 dias" },
@@ -50,13 +70,6 @@ const TONO_SEMAFORO: Record<SemaforoKpi, ClaveTono> = {
   SIN_DATOS: "neutro",
 };
 
-const ESTILO_SALUD: Record<SaludPlantilla, string> = {
-  OK: "bg-exito-tenue text-exito ring-exito-borde",
-  ATENCION: "bg-alerta-tenue text-alerta ring-alerta-borde",
-  CRITICO: "bg-rojo-tenue text-rojo ring-rojo-borde",
-  SIN_DATOS: "bg-lienzo text-tinta-suave ring-borde",
-};
-
 const TONO_SALUD: Record<SaludPlantilla, ClaveTono> = {
   OK: "exito",
   ATENCION: "alerta",
@@ -64,38 +77,41 @@ const TONO_SALUD: Record<SaludPlantilla, ClaveTono> = {
   SIN_DATOS: "neutro",
 };
 
-const COLOR_ESTADO: Record<string, string> = {
-  RECIBIDO: "#9AA1B1",
-  PROCESANDO: "#8A63FF",
-  EXTRAIDO: "#6C38FF",
-  VALIDADO: "#1D6FE0",
-  OBSERVADO: "#C2760A",
-  APROBADO: "#0F9D58",
-  RECHAZADO: "#FF1E1E",
-  CERRADO: "#3D4453",
-  DIVIDIDO: "#5EA0F2",
-};
-
-const ORDEN_EMBUDO = ["RECIBIDO", "PROCESANDO", "EXTRAIDO", "VALIDADO", "APROBADO", "CERRADO"];
+const ORDEN_EMBUDO = [
+  "RECIBIDO",
+  "PROCESANDO",
+  "EXTRAIDO",
+  "VALIDADO",
+  "APROBADO",
+  "CERRADO",
+];
 
 export function Panel() {
   const [dias, setDias] = useState(30);
-  const [indicadorAbierto, setIndicadorAbierto] = useState<IndicadorKpi | null>(null);
+  const [indicadorAbierto, setIndicadorAbierto] = useState<IndicadorKpi | null>(
+    null,
+  );
 
   const rango = useMemo(
     () => ({ desde: new Date(Date.now() - dias * 86400000).toISOString() }),
     [dias],
   );
 
-  const resumen = useQuery({ queryKey: ["kpi", "resumen", dias], queryFn: () => obtenerKpi(rango) });
+  const resumen = useQuery({
+    queryKey: ["kpi", "resumen", dias],
+    queryFn: () => obtenerKpi(rango),
+  });
   const plantillas = useQuery({
     queryKey: ["kpi", "plantillas", dias],
     queryFn: () => listarKpiPorPlantilla(rango),
   });
 
   const indicadores = resumen.data?.indicadores ?? [];
-  const buscar = (clave: string) => indicadores.find((indicador) => indicador.clave === clave);
-  const secundarios = indicadores.filter((indicador) => !DESTACADOS.includes(indicador.clave));
+  const buscar = (clave: string) =>
+    indicadores.find((indicador) => indicador.clave === clave);
+  const secundarios = indicadores.filter(
+    (indicador) => !DESTACADOS.includes(indicador.clave),
+  );
 
   const recibidos = buscar("documentosRecibidos");
   const automatizacion = buscar("automatizacion");
@@ -108,39 +124,69 @@ export function Panel() {
     .map(([estado, cantidad]) => ({
       etiqueta: estado,
       valor: cantidad,
-      color: COLOR_ESTADO[estado] ?? "#9AA1B1",
+      color:
+        ESTADOS_DOCUMENTALES[estado as EstadoDocumento]?.color ??
+        "var(--color-tinta-suave)",
     }));
-  const totalBacklog = segmentos.reduce((suma, segmento) => suma + segmento.valor, 0);
+  const totalBacklog = segmentos.reduce(
+    (suma, segmento) => suma + segmento.valor,
+    0,
+  );
 
-  const embudo = ORDEN_EMBUDO.filter((estado) => porEstado[estado] != null).map((estado) => ({
-    etiqueta: estado,
-    valor: porEstado[estado] ?? 0,
-    tono: (estado === "APROBADO" ? "exito" : estado === "CERRADO" ? "neutro" : "violeta") as ClaveTono,
-  }));
+  const embudo = ORDEN_EMBUDO.filter((estado) => porEstado[estado] != null).map(
+    (estado) => ({
+      etiqueta: estado,
+      valor: porEstado[estado] ?? 0,
+      tono: ESTADOS_DOCUMENTALES[estado as EstadoDocumento].tono as ClaveTono,
+    }),
+  );
 
   return (
     <>
       <Encabezado
         titulo="Panel de control"
-        descripcion="Cada indicador expone la formula con la que se calcula y, cuando aplica, la poblacion exacta que lo compone."
-        acciones={
+        descripcion="Indicadores documentales con sus fórmulas, poblaciones y contexto de medición."
+      />
+      <Contenido>
+        <div className="mb-espacio-5 flex flex-wrap items-center justify-between gap-espacio-3">
           <GrupoSegmentado
             etiqueta="Período de los indicadores"
-            opciones={VENTANAS.map((ventana) => ({ valor: ventana.valor, texto: ventana.texto }))}
+            opciones={VENTANAS.map((ventana) => ({
+              valor: ventana.valor,
+              texto: ventana.texto,
+            }))}
             valor={dias}
             alCambiar={setDias}
           />
-        }
-      />
-
-      <Contenido>
+          {resumen.data && !resumen.isError ? (
+            <p className="text-pequeno text-tinta-suave">
+              {formatearFecha(resumen.data.rango.desde)} —{" "}
+              {formatearFecha(resumen.data.rango.hasta)}
+            </p>
+          ) : null}
+        </div>
         {resumen.isPending ? (
-          <CargandoTarjetas cantidad={3} />
+          <div className="space-y-espacio-5">
+            <CargandoTarjetas cantidad={3} />
+            <Cargando filas={3} alto="h-32" />
+          </div>
         ) : resumen.isError ? (
-          <ErrorPanel mensaje={mensajeDeError(resumen.error)} reintentar={() => resumen.refetch()} />
+          <ErrorPanel
+            mensaje={mensajeDeError(resumen.error)}
+            reintentar={() => resumen.refetch()}
+          />
         ) : (
           <>
-            <div className="grid gap-5 lg:grid-cols-[1.15fr_1fr_1fr]">
+            {indicadores.length === 0 ? (
+              <Vacio
+                titulo="Sin indicadores disponibles"
+                detalle="La respuesta no contiene indicadores. Esto no determina si existen documentos."
+              />
+            ) : null}
+            <section
+              aria-label="Indicadores principales"
+              className="grid min-w-0 gap-espacio-4 sm:grid-cols-2 lg:grid-cols-3"
+            >
               {recibidos ? (
                 <TarjetaHeroe
                   indicador={recibidos}
@@ -148,11 +194,15 @@ export function Panel() {
                   alAbrir={() => setIndicadorAbierto(recibidos)}
                 />
               ) : null}
-              {automatizacion ? <TarjetaAnillo indicador={automatizacion} tono="violeta" /> : null}
+              {automatizacion ? (
+                <TarjetaAnillo indicador={automatizacion} tono="violeta" />
+              ) : null}
               {sla ? <TarjetaAnillo indicador={sla} tono="exito" /> : null}
-            </div>
-
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            </section>
+            <section
+              aria-label="Detalle de indicadores"
+              className="mt-espacio-4 grid min-w-0 gap-espacio-4 sm:grid-cols-2 xl:grid-cols-4"
+            >
               {secundarios.map((indicador) => (
                 <TarjetaIndicador
                   key={indicador.clave}
@@ -160,69 +210,122 @@ export function Panel() {
                   alAbrir={() => setIndicadorAbierto(indicador)}
                 />
               ))}
-            </div>
-
-            <section className="mt-6 grid gap-5 lg:grid-cols-[1fr_1fr]">
-              <Tarjeta indice={0}>
+            </section>
+            <section
+              aria-label="Distribución documental actual"
+              className="mt-espacio-6 grid min-w-0 gap-espacio-4 xl:grid-cols-2"
+            >
+              <Tarjeta>
                 <CabeceraTarjeta
                   titulo="Embudo del ciclo documental"
-                  descripcion="Backlog actual del tenant por etapa, sin recorte de fechas."
+                  descripcion="Conteo actual por etapa, sin recorte de fechas; incluye raíces y segmentos."
                 />
-                <div className="mt-5">
+                <p className="mt-espacio-3 text-pequeno text-tinta-suave">
+                  Las barras se comparan con la etapa de mayor volumen; no
+                  representan tasas de conversión.
+                </p>
+                <div className="mt-espacio-5">
                   {embudo.length ? (
-                    <Embudo etapas={embudo} />
+                    <Embudo etapas={embudo} plano />
                   ) : (
-                    <p className="text-sm text-tinta-suave">Todavia no hay documentos.</p>
+                    <p className="text-pequeno text-tinta-suave">
+                      Sin distribución por etapas disponible.
+                    </p>
                   )}
                 </div>
               </Tarjeta>
-
-              <Tarjeta indice={1}>
+              <Tarjeta>
                 <CabeceraTarjeta
-                  titulo="Composicion del backlog"
-                  descripcion="Cada estado sobre el total de documentos vivos."
+                  titulo="Composición del backlog"
+                  descripcion="Todos los documentos sin baja, incluidos segmentos y estados finales. Sin recorte de fechas."
                 />
                 {totalBacklog ? (
-                  <div className="mt-5 flex flex-wrap items-center gap-7">
-                    <AnilloApilado segmentos={segmentos} total={totalBacklog} />
-                    <ul className="min-w-40 flex-1 space-y-2">
-                      {segmentos.map((segmento) => (
-                        <li key={segmento.etiqueta} className="flex items-center gap-2.5 text-xs">
-                          <span
-                            className="size-3 shrink-0 rounded-full ring-2 ring-white"
-                            style={{
-                              background: segmento.color,
-                              boxShadow: `0 2px 6px -1px ${segmento.color}99`,
-                            }}
-                          />
-                          <span className="flex-1 font-medium text-tinta-media">{segmento.etiqueta}</span>
-                          <span className="cifra text-tinta">{segmento.valor.toLocaleString("es-AR")}</span>
-                          <span className="w-9 text-right tabular-nums text-tinta-tenue">
-                            {Math.round((segmento.valor / totalBacklog) * 100)}%
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                  <div className="mt-espacio-5 flex min-w-0 flex-wrap items-center justify-center gap-espacio-5">
+                    <div aria-hidden="true">
+                      <AnilloApilado
+                        segmentos={segmentos}
+                        total={totalBacklog}
+                        plano
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 basis-56">
+                      <p className="mb-espacio-3 text-pequeno font-semibold">
+                        {totalBacklog.toLocaleString("es-AR")} documentos en
+                        total
+                      </p>
+                      <ul
+                        aria-label="Documentos por estado"
+                        className="space-y-espacio-2"
+                      >
+                        {segmentos.map((segmento) => (
+                          <li
+                            key={segmento.etiqueta}
+                            className="flex flex-wrap items-center gap-espacio-2 text-pequeno"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="size-espacio-2 shrink-0 rounded-insignia"
+                              style={{ background: segmento.color }}
+                            />
+                            <span className="min-w-0 flex-1 font-medium [overflow-wrap:anywhere]">
+                              {segmento.etiqueta}
+                            </span>
+                            <span className="tabular-nums">
+                              {segmento.valor.toLocaleString("es-AR")}
+                            </span>
+                            <span className="w-espacio-10 text-right tabular-nums text-tinta-suave">
+                              {Math.round(
+                                (segmento.valor / totalBacklog) * 100,
+                              )}
+                              %
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
                 ) : (
-                  <p className="mt-5 text-sm text-tinta-suave">Todavia no hay documentos.</p>
+                  <p className="mt-espacio-5 text-pequeno text-tinta-suave">
+                    {Object.keys(porEstado).length
+                      ? "0 documentos en la distribución actual."
+                      : "Sin distribución por estados disponible."}
+                  </p>
                 )}
+                {Object.entries(porEstado).some(
+                  ([, cantidad]) => cantidad === 0,
+                ) ? (
+                  <p className="mt-espacio-4 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
+                    Con 0 documentos:{" "}
+                    {Object.entries(porEstado)
+                      .filter(([, cantidad]) => cantidad === 0)
+                      .map(([estado]) => estado)
+                      .join(", ")}
+                    .
+                  </p>
+                ) : null}
               </Tarjeta>
             </section>
-
-            <section className="mt-6">
-              <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <h2 className="font-titulo text-lg text-tinta">Salud por plantilla</h2>
-                  <p className="mt-0.5 text-sm text-tinta-suave">
-                    Priorizacion operativa por avance, documentacion, automatizacion y excepciones.
-                  </p>
-                </div>
-                <p className="text-xs text-tinta-tenue">
-                  {formatearFecha(resumen.data.rango.desde)} — {formatearFecha(resumen.data.rango.hasta)}
+            <section
+              aria-labelledby="salud-plantillas"
+              className="mt-espacio-6 min-w-0"
+            >
+              <div className="mb-espacio-4">
+                <h2
+                  id="salud-plantillas"
+                  className="font-titulo text-titulo-seccion"
+                >
+                  Salud por plantilla
+                </h2>
+                <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+                  Documentos con plantilla recibidos en el período, incluidos
+                  segmentos. Salud según la menor razón disponible de las cuatro
+                  barras; no es confianza de IA.
+                </p>
+                <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+                  OK ≥ 85% · ATENCIÓN ≥ 60% y &lt; 85% · CRÍTICO &lt; 60% · SIN
+                  DATOS cuando todas las razones son nulas.
                 </p>
               </div>
-
               {plantillas.isPending ? (
                 <Cargando filas={3} alto="h-32" />
               ) : plantillas.isError ? (
@@ -232,36 +335,65 @@ export function Panel() {
                 />
               ) : !plantillas.data.length ? (
                 <Vacio
-                  titulo="Sin documentos en esta ventana"
-                  detalle="Ampliá el rango o ingresá documentos para ver el panel por plantilla."
+                  titulo="Sin datos por plantilla en este período"
+                  detalle="No se devolvieron grupos de documentos con plantilla. Puede haber documentos fuera del período o sin plantilla."
                   accion={
-                    <Link to="/documentos">
-                      <Boton variante="primario">Ir a documentos</Boton>
+                    <Link
+                      to="/documentos"
+                      className="rounded-control px-espacio-4 py-espacio-3 text-pequeno font-semibold text-violeta hover:bg-violeta-tenue focus-visible:outline-foco"
+                    >
+                      Ir a documentos
                     </Link>
                   }
                 />
               ) : (
                 <>
                   {plantillas.data.length > 1 ? (
-                    <Tarjeta className="mb-4" indice={0}>
+                    <Tarjeta className="mb-espacio-4">
                       <CabeceraTarjeta
                         titulo="Volumen por plantilla"
-                        descripcion="Dónde se concentra el trabajo en la ventana elegida."
+                        descripcion="Cantidad de documentos recibidos en el período para cada plantilla, incluidos segmentos."
                       />
-                      <div className="mt-5">
+                      <div
+                        aria-hidden="true"
+                        className="mt-espacio-5 hidden sm:block"
+                      >
                         <Columnas
                           barras={plantillas.data.map((plantilla) => ({
                             etiqueta: plantilla.codigo,
                             valor: plantilla.volumen,
                             tono: TONO_SALUD[plantilla.salud],
+                            color: COLOR_GRAFICO[TONO_SALUD[plantilla.salud]],
                           }))}
                         />
                       </div>
+                      <dl
+                        aria-label="Volumen por plantilla en documentos"
+                        className="mt-espacio-5 grid min-w-0 gap-espacio-3 sm:grid-cols-2 xl:grid-cols-3"
+                      >
+                        {plantillas.data.map((plantilla) => (
+                          <div
+                            key={plantilla.codigo}
+                            className="flex min-w-0 items-baseline justify-between gap-espacio-3 border-t border-borde pt-espacio-2 text-pequeno"
+                          >
+                            <dt className="min-w-0 [overflow-wrap:anywhere]">
+                              {plantilla.codigo}
+                            </dt>
+                            <dd className="shrink-0 font-semibold tabular-nums">
+                              {plantilla.volumen.toLocaleString("es-AR")}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     </Tarjeta>
                   ) : null}
-                  <div className="space-y-3">
+                  <div className="space-y-espacio-4">
                     {plantillas.data.map((plantilla, indice) => (
-                      <FilaPlantilla key={plantilla.codigo} plantilla={plantilla} indice={indice} />
+                      <FilaPlantilla
+                        key={plantilla.codigo}
+                        plantilla={plantilla}
+                        indice={indice}
+                      />
                     ))}
                   </div>
                 </>
@@ -270,7 +402,6 @@ export function Panel() {
           </>
         )}
       </Contenido>
-
       {indicadorAbierto ? (
         <PanelPoblacion
           indicador={indicadorAbierto}
@@ -279,6 +410,47 @@ export function Panel() {
         />
       ) : null}
     </>
+  );
+}
+
+const CONTEXTO_KPI: Record<string, string> = {
+  documentosRecibidos: "Raíces recibidas en el período; excluye segmentos.",
+  documentosCerrados: "Por fecha de cierre en el período; incluye segmentos.",
+  automatizacion: "Cerrados sin revisión humana / cerrados del período.",
+  cumplimientoSla:
+    "Excepciones resueltas en el período; sin vencimiento también cumplen SLA.",
+  tiempoCicloP50:
+    "Cerrados en el período con fecha de recepción; incluye segmentos.",
+  tiempoCicloP90:
+    "Cerrados en el período con fecha de recepción; incluye segmentos.",
+  excepcionesAbiertas: "Actual: ABIERTA + EN_CURSO. Sin recorte de fechas.",
+  excepcionesVencidas: "Actual: vencidas no RESUELTAS, incluidas DESCARTADAS.",
+  documentosPorVencer:
+    "Retención en los próximos 30 días, independiente del período.",
+  almacenamientoUtilizado:
+    "Bytes de archivos vigentes / cuota de almacenamiento. Medición actual.",
+  entregaDeEventos:
+    "Registros de entrega creados en el período; no reintentos.",
+};
+
+function DetalleIndicador({ indicador }: { indicador: IndicadorKpi }) {
+  return (
+    <div className="mt-espacio-3 border-t border-borde pt-espacio-3 text-pequeno text-tinta-suave">
+      {CONTEXTO_KPI[indicador.clave] ? (
+        <p>{CONTEXTO_KPI[indicador.clave]}</p>
+      ) : null}
+      {indicador.detalle ? (
+        <p className="mt-espacio-2">{indicador.detalle}</p>
+      ) : null}
+      <details className="mt-espacio-2">
+        <summary className="w-fit cursor-pointer rounded-control text-violeta focus-visible:outline-foco">
+          Fórmula del indicador
+        </summary>
+        <p className="mt-espacio-2 [overflow-wrap:anywhere]">
+          {indicador.formula}
+        </p>
+      </details>
+    </div>
   );
 }
 
@@ -296,104 +468,133 @@ function TarjetaHeroe({
   const actual = indicador.valor ?? 0;
   const anterior = indicador.valorAnterior ?? 0;
   const maximo = Math.max(actual, anterior, 1);
-
   return (
-    <article
-      ref={referencia}
-      className="subir superficie-oscura relieve-oscuro elevar relative overflow-hidden rounded-3xl p-6"
-    >
-      <div
-        className="pointer-events-none absolute -right-16 -top-16 size-52 rounded-full opacity-40 blur-3xl"
-        style={{ background: "radial-gradient(circle, #6C38FF 0%, transparent 70%)" }}
-      />
-
-      <div className="relative">
-        <div className="flex items-start justify-between gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-white/50">
-            {indicador.etiqueta}
-          </p>
-          <Pastilla tono="violeta" className="bg-white/10 text-violeta-claro ring-white/15">
-            {rango.dias} dias
-          </Pastilla>
-        </div>
-
-        <p className="cifra mt-3 text-[60px] leading-none text-white drop-shadow-[0_4px_24px_rgba(108,56,255,0.55)]">
-          {Math.round(animado).toLocaleString("es-AR")}
+    <div ref={referencia} className="min-w-0 sm:col-span-2 lg:col-span-1">
+      <Tarjeta className="h-full">
+        <Metrica
+          etiqueta={indicador.etiqueta}
+          valor={
+            indicador.valor == null
+              ? "Sin datos"
+              : Math.round(animado).toLocaleString("es-AR")
+          }
+        />
+        <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+          {rango.dias} días
         </p>
-
-        <div className="mt-6 space-y-2.5">
+        <div
+          className="mt-espacio-4 space-y-espacio-3"
+          aria-label="Comparación de documentos recibidos"
+        >
           {[
-            { etiqueta: "Este periodo", valor: actual, fuerte: true },
-            { etiqueta: "Periodo anterior", valor: anterior, fuerte: false },
+            {
+              etiqueta: "Este período",
+              valor: actual,
+              disponible: indicador.valor != null,
+              fuerte: true,
+            },
+            {
+              etiqueta: "Período anterior",
+              valor: anterior,
+              disponible: indicador.valorAnterior != null,
+              fuerte: false,
+            },
           ].map((fila) => (
-            <div key={fila.etiqueta} className="flex items-center gap-3">
-              <span className="w-28 shrink-0 text-[11px] text-white/45">{fila.etiqueta}</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+            <div key={fila.etiqueta}>
+              <div className="mb-espacio-1 flex items-baseline justify-between gap-espacio-2 text-pequeno">
+                <span className="text-tinta-suave">{fila.etiqueta}</span>
+                <span className="font-semibold tabular-nums">
+                  {fila.disponible
+                    ? fila.valor.toLocaleString("es-AR")
+                    : "Sin datos"}
+                </span>
+              </div>
+              <div
+                aria-hidden="true"
+                className="h-espacio-2 overflow-hidden rounded-insignia bg-borde"
+              >
                 <div
-                  className={`h-full rounded-full ${fila.fuerte ? "degradado-marca" : "bg-white/25"}`}
+                  className={
+                    "h-full rounded-insignia " +
+                    (fila.fuerte ? "bg-violeta" : "bg-tinta-suave")
+                  }
                   style={{
                     width: visible ? `${(fila.valor / maximo) * 100}%` : "0%",
-                    boxShadow: fila.fuerte ? "0 0 14px -2px rgba(108,56,255,0.8)" : undefined,
                     transition: "width 1.1s cubic-bezier(0.22, 1, 0.36, 1)",
                   }}
                 />
               </div>
-              <span className="cifra w-12 shrink-0 text-right text-sm text-white/85">
-                {fila.valor.toLocaleString("es-AR")}
-              </span>
             </div>
           ))}
         </div>
-
-        <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
-          <Tendencia indicador={indicador} claro />
-          {indicador.tienePoblacion ? (
-            <button
-              type="button"
-              onClick={alAbrir}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-white/70 transition hover:bg-white/10 hover:text-white"
-            >
-              Ver poblacion
-              <IconoDerecha tamano={13} />
-            </button>
-          ) : null}
+        <div className="mt-espacio-3">
+          <Tendencia indicador={indicador} />
         </div>
-      </div>
-    </article>
+        <DetalleIndicador indicador={indicador} />
+        {indicador.tienePoblacion ? (
+          <Boton
+            type="button"
+            tamano="sm"
+            onClick={alAbrir}
+            className="mt-espacio-3"
+          >
+            Ver población
+            <span aria-hidden="true">
+              <IconoDerecha tamano={13} />
+            </span>
+          </Boton>
+        ) : null}
+      </Tarjeta>
+    </div>
   );
 }
 
-function TarjetaAnillo({ indicador, tono }: { indicador: IndicadorKpi; tono: ClaveTono }) {
+function TarjetaAnillo({
+  indicador,
+  tono,
+}: {
+  indicador: IndicadorKpi;
+  tono: ClaveTono;
+}) {
   const sinDatos = indicador.valor == null;
-
   return (
-    <Tarjeta className="@container/anillo flex flex-col" indice={1} interactiva>
-      <CabeceraTarjeta titulo={indicador.etiqueta} />
-      <div className="mt-4 flex flex-1 flex-col items-center gap-4 @[300px]/anillo:flex-row @[300px]/anillo:gap-5">
-        <Anillo
-          porcentaje={indicador.valor ?? null}
-          tono={sinDatos ? "neutro" : tono}
-          tamano={128}
-          grosor={13}
-        />
-        <div className="min-w-0 flex-1 text-center @[300px]/anillo:text-left">
+    <Tarjeta>
+      <h2 className="font-titulo text-titulo-panel">{indicador.etiqueta}</h2>
+      <div className="mt-espacio-4 flex flex-wrap items-center justify-center gap-espacio-4">
+        <div aria-hidden="true">
+          <Anillo
+            porcentaje={indicador.valor ?? null}
+            tono={sinDatos ? "neutro" : tono}
+            tamano={112}
+            grosor={10}
+            plano
+            centro={
+              <span className="cifra text-metrica-compacta">
+                {formatearValor(indicador)}
+              </span>
+            }
+          />
+        </div>
+        <div className="min-w-0 flex-1 basis-32 text-pequeno">
+          <p className="sr-only">
+            {indicador.etiqueta}: {formatearValor(indicador)}
+          </p>
           {indicador.denominador ? (
-            <p className="text-sm text-tinta-media">
-              <span className="cifra text-tinta">{indicador.numerador?.toLocaleString("es-AR")}</span>
-              <span className="text-tinta-tenue"> de </span>
-              <span className="cifra text-tinta">{indicador.denominador.toLocaleString("es-AR")}</span>
+            <p>
+              {indicador.numerador?.toLocaleString("es-AR")} de{" "}
+              {indicador.denominador.toLocaleString("es-AR")}
             </p>
           ) : (
-            <p className="text-sm text-tinta-tenue">Sin base de calculo en este periodo</p>
+            <p className="text-tinta-suave">
+              Sin base de cálculo en este período
+            </p>
           )}
-          <div className="mt-2">
+          <div className="mt-espacio-2">
             <Tendencia indicador={indicador} />
           </div>
         </div>
       </div>
-      <p className="mt-4 border-t border-borde pt-3 text-[11px] leading-snug text-tinta-suave">
-        {indicador.detalle ?? indicador.formula}
-      </p>
+      <DetalleIndicador indicador={indicador} />
     </Tarjeta>
   );
 }
@@ -405,154 +606,162 @@ function TarjetaIndicador({
   indicador: IndicadorKpi;
   alAbrir: () => void;
 }) {
-  const { referencia, visible } = useVisible<HTMLElement>();
+  const { referencia, visible } = useVisible<HTMLDivElement>();
   const esConteo = indicador.unidad === "CONTEO";
   const animado = useContador(visible && esConteo ? (indicador.valor ?? 0) : 0);
-
   const contenido = (
-    <>
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-tinta-suave">
-          {indicador.etiqueta}
-        </p>
-        {indicador.tienePoblacion ? (
-          <span className="shrink-0 rounded-md bg-violeta-tenue px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-violeta">
-            detalle
-          </span>
-        ) : null}
-      </div>
-      <p className="cifra cifra-degradada mt-2.5 text-[34px] leading-none">
-        {esConteo ? Math.round(animado).toLocaleString("es-AR") : formatearValor(indicador)}
-      </p>
-      <div className="mt-2">
-        <Tendencia indicador={indicador} />
-      </div>
-      <p className="mt-3 border-t border-borde pt-2.5 text-[11px] leading-snug text-tinta-suave">
-        {indicador.detalle ?? indicador.formula}
-      </p>
-    </>
+    <Metrica
+      etiqueta={indicador.etiqueta}
+      valor={
+        indicador.valor == null
+          ? "Sin datos"
+          : esConteo
+            ? Math.round(animado).toLocaleString("es-AR")
+            : formatearValor(indicador)
+      }
+      detalle={<Tendencia indicador={indicador} />}
+    />
   );
-
-  if (!indicador.tienePoblacion) {
-    return (
-      <div
-        ref={referencia as RefObject<HTMLDivElement>}
-        className="subir relieve rounded-3xl border border-borde bg-white px-5 py-4"
-      >
-        {contenido}
-      </div>
-    );
-  }
-
   return (
-    <button
-      ref={referencia as RefObject<HTMLButtonElement>}
-      type="button"
-      onClick={alAbrir}
-      className="subir relieve elevar rounded-3xl border border-borde bg-white px-5 py-4 text-left hover:border-violeta-borde"
-    >
-      {contenido}
-    </button>
+    <div ref={referencia} className="min-w-0">
+      <Tarjeta className="h-full">
+        {indicador.tienePoblacion ? (
+          <button
+            type="button"
+            onClick={alAbrir}
+            className="w-full rounded-control text-left focus-visible:outline-foco"
+          >
+            {contenido}
+            <span className="mt-espacio-2 inline-block text-pequeno font-semibold text-violeta">
+              Ver población
+            </span>
+          </button>
+        ) : (
+          contenido
+        )}
+        <DetalleIndicador indicador={indicador} />
+      </Tarjeta>
+    </div>
   );
 }
 
-function Tendencia({ indicador, claro = false }: { indicador: IndicadorKpi; claro?: boolean }) {
-  if (indicador.tendencia === "SIN_COMPARACION" || indicador.variacion == null) {
+function Tendencia({ indicador }: { indicador: IndicadorKpi }) {
+  if (indicador.tendencia === "SIN_COMPARACION" || indicador.variacion == null)
     return (
-      <span className={`text-xs ${claro ? "text-white/40" : "text-tinta-tenue"}`}>
-        Sin periodo anterior comparable
+      <span className="text-pequeno text-tinta-suave">
+        Sin período anterior comparable
       </span>
     );
-  }
-
   const sube = indicador.tendencia === "SUBE";
   const estable = indicador.tendencia === "ESTABLE";
-  const Icono = estable ? IconoIgual : sube ? IconoFlechaArriba : IconoFlechaAbajo;
-
+  const Icono = estable
+    ? IconoIgual
+    : sube
+      ? IconoFlechaArriba
+      : IconoFlechaAbajo;
   return (
-    <span
-      className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-xs font-semibold ${
-        claro ? "bg-white/10 text-white/80" : "bg-lienzo text-tinta-media ring-1 ring-inset ring-borde"
-      }`}
-    >
-      <Icono tamano={13} />
-      <span className="tabular-nums">{Math.abs(indicador.variacion).toLocaleString("es-AR")}%</span>
-      <span className={claro ? "font-normal text-white/45" : "font-normal text-tinta-tenue"}>
-        vs anterior
+    <span className="inline-flex flex-wrap items-center gap-espacio-1 text-pequeno text-tinta-media">
+      <span aria-hidden="true">
+        <Icono tamano={13} />
       </span>
+      <span>{estable ? "Estable" : sube ? "Sube" : "Baja"}</span>
+      <span className="tabular-nums">
+        {Math.abs(indicador.variacion).toLocaleString("es-AR")}%
+      </span>
+      <span className="text-tinta-suave">vs anterior</span>
     </span>
   );
 }
 
-function FilaPlantilla({ plantilla, indice }: { plantilla: KpiPlantilla; indice: number }) {
-  const estados = Object.entries(plantilla.porEstado).sort((uno, otro) => otro[1] - uno[1]);
-
+function FilaPlantilla({
+  plantilla,
+  indice,
+}: {
+  plantilla: KpiPlantilla;
+  indice: number;
+}) {
+  const estados = Object.entries(plantilla.porEstado).sort(
+    (uno, otro) => otro[1] - uno[1],
+  );
   return (
-    <article className="subir relieve elevar overflow-hidden rounded-3xl border border-borde bg-white hover:border-borde-fuerte">
-      <div className="grid gap-5 p-5 xl:grid-cols-[minmax(210px,1fr)_2.5fr] xl:items-center">
+    <Tarjeta>
+      <div className="grid min-w-0 gap-espacio-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
         <div className="min-w-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="truncate font-titulo text-[15px] text-tinta">
-                {plantilla.nombre ?? plantilla.codigo}
-              </h3>
-              <p className="mt-0.5 font-mono text-[11px] text-tinta-tenue">{plantilla.codigo}</p>
-            </div>
-            <span
-              className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-inset ${
-                ESTILO_SALUD[plantilla.salud]
-              }`}
-            >
-              {plantilla.salud}
+          <h3 className="font-titulo text-titulo-panel [overflow-wrap:anywhere]">
+            {plantilla.nombre ?? plantilla.codigo}
+          </h3>
+          <p className="mt-espacio-1 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
+            {plantilla.codigo}
+          </p>
+          <div className="mt-espacio-3 flex flex-wrap items-center gap-espacio-2">
+            <Pastilla tono={TONO_SALUD[plantilla.salud] as Tono}>
+              {plantilla.salud.replace(/_/g, " ")}
+            </Pastilla>
+            <span className="text-pequeno">
+              <span className="font-semibold tabular-nums">
+                {plantilla.volumen.toLocaleString("es-AR")}
+              </span>{" "}
+              documentos
             </span>
-          </div>
-          <div className="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-1.5">
-            <span className="cifra text-xl text-tinta">{plantilla.volumen.toLocaleString("es-AR")}</span>
-            <span className="text-xs text-tinta-suave">documentos</span>
-            {plantilla.documentosConExcepciones ? (
-              <Pastilla tono="rojo">{plantilla.documentosConExcepciones} con excepcion</Pastilla>
-            ) : null}
+            <Pastilla
+              tono={plantilla.documentosConExcepciones ? "rojo" : "neutro"}
+            >
+              {plantilla.documentosConExcepciones} con excepción
+            </Pastilla>
           </div>
         </div>
-
-        <div className="grid gap-x-7 gap-y-3.5 sm:grid-cols-2">
+        <div className="grid min-w-0 gap-espacio-4 sm:grid-cols-2">
           {plantilla.barras.map((barra, posicion) => (
-            <CeldaBarra key={barra.clave} barra={barra} retraso={indice * 40 + posicion * 60} />
+            <CeldaBarra
+              key={barra.clave}
+              barra={barra}
+              retraso={indice * 40 + posicion * 60}
+            />
           ))}
         </div>
       </div>
-
-      <div className="flex flex-wrap items-center gap-2 border-t border-borde bg-lienzo/50 px-5 py-2.5">
+      <ul
+        aria-label={"Estados de " + plantilla.codigo}
+        className="mt-espacio-4 flex flex-wrap items-center gap-espacio-3 border-t border-borde pt-espacio-3"
+      >
         {estados.map(([estado, cantidad]) => (
-          <span key={estado} className="flex items-center gap-1.5">
-            <InsigniaEstado estado={estado as never} />
-            <span className="text-xs font-semibold tabular-nums text-tinta-media">{cantidad}</span>
-          </span>
+          <li key={estado} className="flex items-center gap-espacio-1">
+            <InsigniaEstado estado={estado as EstadoDocumento} />
+            <span className="text-pequeno font-semibold tabular-nums">
+              {cantidad}
+            </span>
+          </li>
         ))}
-      </div>
-    </article>
+      </ul>
+    </Tarjeta>
   );
 }
 
 function CeldaBarra({ barra, retraso }: { barra: BarraKpi; retraso: number }) {
   return (
-    <div>
-      <div className="flex items-baseline justify-between gap-2">
-        <span className="truncate text-xs font-medium text-tinta-media" title={barra.formula}>
+    <div className="min-w-0">
+      <div className="flex items-baseline justify-between gap-espacio-2 text-pequeno">
+        <span className="min-w-0 font-medium [overflow-wrap:anywhere]">
           {barra.etiqueta}
         </span>
-        <span className="cifra shrink-0 text-xs text-tinta">
-          {barra.porcentaje == null ? "sin datos" : `${barra.porcentaje.toLocaleString("es-AR")}%`}
+        <span className="shrink-0 font-semibold tabular-nums">
+          {barra.porcentaje == null
+            ? "sin datos"
+            : `${barra.porcentaje.toLocaleString("es-AR")}%`}
         </span>
       </div>
-      <div className="mt-1.5">
+      <div aria-hidden="true" className="mt-espacio-2">
         <BarraAnimada
           porcentaje={barra.porcentaje}
           tono={TONO_SEMAFORO[barra.semaforo]}
           alto={7}
           retraso={retraso}
+          plano
         />
       </div>
+      <p className="mt-espacio-2 text-micro text-tinta-suave [overflow-wrap:anywhere]">
+        {barra.formula}
+      </p>
     </div>
   );
 }
@@ -571,36 +780,52 @@ function PanelPoblacion({
     queryFn: () => obtenerPoblacionKpi(indicador.clave, rango),
   });
 
-  return (
-    <PanelLateral titulo={indicador.etiqueta} descripcion={indicador.formula} alCerrar={alCerrar}>
+  return createPortal(
+    <PanelLateral
+      titulo={indicador.etiqueta}
+      descripcion={indicador.formula}
+      alCerrar={alCerrar}
+    >
       {poblacion.isPending ? (
         <Cargando filas={6} alto="h-16" />
       ) : poblacion.isError ? (
-        <ErrorPanel mensaje={mensajeDeError(poblacion.error)} reintentar={() => poblacion.refetch()} />
+        <ErrorPanel
+          mensaje={mensajeDeError(poblacion.error)}
+          reintentar={() => poblacion.refetch()}
+        />
       ) : !poblacion.data.length ? (
-        <Vacio titulo="Sin documentos" detalle="Este indicador no tiene documentos en la ventana elegida." />
+        <Vacio
+          titulo="Sin documentos"
+          detalle="Este indicador no tiene documentos en la ventana elegida."
+        />
       ) : (
         <>
-          <p className="flex items-center gap-2 rounded-xl bg-violeta-tenue px-4 py-3 text-xs text-violeta ring-1 ring-inset ring-violeta-borde">
-            <IconoInfo tamano={15} />
+          <p className="flex items-center gap-espacio-2 rounded-control bg-violeta-tenue px-espacio-4 py-espacio-3 text-pequeno text-violeta ring-1 ring-inset ring-violeta-borde">
+            <span aria-hidden="true" className="shrink-0">
+              <IconoInfo tamano={15} />
+            </span>
             <span>
-              <span className="font-bold">{poblacion.data.length.toLocaleString("es-AR")}</span>{" "}
-              documentos componen este indicador. El numero de la tarjeta es exactamente este listado.
+              <span className="font-bold">
+                {poblacion.data.length.toLocaleString("es-AR")}
+              </span>{" "}
+              documentos devueltos para este indicador. La consulta devuelve
+              hasta 200 registros; puede ser una muestra. En p50/p90 son la base
+              del cálculo, no el valor en horas.
             </span>
           </p>
-          <ul className="mt-4 space-y-2">
+          <ul className="mt-espacio-4 space-y-espacio-2">
             {poblacion.data.map((documento) => (
               <li
                 key={documento.id}
-                className="rounded-xl border border-borde px-4 py-3 transition hover:border-borde-fuerte hover:bg-lienzo/60"
+                className="rounded-control border border-borde px-espacio-4 py-espacio-3"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="truncate text-sm font-semibold text-tinta">
+                <div className="flex flex-wrap items-center justify-between gap-espacio-3">
+                  <span className="min-w-0 text-pequeno font-semibold text-tinta [overflow-wrap:anywhere]">
                     {documento.nombre ?? documento.id}
                   </span>
                   <InsigniaEstado estado={documento.estado} />
                 </div>
-                <p className="mt-1 text-xs text-tinta-suave">
+                <p className="mt-espacio-1 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
                   {documento.codigoPlantilla ?? "sin plantilla"} · recibido{" "}
                   {formatearFecha(documento.recibido)}
                 </p>
@@ -609,7 +834,8 @@ function PanelPoblacion({
           </ul>
         </>
       )}
-    </PanelLateral>
+    </PanelLateral>,
+    document.body,
   );
 }
 

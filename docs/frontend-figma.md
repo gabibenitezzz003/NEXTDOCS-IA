@@ -712,3 +712,170 @@ por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`; Workflow no está d
 E2E no está verde y debe repetirse con los servicios disponibles antes del PR.
 `npm run build` y `git diff --check` pasan sobre la implementación final.
 FASE 7 termina sin iniciar Panel o Tipos propuestos, sin push y conservando el stash.
+
+## FASE 8 — Panel de control
+
+### Inspección previa
+
+Base `a175714`. Panel permanece separado de Resumen. Se inspeccionaron Panel, Graficos,
+cliente KPI, DTOs, KpiRestController, KpiService, modelos de indicadores/rango/barras y los
+repositorios de documentos, excepciones, valores extraídos, archivos y entregas webhook.
+
+Queries conservadas: `["kpi", "resumen", dias]` → GET `/api/v1/kpi/resumen`;
+`["kpi", "plantillas", dias]` → GET `/api/v1/kpi/plantillas`;
+`["kpi", "poblacion", indicador.clave, rango.desde]` → GET `/api/v1/kpi/poblacion`.
+El rango memoizado envía solo `desde = Date.now() - dias * 86400000`, en ISO; población
+agrega `indicador`. Opciones 7/30/90, inicial 30, grupo «Período de los indicadores».
+Backend fija `hasta` a ahora y compara con el intervalo anterior de idéntica duración.
+Los tres endpoints requieren `documentos.leer`; no hay nuevas reglas de permiso.
+
+Todos los KPI siguientes vienen de `KpiResumen.indicadores`, no se calculan en React.
+Las consultas filtran tenant; documentos/excepciones/archivos indican baja lógica donde
+corresponde. La columna de fórmula describe el predicado real, no solo su etiqueta.
+
+| Clave / nombre | Fórmula y población real | Unidad; cero/null | Período |
+| --- | --- | --- | --- |
+| documentosRecibidos / Documentos recibidos | COUNT documentos sin baja, raíz (`documentoPadre IS NULL`), por `recibido` entre límites inclusivos | Conteo; 0 válido | Sí |
+| documentosCerrados / Documentos cerrados | COUNT sin baja con timestamp `cerrado` en rango; incluye segmentos, no exige estado actual CERRADO en la query | Conteo; 0 válido | Sí |
+| automatizacion / Automatización | Cerrados del rango sin ninguna RevisionDocumento / cerrados del rango | %; 0 válido, null si denominador cero | Sí |
+| cumplimientoSla / Cumplimiento SLA | Excepciones con `resuelta` en rango y (`venceEn` nulo o resuelta ≤ venceEn) / todas con `resuelta` en rango | %; 0 válido, null sin resueltas | Sí |
+| tiempoCicloP50 / Tiempo de ciclo p50 | Cerrados en rango con recibido informado; duración truncada a horas enteras, orden ascendente, índice ceil(0,50 × N) − 1 | Horas; 0 válido, null sin ciclos | Sí |
+| tiempoCicloP90 / Tiempo de ciclo p90 | Misma población; índice ceil(0,90 × N) − 1 | Horas; 0 válido, null sin ciclos | Sí |
+| excepcionesAbiertas / Excepciones abiertas | COUNT ABIERTA + COUNT EN_CURSO, sin baja | Conteo; 0 válido | No, actual |
+| excepcionesVencidas / Excepciones vencidas | COUNT sin baja, estado distinto de RESUELTA, venceEn < ahora; incluye DESCARTADA | Conteo; 0 válido | No, actual |
+| documentosPorVencer / Documentos por vencer | COUNT sin baja con retenerHasta entre ahora y ahora + 30 días; sin filtro adicional de estado, raíz o legal hold | Conteo; 0 válido | No, horizonte fijo 30 días |
+| almacenamientoUtilizado / Almacenamiento utilizado | SUM tamaño de archivos sin baja / cuota en bytes del tenant | %; 0 válido, null si cuota ≤ 0 | No, actual |
+| entregaDeEventos / Entrega de eventos | Registros EntregaWebhook con estado ENTREGADO / registros de entrega creados en rango por alta; no cantidad de reintentos | %; 0 válido, null sin registros | Sí |
+
+Razones backend: división con 4 decimales HALF_UP, luego ×100 a un decimal. Variación
+backend: (valor − anterior) ×100 / abs(anterior), a un decimal; SIN_COMPARACION cuando el
+actual/anterior es null o anterior es cero. No se calculan variaciones nuevas en frontend.
+Formato de horas existente: menos de una hora → «< 1 h»; luego horas redondeadas o días y
+resto de horas. Se conserva, incluido 0 h como «< 1 h», distinto de null «Sin datos».
+
+### Poblaciones, gráficos y salud
+
+- `porEstado` cuenta todos los documentos sin baja del tenant, sin fechas ni exclusión de
+  raíces, segmentos o estados finales. «Backlog» aquí no equivale a pendientes de revisión.
+- Embudo conserva RECIBIDO, PROCESANDO, EXTRAIDO, VALIDADO, APROBADO, CERRADO; conserva ceros
+  cuando la clave existe. Su ancho relativo divide por el máximo de esas etapas (mínimo 1),
+  no por recibidos. No es conversión acumulada ni debe sumar 100. OBSERVADO, RECHAZADO y
+  DIVIDIDO continúan en la composición completa, fuera de esas seis etapas.
+- Anillo apilado conserva filtro original cantidad > 0, orden descendente y suma de esas
+  cantidades. Su leyenda conserva round(cantidad/total ×100), sin ajuste para sumar 100.
+  Los estados en cero no se eliminan del contrato ni de las otras visualizaciones.
+- Plantillas agrupa documentos sin baja, con plantilla y recibido en rango, por código y
+  estado. Incluye segmentos; por eso volumen no equivale al KPI de raíces recibidas. Orden
+  backend: volumen descendente. Barras y categorías conservan orden recibido.
+- Avance: (CERRADO + APROBADO + RECHAZADO) / volumen; DIVIDIDO no entra en ese numerador.
+- Completitud: valores con presencia PRESENTE / todos los valores extraídos de documentos
+  con plantilla recibidos en rango. La query de valores no agrega filtros de baja ni última
+  extracción; no se modifica esa población en una fase visual.
+- Automatización por plantilla: APROBADO / (APROBADO + OBSERVADO), distinta del KPI global
+  basado en cerrados sin revisión. Sin excepciones: max(0, 1 − documentos distintos con
+  excepción de estado distinto de RESUELTA / volumen); incluye DESCARTADA, no un conteo
+  de incidencias. Se usan documentos del período y sus excepciones vigentes.
+- Semáforo de cada barra y salud: ≥0,85 verde/OK, ≥0,60 ámbar/ATENCION, menor rojo/CRITICO.
+  Salud toma la menor razón no nula de las cuatro barras; todas nulas → SIN_DATOS. No es
+  confianza de IA ni hay health global numérico en el contrato.
+
+Población auditable existe solo para recibidos, cerrados, p50 y p90. Backend limita la
+respuesta a 200 documentos; para percentiles el listado es la base, no el valor en horas.
+El texto previo «el número de la tarjeta es exactamente este listado» no es válido para
+percentiles o conteos mayores de 200: se ajustó solo la explicación, sin tocar endpoint.
+Se preserva el panel lateral y el enlace existente a `/documentos`, sin deep-links nuevos.
+
+Loading/error de resumen bloquean su contenido; plantillas y población tienen sus propios
+loading/error/refetch. Una lista de plantillas vacía no demuestra ausencia global de
+documentos: puede haber documentos sin plantilla o fuera del rango. Null se presenta como
+sin datos; cero es una medición válida. No se muestran indicadores inventados durante carga.
+
+### Referencias visuales y decisiones
+
+Se inspeccionó mediante Figma MCP la metadata de `08 — PANEL DE CONTROL` (`123:20962`),
+y design context y screenshots de `75:335` (30 días), `75:562` (salud), `75:717`
+(población), `126:3537` (vacío) y `126:3686` (Panel 390), del Design System NEXT DOC AI
+`0VZRK69QjDTDy0oAaf8Uv1`. Se reutilizó la inspección MCP de `11 — ESTADOS TRANSVERSALES`
+(`123:20965`) y `12 — DISEÑO RESPONSIVE` (`123:20966`), incluidos error global
+`123:6705` y lectura `123:6889`, realizada en la fase previa de esta conversación.
+
+Product UX aporta dirección de jerarquía, no contratos: no se importaron KPI del catálogo
+80 ni se fusionó Panel con Resumen. El Design System contiene cifras y categorías
+ilustrativas distintas de las reales; se conservan los once indicadores, seis etapas y
+cuatro barras por plantilla. No se implementa el health global 92% ilustrativo, ni exportar
+población, ni se reduce mobile a tres KPI o tres etapas. Tampoco se replica la navegación
+incompleta del frame móvil: el shell de FASE 2 permanece intacto.
+
+Se sustituye la tarjeta oscura con cifra display y resplandores por superficies y métricas
+compactas de las primitivas vigentes; se mantiene su comparación real con el período
+anterior. Colores, radios, fondos y tipografía usan tokens actuales. No se agregan tokens,
+dependencias ni fuentes. No se declara pixel-perfect ni validación interna contra Follow.
+
+### Implementación y accesibilidad
+
+- Panel reutiliza Tarjeta, Metrica, Pastilla, GrupoSegmentado, Boton y estados compartidos.
+  Se mantienen los tres KPI principales y ocho secundarios, embudo, backlog, volumen,
+  salud y población. Las tarjetas estáticas no adquieren interacción artificial.
+- Se explicitan período y poblaciones sin recalcular nada. Variaciones, anterior,
+  numerador y denominador se muestran únicamente desde el DTO real. Null pasa a «Sin
+  datos», incluso en conteos donde antes se presentaba como cero; 0 y 0% siguen visibles.
+  El centro de los anillos muestra el porcentaje recibido con sus decimales disponibles.
+- Fórmulas de KPI mediante details/summary operable por teclado; fórmulas de barras
+  visibles, sin depender del tooltip nativo anterior. Regiones nombradas, jerarquía de
+  títulos, valores/unidades textuales, colores junto con estado o etiquetas y foco visible.
+- Las representaciones decorativas llevan aria-hidden cuando existe alternativa textual.
+  Embudo conserva lista con cantidades; backlog tiene leyenda completa y texto de estados
+  en cero; volumen tiene lista de definiciones con todas las categorías y valores.
+- Graficos agrega `plano?: boolean`, por defecto false, a Anillo, BarraAnimada, Embudo y
+  AnilloApilado, junto con COLOR_GRAFICO basado en tokens. Solo Panel lo activa; elimina
+  brillos/degradados de esas instancias sin alterar geometría ni fórmulas. Columnas mantiene
+  su API y lógica; Panel pasa su color opcional ya disponible desde FASE 4. Resumen conserva
+  su comportamiento. Los demás cambios de Columnas son formato de Prettier.
+- 1440/1280: tres KPI principales, secundarios en cuatro columnas, distribución en dos.
+  1024: tres principales, secundarios en dos y distribución apilada. 768: recibidos ocupa
+  la fila y los dos anillos comparten la siguiente; secundarios en dos columnas. 390: una
+  columna, textos completos y volumen presentado prioritariamente como valores textuales.
+  Las cuatro barras y todos los estados permanecen alcanzables mediante scroll vertical.
+- Población mantiene apertura, cierre, query y permisos; explica el límite real de 200.
+  Se elimina el anidamiento anterior de botón dentro del enlace a Documentos. No hay rutas
+  nuevas ni cambios en la primitiva compartida PanelLateral.
+  La validación visual detectó que el ancestro animado del shell contenía el overlay fijo:
+  en mobile, tras scroll, su cabecera quedaba fuera de pantalla y el drawer tomaba la altura
+  del contenido. PanelPoblacion ahora usa createPortal hacia document.body, exclusivamente
+  dentro de Panel.tsx. Conserva las props y acciones de PanelLateral; no modifica shell
+  ni agrega dependencias. Se comprueba que el cierre esté dentro del viewport.
+
+### Verificación y límites
+
+Comparación de AST contra `a175714`: mismas queries, claves, rango memoizado, períodos,
+selección de indicadores, filtros, orden, sumas, transformaciones, formatos de valor/horas
+y cálculos de los gráficos. La comparación excluye únicamente color/tono visual cuando
+corresponde. Columnas, useVisible y useContador conservan su AST. Cliente API, DTOs,
+sesión, permisos, backend, shell y demás páginas no tienen cambios.
+
+Chromium con respuestas controladas verifica 1440, 1280, 1024, 768 y 390 sin overflow
+horizontal; períodos 7/30/90 y parámetros emitidos; orden del embudo y backlog; estados
+en cero; fórmulas por teclado; apertura/cierre de población; enlace existente a Documentos;
+null frente a 0, 0% y 0 horas; ausencia de indicadores; textos extensos y categorías
+completas. Resumen, plantillas y población prueban loading/error y recuperación por separado.
+Se verifican población cero, plantillas vacías y población vacía. No aparecen NaN o undefined
+en el caso de datos extensos. Dos errores del script temporal (selector del embudo y conteo
+esperado de textos) se corrigieron; no eran defectos del producto.
+
+Script, resultados y capturas: `/tmp/nextdocs-panel-K9KKNF/`. Capturas normales completas
+del viewport incluyen el shell; los recortes de distribución y salud ocultan únicamente
+la topbar sticky durante la captura para que no tape el recorte. No modifica la aplicación.
+
+`npm run build` y `git diff --check` pasan. `npm run test:e2e` falla en los dos smoke de
+Workflow por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`. No es E2E verde ni
+evidencia de regresión del Panel. La API core tampoco acepta conexión en `127.0.0.1:8090`.
+Las respuestas controladas validan frontend, no integración real; repetir con servicios
+disponibles antes del PR, sin reconfigurar Workflow en esta fase.
+
+Limitación preexistente fuera de esta modificación: PanelLateral conserva role dialog,
+aria-modal, cierre por Escape/botón y bloqueo de scroll, pero no incorpora la contención
+y restauración de foco del visor documental. No se certifica accesibilidad modal completa
+para población ni se amplía la primitiva compartida en este alcance.
+
+FASE 8 termina sin iniciar Tipos propuestos o Procesos, sin push y conservando intacto
+`stash@{0}` (`2a7597caa4a46330a90f8c6569b6ae26de334292`).
