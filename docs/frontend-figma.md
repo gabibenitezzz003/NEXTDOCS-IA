@@ -608,3 +608,107 @@ asociaciones ejecutadas en backend. Script, resultados y capturas locales de est
 La API core también rechaza conexión en `127.0.0.1:8090`. La integración real queda pendiente
 y E2E no está verde: debe repetirse con los servicios disponibles antes del PR.
 FASE 6 se limita al visor y termina sin iniciar Excepciones, sin push y preservando el stash.
+
+## FASE 7 — Excepciones documentales
+
+### Inspección previa a la implementación
+
+Base: `64a7662`. La superficie `/excepciones` es una bandeja de excepciones documentales,
+distinta de hallazgos de validación del visor, Supervisor de procesos y Sentinel.
+
+| Aspecto | Contrato inspeccionado |
+| --- | --- |
+| Query | `["excepciones", estado, pagina]`; `listarExcepciones(estado, pagina, 25)` |
+| Endpoint | GET `/api/v1/excepciones`, parámetros `estado`, `pagina`, `tamano`; conserva el orden recibido del backend |
+| Filtros | ABIERTA inicial, EN_CURSO, RESUELTA, DESCARTADA; cambiar estado reinicia página a cero |
+| Búsqueda / Todas | No existen en esta pantalla; no se agregan |
+| Paginación | Base cero, 25 elementos; `content`, `totalElements`, `totalPages` de la respuesta paginada |
+| Prioridades | BAJA, MEDIA, ALTA, CRITICA; mapa semántico existente neutro/información/alerta/rojo |
+| Lectura | Navegación y endpoint requieren `excepciones.leer`; se preserva la integración actual de rutas |
+| Gestión | `excepciones.gestionar` y estado distinto de RESUELTA muestran Resolver |
+| Resolver | Alterna formulario inline y vacía texto al abrir/cerrar; input requerido con foco inicial; submit sin trim ni transformación |
+| Mutación | POST `/api/v1/excepciones/{id}/resolver`, payload `{resolucion}`; el servicio fija RESUELTA, actor y fecha |
+| Éxito | Cierra formulario, limpia texto y error; invalida `["excepciones"]` y `["kpi"]` |
+| Error | `mensajeDeError`; conserva formulario y texto; consulta usa ErrorPanel y `refetch` |
+| Documento | Botón cuando existe `documentoId`; monta el mismo VisorDocumento y cierra poniendo ID local a null |
+| Fechas y vencimiento | `venceEn`, `vencida` y fecha formateada por la función existente; no se recalculan SLA |
+| Hallazgo / excepción | Un hallazgo pertenece a una validación; una excepción tiene identidad, prioridad, vencimiento, estado y resolución propios, con relación documental opcional |
+
+Dos límites del contrato se conservan expresamente. DESCARTADA permite Resolver en el
+frontend y el servicio no impide pasarla a RESUELTA: no se inventa una restricción de estado
+final en una fase visual. RESUELTA no muestra Resolver. Aunque hay un endpoint de asignación
+en backend, la página no lo utiliza y no se agrega esa acción.
+
+La consulta siempre filtra por estado. Cero resultados no demuestra cero excepciones en el
+tenant, y no hay filtro Todas. El vacío debe describir el estado consultado sin afirmar que
+todo el flujo está al día ni introducir queries adicionales para averiguar el total global.
+El único conteo de la página representa `totalElements` del filtro activo; no se agregan KPI.
+
+### Implementación y referencias visuales
+
+Se inspeccionaron metadatos de las páginas 07 — EXCEPCIONES, 11 — ESTADOS TRANSVERSALES y
+12 — DISEÑO RESPONSIVE con Figma MCP. Se obtuvieron contextos de diseño e imágenes de:
+Abiertas `46:233`, Resolver `46:368`, Resueltas `46:506`, Vacío `46:601`, Cargando `46:663`,
+En curso `126:3451`, Error global `123:6705`, Solo lectura `123:6889` y Excepciones móvil
+`123:9914`. No se modificó Figma. No hay un frame específico de Excepciones tablet en la
+página responsive inspeccionada; la adaptación responde al espacio real y se verifica en navegador.
+
+- El shell permanece intacto. Título, filtros nombrados y total del estado preceden a una
+  lista semántica de Tarjeta. En desktop/tablet, metadatos usan dos columnas; en móvil, una.
+  Acciones y formulario se reorganizan mediante flex/grid, sin anchos de frame fijos.
+- Se conserva información existente y se hace visible información ya disponible en el DTO:
+  ID, código, estado, alta y, cuando existen, responsable, resolución registrada y actor.
+  No se inventan fechas de resolución: el tipo frontend no expone ese timestamp.
+- Estado y prioridad son conceptos separados, con texto explícito. Las prioridades conservan
+  exactamente su mapa semántico. Severidad usa InsigniaSeveridad; `vencida` conserva su indicador
+  «SLA vencido» y su borde. No se interpreta vencimiento ni se ordena nuevamente la colección.
+- El formulario conserva input de una línea, validación `required`, foco inicial, toggle y
+  payload. Usa Campo asociado a «Cómo se resolvió», formulario nombrado, Resolver con
+  `aria-expanded` y `aria-controls`, y Confirmar con loading, disabled y anuncio de guardado.
+  No se copia el textarea de Figma para alterar el comportamiento de Enter.
+- RESUELTA muestra su etiqueta y datos reales de resolución cuando existen, sin Resolver.
+  DESCARTADA conserva su etiqueta propia y la acción permitida por la implementación actual.
+- El botón Ver documento conserva su handler. El dialog de FASE 6 ya captura ese botón y le
+  devuelve el foco: no fue necesario modificar VisorDocumento ni otra superficie.
+- Cargando muestra cinco skeletons decorativos; no se muestra un conteo de cero durante carga
+  o error. ErrorPanel presenta mensajes reales de consulta o resolución; solo la consulta
+  ofrece Reintentar mediante su `refetch` existente.
+- Vacío en ABIERTA dice «No hay excepciones abiertas»; los otros estados, «Sin coincidencias
+  en este estado». Ambos describen el filtro, sin afirmar ausencia global. Si una página queda
+  vacía pero `totalElements > 0`, dice «Sin resultados en esta página» y explica que volver a
+  seleccionar el estado usa el reinicio de página existente. No hay salto de página automático.
+- La paginación conserva 25, límites, condiciones de visibilidad y cambios de página; ahora
+  tiene nombre accesible. Se mantiene el orden por `alta DESC` que aplica el backend por defecto.
+
+El Design System orienta tarjetas, jerarquía, resolución inline y estados. Se descartan
+instancias genéricas «Guardar», cifras «resueltas este mes» sin contrato temporal, afirmaciones
+«el flujo está al día», el filtro ilustrativo PENDIENTES y tiempos de revisión inexistentes.
+El móvil conserva filtros, identificación, documento, estado, prioridad, fechas y acciones
+que la referencia omite. Se usan tokens y primitivas actuales, sin nuevos colores, tokens,
+dependencias o componentes compartidos. No se declara pixel-perfect ni validación interna de Follow.
+
+Product UX aporta la jerarquía general ya adoptada por el producto. UX-13 no reemplaza esta
+pantalla: `/excepciones` ≠ Supervisor ≠ Sentinel. Los hallazgos del visor siguen siendo otra
+entidad, aunque compartan presentación de severidad.
+
+### Validación
+
+Comparación de AST contra `64a7662`: queries, query keys, catálogo de estados, mapa de
+prioridades, mutación completa, invalidaciones, cálculo de totales, callbacks de filtros,
+paginación, resolución y apertura/cierre del visor preservados. API, sesión, DTOs, backend,
+shell, visor y demás páginas permanecen sin cambios.
+
+Chromium con respuestas controladas verifica 1440, 1024, 768 y 390 sin overflow horizontal;
+las cuatro prioridades; filtros; páginas de 25; estados RESUELTA/DESCARTADA; lectura sin
+gestión; apertura del visor con Enter y clic, cierre con Escape y botón y retorno de foco;
+formulario requerido, toggle, envío con Enter, payload sin trim, loading estable, error con
+conservación del texto e invalidación tras éxito. Se verifican loading/error con recuperación,
+vacío filtrado, sin coincidencias, página vacía tras resolver su último elemento, datos
+parciales y textos extensos. Script, resultados y capturas: `/tmp/nextdocs-excepciones-aZDr6u/`.
+
+Las respuestas simuladas validan el frontend, no una resolución ejecutada en backend.
+La API core rechaza conexión en `127.0.0.1:8090`. `npm run test:e2e` falla en los dos smoke
+por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`; Workflow no está disponible.
+E2E no está verde y debe repetirse con los servicios disponibles antes del PR.
+`npm run build` y `git diff --check` pasan sobre la implementación final.
+FASE 7 termina sin iniciar Panel o Tipos propuestos, sin push y conservando el stash.
