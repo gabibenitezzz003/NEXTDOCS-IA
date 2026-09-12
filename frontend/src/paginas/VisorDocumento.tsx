@@ -1,9 +1,26 @@
-import { useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
-import { Boton, Pastilla } from "../componentes/Interfaz";
-import { IconoCerrar, IconoDescargar, IconoRecargar } from "../componentes/Iconos";
-import { BarraConfianza, InsigniaEstado, InsigniaPresencia, InsigniaSeveridad } from "../componentes/Insignias";
+import type { DetalleDocumento, ValorExtraido } from "../tipos/api";
+import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
+import {
+  Boton,
+  BotonIcono,
+  Campo,
+  Pastilla,
+  Tarjeta,
+} from "../componentes/Interfaz";
+import {
+  IconoCerrar,
+  IconoDescargar,
+  IconoRecargar,
+} from "../componentes/Iconos";
+import {
+  BarraConfianza,
+  InsigniaEstado,
+  InsigniaPresencia,
+  InsigniaSeveridad,
+} from "../componentes/Insignias";
 import { formatearFecha } from "./Documentos";
 import { mensajeDeError } from "../api/cliente";
 import {
@@ -27,10 +44,33 @@ export function VisorDocumento({
 }) {
   const { tienePermiso } = useSesion();
   const clienteConsultas = useQueryClient();
+  const dialogo = useRef<HTMLDialogElement>(null);
+  const titulo = useRef<HTMLHeadingElement>(null);
+  const identificador = useId();
+
+  useEffect(() => {
+    const elemento = dialogo.current;
+    const origen =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const desbordamiento = document.body.style.overflow;
+    elemento?.showModal();
+    titulo.current?.focus({ preventScroll: true });
+    document.body.style.overflow = "hidden";
+    return () => {
+      elemento?.close();
+      document.body.style.overflow = desbordamiento;
+      if (origen?.isConnected) origen.focus({ preventScroll: true });
+    };
+  }, []);
   const [pestana, setPestana] = useState<Pestana>("campos");
   const [correcciones, setCorrecciones] = useState<Record<string, string>>({});
   const [motivo, setMotivo] = useState("");
-  const [aviso, setAviso] = useState<{ tono: "ok" | "error"; texto: string } | null>(null);
+  const [aviso, setAviso] = useState<{
+    tono: "ok" | "error";
+    texto: string;
+  } | null>(null);
 
   const consulta = useQuery({
     queryKey: ["documento", documentoId],
@@ -38,7 +78,9 @@ export function VisorDocumento({
   });
 
   function invalidar() {
-    clienteConsultas.invalidateQueries({ queryKey: ["documento", documentoId] });
+    clienteConsultas.invalidateQueries({
+      queryKey: ["documento", documentoId],
+    });
     clienteConsultas.invalidateQueries({ queryKey: ["documentos"] });
     clienteConsultas.invalidateQueries({ queryKey: ["excepciones"] });
     clienteConsultas.invalidateQueries({ queryKey: ["resumen"] });
@@ -49,15 +91,21 @@ export function VisorDocumento({
       revisar(documentoId, {
         decision,
         motivo: motivo.trim() || undefined,
-        correcciones: Object.keys(correcciones).length ? correcciones : undefined,
+        correcciones: Object.keys(correcciones).length
+          ? correcciones
+          : undefined,
       }),
     onSuccess: (revision) => {
-      setAviso({ tono: "ok", texto: `Documento ${revision.estadoNuevo}` });
+      setAviso({
+        tono: "ok",
+        texto: `Documento ${revision.estadoNuevo ? ESTADOS_DOCUMENTALES[revision.estadoNuevo].etiqueta : "revisado"}`,
+      });
       setCorrecciones({});
       setMotivo("");
       invalidar();
     },
-    onError: (error) => setAviso({ tono: "error", texto: mensajeDeError(error) }),
+    onError: (error) =>
+      setAviso({ tono: "error", texto: mensajeDeError(error) }),
   });
 
   const reproceso = useMutation({
@@ -66,7 +114,8 @@ export function VisorDocumento({
       setAviso({ tono: "ok", texto: "Documento reencolado para reproceso" });
       invalidar();
     },
-    onError: (error) => setAviso({ tono: "error", texto: mensajeDeError(error) }),
+    onError: (error) =>
+      setAviso({ tono: "error", texto: mensajeDeError(error) }),
   });
 
   const cierre = useMutation({
@@ -75,17 +124,23 @@ export function VisorDocumento({
       setAviso({ tono: "ok", texto: "Documento cerrado" });
       invalidar();
     },
-    onError: (error) => setAviso({ tono: "error", texto: mensajeDeError(error) }),
+    onError: (error) =>
+      setAviso({ tono: "error", texto: mensajeDeError(error) }),
   });
 
   const eleccion = useMutation({
     mutationFn: (candidatoId: string) =>
-      seleccionarCandidato(documentoId, candidatoId, motivo.trim() || "Seleccion desde el portal"),
+      seleccionarCandidato(
+        documentoId,
+        candidatoId,
+        motivo.trim() || "Seleccion desde el portal",
+      ),
     onSuccess: () => {
       setAviso({ tono: "ok", texto: "Candidato asociado" });
       invalidar();
     },
-    onError: (error) => setAviso({ tono: "error", texto: mensajeDeError(error) }),
+    onError: (error) =>
+      setAviso({ tono: "error", texto: mensajeDeError(error) }),
   });
 
   async function abrirOriginal() {
@@ -99,235 +154,385 @@ export function VisorDocumento({
   const detalle = consulta.data;
   const documento = detalle?.documento;
   const puedeRevisar = tienePermiso("documentos.revisar");
-  const trabajando = decidir.isPending || reproceso.isPending || cierre.isPending;
+  const trabajando =
+    decidir.isPending || reproceso.isPending || cierre.isPending;
+
+  const pestanas: [Pestana, string][] = [
+    ["campos", "Campos (" + (detalle?.extraccion?.valores.length ?? 0) + ")"],
+    [
+      "hallazgos",
+      "Hallazgos (" + (detalle?.validacion?.hallazgos.length ?? 0) + ")",
+    ],
+    ["asociacion", "Asociación (" + (detalle?.candidatos.length ?? 0) + ")"],
+    ["actividad", "Actividad (" + (detalle?.revisiones.length ?? 0) + ")"],
+  ];
 
   return (
-    <div
-      className="velo fixed inset-0 z-50 flex justify-end bg-grafito/45 backdrop-blur-[2px]"
-      role="dialog"
+    <dialog
+      ref={dialogo}
       aria-modal="true"
+      aria-labelledby={identificador + "-titulo"}
+      aria-describedby={identificador + "-descripcion"}
+      onKeyDown={(evento) => {
+        if (evento.key !== "Tab") return;
+        const controles = Array.from(
+          evento.currentTarget.querySelectorAll<HTMLElement>(
+            "button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]",
+          ),
+        ).filter(
+          (elemento) =>
+            elemento.tabIndex >= 0 && elemento.getClientRects().length > 0,
+        );
+        const primero = controles[0];
+        const ultimo = controles.at(-1);
+        const activo = document.activeElement;
+        if (
+          evento.shiftKey &&
+          (activo === primero || !controles.includes(activo as HTMLElement))
+        ) {
+          evento.preventDefault();
+          (ultimo ?? titulo.current)?.focus();
+        } else if (!evento.shiftKey && (activo === ultimo || !primero)) {
+          evento.preventDefault();
+          (primero ?? titulo.current)?.focus();
+        }
+      }}
+      onCancel={(evento) => {
+        evento.preventDefault();
+        alCerrar();
+      }}
+      onClick={(evento) => {
+        if (evento.target !== evento.currentTarget) return;
+        const caja = evento.currentTarget.getBoundingClientRect();
+        if (
+          evento.clientX < caja.left ||
+          evento.clientX > caja.right ||
+          evento.clientY < caja.top ||
+          evento.clientY > caja.bottom
+        )
+          alCerrar();
+      }}
+      className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-none border-0 bg-lienzo p-0 text-tinta shadow-panel-lateral backdrop:bg-grafito/50 md:w-[min(90vw,64rem)]"
     >
-      <button type="button" aria-label="Cerrar" className="flex-1 cursor-default" onClick={alCerrar} />
-      <section className="entrar-lateral flex w-full max-w-3xl flex-col border-l border-borde bg-lienzo shadow-flotante">
-        <header className="flex items-start justify-between gap-4 border-b border-borde bg-white px-6 py-5">
-          <div className="min-w-0">
-            <p className="truncate font-titulo text-xl text-tinta">
-              {documento?.nombre ?? "Documento"}
-            </p>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-tinta-suave">
+      <div className="flex h-full min-h-0 flex-col [@media(max-height:600px)]:overflow-y-auto">
+        <header className="shrink-0 border-b border-borde bg-superficie p-espacio-4 sm:px-espacio-6">
+          <div className="flex items-start justify-between gap-espacio-3">
+            <div className="min-w-0">
+              <p
+                id={identificador + "-descripcion"}
+                className="mb-espacio-1 text-micro uppercase tracking-wide text-tinta-suave"
+              >
+                Revisión documental
+              </p>
+              <h2
+                ref={titulo}
+                tabIndex={-1}
+                id={identificador + "-titulo"}
+                title={documento?.nombre ?? "Documento"}
+                className="line-clamp-2 font-titulo text-titulo-panel [overflow-wrap:anywhere] focus:outline-none"
+              >
+                {documento?.nombre ?? "Documento"}
+              </h2>
+            </div>
+            <BotonIcono
+              aria-label="Cerrar visor"
+              variante="fantasma"
+              onClick={alCerrar}
+            >
+              <IconoCerrar tamano={18} />
+            </BotonIcono>
+          </div>
+          <div className="mt-espacio-3 flex flex-wrap items-center justify-between gap-espacio-3">
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-espacio-2 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
               {documento ? <InsigniaEstado estado={documento.estado} /> : null}
               {documento?.codigoPlantilla ? (
                 <span>
-                  {documento.codigoPlantilla} v{documento.numeroVersionPlantilla}
+                  {documento.codigoPlantilla}
+                  {documento.numeroVersionPlantilla != null
+                    ? " v" + documento.numeroVersionPlantilla
+                    : ""}
                 </span>
               ) : null}
               {documento?.origenTipo === "GENERICO" ? (
-                <Pastilla tono="alerta">Captura generica</Pastilla>
+                <Pastilla tono="alerta">Captura genérica</Pastilla>
               ) : null}
               {documento?.sujetoIdObjeto ? (
                 <span>
-                  {documento.sujetoOrigen} · {documento.sujetoTipoObjeto} {documento.sujetoIdObjeto}
+                  {[
+                    documento.sujetoOrigen,
+                    documento.sujetoTipoObjeto,
+                    documento.sujetoIdObjeto,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
                 </span>
               ) : null}
             </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <Boton tamano="sm" onClick={abrirOriginal}>
-              <IconoDescargar tamano={14} />
+            <Boton type="button" tamano="sm" onClick={abrirOriginal}>
+              <span aria-hidden="true">
+                <IconoDescargar tamano={14} />
+              </span>
               Ver original
-            </Boton>
-            <Boton variante="fantasma" tamano="sm" onClick={alCerrar} aria-label="Cerrar">
-              <IconoCerrar tamano={16} />
             </Boton>
           </div>
         </header>
 
-        <div className="barra-desplazamiento-fina flex-1 overflow-y-auto px-6 py-5">
+        {detalle && !consulta.isError ? (
+          <div
+            role="tablist"
+            aria-label="Información del documento"
+            className="grid shrink-0 grid-cols-2 gap-espacio-1 border-b border-borde bg-superficie p-espacio-2 sm:grid-cols-4 sm:px-espacio-6"
+            onKeyDown={(evento) => {
+              const indice = pestanas.findIndex(([clave]) => clave === pestana);
+              const siguiente =
+                evento.key === "ArrowRight"
+                  ? (indice + 1) % pestanas.length
+                  : evento.key === "ArrowLeft"
+                    ? (indice + pestanas.length - 1) % pestanas.length
+                    : evento.key === "Home"
+                      ? 0
+                      : evento.key === "End"
+                        ? pestanas.length - 1
+                        : null;
+              if (siguiente === null) return;
+              evento.preventDefault();
+              setPestana(pestanas[siguiente][0]);
+              evento.currentTarget
+                .querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                [siguiente]?.focus();
+            }}
+          >
+            {pestanas.map(([clave, texto]) => (
+              <Boton
+                key={clave}
+                type="button"
+                role="tab"
+                id={identificador + "-tab-" + clave}
+                aria-controls={identificador + "-panel"}
+                aria-selected={pestana === clave}
+                tabIndex={pestana === clave ? 0 : -1}
+                variante={pestana === clave ? "primario" : "fantasma"}
+                tamano="sm"
+                onClick={() => setPestana(clave)}
+                className="min-w-0 px-espacio-2!"
+              >
+                {texto}
+              </Boton>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="barra-desplazamiento-fina min-h-0 flex-1 overflow-y-auto overscroll-contain p-espacio-4 sm:p-espacio-6 [@media(max-height:600px)]:flex-none [@media(max-height:600px)]:overflow-visible">
           {aviso ? (
             <div
-              role="status"
-              className={`aparecer mb-4 rounded-xl border px-4 py-3 text-sm ${
-                aviso.tono === "ok"
-                  ? "border-exito-borde bg-exito-tenue text-exito"
-                  : "border-rojo-borde bg-rojo-tenue text-rojo"
-              }`}
+              role={aviso.tono === "ok" ? "status" : "alert"}
+              aria-atomic="true"
+              className={
+                "mb-espacio-4 rounded-control border p-espacio-3 text-pequeno [overflow-wrap:anywhere] " +
+                (aviso.tono === "ok"
+                  ? "border-exito-borde bg-exito-tenue text-exito-texto"
+                  : "border-rojo-borde bg-rojo-tenue text-rojo-alto")
+              }
             >
               {aviso.texto}
             </div>
           ) : null}
-
           {consulta.isPending ? (
             <Cargando filas={5} />
           ) : consulta.isError ? (
-            <ErrorPanel mensaje={mensajeDeError(consulta.error)} reintentar={() => consulta.refetch()} />
-          ) : !detalle ? null : (
+            <ErrorPanel
+              titulo="No se pudo cargar el documento"
+              mensaje={mensajeDeError(consulta.error)}
+              reintentar={() => consulta.refetch()}
+            />
+          ) : !detalle ? (
+            <Vacio titulo="Sin detalle disponible" />
+          ) : (
             <>
               {documento?.origenTipo === "GENERICO" ? (
                 <div
-                  role="status"
-                  className="aparecer mb-4 rounded-xl border border-alerta-borde bg-alerta-tenue px-4 py-3 text-sm text-alerta"
+                  role="note"
+                  className="mb-espacio-4 rounded-control border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-alerta-texto"
                 >
                   <p className="font-semibold">
-                    Este documento no correspondia a ningun tipo del catalogo y se capturo con el
-                    esquema generico
+                    Este documento no correspondía a ningún tipo del catálogo y
+                    se capturó con el esquema genérico.
                   </p>
                   {documento.motivoTipo ? (
-                    <p className="mt-1 text-xs text-alerta/80">{documento.motivoTipo}</p>
+                    <p className="mt-espacio-1 [overflow-wrap:anywhere]">
+                      {documento.motivoTipo}
+                    </p>
                   ) : null}
                 </div>
               ) : null}
-              <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <Metrica etiqueta="Proveedor" valor={detalle.extraccion?.proveedor ?? "—"} />
-                <Metrica etiqueta="Modelo" valor={detalle.extraccion?.modelo ?? "—"} />
-                <Metrica
-                  etiqueta="Validacion"
-                  valor={detalle.validacion?.resultado ?? "—"}
-                  tono={detalle.validacion?.resultado === "APROBADO" ? "ok" : "alerta"}
-                />
-                <Metrica
-                  etiqueta="Autoaprobado"
-                  valor={detalle.validacion ? (detalle.validacion.autoaprobado ? "Si" : "No") : "—"}
-                />
+              <div
+                role="tabpanel"
+                tabIndex={0}
+                id={identificador + "-panel"}
+                aria-labelledby={identificador + "-tab-" + pestana}
+                className="min-w-0 rounded-control focus-visible:outline-foco"
+              >
+                {pestana === "campos" ? (
+                  <PanelCampos
+                    detalle={detalle}
+                    correcciones={correcciones}
+                    editable={puedeRevisar}
+                    alCorregir={(clave, valor) =>
+                      setCorrecciones((actuales) => {
+                        const copia = { ...actuales };
+                        if (valor === null) {
+                          delete copia[clave];
+                        } else {
+                          copia[clave] = valor;
+                        }
+                        return copia;
+                      })
+                    }
+                  />
+                ) : null}
+                {pestana === "hallazgos" ? (
+                  <PanelHallazgos detalle={detalle} />
+                ) : null}
+                {pestana === "asociacion" ? (
+                  <PanelAsociacion
+                    detalle={detalle}
+                    puedeElegir={puedeRevisar}
+                    eligiendo={eleccion.isPending}
+                    alElegir={(candidatoId) => eleccion.mutate(candidatoId)}
+                  />
+                ) : null}
+                {pestana === "actividad" ? (
+                  <PanelActividad detalle={detalle} />
+                ) : null}
               </div>
-
-              <nav className="mb-4 inline-flex rounded-xl border border-borde bg-white p-1 shadow-plano">
-                {(
+              <dl
+                aria-label="Contexto de extracción y validación"
+                className="mt-espacio-5 grid min-w-0 grid-cols-2 gap-espacio-3 sm:grid-cols-4"
+              >
+                {[
+                  ["Proveedor", detalle.extraccion?.proveedor ?? "—"],
+                  ["Modelo", detalle.extraccion?.modelo ?? "—"],
+                  ["Validación", detalle.validacion?.resultado ?? "—"],
                   [
-                    ["campos", `Campos (${detalle.extraccion?.valores.length ?? 0})`],
-                    ["hallazgos", `Hallazgos (${detalle.validacion?.hallazgos.length ?? 0})`],
-                    ["asociacion", `Asociacion (${detalle.candidatos.length})`],
-                    ["actividad", `Actividad (${detalle.revisiones.length})`],
-                  ] as [Pestana, string][]
-                ).map(([clave, texto]) => (
-                  <button
-                    key={clave}
-                    type="button"
-                    onClick={() => setPestana(clave)}
-                    className={`rounded-lg px-3.5 py-1.5 text-xs font-semibold transition ${
-                      pestana === clave
-                        ? "bg-grafito text-white shadow-plano"
-                        : "text-tinta-suave hover:text-tinta"
-                    }`}
+                    "Autoaprobado",
+                    detalle.validacion
+                      ? detalle.validacion.autoaprobado
+                        ? "Sí"
+                        : "No"
+                      : "—",
+                  ],
+                ].map(([etiqueta, valor]) => (
+                  <div
+                    key={etiqueta}
+                    className="min-w-0 rounded-control border border-borde bg-superficie p-espacio-3"
                   >
-                    {texto}
-                  </button>
+                    <dt className="text-micro uppercase text-tinta-suave">
+                      {etiqueta}
+                    </dt>
+                    <dd className="mt-espacio-1 text-pequeno font-semibold [overflow-wrap:anywhere]">
+                      {valor}
+                    </dd>
+                  </div>
                 ))}
-              </nav>
-
-              {pestana === "campos" ? (
-                <PanelCampos
-                  detalle={detalle}
-                  correcciones={correcciones}
-                  editable={puedeRevisar}
-                  alCorregir={(clave, valor) =>
-                    setCorrecciones((actuales) => {
-                      const copia = { ...actuales };
-                      if (valor === null) {
-                        delete copia[clave];
-                      } else {
-                        copia[clave] = valor;
-                      }
-                      return copia;
-                    })
-                  }
-                />
-              ) : null}
-
-              {pestana === "hallazgos" ? <PanelHallazgos detalle={detalle} /> : null}
-
-              {pestana === "asociacion" ? (
-                <PanelAsociacion
-                  detalle={detalle}
-                  puedeElegir={puedeRevisar}
-                  eligiendo={eleccion.isPending}
-                  alElegir={(candidatoId) => eleccion.mutate(candidatoId)}
-                />
-              ) : null}
-
-              {pestana === "actividad" ? <PanelActividad detalle={detalle} /> : null}
+              </dl>
             </>
           )}
         </div>
 
-        {puedeRevisar && documento ? (
-          <footer className="border-t border-borde bg-white px-6 py-4">
+        {puedeRevisar && documento && !consulta.isError ? (
+          <footer
+            aria-label="Decisiones documentales"
+            className="shrink-0 border-t border-borde bg-superficie p-espacio-4 sm:px-espacio-6"
+          >
             {Object.keys(correcciones).length ? (
-              <p className="mb-2.5 inline-flex items-center gap-1.5 rounded-lg bg-violeta-tenue px-2.5 py-1 text-xs font-semibold text-violeta ring-1 ring-inset ring-violeta-borde">
-                {Object.keys(correcciones).length} campo(s) corregido(s) sin guardar
+              <p
+                role="status"
+                aria-atomic="true"
+                className="mb-espacio-2 text-pequeno font-semibold text-violeta"
+              >
+                {Object.keys(correcciones).length} campo(s) corregido(s) sin
+                enviar. Se envían con la decisión.
               </p>
             ) : null}
-            <input
+            <Campo
+              etiqueta="Motivo de la decisión"
               value={motivo}
               onChange={(evento) => setMotivo(evento.target.value)}
-              placeholder="Motivo de la decision (obligatorio para rechazar, observar o corregir)"
-              className="h-10 w-full rounded-xl border border-borde bg-white px-3 text-sm text-tinta outline-none transition placeholder:text-tinta-tenue focus:border-violeta focus:ring-[3px] focus:ring-violeta/15"
+              placeholder="Motivo de la decisión (obligatorio para rechazar, observar o corregir)"
             />
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
+            <div className="mt-espacio-3 grid grid-cols-2 gap-espacio-2 sm:flex sm:flex-wrap">
+              <Boton
                 type="button"
-                disabled={trabajando || !documento.transicionesPosibles.includes("APROBADO")}
+                variante="primario"
+                disabled={
+                  trabajando ||
+                  !documento.transicionesPosibles.includes("APROBADO")
+                }
+                cargando={decidir.isPending && decidir.variables === "APROBAR"}
                 onClick={() => decidir.mutate("APROBAR")}
-                className="h-9.5 rounded-xl bg-exito px-4 text-sm font-semibold text-white shadow-[0_4px_14px_-3px_rgba(15,157,88,0.45)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-borde-fuerte disabled:text-white/70 disabled:shadow-none"
               >
                 Aprobar
-              </button>
-              <button
+              </Boton>
+              <Boton
                 type="button"
-                disabled={trabajando || !documento.transicionesPosibles.includes("OBSERVADO")}
+                disabled={
+                  trabajando ||
+                  !documento.transicionesPosibles.includes("OBSERVADO")
+                }
+                cargando={decidir.isPending && decidir.variables === "OBSERVAR"}
                 onClick={() => decidir.mutate("OBSERVAR")}
-                className="h-9.5 rounded-xl bg-alerta px-4 text-sm font-semibold text-white shadow-[0_4px_14px_-3px_rgba(194,118,10,0.45)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-borde-fuerte disabled:text-white/70 disabled:shadow-none"
               >
                 Observar
-              </button>
-              <button
+              </Boton>
+              <Boton
                 type="button"
-                disabled={trabajando || !documento.transicionesPosibles.includes("RECHAZADO")}
+                variante="peligro"
+                disabled={
+                  trabajando ||
+                  !documento.transicionesPosibles.includes("RECHAZADO")
+                }
+                cargando={decidir.isPending && decidir.variables === "RECHAZAR"}
                 onClick={() => decidir.mutate("RECHAZAR")}
-                className="h-9.5 rounded-xl bg-rojo px-4 text-sm font-semibold text-white shadow-[0_4px_14px_-3px_rgba(255,30,30,0.45)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-borde-fuerte disabled:text-white/70 disabled:shadow-none"
               >
                 Rechazar
-              </button>
-              <span className="ml-auto flex gap-2">
-                <Boton tamano="md" disabled={trabajando} onClick={() => reproceso.mutate()}>
+              </Boton>
+              <Boton
+                type="button"
+                disabled={trabajando}
+                cargando={reproceso.isPending}
+                onClick={() => reproceso.mutate()}
+              >
+                <span aria-hidden="true">
                   <IconoRecargar tamano={14} />
-                  Reprocesar
-                </Boton>
-                <Boton
-                  tamano="md"
-                  disabled={trabajando || !documento.transicionesPosibles.includes("CERRADO")}
-                  onClick={() => cierre.mutate()}
-                >
-                  Cerrar documento
-                </Boton>
-              </span>
+                </span>
+                Reprocesar
+              </Boton>
+              <Boton
+                type="button"
+                disabled={
+                  trabajando ||
+                  !documento.transicionesPosibles.includes("CERRADO")
+                }
+                cargando={cierre.isPending}
+                onClick={() => cierre.mutate()}
+                className="col-span-2"
+              >
+                Cerrar documento
+              </Boton>
             </div>
+            <span role="status" aria-atomic="true" className="sr-only">
+              {trabajando ? "Enviando acción documental" : ""}
+            </span>
             {documento.transicionesPosibles.length === 0 ? (
-              <p className="mt-2.5 text-xs text-tinta-suave">
-                Este documento esta en un estado final y no admite mas transiciones.
+              <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+                Este documento está en un estado final y no admite más
+                transiciones.
               </p>
             ) : null}
           </footer>
         ) : null}
-      </section>
-    </div>
-  );
-}
-
-function Metrica({
-  etiqueta,
-  valor,
-  tono,
-}: {
-  etiqueta: string;
-  valor: string;
-  tono?: "ok" | "alerta";
-}) {
-  const color = tono === "ok" ? "text-exito" : tono === "alerta" ? "text-alerta" : "text-tinta";
-  return (
-    <div className="rounded-xl border border-borde bg-white px-3.5 py-2.5 shadow-plano">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">{etiqueta}</p>
-      <p className={`mt-1 truncate font-titulo text-sm ${color}`}>{valor}</p>
-    </div>
+      </div>
+    </dialog>
   );
 }
 
@@ -337,112 +542,178 @@ function PanelCampos({
   editable,
   alCorregir,
 }: {
-  detalle: NonNullable<ReturnType<typeof useQuery<Awaited<ReturnType<typeof obtenerDetalle>>>>["data"]>;
+  detalle: DetalleDocumento;
   correcciones: Record<string, string>;
   editable: boolean;
   alCorregir: (clave: string, valor: string | null) => void;
 }) {
-  if (!detalle.extraccion) {
+  if (!detalle.extraccion)
     return (
       <Vacio
-        titulo="Sin extraccion"
-        detalle="Todavia no se ejecuto ninguna extraccion sobre este documento."
+        titulo="Sin extracción"
+        detalle="Todavía no se ejecutó ninguna extracción sobre este documento."
       />
     );
-  }
+  if (!detalle.extraccion.valores.length)
+    return (
+      <Vacio
+        titulo="Sin campos extraídos"
+        detalle="La extracción no devolvió campos para mostrar."
+      />
+    );
   return (
-    <div className="overflow-hidden rounded-3xl border border-borde bg-white relieve">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-borde bg-lienzo/70">
-            {["Campo", "Valor", "Presencia", "Confianza"].map((columna) => (
-              <th
-                key={columna}
-                className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-tinta-suave"
-              >
-                {columna}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-borde">
-          {detalle.extraccion.valores.map((valor) => {
-            const corregido = correcciones[valor.claveCampo];
-            return (
-              <tr key={valor.id} className="transition hover:bg-lienzo/50">
-                <td className="px-4 py-2.5">
-                  <p className="font-medium text-tinta">{valor.etiqueta ?? valor.claveCampo}</p>
-                  <p className="text-xs text-tinta-suave">{valor.claveCampo}</p>
-                </td>
-                <td className="px-4 py-2.5">
-                  {editable ? (
-                    <input
-                      value={corregido ?? valor.valorNormalizado ?? ""}
-                      onChange={(evento) => {
-                        const nuevo = evento.target.value;
-                        alCorregir(valor.claveCampo, nuevo === (valor.valorNormalizado ?? "") ? null : nuevo);
-                      }}
-                      className={`w-full rounded-lg border px-2.5 py-1.5 text-sm outline-none transition ${
-                        corregido !== undefined
-                          ? "border-violeta bg-violeta-tenue font-medium text-violeta"
-                          : "border-transparent hover:border-borde focus:border-violeta focus:ring-[3px] focus:ring-violeta/15"
-                      }`}
-                    />
-                  ) : (
-                    <span>{valor.valorNormalizado ?? "—"}</span>
-                  )}
-                  {valor.corregidoManualmente ? (
-                    <p className="mt-0.5 text-xs text-violeta">corregido manualmente</p>
-                  ) : null}
-                </td>
-                <td className="px-4 py-2.5">
-                  <InsigniaPresencia presencia={valor.presencia} />
-                </td>
-                <td className="px-4 py-2.5">
-                  <BarraConfianza valor={valor.confianza} />
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+    <div>
+      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">
+        Campos extraídos
+      </h3>
+      <ul className="space-y-espacio-3">
+        {detalle.extraccion.valores.map((valor) => (
+          <li key={valor.id}>
+            <Tarjeta padding="p-espacio-4" className="rounded-panel!">
+              <CampoExtraido
+                valor={valor}
+                corregido={correcciones[valor.claveCampo]}
+                editable={editable}
+                alCorregir={alCorregir}
+              />
+            </Tarjeta>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-function PanelHallazgos({
-  detalle,
+function CampoExtraido({
+  valor,
+  corregido,
+  editable,
+  alCorregir,
 }: {
-  detalle: NonNullable<ReturnType<typeof useQuery<Awaited<ReturnType<typeof obtenerDetalle>>>>["data"]>;
+  valor: ValorExtraido;
+  corregido?: string;
+  editable: boolean;
+  alCorregir: (clave: string, valor: string | null) => void;
 }) {
+  const id = useId();
+  return (
+    <div className="grid min-w-0 gap-espacio-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)]">
+      <div className="min-w-0 [overflow-wrap:anywhere]">
+        <p id={id + "-etiqueta"} className="text-pequeno font-semibold">
+          {valor.etiqueta ?? valor.claveCampo}
+        </p>
+        <p
+          id={id + "-clave"}
+          className="mt-espacio-1 text-micro text-tinta-suave"
+        >
+          {valor.claveCampo}
+        </p>
+      </div>
+      <div className="min-w-0">
+        {editable ? (
+          <Campo
+            aria-labelledby={id + "-etiqueta"}
+            aria-describedby={id + "-clave"}
+            value={corregido ?? valor.valorNormalizado ?? ""}
+            onChange={(evento) => {
+              const nuevo = evento.target.value;
+              alCorregir(
+                valor.claveCampo,
+                nuevo === (valor.valorNormalizado ?? "") ? null : nuevo,
+              );
+            }}
+            className={
+              corregido !== undefined
+                ? "border-violeta! bg-violeta-tenue! font-medium text-violeta"
+                : ""
+            }
+          />
+        ) : (
+          <p className="text-pequeno [overflow-wrap:anywhere]">
+            {valor.valorNormalizado ?? "—"}
+          </p>
+        )}
+        {valor.corregidoManualmente ? (
+          <p className="mt-espacio-1 text-micro text-violeta">
+            corregido manualmente
+          </p>
+        ) : null}
+      </div>
+      <dl className="flex flex-wrap gap-espacio-3 sm:col-span-2 lg:col-span-1">
+        <div>
+          <dt className="mb-espacio-1 text-micro text-tinta-suave">
+            Presencia
+          </dt>
+          <dd>
+            <InsigniaPresencia presencia={valor.presencia} />
+          </dd>
+        </div>
+        <div>
+          <dt className="mb-espacio-1 text-micro text-tinta-suave">
+            Confianza
+          </dt>
+          <dd>
+            <BarraConfianza valor={valor.confianza} />
+          </dd>
+        </div>
+      </dl>
+    </div>
+  );
+}
+
+function PanelHallazgos({ detalle }: { detalle: DetalleDocumento }) {
   const hallazgos = detalle.validacion?.hallazgos ?? [];
-  if (!hallazgos.length) {
+  if (!detalle.validacion)
     return (
-      <p className="rounded-2xl border border-exito-borde bg-exito-tenue px-4 py-8 text-center text-sm font-medium text-exito">
-        La validacion no encontro hallazgos.
+      <Vacio
+        titulo="Sin validación"
+        detalle="Todavía no hay una validación disponible para consultar hallazgos."
+      />
+    );
+  if (!hallazgos.length)
+    return (
+      <p
+        role="status"
+        className="rounded-panel border border-exito-borde bg-exito-tenue p-espacio-6 text-center text-pequeno text-exito-texto"
+      >
+        La validación no encontró hallazgos.
       </p>
     );
-  }
   return (
-    <ul className="space-y-2">
-      {hallazgos.map((hallazgo) => (
-        <li key={hallazgo.id} className="rounded-xl border border-borde bg-white px-4 py-3 shadow-plano">
-          <div className="flex flex-wrap items-center gap-2">
-            <InsigniaSeveridad severidad={hallazgo.severidad} />
-            <span className="font-mono text-xs text-tinta-suave">{hallazgo.codigoRegla}</span>
-            {hallazgo.claveCampo ? (
-              <span className="text-xs text-tinta-suave">· {hallazgo.claveCampo}</span>
-            ) : null}
-          </div>
-          <p className="mt-1.5 text-sm text-tinta">{hallazgo.mensaje}</p>
-          {hallazgo.sobreescrito ? (
-            <p className="mt-1 text-xs text-violeta">
-              Sobreescrito por {hallazgo.sobreescritoPor}: {hallazgo.motivoSobreescritura}
-            </p>
-          ) : null}
-        </li>
-      ))}
-    </ul>
+    <div>
+      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">Hallazgos</h3>
+      <ul className="space-y-espacio-3">
+        {hallazgos.map((hallazgo) => (
+          <li key={hallazgo.id}>
+            <Tarjeta padding="p-espacio-4" className="rounded-panel!">
+              <div className="flex flex-wrap items-center gap-espacio-2 text-micro text-tinta-suave [overflow-wrap:anywhere]">
+                <InsigniaSeveridad severidad={hallazgo.severidad} />
+                {hallazgo.codigoRegla ? (
+                  <span>{hallazgo.codigoRegla}</span>
+                ) : null}
+                {hallazgo.claveCampo ? (
+                  <span>{hallazgo.claveCampo}</span>
+                ) : null}
+              </div>
+              <p className="mt-espacio-3 text-pequeno [overflow-wrap:anywhere]">
+                {hallazgo.mensaje ?? "Sin mensaje disponible"}
+              </p>
+              {hallazgo.sobreescrito ? (
+                <p className="mt-espacio-2 text-pequeno text-violeta [overflow-wrap:anywhere]">
+                  Sobreescrito
+                  {hallazgo.sobreescritoPor
+                    ? " por " + hallazgo.sobreescritoPor
+                    : ""}
+                  {hallazgo.motivoSobreescritura
+                    ? ": " + hallazgo.motivoSobreescritura
+                    : ""}
+                </p>
+              ) : null}
+            </Tarjeta>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -452,91 +723,147 @@ function PanelAsociacion({
   eligiendo,
   alElegir,
 }: {
-  detalle: NonNullable<ReturnType<typeof useQuery<Awaited<ReturnType<typeof obtenerDetalle>>>>["data"]>;
+  detalle: DetalleDocumento;
   puedeElegir: boolean;
   eligiendo: boolean;
   alElegir: (candidatoId: string) => void;
 }) {
-  if (!detalle.candidatos.length) {
+  if (!detalle.candidatos.length)
     return (
       <Vacio
         titulo="Sin candidatos"
-        detalle="Ningun conector devolvio candidatos para este documento."
+        detalle="Ningún conector devolvió candidatos para este documento."
       />
     );
-  }
   return (
-    <ul className="space-y-2">
-      {detalle.candidatos.map((candidato) => (
-        <li
-          key={candidato.id}
-          className={`rounded-xl border bg-white px-4 py-3 shadow-plano transition ${
-            candidato.seleccionado ? "border-exito ring-1 ring-exito/25" : "border-borde hover:border-borde-fuerte"
-          } ${candidato.descartado ? "opacity-50" : ""}`}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-medium text-tinta">
-                {candidato.descripcion ?? candidato.idObjeto}
-              </p>
-              <p className="text-xs text-tinta-suave">
-                {candidato.conector} · {candidato.tipoObjeto} {candidato.idObjeto}
-                {candidato.puntaje !== undefined ? ` · puntaje ${candidato.puntaje}` : ""}
-              </p>
-            </div>
-            {candidato.seleccionado ? (
-              <Pastilla tono="exito">Seleccionado</Pastilla>
-            ) : puedeElegir && !candidato.descartado ? (
-              <Boton tamano="sm" disabled={eligiendo} onClick={() => alElegir(candidato.id)}>
-                Elegir
-              </Boton>
-            ) : null}
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div>
+      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">Asociación</h3>
+      <ul className="space-y-espacio-3">
+        {detalle.candidatos.map((candidato) => (
+          <li key={candidato.id}>
+            <Tarjeta
+              padding="p-espacio-4"
+              className={
+                "rounded-panel! " +
+                (candidato.seleccionado
+                  ? "border-exito-borde! bg-exito-tenue!"
+                  : "") +
+                (candidato.descartado ? " opacity-50" : "")
+              }
+            >
+              <div className="flex flex-wrap items-center justify-between gap-espacio-3">
+                <div className="min-w-0 flex-1 [overflow-wrap:anywhere]">
+                  <p className="text-pequeno font-semibold">
+                    {candidato.descripcion ??
+                      candidato.idObjeto ??
+                      "Sin descripción disponible"}
+                  </p>
+                  <p className="mt-espacio-1 text-pequeno text-tinta-suave">
+                    {[
+                      candidato.conector,
+                      candidato.tipoObjeto,
+                      candidato.idObjeto,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    {candidato.puntaje != null
+                      ? " · puntaje " + candidato.puntaje
+                      : ""}
+                  </p>
+                </div>
+                {candidato.seleccionado ? (
+                  <Pastilla tono="exito">Seleccionado</Pastilla>
+                ) : puedeElegir && !candidato.descartado ? (
+                  <Boton
+                    type="button"
+                    tamano="sm"
+                    disabled={eligiendo}
+                    onClick={() => alElegir(candidato.id)}
+                  >
+                    Elegir
+                  </Boton>
+                ) : null}
+              </div>
+            </Tarjeta>
+          </li>
+        ))}
+      </ul>
+      <span role="status" aria-atomic="true" className="sr-only">
+        {eligiendo ? "Seleccionando candidato" : ""}
+      </span>
+    </div>
   );
 }
 
-function PanelActividad({
-  detalle,
-}: {
-  detalle: NonNullable<ReturnType<typeof useQuery<Awaited<ReturnType<typeof obtenerDetalle>>>>["data"]>;
-}) {
-  if (!detalle.revisiones.length) {
+function PanelActividad({ detalle }: { detalle: DetalleDocumento }) {
+  if (!detalle.revisiones.length)
     return (
       <Vacio
         titulo="Sin actividad"
-        detalle="Todavia no hubo revisiones humanas sobre este documento."
+        detalle="Todavía no hubo revisiones humanas sobre este documento."
       />
     );
-  }
   return (
-    <ol className="space-y-3">
-      {detalle.revisiones.map((revision) => (
-        <li key={revision.id} className="rounded-xl border border-borde bg-white px-4 py-3 shadow-plano">
-          <div className="flex flex-wrap items-center gap-2 text-sm">
-            <span className="font-medium text-tinta">{revision.decision}</span>
-            <span className="text-tinta-suave">
-              {revision.estadoAnterior} → {revision.estadoNuevo}
-            </span>
-            <span className="ml-auto text-xs text-tinta-suave">{formatearFecha(revision.alta)}</span>
-          </div>
-          <p className="mt-1 text-xs text-tinta-suave">{revision.actor}</p>
-          {revision.motivo ? <p className="mt-1.5 text-sm text-tinta">{revision.motivo}</p> : null}
-          {revision.cambios.length ? (
-            <ul className="mt-2 space-y-1 border-t border-borde pt-2">
-              {revision.cambios.map((cambio) => (
-                <li key={cambio.claveCampo} className="text-xs text-tinta-suave">
-                  <span className="font-medium text-tinta">{cambio.claveCampo}</span>{" "}
-                  <span className="line-through">{cambio.valorAnterior ?? "vacio"}</span> →{" "}
-                  <span className="text-violeta">{cambio.valorNuevo}</span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </li>
-      ))}
-    </ol>
+    <div>
+      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">Actividad</h3>
+      <ol className="space-y-espacio-4 border-l border-borde pl-espacio-4">
+        {detalle.revisiones.map((revision) => (
+          <li key={revision.id} className="relative">
+            <span
+              aria-hidden="true"
+              className="absolute top-espacio-4 -left-espacio-5 size-espacio-2 rounded-insignia bg-violeta"
+            />
+            <Tarjeta padding="p-espacio-4" className="rounded-panel!">
+              <div className="flex flex-wrap items-center gap-espacio-2 text-pequeno">
+                <span className="font-semibold">{revision.decision}</span>
+                <span className="flex flex-wrap items-center gap-espacio-1">
+                  {revision.estadoAnterior ? (
+                    <InsigniaEstado estado={revision.estadoAnterior} />
+                  ) : (
+                    "—"
+                  )}
+                  <span aria-label="hacia">→</span>
+                  {revision.estadoNuevo ? (
+                    <InsigniaEstado estado={revision.estadoNuevo} />
+                  ) : (
+                    "—"
+                  )}
+                </span>
+                <span className="text-pequeno text-tinta-suave sm:ml-auto">
+                  {formatearFecha(revision.alta)}
+                </span>
+              </div>
+              <p className="mt-espacio-2 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
+                {revision.actor ?? "Actor no informado"}
+              </p>
+              {revision.motivo ? (
+                <p className="mt-espacio-2 text-pequeno [overflow-wrap:anywhere]">
+                  {revision.motivo}
+                </p>
+              ) : null}
+              {revision.cambios.length ? (
+                <ul className="mt-espacio-3 space-y-espacio-2 border-t border-borde pt-espacio-3">
+                  {revision.cambios.map((cambio) => (
+                    <li
+                      key={cambio.claveCampo}
+                      className="text-pequeno [overflow-wrap:anywhere]"
+                    >
+                      <span className="font-semibold">{cambio.claveCampo}</span>{" "}
+                      <span className="line-through text-tinta-suave">
+                        {cambio.valorAnterior ?? "vacío"}
+                      </span>
+                      {" → "}
+                      <span className="text-violeta">
+                        {cambio.valorNuevo ?? "vacío"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </Tarjeta>
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

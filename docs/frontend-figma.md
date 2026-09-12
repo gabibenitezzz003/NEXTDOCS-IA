@@ -489,3 +489,122 @@ La integración real está pendiente: `127.0.0.1:8090` rechaza la conexión. `np
 falla en sus dos smoke por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`.
 No se declara E2E verde; se debe repetir con Workflow disponible antes del PR.
 FASE 5 termina sin iniciar el rediseño del visor, sin push y conservando el stash de CHECKPOINT 2.
+
+## FASE 6 — Visor y revisión documental
+
+Base funcional: `811d7f9`. Se moderniza `VisorDocumento.tsx`. En `Documentos.tsx`, el clic
+sobre una celda enfoca el botón de apertura de esa fila antes de montar el visor: esto
+permite devolver el foco a un control útil al cerrar. No cambia el ID ni la apertura.
+No se modifica Excepciones, que continúa utilizando el mismo visor.
+
+### Contratos inspeccionados y preservados
+
+| Aspecto | Contrato real |
+| --- | --- |
+| Invocación | Props `documentoId` y `alCerrar`; montaje desde Documentos y Excepciones, sin rutas nuevas |
+| Detalle | Query key `["documento", documentoId]`; `obtenerDetalle`; GET `/api/v1/documentos/{id}/detalle` |
+| Modelo | `DetalleDocumento`: documento, extracción y validación opcionales, candidatos, revisiones, segmentos y original físico; no se agregan vistas para estos dos últimos |
+| Original | Acción `urlOriginal`, GET `/api/v1/documentos/{id}/original`, respuesta `{url}`; `window.open(url, "_blank", "noopener")`; no es una query ni un preview embebido |
+| Campos | Mismo orden, etiqueta/clave, valor normalizado, presencia, confianza y marca manual; edición condicionada por `documentos.revisar` |
+| Correcciones | Registro local por clave; volver al valor original elimina la corrección; no se envía ninguna petición al editar |
+| Revisión | POST `/api/v1/documentos/{id}/revisiones` con `decision`, `motivo.trim() || undefined` y correcciones cuando existen |
+| Decisiones | Aprobar, Observar y Rechazar conservan `APROBAR`, `OBSERVAR` y `RECHAZAR`, con los mismos chequeos sobre `transicionesPosibles` |
+| Reprocesar / cerrar | POST `/api/v1/documentos/{id}/reprocesar` y `/cerrar`; las condiciones de habilitación permanecen iguales |
+| Asociación | Mismos candidatos, orden, puntaje sin transformar, seleccionado/descartado y selección; POST `/api/v1/documentos/{id}/candidatos/{candidatoId}/seleccionar` |
+| Motivo de asociación | `motivo.trim() || "Seleccion desde el portal"`, sin cambios |
+| Actividad | Mismas revisiones, orden, actor, fecha, decisión, estados, motivo y cambios; no se agregan eventos |
+| Invalidación | Las cuatro claves existentes: documento con ID, documentos, excepciones y resumen |
+| Éxito de revisión | Limpia correcciones y motivo, anuncia el estado devuelto e invalida consultas |
+| Éxito de reproceso/cierre/selección | Conserva correcciones y motivo, muestra el aviso e invalida consultas, como antes |
+| Fallos | Conserva `mensajeDeError` y los borradores locales; ErrorPanel del detalle permite `refetch` y cierre |
+| Cierre del visor | Desmonta y descarta correcciones y motivo locales sin confirmación, igual que antes |
+
+Se inspeccionaron cliente API, DTOs, controlador documental y servicio de revisión. La
+confianza sigue siendo un dato de lectura, nunca una decisión. `CORREGIR` conduce a
+`OBSERVADO`; no existe guardado neutral ni se agrega «Guardar corrección». El texto de
+correcciones pendientes explica que se envían con la decisión.
+
+La discrepancia histórica de permisos queda pendiente de decisión funcional: el frontend
+agrupa Reprocesar y Cerrar bajo `documentos.revisar`, mientras sus endpoints exigen
+`documentos.escribir`. Detalle/original requieren leer; revisión/selección requieren revisar.
+No se amplían ni reducen permisos. Reprocesar conserva su habilitación incluso en un estado
+final cuando no hay una mutación de decisión/reproceso/cierre pendiente.
+
+También se conserva el placeholder histórico de motivo, que menciona «corregir». El backend
+exige motivo para RECHAZAR, OBSERVAR o sobreescritura de hallazgos; una corrección adjunta a
+APROBAR no equivale por sí sola a esa exigencia. No se agrega validación frontend ni se
+cambia esta regla. La selección de candidato conserva su bloqueo independiente.
+
+### Referencias y decisiones visuales
+
+Se inspeccionaron mediante Figma MCP contexto e imagen de Product UX `2:291` y del Design
+System: Campos normal `40:12516`, editados `40:12742`, captura genérica `40:12970`, Hallazgos
+`40:13198`, Hallazgos vacío `40:13281`, Asociación `40:13347`, Actividad `40:13424`, estado
+final `40:13519` y visor móvil `123:9885`. Se revisaron metadatos de visor y responsive para
+identificar las referencias relacionadas. La inspección de Figma fue de solo lectura.
+
+- Se mantiene un drawer modal porque las superficies actuales lo abren sin cambiar ruta.
+  Desde 768 px ocupa `min(90vw, 64rem)`; en móvil, todo el ancho. El límite de 64 rem permite
+  revisar datos reales con más espacio que el drawer de unos 768 px del Design System.
+- Encabezado, pestañas y decisiones rodean un área central desplazable. En viewports de
+  hasta 600 px de alto se desplaza el conjunto para mantener accesibles contenido y acciones.
+  No se fija una altura de frame de Figma ni se altera el shell.
+- Se conservan Campos, Hallazgos, Asociación y Actividad. En móvil las cuatro pestañas se
+  distribuyen en dos filas; las cinco decisiones siguen disponibles según el contrato.
+- Del patrón original/datos/asistencia de UX-05 se incorpora la jerarquía: original siempre
+  accesible en el encabezado, datos editables como vista inicial y hallazgos próximos mediante
+  pestaña. No se agregan preview, asistencia IA, SLA, KPI, confianza global ni proceso sugerido.
+- El Design System orienta superficies claras, separación de campos, selección violeta,
+  estados y decisiones. Se utilizan tokens actuales y primitivas compartidas, sin copiar
+  instancias genéricas de «Guardar» o pestañas ajenas al contrato ni el preview vacío móvil.
+  Se mantiene una cabecera clara coherente con las fundaciones actuales en lugar de copiar
+  la cabecera grafito de la referencia móvil.
+- Se reutilizan Boton, BotonIcono, Campo, Tarjeta, Pastilla, InsigniaEstado, InsigniaPresencia,
+  InsigniaSeveridad, BarraConfianza, Cargando, Vacio y ErrorPanel. No cambian sus APIs ni se
+  agregan tokens, fuentes o dependencias. `ESTADOS_DOCUMENTALES` sigue siendo la fuente
+  compartida de presentación documental; la confianza conserva `role="meter"` y sus ARIA.
+- Loading muestra cinco skeletons decorativos. Error del detalle no muestra decisiones,
+  incluso si existe un dato previo en caché. Se distinguen ausencia de validación y validación
+  sin hallazgos. Sin extracción, candidatos o actividad se muestran mensajes específicos;
+  metadatos opcionales ausentes se omiten o muestran «—», sin datos ilustrativos de relleno.
+
+No se declara pixel-perfect ni validación corporativa de propiedades internas de Follow.
+
+### Modalidad y accesibilidad
+
+Se usa `dialog.showModal()`, `aria-modal`, título y descripción con IDs estables. El foco
+inicial está en el título; el fondo queda inerte. Tab y Shift+Tab recorren los controles
+disponibles dentro del visor: se cierran explícitamente ambos extremos porque Chromium
+puede llevar el foco a la interfaz del navegador al salir del último control nativo.
+Escape, el botón «Cerrar visor» y el clic exterior cierran; el foco vuelve al abridor si
+sigue conectado. El scroll del documento se bloquea y restaura sin alterar su valor previo.
+
+Las pestañas tienen roles tablist/tab/tabpanel, nombres, relaciones ARIA y un único tab stop;
+flechas izquierda/derecha, Home y End activan y enfocan la pestaña correspondiente. Los
+campos tienen nombre y descripción asociados. Mensajes usan status/alert, iconos e
+indicadores decorativos se excluyen del árbol accesible. Loading de acciones mantiene
+dimensiones, comunica aria-busy y conserva exactamente los bloqueos funcionales existentes.
+
+### Verificación y límites
+
+La comparación de AST contra `811d7f9` confirma query, permisos, indicador de trabajo,
+mutaciones, payloads, errores, invalidaciones, apertura del original, correcciones y
+condiciones de habilitación. API, tipos, sesión y backend permanecen sin cambios.
+
+Chromium verifica Campos en 1440, 1024, 768 y 390; las cuatro pestañas en 1440 y 390; footer,
+loading, error y recuperación, ausencia de hallazgos/validación, datos parciales, estado
+final, tres combinaciones de permisos, apertura desde Excepciones y viewport 390×400.
+No hay overflow horizontal en los escenarios capturados. Se verifican foco inicial, fondo
+inerte, Tab/Shift+Tab, flechas/Home/End, Escape, retorno de foco y cierre con cambios locales.
+Las cinco decisiones mantienen payloads y bloqueo mientras esperan; selección conserva
+motivo explícito y fallback. Original conserva URL y apertura externa; sus errores se anuncian.
+
+Estas son pruebas frontend con respuestas controladas, no evidencia de decisiones o
+asociaciones ejecutadas en backend. Script, resultados y capturas locales de esta ejecución:
+`/tmp/nextdocs-visor-heyiYw/`. No se agregan fixtures al producto ni dependencias.
+
+`npm run build` pasa. `npm run test:e2e` falla en sus dos smoke por
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`; Workflow no está disponible.
+La API core también rechaza conexión en `127.0.0.1:8090`. La integración real queda pendiente
+y E2E no está verde: debe repetirse con los servicios disponibles antes del PR.
+FASE 6 se limita al visor y termina sin iniciar Excepciones, sin push y preservando el stash.

@@ -284,7 +284,10 @@ export function Documentos() {
                   {documentos.map((documento) => (
                     <tr
                       key={documento.id}
-                      onClick={() => setDocumentoAbierto(documento.id)}
+                      onClick={(evento) => {
+                        evento.currentTarget.querySelector("button")?.focus();
+                        setDocumentoAbierto(documento.id);
+                      }}
                       className="group cursor-pointer transition-colors hover:bg-violeta-tenue focus-within:bg-violeta-tenue"
                     >
                       <td className="px-espacio-4 py-espacio-3">
