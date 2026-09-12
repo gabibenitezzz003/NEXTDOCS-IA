@@ -202,7 +202,7 @@ export function Columnas({
   barras,
   alto = 120,
 }: {
-  barras: { etiqueta: string; valor: number; tono?: ClaveTono }[];
+  barras: { etiqueta: string; valor: number; tono?: ClaveTono; color?: string }[];
   alto?: number;
 }) {
   const { referencia, visible } = useVisible<HTMLDivElement>();
@@ -214,7 +214,7 @@ export function Columnas({
         const [claro, oscuro] = PALETA[barra.tono ?? "violeta"];
         const proporcion = Math.max((barra.valor / maximo) * 100, barra.valor > 0 ? 4 : 0);
         return (
-          <div key={barra.etiqueta} className="group flex h-full flex-1 flex-col justify-end gap-1.5">
+          <div key={barra.etiqueta} className="group flex h-full min-w-0 flex-1 flex-col justify-end gap-1.5">
             <span className="cifra text-center text-[11px] text-tinta-suave tabular-nums">
               {barra.valor.toLocaleString("es-AR")}
             </span>
@@ -223,8 +223,8 @@ export function Columnas({
               style={{
                 height: visible ? `${proporcion}%` : "0%",
                 transformOrigin: "bottom",
-                backgroundImage: `linear-gradient(180deg, ${claro}, ${oscuro})`,
-                boxShadow: `inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 12px -4px ${oscuro}99`,
+                background: barra.color ?? `linear-gradient(180deg, ${claro}, ${oscuro})`,
+                boxShadow: barra.color ? undefined : `inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 12px -4px ${oscuro}99`,
                 transition: `height 0.95s cubic-bezier(0.22, 1, 0.36, 1) ${indice * 60}ms`,
               }}
             />

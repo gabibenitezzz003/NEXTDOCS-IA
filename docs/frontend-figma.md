@@ -3,8 +3,9 @@
 ## Alcance
 
 FASE 1 quedó cerrada con las fundaciones de `1d2ae93` y las primitivas de `c53cfcc`.
-FASE 2 quedó aceptada en `dd52b90` con el shell y la navegación. FASE 3 moderniza Login y la
-presentación de la restauración de sesión; no modifica contratos de autenticación ni otras páginas.
+FASE 2 quedó aceptada en `dd52b90` con el shell y la navegación. FASE 3 quedó aceptada en
+`9b1fdd5` con Login y restauración de sesión. FASE 4 trabaja únicamente la presentación de
+`/resumen`, conservando las consultas, poblaciones y fórmulas existentes.
 
 Antes de editar se preservó el trabajo incompleto de CHECKPOINT 2:
 
@@ -310,3 +311,88 @@ E2E no está verde y esos errores de conexión no demuestran un fallo introducid
 
 `npm run build` y `git diff --check` pasaron. FASE 3 termina aquí, sin iniciar Resumen ni
 Documentos y sin aplicar o eliminar el stash de CHECKPOINT 2.
+
+## FASE 4 — Resumen operativo
+
+Se inspeccionaron contexto de diseño e imágenes con Figma MCP: Product UX `2:39`; Design
+System normal `40:3580`, vacío `40:3724`, cargando `126:3368` y menú de usuario `40:3801`.
+El shell aceptado permanece intacto; la identidad del tenant y el menú siguen siendo suyos.
+
+### Fuentes funcionales y poblaciones
+
+`obtenerResumen()` consulta `GET /api/v1/documentos/resumen` con query key `["resumen"]`.
+El frontend recibe `Record<string, number>`; `DocumentoRestController.resumen()` exige
+`documentos.leer` y delega en `DocumentoService.resumenPorEstado(tenantId())`.
+`DocumentoRepository.contarPorEstado` cuenta documentos del tenant con `baja IS NULL`, por
+cada estado del enum. No filtra sólo documentos raíz ni aplica una ventana temporal.
+
+| Dato visible | Fuente y cálculo conservados |
+|---|---|
+| Documentos totales | Suma de entradas del resumen, excluyendo `profundidadCola` y `profundidadReintento` |
+| Requieren revisión | `Number(datos.OBSERVADO ?? 0)` |
+| Aprobados | `Number(datos.APROBADO ?? 0)` |
+| Recibidos | `Number(datos.RECIBIDO ?? 0)` |
+| Rechazados | `Number(datos.RECHAZADO ?? 0)` |
+| Porcentaje de cada destacado | `Math.round(parte / total * 100)`; con total cero, `0% del total` |
+| Cola de extracción | `Number(datos.profundidadCola ?? 0)`, mostrada como detalle del total |
+| Distribución | Las mismas entradas documentales, ordenadas por cantidad descendente |
+
+La cola viene de `ColaExtraccionService.profundidad()`: tamaño de la lista Redis configurada
+para el servicio, sin filtro por tenant. Se conserva el dato y se aclara «del servicio»; no se
+presenta como otra población documental. La tarjeta antes titulada «En cola» pasa a «Recibidos»
+porque cuenta exactamente `RECIBIDO`, no la profundidad Redis. `profundidadReintento` sigue
+excluida del total y del gráfico, sin agregar un KPI nuevo.
+
+Las excepciones mantienen query key `["excepciones", "ABIERTA", 0]`, función
+`listarExcepciones("ABIERTA", 0, 5)` y `enabled: tienePermiso("excepciones.leer")`.
+`GET /api/v1/excepciones?estado=ABIERTA&pagina=0&tamano=5` devuelve `Pagina<Excepcion>`.
+El backend filtra tenant, `baja IS NULL` y estado, y ordena por prioridad descendente y alta.
+Se muestran los mismos cinco elementos como máximo, con tipo, severidad y detalle; no se
+convierte el tamaño de esa página en un KPI global ni se incluyen excepciones `EN_CURSO`.
+
+### Presentación y decisiones
+
+- Cinco tarjetas estáticas usan `Tarjeta`, `Metrica` compacta e `InsigniaEstado`. `OBSERVADO`
+  tiene énfasis ámbar. Desaparecen auras, elevación al hover y contadores animados; se muestran
+  las cantidades recibidas sin pasar por ceros animados.
+- Desde 80 rem se muestran cinco KPI en una fila y dos paneles de operación. Entre 40 y
+  80 rem, el total ocupa ambas columnas y los otros cuatro KPI forman una grilla de dos por dos.
+  En móvil se apilan. Los paneles quedan en una columna hasta 80 rem y crecen con su contenido.
+- Se mantienen exclusivamente los enlaces existentes a `/panel` y `/excepciones`. No hay
+  links en KPI estáticos ni CTA de carga, por lo que no se ofrece subida a usuarios sin permiso.
+- `ESTADOS_DOCUMENTALES` es la única fuente de etiquetas y colores documentales. Se eliminan
+  los mapas locales de tonos; `RECIBIDO` y `DIVIDIDO` usan la presentación neutra compartida.
+- `Columnas` acepta `color` opcional por barra para recibir el token del catálogo. Sin esa
+  propiedad conserva el degradado y sombra anteriores, como en su consumidor `Panel.tsx`.
+  El máximo, proporción y mínimo visual de barra no cambian. `min-w-0` evita que las etiquetas
+  impongan un ancho de escritorio. El gráfico mantiene cantidades, agrupación y orden.
+- La distribución incluye una lista textual de todos los estados y cantidades. En móvil esa
+  lista reemplaza visualmente las columnas estrechas; el gráfico decorativo queda oculto al
+  lector de pantalla para evitar duplicación. No se ocultan estados con cantidad cero.
+- Loading usa `Cargando` con cinco espacios de KPI y dos paneles, sin mostrar ceros mientras
+  la consulta está pendiente. Los ceros de una respuesta válida se mantienen como datos reales.
+- Con total cero se muestra `Vacio` en la distribución. Las excepciones conservan su resultado
+  independiente, incluso si todavía no hay documentos. Los errores de resumen y excepciones
+  usan `ErrorPanel`, mensaje real y `refetch`; un error nunca se sustituye por un total cero.
+
+UX-02 aporta jerarquía compacta, pero no se copian automatización, confianza global, variaciones,
+actividad reciente, responsables ilustrativos ni «En revisión»/«Por revisar». Tampoco se agrega
+la tabla documental conceptual o analítica de `/panel`. El Design System aporta superficies,
+estados y tokens; sus instancias genéricas «Guardar»/«Borrador» no son acciones ni estados reales.
+La tarjeta total queda clara y compacta para reservar el énfasis a la revisión humana. Se usan
+radios funcionales de métrica/panel, sin reconstruir la sidebar de 248 px o el header de 104 px.
+No se declara pixel-perfect ni validación corporativa de Follow.
+
+### Verificación del resumen
+
+La validación visual controlada en Chromium cubre 1440, 1024, 768 y 390 px; loading, vacío,
+error completo, error de excepciones, recuperación con Reintentar y permisos reducidos. Se
+contrastan cinco KPI, nueve estados, porcentajes, cola separada, cinco excepciones y navegación.
+Una comparación de AST contra el commit anterior comprueba las dos queries y los cálculos de
+datos, total, destacados, cola, exclusiones técnicas y porcentajes, independientemente del formato.
+
+La integración real no está verificada: el backend en `127.0.0.1:8090` no responde.
+`npm run test:e2e` falla en los dos smoke por `ECONNREFUSED ::1:8091` y
+`ECONNREFUSED 127.0.0.1:8091`; debe repetirse con Workflow disponible antes del PR.
+`npm run build` y `git diff --check` pasaron. No se declara E2E verde.
+FASE 4 termina sin iniciar Documentos ni Visor y conserva el stash.
