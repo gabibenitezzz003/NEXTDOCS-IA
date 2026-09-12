@@ -85,9 +85,11 @@ export function Vacio({
 export function ErrorPanel({
   mensaje,
   reintentar,
+  titulo = "No se pudo cargar",
 }: {
   mensaje: string;
   reintentar?: () => void;
+  titulo?: string;
 }) {
   return (
     <div
@@ -99,9 +101,7 @@ export function ErrorPanel({
         <IconoInfo tamano={18} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-pequeno font-semibold text-rojo-alto">
-          No se pudo cargar
-        </p>
+        <p className="text-pequeno font-semibold text-rojo-alto">{titulo}</p>
         <p className="mt-espacio-1 text-pequeno text-tinta-media break-words">
           {mensaje}
         </p>

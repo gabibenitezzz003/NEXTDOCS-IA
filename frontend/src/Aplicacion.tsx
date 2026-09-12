@@ -8,21 +8,35 @@ import { Excepciones } from "./paginas/Excepciones";
 import { TiposPropuestos } from "./paginas/TiposPropuestos";
 import { Procesos } from "./paginas/Procesos";
 import { useSesion } from "./contextos/ProveedorSesion";
-import { Isotipo } from "./componentes/Marca";
+import { Logotipo } from "./componentes/Marca";
+import { Tarjeta } from "./componentes/Interfaz";
 
 export function Aplicacion() {
   const { sesion, cargando } = useSesion();
 
   if (cargando) {
     return (
-      <div className="flex h-full items-center justify-center bg-lienzo">
-        <div className="flex flex-col items-center gap-3 text-tinta-suave">
-          <span className="esqueleto text-grafito">
-            <Isotipo tamano={40} />
-          </span>
-          <p className="text-sm">Restaurando sesion...</p>
-        </div>
-      </div>
+      <main className="grid min-h-dvh place-items-center bg-lienzo p-espacio-6">
+        <Tarjeta padding="px-espacio-8 py-espacio-10" className="max-w-full">
+          <div className="flex flex-col items-center gap-espacio-6">
+            <Logotipo />
+            <div
+              role="status"
+              aria-atomic="true"
+              className="flex flex-col items-center gap-espacio-6"
+            >
+              <div aria-hidden="true" className="flex gap-espacio-2">
+                <span className="h-espacio-1 w-espacio-12 animate-pulse rounded-insignia bg-violeta motion-reduce:animate-none" />
+                <span className="h-espacio-1 w-espacio-12 rounded-insignia bg-borde" />
+                <span className="h-espacio-1 w-espacio-12 rounded-insignia bg-borde" />
+              </div>
+              <p className="text-pequeno font-semibold text-tinta-media">
+                Restaurando sesión…
+              </p>
+            </div>
+          </div>
+        </Tarjeta>
+      </main>
     );
   }
 

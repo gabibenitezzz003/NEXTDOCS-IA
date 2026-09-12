@@ -1,20 +1,24 @@
+import { useId } from "react";
+
 export function Isotipo({ tamano = 32, animado = false }: { tamano?: number; animado?: boolean }) {
+  const fondo = useId();
+  const brillo = useId();
   return (
     <svg width={tamano} height={tamano} viewBox="0 0 40 40" fill="none" aria-hidden>
       <defs>
-        <linearGradient id="marcaFondo" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+        <linearGradient id={fondo} x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#8A63FF" />
           <stop offset="46%" stopColor="#6C38FF" />
           <stop offset="100%" stopColor="#FF1E1E" />
         </linearGradient>
-        <linearGradient id="marcaBrillo" x1="0" y1="0" x2="0" y2="40" gradientUnits="userSpaceOnUse">
+        <linearGradient id={brillo} x1="0" y1="0" x2="0" y2="40" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.34" />
           <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0" />
         </linearGradient>
       </defs>
 
-      <rect width="40" height="40" rx="11" fill="url(#marcaFondo)" />
-      <rect width="40" height="40" rx="11" fill="url(#marcaBrillo)" />
+      <rect width="40" height="40" rx="11" fill={`url(#${fondo})`} />
+      <rect width="40" height="40" rx="11" fill={`url(#${brillo})`} />
       <rect x="0.6" y="0.6" width="38.8" height="38.8" rx="10.4" stroke="#FFFFFF" strokeOpacity="0.22" strokeWidth="1.2" />
 
       <g fill="#FFFFFF">

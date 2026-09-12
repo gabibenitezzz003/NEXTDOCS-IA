@@ -3,8 +3,8 @@
 ## Alcance
 
 FASE 1 quedó cerrada con las fundaciones de `1d2ae93` y las primitivas de `c53cfcc`.
-FASE 2 moderniza exclusivamente el shell y la navegación. No rediseña el contenido interno
-de las páginas ni modifica APIs, permisos o transiciones.
+FASE 2 quedó aceptada en `dd52b90` con el shell y la navegación. FASE 3 moderniza Login y la
+presentación de la restauración de sesión; no modifica contratos de autenticación ni otras páginas.
 
 Antes de editar se preservó el trabajo incompleto de CHECKPOINT 2:
 
@@ -165,8 +165,9 @@ El gestor es npm y no se instalaron dependencias. Se ejecutan desde `frontend/`:
 --branch`. Los smoke sólo cubren health y Workflow con tenant; no certifican portal, permisos,
 accesibilidad, fidelidad visual ni Follow.
 
-El stash continúa intacto. Tras FASE 2 se detiene el trabajo: Login, Resumen, Documentos y las
-demás superficies requieren autorización independiente para su rediseño interno.
+El stash continúa intacto. FASE 2 fue aceptada en `dd52b90`. FASE 3 comprende únicamente Login
+y la presentación de la restauración de sesión. Resumen, Documentos y las demás superficies
+requieren autorización independiente para su rediseño interno.
 
 ## FASE 2 — Application shell y navegación
 
@@ -237,3 +238,75 @@ permitidos, organización larga y cierre del drawer al ampliar el viewport.
 `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`, al consultar health y procesos de
 Workflow. E2E no está verde: debe repetirse con ese servicio disponible antes del PR. Este
 resultado no demuestra una regresión del shell ni de las fundaciones de FASE 1.
+
+## FASE 3 — Autenticación y Login
+
+Se inspeccionaron mediante Figma MCP el contexto de diseño y las imágenes de UX-01 (`2:2`)
+y los estados del Design System NEXT: normal `40:2398`, error `40:2473`, cargando `40:2556`,
+móvil `40:2632` y restauración `40:2663`.
+
+UX-01 es conceptual: se conserva la intención de marca, pero el login público no incorpora
+su sidebar, topbar, usuario ficticio ni botones «Continuar». El contrato real exige Organización,
+Email y Clave. Se mantienen el valor inicial `demo`, email y clave vacíos, campos obligatorios,
+validación nativa de email, recorte de espacios en organización/email y clave sin transformación.
+El endpoint, payload, proveedor de sesión, almacenamiento, refresh y destino `/resumen` no cambian.
+
+`Ingresar.tsx` usa una composición fluida de dos columnas desde 64 rem, con fondo grafito,
+marca y contenido institucional existente. Por debajo se prioriza el formulario en una columna
+con marca y pie visibles. El formulario tiene un máximo de 420 px, controles del sistema de
+42 px y acción principal de 50 px. La pantalla crece y permite scroll en viewports bajos.
+
+Se reutilizan `Campo`, `Boton`, `Logotipo` y `ErrorPanel`. El único ajuste de la primitiva de
+error agrega `titulo` opcional, con «No se pudo cargar» como valor por defecto; Login utiliza
+«No pudimos iniciar sesión». Los consumidores anteriores mantienen su presentación y contrato.
+El mensaje sigue saliendo de `mensajeDeError`, incluidos los detalles de campos del backend.
+
+`Marca.tsx` asigna IDs de degradado únicos mediante `useId`. Las instancias simultáneas del
+hero y del encabezado móvil usaban los mismos IDs SVG: cuando el hero estaba oculto, Chromium
+dejaba vacío el isotipo móvil. Sólo se corrigen IDs y referencias; el dibujo, los colores y las
+props de la marca permanecen iguales.
+
+El formulario tiene nombre y descripción accesibles. El error usa `role="alert"` y queda
+asociado al formulario por `aria-describedby`. Se reserva espacio para el feedback habitual;
+los mensajes extensos pueden crecer y nunca se recortan. No se marca una clave como inválida
+por un error general de red o sesión: la validación de campos continúa siendo la nativa del
+navegador, sin inferir errores específicos a partir de un texto genérico.
+
+Durante submit se deshabilitan los campos, `Boton` utiliza `cargando` y el formulario expone
+`aria-busy`. Una referencia evita solicitudes duplicadas, incluso ante eventos consecutivos
+antes del siguiente render. El estado se anuncia fuera del formulario ocupado. No hay overlay.
+Email usa `autocomplete="email"` y Clave `current-password`; el código de organización usa
+`off` para evitar tratarlo como nombre comercial. No se agrega mostrar contraseña ni recuperación.
+
+En `Aplicacion.tsx` sólo cambia el JSX de la rama `cargando`: tarjeta de marca, indicador
+indeterminado decorativo y «Restaurando sesión…» con `role="status"`. Se conserva la decisión
+previa al routing; mientras se restaura no se renderizan Login ni el shell autenticado.
+
+Las diferencias deliberadas con el Design System son la marca existente del producto, la
+omisión de grilla/resplandores decorativos, el acento violeta sólido y las medidas consolidadas
+de las primitivas. El título del formulario usa 32/40 en desktop y 28/36 en móvil. El hero adapta
+los 52 px del frame al espacio disponible. El botón conserva 50 px para la acción táctil, frente
+a 42 px del frame; los campos usan 42 px en lugar de copiar instancias genéricas de 66 px.
+La restauración utiliza radio y sombra de `Tarjeta`, sin inventar un porcentaje de avance.
+No se agregan tokens, fuentes ni dependencias. No se declara pixel-perfect ni validación de Follow.
+
+### Verificación de autenticación
+
+Chromium verificó 1440, 1024, 768 y 390 px con respuestas HTTP interceptadas en el navegador:
+tres campos y valores iniciales, validación required/email, Tab, Enter, foco visible, payload
+con los mismos recortes, bloqueo de envíos duplicados, inputs deshabilitados y dimensiones
+estables durante loading y error habitual. Se comprobaron mensajes generales y detalles de
+campos del contrato, conservación de valores y scroll con una altura de 480 px. No hubo
+desbordamiento horizontal del documento en esos escenarios.
+
+La restauración se verificó en 1440 y 390 px reteniendo la respuesta de refresh: se muestra el
+estado de marca sin formulario ni navegación autenticada. Al responder 401 se conserva el flujo
+existente hacia `/ingresar`. No se simuló un éxito como prueba de integración. El backend real
+en `127.0.0.1:8090` no estaba disponible, por lo que el login exitoso real queda pendiente.
+
+`npm run test:e2e` falló en sus dos smoke por `ECONNREFUSED ::1:8091` y
+`ECONNREFUSED 127.0.0.1:8091`. Workflow debe estar disponible para repetir la suite antes del PR;
+E2E no está verde y esos errores de conexión no demuestran un fallo introducido por Login.
+
+`npm run build` y `git diff --check` pasaron. FASE 3 termina aquí, sin iniciar Resumen ni
+Documentos y sin aplicar o eliminar el stash de CHECKPOINT 2.
