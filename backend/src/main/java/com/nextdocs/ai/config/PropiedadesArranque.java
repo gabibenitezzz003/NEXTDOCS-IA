@@ -12,6 +12,8 @@ public class PropiedadesArranque {
 
 	private String codigoTenant;
 
+	private String idTenant;
+
 	private String nombreTenant;
 
 	private String emailAdministrador;

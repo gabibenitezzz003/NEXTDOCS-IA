@@ -25,7 +25,8 @@ public class ArranqueInicializador {
 				return;
 			}
 			tenantService.crear(propiedades.getCodigoTenant(), propiedades.getNombreTenant(),
-					propiedades.getEmailAdministrador(), propiedades.getClaveAdministrador());
+					propiedades.getEmailAdministrador(), propiedades.getClaveAdministrador(),
+					propiedades.getIdTenant());
 			log.info("Tenant de demostracion {} creado con administrador {}", propiedades.getCodigoTenant(),
 					propiedades.getEmailAdministrador());
 		};

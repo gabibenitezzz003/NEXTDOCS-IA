@@ -173,6 +173,7 @@ nextdocs:
   arranque:
     crearTenantDemostracion: ${NEXTDOCS_CREAR_TENANT_DEMO:false}
     codigoTenant: ${NEXTDOCS_TENANT_DEMO_CODIGO:demo}
+    idTenant: ${NEXTDOCS_TENANT_DEMO_ID:}
     nombreTenant: ${NEXTDOCS_TENANT_DEMO_NOMBRE:Tenant de demostracion}
     emailAdministrador: ${NEXTDOCS_TENANT_DEMO_EMAIL:admin@nextdocs.ai}
     claveAdministrador: ${NEXTDOCS_TENANT_DEMO_CLAVE:nextdocs123}

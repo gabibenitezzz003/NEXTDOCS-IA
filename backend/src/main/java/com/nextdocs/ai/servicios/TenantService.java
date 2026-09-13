@@ -67,10 +67,19 @@ public class TenantService {
 
 	@Transactional
 	public Tenant crear(String codigo, String nombre, String emailAdministrador, String claveAdministrador) {
+		return crear(codigo, nombre, emailAdministrador, claveAdministrador, null);
+	}
+
+	@Transactional
+	public Tenant crear(String codigo, String nombre, String emailAdministrador, String claveAdministrador,
+			String idTenant) {
 		if (tenantRepository.findByCodigoAndBajaIsNull(codigo).isPresent()) {
 			throw new RegistroExistenteException("Ya existe un tenant con el codigo " + codigo);
 		}
 		Tenant tenant = new Tenant();
+		if (idTenant != null && !idTenant.isBlank()) {
+			tenant.setId(idTenant);
+		}
 		tenant.setCodigo(codigo);
 		tenant.setNombre(nombre);
 		tenant.setEstado(EstadoTenant.ACTIVO);
