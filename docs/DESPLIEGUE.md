@@ -176,12 +176,12 @@ sólo desde IPs autorizadas). Alternativa sin puerto 22: `aws ssm start-session`
 
 ### Workflow en producción
 
-El servicio workflow (repo aparte `Follow-Hub/workflow`, puerto interno 8091) valida el mismo
+El servicio workflow (repo aparte `gabibenitezzz003/nextdocs-workflow`, puerto interno 8091) valida el mismo
 JWT del core: `Authorization: Bearer` HS256 con `NEXTDOCS_JWT_SECRETO`, emisor `nextdocs-ai` y
 claim `tenantId`. Con `NEXTDOCS_WORKFLOW_SEGURIDAD_JWT_HABILITADA=true` el header `X-Tenant-Id`
 suelto ya no alcanza (401); el frontend manda el Bearer del core automáticamente.
 
-`deploy.sh` lo maneja como unidad propia: clona/sincroniza `Follow-Hub/workflow` en
+`deploy.sh` lo maneja como unidad propia: clona/sincroniza `gabibenitezzz003/nextdocs-workflow` en
 `/opt/nextdocs-ia/workflow`, compara contra `/var/lib/nextdocs-ia/deployed_workflow_commit`,
 crea la base `nextdocs_workflow` en RDS si falta, buildea, recrea y espera `healthy` con
 rollback a la imagen anterior (primera vez sin imagen previa: detiene el servicio). Si el
@@ -218,13 +218,13 @@ workflow al lado del del core):
 ```
 
 Requisitos en la instancia (una sola vez): clave de despliegue SSH de sólo lectura para
-`Follow-Hub/workflow` en el usuario `ubuntu` (el `git clone` corre con ella), y
+`gabibenitezzz003/nextdocs-workflow` en el usuario `ubuntu` (el `git clone` corre con ella), y
 `NEXTDOCS_JWT_SECRETO` presente en `/etc/nextdocs-ia/nextdocs.env` con el mismo valor que usa
 el core. nginx ya rutea `/api/v1/{procesos,instancias,tareas,kpi-procesos,partners,
 marketplace,supervisora,colaboracion-externa}` a `127.0.0.1:8091` desde
 `infra/nginx/nextdocs-ia.conf`.
 
-Disparadores: cada push a `main` de `Follow-Hub/workflow` llama `repository_dispatch`
+Disparadores: cada push a `main` de `gabibenitezzz003/nextdocs-workflow` llama `repository_dispatch`
 (`workflow-actualizado`) sobre este repo vía `.github/workflows/despachar.yml` (secreto
 `NEXTDOCS_DISPATCH_TOKEN` en ese repo), y el deploy normal del core también sincroniza el
 workflow si cambió — un merge del core que no toca el workflow no lo rebuildeará.

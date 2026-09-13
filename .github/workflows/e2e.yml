@@ -14,7 +14,7 @@ jobs:
       - name: Clonar el servicio workflow (repo privado aparte)
         env:
           WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
-        run: git clone --depth 1 "https://x-access-token:${WORKFLOW_PAT}@github.com/Follow-Hub/workflow" ../workflow
+        run: git clone --depth 1 "https://x-access-token:${WORKFLOW_PAT}@github.com/gabibenitezzz003/nextdocs-workflow" ../workflow
       - uses: actions/setup-node@v4
         with:
           node-version: 20
