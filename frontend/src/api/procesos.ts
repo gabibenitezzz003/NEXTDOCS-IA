@@ -69,19 +69,43 @@ export interface TareaProceso {
   asignadoA?: string;
   decision?: string;
   datos?: Record<string, unknown>;
+  motivo?: string;
   vencimiento?: string;
   alta?: string;
   completada?: string;
   completadaPor?: string;
 }
 
+export interface EventoInstancia {
+  id: string;
+  nodoId?: string;
+  accion: string;
+  detalle?: Record<string, unknown>;
+  actor?: string;
+  alta?: string;
+}
+
+export type EstadoInstanciaProceso =
+  | "CREADA"
+  | "ACTIVA"
+  | "ESPERANDO"
+  | "BLOQUEADA"
+  | "COMPLETADA"
+  | "CANCELADA";
+
 export interface InstanciaProceso {
   id: string;
   definicionId: string;
   codigoDefinicion: string;
   numeroVersion: number;
-  estado: "CREADA" | "ACTIVA" | "ESPERANDO" | "BLOQUEADA" | "COMPLETADA" | "CANCELADA";
+  estado: EstadoInstanciaProceso;
+  sujetoOrigen?: string;
+  sujetoTipo?: string;
+  sujetoId?: string;
+  datos?: Record<string, unknown>;
+  correlacionId?: string;
   tareas: TareaProceso[];
+  eventos?: EventoInstancia[];
   alta?: string;
   fin?: string;
 }
@@ -159,9 +183,59 @@ export async function obtenerInstancia(instanciaId: string): Promise<InstanciaPr
   return data;
 }
 
+export async function listarInstancias(estado?: string): Promise<InstanciaProceso[]> {
+  const { data } = await clienteProcesos.get<InstanciaProceso[]>("/instancias", {
+    params: estado ? { estado } : undefined,
+  });
+  return data;
+}
+
+export async function pausarInstancia(
+  instanciaId: string,
+  cuerpo: { motivo: string; actor?: string },
+): Promise<InstanciaProceso> {
+  const { data } = await clienteProcesos.post<InstanciaProceso>(
+    `/instancias/${instanciaId}/pausar`,
+    cuerpo,
+  );
+  return data;
+}
+
+export async function reanudarInstancia(
+  instanciaId: string,
+  actor?: string,
+): Promise<InstanciaProceso> {
+  const { data } = await clienteProcesos.post<InstanciaProceso>(
+    `/instancias/${instanciaId}/reanudar`,
+    { actor },
+  );
+  return data;
+}
+
+export async function cancelarInstancia(
+  instanciaId: string,
+  cuerpo: { motivo?: string; actor?: string },
+): Promise<InstanciaProceso> {
+  const { data } = await clienteProcesos.post<InstanciaProceso>(
+    `/instancias/${instanciaId}/cancelar`,
+    cuerpo,
+  );
+  return data;
+}
+
+export async function listarTareas(): Promise<TareaProceso[]> {
+  const { data } = await clienteProcesos.get<TareaProceso[]>("/tareas");
+  return data;
+}
+
 export async function completarTarea(
   tareaId: string,
-  cuerpo: { actor: string; decision?: string; motivo?: string },
+  cuerpo: {
+    actor: string;
+    decision?: string;
+    motivo?: string;
+    datos?: Record<string, unknown>;
+  },
 ): Promise<TareaProceso> {
   const { data } = await clienteProcesos.post<TareaProceso>(`/tareas/${tareaId}/completar`, cuerpo);
   return data;
