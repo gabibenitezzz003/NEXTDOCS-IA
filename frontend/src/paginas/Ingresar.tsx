@@ -114,7 +114,7 @@ export function Ingresar() {
             </p>
             <div
               id={`${id}-error`}
-              className="flex min-h-[calc(var(--spacing-espacio-24)+var(--spacing-espacio-6))] flex-col justify-center py-espacio-3"
+              className="flex min-h-espacio-6 flex-col justify-center py-espacio-3"
             >
               {error ? (
                 <ErrorPanel

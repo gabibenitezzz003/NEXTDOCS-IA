@@ -77,13 +77,15 @@ export function VisorDocumento({
     queryFn: () => obtenerDetalle(documentoId),
   });
 
-  function invalidar() {
+  function invalidar(actualizarIndicadores = false) {
     clienteConsultas.invalidateQueries({
       queryKey: ["documento", documentoId],
     });
     clienteConsultas.invalidateQueries({ queryKey: ["documentos"] });
     clienteConsultas.invalidateQueries({ queryKey: ["excepciones"] });
     clienteConsultas.invalidateQueries({ queryKey: ["resumen"] });
+    if (actualizarIndicadores)
+      clienteConsultas.invalidateQueries({ queryKey: ["kpi"] });
   }
 
   const decidir = useMutation({
@@ -102,7 +104,7 @@ export function VisorDocumento({
       });
       setCorrecciones({});
       setMotivo("");
-      invalidar();
+      invalidar(true);
     },
     onError: (error) =>
       setAviso({ tono: "error", texto: mensajeDeError(error) }),
@@ -112,7 +114,7 @@ export function VisorDocumento({
     mutationFn: () => reprocesar(documentoId),
     onSuccess: () => {
       setAviso({ tono: "ok", texto: "Documento reencolado para reproceso" });
-      invalidar();
+      invalidar(true);
     },
     onError: (error) =>
       setAviso({ tono: "error", texto: mensajeDeError(error) }),
@@ -122,7 +124,7 @@ export function VisorDocumento({
     mutationFn: () => cerrar(documentoId),
     onSuccess: () => {
       setAviso({ tono: "ok", texto: "Documento cerrado" });
-      invalidar();
+      invalidar(true);
     },
     onError: (error) =>
       setAviso({ tono: "error", texto: mensajeDeError(error) }),
@@ -155,7 +157,10 @@ export function VisorDocumento({
   const documento = detalle?.documento;
   const puedeRevisar = tienePermiso("documentos.revisar");
   const trabajando =
-    decidir.isPending || reproceso.isPending || cierre.isPending;
+    decidir.isPending ||
+    reproceso.isPending ||
+    cierre.isPending ||
+    eleccion.isPending;
 
   const pestanas: [Pestana, string][] = [
     ["campos", "Campos (" + (detalle?.extraccion?.valores.length ?? 0) + ")"],
@@ -177,7 +182,7 @@ export function VisorDocumento({
         if (evento.key !== "Tab") return;
         const controles = Array.from(
           evento.currentTarget.querySelectorAll<HTMLElement>(
-            "button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]",
+            "button:not(:disabled), summary, a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]",
           ),
         ).filter(
           (elemento) =>
@@ -214,8 +219,8 @@ export function VisorDocumento({
       }}
       className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-none border-0 bg-lienzo p-0 text-tinta shadow-panel-lateral backdrop:bg-grafito/50 md:w-[min(90vw,64rem)]"
     >
-      <div className="flex h-full min-h-0 flex-col [@media(max-height:600px)]:overflow-y-auto">
-        <header className="shrink-0 border-b border-borde bg-superficie p-espacio-4 sm:px-espacio-6">
+      <div className="flex h-full min-h-0 flex-col overflow-y-auto md:overflow-hidden [@media(max-height:600px)]:overflow-y-auto">
+        <header className="sticky top-0 z-10 shrink-0 md:static border-b border-borde bg-superficie p-espacio-4 sm:px-espacio-6">
           <div className="flex items-start justify-between gap-espacio-3">
             <div className="min-w-0">
               <p
@@ -245,27 +250,8 @@ export function VisorDocumento({
           <div className="mt-espacio-3 flex flex-wrap items-center justify-between gap-espacio-3">
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-espacio-2 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
               {documento ? <InsigniaEstado estado={documento.estado} /> : null}
-              {documento?.codigoPlantilla ? (
-                <span>
-                  {documento.codigoPlantilla}
-                  {documento.numeroVersionPlantilla != null
-                    ? " v" + documento.numeroVersionPlantilla
-                    : ""}
-                </span>
-              ) : null}
               {documento?.origenTipo === "GENERICO" ? (
                 <Pastilla tono="alerta">Captura genérica</Pastilla>
-              ) : null}
-              {documento?.sujetoIdObjeto ? (
-                <span>
-                  {[
-                    documento.sujetoOrigen,
-                    documento.sujetoTipoObjeto,
-                    documento.sujetoIdObjeto,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
               ) : null}
             </div>
             <Boton type="button" tamano="sm" onClick={abrirOriginal}>
@@ -322,7 +308,7 @@ export function VisorDocumento({
           </div>
         ) : null}
 
-        <div className="barra-desplazamiento-fina min-h-0 flex-1 overflow-y-auto overscroll-contain p-espacio-4 sm:p-espacio-6 [@media(max-height:600px)]:flex-none [@media(max-height:600px)]:overflow-visible">
+        <div className="barra-desplazamiento-fina min-h-0 flex-none overflow-visible overscroll-contain p-espacio-4 sm:p-espacio-6 md:flex-1 md:overflow-y-auto [@media(max-height:600px)]:flex-none [@media(max-height:600px)]:overflow-visible">
           {aviso ? (
             <div
               role={aviso.tono === "ok" ? "status" : "alert"}
@@ -349,6 +335,38 @@ export function VisorDocumento({
             <Vacio titulo="Sin detalle disponible" />
           ) : (
             <>
+              <details className="mb-espacio-4 min-w-0 rounded-panel border border-borde bg-superficie p-espacio-3">
+                <summary className="cursor-pointer rounded-control text-pequeno font-semibold text-tinta-media focus-visible:outline-foco">
+                  Datos del documento
+                </summary>
+                <dl className="mt-espacio-3 space-y-espacio-3 text-pequeno [overflow-wrap:anywhere]">
+                  {[
+                    ["Nombre completo", documento?.nombre ?? "Documento"],
+                    [
+                      "Tipo y versión",
+                      documento?.codigoPlantilla
+                        ? documento.codigoPlantilla +
+                          (documento.numeroVersionPlantilla != null
+                            ? " v" + documento.numeroVersionPlantilla
+                            : "")
+                        : "Sin plantilla",
+                    ],
+                    ["Origen del sujeto", documento?.sujetoOrigen ?? "—"],
+                    ["Tipo de sujeto", documento?.sujetoTipoObjeto ?? "—"],
+                    [
+                      "Identificador del sujeto",
+                      documento?.sujetoIdObjeto ?? "—",
+                    ],
+                  ].map(([etiqueta, valor]) => (
+                    <div key={etiqueta}>
+                      <dt className="text-micro uppercase text-tinta-suave">
+                        {etiqueta}
+                      </dt>
+                      <dd className="mt-espacio-1">{valor}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </details>
               {documento?.origenTipo === "GENERICO" ? (
                 <div
                   role="note"
@@ -377,6 +395,7 @@ export function VisorDocumento({
                     detalle={detalle}
                     correcciones={correcciones}
                     editable={puedeRevisar}
+                    bloqueado={trabajando}
                     alCorregir={(clave, valor) =>
                       setCorrecciones((actuales) => {
                         const copia = { ...actuales };
@@ -398,6 +417,7 @@ export function VisorDocumento({
                     detalle={detalle}
                     puedeElegir={puedeRevisar}
                     eligiendo={eleccion.isPending}
+                    bloqueado={trabajando}
                     alElegir={(candidatoId) => eleccion.mutate(candidatoId)}
                   />
                 ) : null}
@@ -457,6 +477,7 @@ export function VisorDocumento({
             <Campo
               etiqueta="Motivo de la decisión"
               value={motivo}
+              disabled={trabajando}
               onChange={(evento) => setMotivo(evento.target.value)}
               placeholder="Motivo de la decisión (obligatorio para rechazar, observar o corregir)"
             />
@@ -540,11 +561,13 @@ function PanelCampos({
   detalle,
   correcciones,
   editable,
+  bloqueado,
   alCorregir,
 }: {
   detalle: DetalleDocumento;
   correcciones: Record<string, string>;
   editable: boolean;
+  bloqueado: boolean;
   alCorregir: (clave: string, valor: string | null) => void;
 }) {
   if (!detalle.extraccion)
@@ -574,6 +597,7 @@ function PanelCampos({
                 valor={valor}
                 corregido={correcciones[valor.claveCampo]}
                 editable={editable}
+                bloqueado={bloqueado}
                 alCorregir={alCorregir}
               />
             </Tarjeta>
@@ -588,11 +612,13 @@ function CampoExtraido({
   valor,
   corregido,
   editable,
+  bloqueado,
   alCorregir,
 }: {
   valor: ValorExtraido;
   corregido?: string;
   editable: boolean;
+  bloqueado: boolean;
   alCorregir: (clave: string, valor: string | null) => void;
 }) {
   const id = useId();
@@ -612,6 +638,7 @@ function CampoExtraido({
       <div className="min-w-0">
         {editable ? (
           <Campo
+            disabled={bloqueado}
             aria-labelledby={id + "-etiqueta"}
             aria-describedby={id + "-clave"}
             value={corregido ?? valor.valorNormalizado ?? ""}
@@ -721,11 +748,13 @@ function PanelAsociacion({
   detalle,
   puedeElegir,
   eligiendo,
+  bloqueado,
   alElegir,
 }: {
   detalle: DetalleDocumento;
   puedeElegir: boolean;
   eligiendo: boolean;
+  bloqueado: boolean;
   alElegir: (candidatoId: string) => void;
 }) {
   if (!detalle.candidatos.length)
@@ -777,7 +806,7 @@ function PanelAsociacion({
                   <Boton
                     type="button"
                     tamano="sm"
-                    disabled={eligiendo}
+                    disabled={bloqueado}
                     onClick={() => alElegir(candidato.id)}
                   >
                     Elegir

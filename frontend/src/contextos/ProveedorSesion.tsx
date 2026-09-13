@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import axios from "axios";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   cliente,
   fijarTokenAcceso,
@@ -22,21 +23,29 @@ interface ContextoSesion {
 const Contexto = createContext<ContextoSesion | null>(null);
 
 export function ProveedorSesion({ children }: { children: ReactNode }) {
+  const clienteConsultas = useQueryClient();
   const [sesion, setSesion] = useState<Sesion | null>(null);
   const [cargando, setCargando] = useState(true);
 
+  const limpiarConsultas = useCallback(() => {
+    void clienteConsultas.cancelQueries();
+    clienteConsultas.clear();
+  }, [clienteConsultas]);
+
   const salir = useCallback(() => {
+    limpiarConsultas();
     fijarTokenAcceso(null);
     fijarTenantProcesos(null);
     guardarTokenRefresco(null);
     setSesion(null);
-  }, []);
+  }, [limpiarConsultas]);
 
   useEffect(() => {
     registrarExpiracion(salir);
   }, [salir]);
 
   useEffect(() => {
+    let vigente = true;
     const tokenRefresco = leerTokenRefresco();
     if (!tokenRefresco) {
       setCargando(false);
@@ -45,14 +54,21 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     axios
       .post<Sesion>("/api/v1/autenticacion/refrescar", { tokenRefresco })
       .then(({ data }) => {
+        if (!vigente) return;
+        limpiarConsultas();
         fijarTokenAcceso(data.tokenAcceso);
         fijarTenantProcesos(data.tenantId);
         guardarTokenRefresco(data.tokenRefresco);
         setSesion(data);
       })
-      .catch(() => guardarTokenRefresco(null))
-      .finally(() => setCargando(false));
-  }, []);
+      .catch(() => {
+        if (vigente) guardarTokenRefresco(null);
+      })
+      .finally(() => {
+        if (vigente) setCargando(false);
+      });
+    return () => { vigente = false; };
+  }, [limpiarConsultas]);
 
   const ingresar = useCallback(async (codigoTenant: string, email: string, clave: string) => {
     const { data } = await cliente.post<Sesion>("/autenticacion/ingresar", {
@@ -60,11 +76,12 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
       email,
       clave,
     });
+    limpiarConsultas();
     fijarTokenAcceso(data.tokenAcceso);
     fijarTenantProcesos(data.tenantId);
     guardarTokenRefresco(data.tokenRefresco);
     setSesion(data);
-  }, []);
+  }, [limpiarConsultas]);
 
   const valor = useMemo<ContextoSesion>(
     () => ({

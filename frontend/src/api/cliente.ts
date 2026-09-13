@@ -4,6 +4,8 @@ import type { ErrorApi, Sesion } from "../tipos/api";
 const CLAVE_REFRESCO = "nextdocs.tokenRefresco";
 
 let tokenAcceso: string | null = null;
+let versionSesion = 0;
+let refrescoEnCurso: Promise<string | null> | null = null;
 let alExpirarSesion: (() => void) | null = null;
 
 export const cliente = axios.create({
@@ -12,6 +14,8 @@ export const cliente = axios.create({
 });
 
 export function fijarTokenAcceso(token: string | null) {
+  versionSesion++;
+  refrescoEnCurso = null;
   tokenAcceso = token;
 }
 
@@ -32,22 +36,24 @@ export function registrarExpiracion(manejador: () => void) {
 }
 
 cliente.interceptors.request.use((configuracion) => {
+  const contexto = configuracion as typeof configuracion & { _versionSesion?: number };
+  contexto._versionSesion = versionSesion;
   if (tokenAcceso) {
     configuracion.headers.Authorization = `Bearer ${tokenAcceso}`;
   }
   return configuracion;
 });
 
-let refrescoEnCurso: Promise<string | null> | null = null;
-
 async function refrescar(): Promise<string | null> {
+  const versionInicial = versionSesion;
   const tokenRefresco = leerTokenRefresco();
   if (!tokenRefresco) {
     return null;
   }
   try {
     const { data } = await axios.post<Sesion>("/api/v1/autenticacion/refrescar", { tokenRefresco });
-    fijarTokenAcceso(data.tokenAcceso);
+    if (versionInicial !== versionSesion) return null;
+    tokenAcceso = data.tokenAcceso;
     guardarTokenRefresco(data.tokenRefresco);
     return data.tokenAcceso;
   } catch {
@@ -58,12 +64,15 @@ async function refrescar(): Promise<string | null> {
 cliente.interceptors.response.use(
   (respuesta) => respuesta,
   async (error: AxiosError<ErrorApi>) => {
-    const original = error.config as (typeof error.config & { _reintentado?: boolean }) | undefined;
+    const original = error.config as (typeof error.config & { _reintentado?: boolean; _versionSesion?: number }) | undefined;
     if (error.response?.status === 401 && original && !original._reintentado) {
+      if (original._versionSesion !== versionSesion) return Promise.reject(error);
       original._reintentado = true;
-      refrescoEnCurso = refrescoEnCurso ?? refrescar();
-      const nuevo = await refrescoEnCurso;
-      refrescoEnCurso = null;
+      const solicitud = refrescoEnCurso ?? refrescar();
+      refrescoEnCurso = solicitud;
+      const nuevo = await solicitud;
+      if (refrescoEnCurso === solicitud) refrescoEnCurso = null;
+      if (original._versionSesion !== versionSesion) return Promise.reject(error);
       if (nuevo) {
         original.headers.Authorization = `Bearer ${nuevo}`;
         return cliente(original);

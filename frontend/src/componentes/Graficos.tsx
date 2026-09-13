@@ -188,7 +188,7 @@ export function Anillo({
           </span>
         )}
         {subtitulo ? (
-          <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">
+          <span className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-neutro-texto">
             {subtitulo}
           </span>
         ) : null}
@@ -291,7 +291,7 @@ export function Columnas({
                 transition: `height 0.95s cubic-bezier(0.22, 1, 0.36, 1) ${indice * 60}ms`,
               }}
             />
-            <span className="truncate text-center text-[10px] uppercase tracking-wider text-tinta-tenue">
+            <span className="truncate text-center text-[10px] uppercase tracking-wider text-neutro-texto">
               {barra.etiqueta}
             </span>
           </div>
@@ -446,7 +446,7 @@ export function AnilloApilado({
         >
           {Math.round(animado).toLocaleString("es-AR")}
         </span>
-        <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-tinta-tenue">
+        <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutro-texto">
           {etiquetaTotal}
         </span>
       </div>
