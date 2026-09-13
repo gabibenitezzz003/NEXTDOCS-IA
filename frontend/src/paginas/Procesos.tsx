@@ -401,6 +401,7 @@ function EstudioProceso({
       setDetalles([]);
       setAviso("Version publicada. Las instancias nuevas usan esta version.");
       refrescar();
+      clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
     },
     onError: (fallo) => {
       setAviso(null);
@@ -416,6 +417,7 @@ function EstudioProceso({
       setError(null);
       setAviso(null);
       refrescar();
+      clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
     },
     onError: (fallo) => setError(mensajeDeError(fallo)),
   });

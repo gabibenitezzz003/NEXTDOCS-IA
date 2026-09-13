@@ -49,7 +49,7 @@ export function Excepciones() {
   const [error, setError] = useState<string | null>(null);
 
   const consulta = useQuery({
-    queryKey: ["excepciones", estado, pagina],
+    queryKey: ["excepciones", estado, pagina, 25],
     queryFn: () => listarExcepciones(estado, pagina, 25),
   });
 

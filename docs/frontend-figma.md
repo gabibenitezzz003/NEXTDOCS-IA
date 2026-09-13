@@ -1211,3 +1211,98 @@ rechazo sin envío y dimensiones estables/aria-busy durante guardado.
 `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`. Se registra dependencia externa
 inaccesible, no fallo introducido por el rediseño. Hay que repetir integración real antes del PR.
 No se hace push ni se inicia otra fase. AGENTS.md externo y stash@{0} se conservan.
+
+## FASE 12 — Correcciones transversales finales
+
+Alcance exclusivo: AT-01 a AT-08, sobre `b2b29e5`. No se modifican rutas,
+endpoints, payloads, permisos, fórmulas, datasets, estados ni Workflow.
+
+### Sesión y consultas
+
+AT-01 se resuelve en la frontera de sesión con `cancelQueries()` y `clear()`:
+se cancelan lógicamente las consultas activas y se eliminan datos y mutaciones
+cacheadas antes de logout y antes de establecer una sesión por login/restauración.
+No basta invalidar: hacerlo conservaría datos anteriores durante el refetch.
+No existen consultas públicas que necesiten sobrevivir al cambio de sesión.
+La limpieza sucede antes de `setSesion`, por lo que el árbol autenticado nuevo
+no hereda datos del anterior. Los endpoints Axios que no consumen AbortSignal
+pueden terminar el transporte, pero la consulta cancelada no acepta el resultado.
+
+La regresión de respuesta tardía también demostró que un refresh anterior podía
+volver a escribir credenciales tras ingresar a otra organización. El cliente Core
+asigna una generación interna a cada sesión y petición; sólo la generación vigente
+puede renovar credenciales, reintentar o provocar expiración. Esto no cambia el
+contrato de refresh, y se verifica que la renovación normal siga funcionando.
+La restauración descartada al desmontar su efecto no vuelve a establecer sesión.
+El tenant del cliente Workflow continúa fijándose y borrándose en los mismos puntos.
+
+AT-02 separa `["excepciones", "ABIERTA", 0, 5]` del Resumen y
+`["excepciones", estado, pagina, 25]` de la bandeja. Se conservan endpoint,
+orden, filtro y paginación; el prefijo común conserva las invalidaciones existentes.
+
+AT-06 añade invalidación de `["kpi"]` al éxito de decisiones, reproceso y cierre;
+la selección de asociación conserva las invalidaciones previas. Publicar y crear
+versión invalidan `["procesos"]` además del detalle de la definición. No se vacía
+la caché completa para una mutación de negocio.
+
+### Modalidad y revisión documental
+
+AT-03 convierte el Panel de población en dialog nativo con `showModal`, título y
+descripción asociados, foco inicial, Tab/Shift+Tab contenidos, Escape, cierre por
+exterior y retorno al disparador. Restaura también el overflow previo del body.
+No se añade dependencia ni se acopla el Panel al componente del visor.
+
+AT-04 considera decisión, reproceso, cierre y elección de asociación como mutación
+global del visor. Bloquea inputs de extracción, motivo, decisiones y elección
+mientras está pendiente. Conserva el valor local visible y lo mantiene si falla.
+Los permisos no cambian: editar por permiso y estar temporalmente bloqueado son
+propiedades diferentes. Las tabs y el cierre del visor siguen disponibles.
+
+AT-05 conserva título, estado y cierre en un encabezado móvil compacto. El nombre
+completo, plantilla/versión y sujeto se consultan en “Datos del documento”, dentro
+del contenido desplazable. El título resumido tiene ese acceso explícito al texto
+completo. En móvil el contenido y las decisiones fluyen dentro del scroll del drawer;
+no compiten por una altura residual después de header y footer. El header permanece
+visible y se conservan las cuatro tabs, todos los datos y todas las acciones.
+Se verificaron metadatos combinados largos en 390×650 y 390×844: header de 145 px
+frente a los 365 px del caso auditado; quedan 416/610 px bajo header y tabs al inicio.
+El contenido completo puede crecer verticalmente sin quedar reducido a 32 px.
+
+### Contraste y login
+
+AT-07 reutiliza `--color-neutro-texto` (#596170) para el contexto del Encabezado y
+los labels informativos que antes usaban `--color-tinta-tenue` (#9AA1B1) en Graficos.
+Contraste sobre blanco: aproximadamente 2,59 → 6,23; sobre lienzo: 2,40 → 5,77.
+No se alteran el gris de navegación oscura ni consumidores disabled/decorativos.
+No se agregan tokens, colores hardcodeados, alias o variantes del sistema.
+
+AT-08 reduce la reserva permanente del error de login de 120 a 24 px. El mensaje
+real crece en flujo natural, sin truncarse ni ocultarse. Un error largo requiere
+scroll; no se reserva siempre su peor altura. El loading mantiene controles y
+botón con las mismas dimensiones. A 390×650, Organización comienza en y=212.
+
+### Regresiones y verificación
+
+La configuración `playwright.transversales.config.ts` reutiliza la configuración
+local de servidor/Chromium existente y ejecuta `pruebas-transversales`. No se
+agregan dependencias ni se altera la suite de 27 pruebas de Procesos.
+
+```bash
+cd frontend
+npx playwright test --config playwright.transversales.config.ts
+npx playwright test --config playwright.procesos.config.ts
+npm run build
+npm run test:e2e
+```
+
+Las regresiones incluyen sesión A→B y A→A antes de responder la consulta nueva,
+logout con consulta pendiente, refresh/restauración tardíos y refresh vigente;
+identidad 5/25 y siguiente página; modalidad en 1440/390; las seis acciones mutables
+del visor; metadata larga con altura baja; invalidaciones; contraste y error de login.
+Se usan respuestas HTTP controladas sobre componentes y lógica frontend reales.
+No prueban integración con backend ni una autenticación productiva exitosa.
+
+AT-09–13 continúan como deuda separada: permisos revisar/escribir, IAM Workflow,
+acceso al documento desde Excepciones, complejidad y duplicaciones menores.
+AT-14 pertenece a FASE 13. El intento E2E sigue fallando por ECONNREFUSED en
+localhost:8091; no se declara integración verde ni se configura Workflow aquí.

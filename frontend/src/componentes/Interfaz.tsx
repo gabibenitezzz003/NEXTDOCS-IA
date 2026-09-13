@@ -6,7 +6,7 @@ import type {
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
-import { useEffect, useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { IconoCerrar } from "./Iconos";
 
 export type Tono =
@@ -424,40 +424,82 @@ export function Panel({
   pie?: ReactNode;
 }) {
   const identificador = useId();
+  const dialogo = useRef<HTMLDialogElement>(null);
+  const encabezado = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    function alTeclear(evento: KeyboardEvent) {
-      if (evento.key === "Escape") {
-        alCerrar();
-      }
-    }
-    document.addEventListener("keydown", alTeclear);
+    const elemento = dialogo.current;
+    const origen =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const desbordamiento = document.body.style.overflow;
+    elemento?.showModal();
+    encabezado.current?.focus({ preventScroll: true });
     document.body.style.overflow = "hidden";
     return () => {
-      document.removeEventListener("keydown", alTeclear);
-      document.body.style.overflow = "";
+      elemento?.close();
+      document.body.style.overflow = desbordamiento;
+      if (origen?.isConnected) origen.focus({ preventScroll: true });
     };
-  }, [alCerrar]);
+  }, []);
 
   return (
-    <div
-      className="velo fixed inset-0 z-50 flex justify-end bg-grafito/50 backdrop-blur-[3px]"
-      onClick={alCerrar}
-    >
-      <aside
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={`${identificador}-titulo`}
-        aria-describedby={
-          descripcion ? `${identificador}-descripcion` : undefined
+    <dialog
+      ref={dialogo}
+      aria-modal="true"
+      aria-labelledby={`${identificador}-titulo`}
+      aria-describedby={
+        descripcion ? `${identificador}-descripcion` : undefined
+      }
+      onCancel={(evento) => {
+        evento.preventDefault();
+        alCerrar();
+      }}
+      onClick={(evento) => {
+        if (evento.target !== evento.currentTarget) return;
+        const caja = evento.currentTarget.getBoundingClientRect();
+        if (
+          evento.clientX < caja.left ||
+          evento.clientX > caja.right ||
+          evento.clientY < caja.top ||
+          evento.clientY > caja.bottom
+        )
+          alCerrar();
+      }}
+      onKeyDown={(evento) => {
+        if (evento.key !== "Tab") return;
+        const controles = Array.from(
+          evento.currentTarget.querySelectorAll<HTMLElement>(
+            "button:not(:disabled), summary, a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]",
+          ),
+        ).filter(
+          (elemento) =>
+            elemento.tabIndex >= 0 && elemento.getClientRects().length > 0,
+        );
+        const primero = controles[0];
+        const ultimo = controles.at(-1);
+        const activo = document.activeElement;
+        if (
+          evento.shiftKey &&
+          (activo === primero || !controles.includes(activo as HTMLElement))
+        ) {
+          evento.preventDefault();
+          (ultimo ?? encabezado.current)?.focus();
+        } else if (!evento.shiftKey && (activo === ultimo || !primero)) {
+          evento.preventDefault();
+          (primero ?? encabezado.current)?.focus();
         }
-        className="entrar-lateral flex h-full w-full max-w-2xl flex-col rounded-panel-lateral border-l border-borde bg-superficie shadow-panel-lateral"
-        onClick={(evento) => evento.stopPropagation()}
-      >
+      }}
+      className="fixed inset-y-0 right-0 left-auto m-0 h-dvh max-h-none w-full max-w-2xl rounded-panel-lateral border-0 border-l border-borde bg-superficie p-0 text-tinta shadow-panel-lateral backdrop:bg-grafito/50 backdrop:backdrop-blur-[3px]"
+    >
+      <div className="flex h-full min-h-0 flex-col">
         <header className="flex items-start justify-between gap-espacio-4 border-b border-borde px-espacio-6 py-espacio-5">
           <div className="min-w-0">
             <h2
+              ref={encabezado}
+              tabIndex={-1}
               id={`${identificador}-titulo`}
-              className="font-titulo text-titulo-panel text-tinta break-words"
+              className="font-titulo text-titulo-panel text-tinta break-words focus:outline-none"
             >
               {titulo}
             </h2>
@@ -487,8 +529,8 @@ export function Panel({
             {pie}
           </footer>
         ) : null}
-      </aside>
-    </div>
+      </div>
+    </dialog>
   );
 }
 

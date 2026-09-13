@@ -467,7 +467,7 @@ export function Encabezado({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           {seccion && seccion !== titulo ? (
-            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-tinta-tenue">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-neutro-texto">
               {seccion}
             </p>
           ) : null}

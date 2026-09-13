@@ -35,7 +35,7 @@ export function Resumen() {
 
   const resumen = useQuery({ queryKey: ["resumen"], queryFn: obtenerResumen });
   const excepciones = useQuery({
-    queryKey: ["excepciones", "ABIERTA", 0],
+    queryKey: ["excepciones", "ABIERTA", 0, 5],
     queryFn: () => listarExcepciones("ABIERTA", 0, 5),
     enabled: tienePermiso("excepciones.leer"),
   });
