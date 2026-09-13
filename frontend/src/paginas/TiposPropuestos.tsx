@@ -2,7 +2,12 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
-import { Boton, CabeceraTarjeta, GrupoSegmentado, Pastilla, Tarjeta } from "../componentes/Interfaz";
+import {
+  Boton,
+  GrupoSegmentado,
+  Pastilla,
+  Tarjeta,
+} from "../componentes/Interfaz";
 import { IconoCheck, IconoInfo } from "../componentes/Iconos";
 import {
   aprobarTipoPropuesto,
@@ -39,7 +44,8 @@ export function TiposPropuestos() {
     queryKey: ["tipos-propuestos", estado],
     queryFn: () => listarTiposPropuestos(estado),
   });
-  const refrescar = () => clienteConsultas.invalidateQueries({ queryKey: ["tipos-propuestos"] });
+  const refrescar = () =>
+    clienteConsultas.invalidateQueries({ queryKey: ["tipos-propuestos"] });
 
   const aprobar = useMutation({
     mutationFn: aprobarTipoPropuesto,
@@ -71,27 +77,52 @@ export function TiposPropuestos() {
   return (
     <>
       <Encabezado
-        titulo="Tipos que encontro el sistema"
-        descripcion="Documentos que no encajaron en ningun tipo conocido. Se capturaron igual, y aca decidis si vale la pena modelarlos."
-        acciones={
-          <GrupoSegmentado etiqueta="Estado de los tipos propuestos" opciones={FILTROS} valor={estado} alCambiar={setEstado} />
-        }
+        titulo="Tipos propuestos"
+        descripcion="Propuestas detectadas por el sistema para ampliar el catálogo documental. Revisá el motivo y los campos sugeridos antes de decidir."
       />
       <Contenido>
+        <div className="mb-espacio-5 flex flex-wrap items-center justify-between gap-espacio-3">
+          <GrupoSegmentado
+            etiqueta="Estado de los tipos propuestos"
+            opciones={FILTROS}
+            valor={estado}
+            alCambiar={setEstado}
+          />
+          {!consulta.isPending && !consulta.isError ? (
+            <p
+              role="status"
+              aria-atomic="true"
+              className="text-pequeno text-tinta-suave"
+            >
+              {propuestos.length}{" "}
+              {propuestos.length === 1 ? "propuesta" : "propuestas"} en este
+              estado
+            </p>
+          ) : null}
+        </div>
         {aviso ? (
-          <div className="aparecer mb-4 flex items-center gap-2 rounded-xl border border-exito-borde bg-exito-tenue px-4 py-3 text-sm text-exito">
-            <IconoCheck tamano={15} />
-            {aviso}
+          <div
+            role="status"
+            aria-atomic="true"
+            className="mb-espacio-4 flex items-start gap-espacio-2 rounded-panel border border-exito-borde bg-exito-tenue p-espacio-4 text-pequeno text-exito-texto"
+          >
+            <span aria-hidden="true" className="mt-px shrink-0">
+              <IconoCheck tamano={16} />
+            </span>
+            <p className="min-w-0 [overflow-wrap:anywhere]">{aviso}</p>
           </div>
         ) : null}
         {error ? (
-          <div className="aparecer mb-4 rounded-xl border border-rojo-borde bg-rojo-tenue px-4 py-3 text-sm text-rojo">
-            {error}
+          <div className="mb-espacio-4">
+            <ErrorPanel
+              titulo="No se pudo completar la acción"
+              mensaje={error}
+            />
           </div>
         ) : null}
 
         {consulta.isPending ? (
-          <Cargando filas={3} alto="h-32" />
+          <Cargando filas={3} alto="h-64" />
         ) : consulta.isError ? (
           <ErrorPanel
             mensaje={mensajeDeError(consulta.error)}
@@ -101,24 +132,36 @@ export function TiposPropuestos() {
           <Vacio
             titulo={
               estado === "PENDIENTE"
-                ? "No hay tipos nuevos esperando"
-                : "No hay nada en este estado"
+                ? "No hay propuestas pendientes"
+                : estado === "APROBADO"
+                  ? "No hay propuestas aprobadas"
+                  : "No hay propuestas descartadas"
             }
-            detalle="Cuando llegue un documento que no encaje en el catalogo, el sistema lo captura igual y propone aca el tipo que le falta."
+            detalle="No se encontraron propuestas para el estado seleccionado. Las nuevas propuestas del sistema aparecen en Pendientes."
           />
         ) : (
-          <div className="space-y-4">
+          <ul
+            aria-label="Propuestas de tipos documentales"
+            className="space-y-espacio-4"
+          >
             {propuestos.map((propuesto) => (
-              <TarjetaPropuesta
-                key={propuesto.id}
-                propuesto={propuesto}
-                puedeAdministrar={puedeAdministrar}
-                enProceso={aprobar.isPending || descartar.isPending}
-                alAprobar={() => aprobar.mutate(propuesto.id)}
-                alDescartar={() => descartar.mutate(propuesto.id)}
-              />
+              <li key={propuesto.id} className="min-w-0">
+                <TarjetaPropuesta
+                  propuesto={propuesto}
+                  puedeAdministrar={puedeAdministrar}
+                  enProceso={aprobar.isPending || descartar.isPending}
+                  aprobando={
+                    aprobar.isPending && aprobar.variables === propuesto.id
+                  }
+                  descartando={
+                    descartar.isPending && descartar.variables === propuesto.id
+                  }
+                  alAprobar={() => aprobar.mutate(propuesto.id)}
+                  alDescartar={() => descartar.mutate(propuesto.id)}
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </Contenido>
     </>
@@ -129,12 +172,16 @@ function TarjetaPropuesta({
   propuesto,
   puedeAdministrar,
   enProceso,
+  aprobando,
+  descartando,
   alAprobar,
   alDescartar,
 }: {
   propuesto: TipoPropuesto;
   puedeAdministrar: boolean;
   enProceso: boolean;
+  aprobando: boolean;
+  descartando: boolean;
   alAprobar: () => void;
   alDescartar: () => void;
 }) {
@@ -142,47 +189,82 @@ function TarjetaPropuesta({
 
   return (
     <Tarjeta>
-      <CabeceraTarjeta
-        titulo={propuesto.nombreSugerido || propuesto.codigoSugerido}
-        descripcion={propuesto.codigoSugerido}
-        acciones={
-          <>
-            <Pastilla tono="informacion">
-              {propuesto.veces} {propuesto.veces === 1 ? "documento" : "documentos"}
-            </Pastilla>
-            <Pastilla tono={TONO_ESTADO[propuesto.estado]}>{propuesto.estado}</Pastilla>
-          </>
-        }
-      />
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-espacio-3">
+        <div className="min-w-0 flex-1 basis-64">
+          <h2 className="font-titulo text-titulo-panel [overflow-wrap:anywhere]">
+            {propuesto.nombreSugerido || propuesto.codigoSugerido}
+          </h2>
+          <p className="mt-espacio-1 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
+            {propuesto.codigoSugerido}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-espacio-2">
+          <Pastilla tono="informacion">
+            {propuesto.veces}{" "}
+            {propuesto.veces === 1 ? "documento" : "documentos"}
+          </Pastilla>
+          <Pastilla tono={TONO_ESTADO[propuesto.estado]}>
+            {propuesto.estado}
+          </Pastilla>
+        </div>
+      </div>
 
       {propuesto.motivo ? (
-        <p className="mt-3 text-xs leading-relaxed text-tinta-suave">
-          <span className="font-semibold text-tinta-media">Por que lo propone: </span>
+        <p className="mt-espacio-4 text-pequeno text-tinta-media [overflow-wrap:anywhere]">
+          <span className="font-semibold">Por qué lo propone: </span>
           {propuesto.motivo}
         </p>
       ) : null}
 
-      <div className="mt-4">
-        <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-tinta-suave">
-          Campos que se extraerian ({propuesto.campos.length})
-        </h4>
+      <div className="mt-espacio-5">
+        <h3 className="mb-espacio-3 text-micro font-semibold uppercase tracking-wider text-tinta-suave">
+          Campos sugeridos ({propuesto.campos.length})
+        </h3>
         {sinCampos ? (
-          <p className="flex items-start gap-1.5 rounded-xl border border-ambar-borde bg-ambar-tenue px-3.5 py-2.5 text-xs leading-relaxed text-tinta">
-            <IconoInfo tamano={13} className="mt-0.5 shrink-0" />
-            El clasificador no pudo proponer campos para este tipo, asi que todavia no se puede
-            aprobar: quedaria una plantilla que no extrae nada. Va a poder cuando llegue un documento
-            mas claro.
+          <p
+            role="note"
+            className="flex items-start gap-espacio-2 rounded-control border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-tinta"
+          >
+            <span aria-hidden="true" className="mt-px shrink-0">
+              <IconoInfo tamano={16} />
+            </span>
+            <span>
+              No hay campos sugeridos. La aprobación requiere al menos un campo
+              con clave utilizable; no se puede crear una plantilla sin datos
+              para extraer.
+            </span>
           </p>
         ) : (
-          <ul className="flex flex-wrap gap-1.5">
+          <ul
+            aria-label={"Campos sugeridos de " + propuesto.codigoSugerido}
+            className="grid min-w-0 gap-espacio-3 sm:grid-cols-2 xl:grid-cols-3"
+          >
             {propuesto.campos.map((campo) => (
               <li
                 key={campo.clave}
-                className="inline-flex items-center gap-1.5 rounded-full bg-lienzo px-2.5 py-1 text-[11px] text-tinta-media ring-1 ring-inset ring-borde"
+                className="min-w-0 rounded-control border border-borde bg-lienzo p-espacio-3 text-pequeno"
               >
-                <span className="font-medium">{campo.etiqueta || campo.clave}</span>
-                {campo.tipoDato ? (
-                  <span className="text-tinta-tenue">{campo.tipoDato.toLowerCase()}</span>
+                <p className="font-semibold [overflow-wrap:anywhere]">
+                  {campo.etiqueta || campo.clave}
+                </p>
+                {campo.etiqueta && campo.etiqueta !== campo.clave ? (
+                  <p className="mt-espacio-1 text-micro text-tinta-suave [overflow-wrap:anywhere]">
+                    {campo.clave}
+                  </p>
+                ) : null}
+                <div className="mt-espacio-2 flex flex-wrap items-center gap-espacio-2">
+                  {campo.tipoDato ? (
+                    <Pastilla>{campo.tipoDato.toLowerCase()}</Pastilla>
+                  ) : null}
+                  <span className="text-micro text-tinta-suave">
+                    {campo.requerido ? "Requerido" : "Opcional"}
+                  </span>
+                </div>
+                {campo.ejemplo != null && campo.ejemplo !== "" ? (
+                  <p className="mt-espacio-2 text-pequeno text-tinta-media [overflow-wrap:anywhere]">
+                    <span className="font-medium">Ejemplo: </span>
+                    {campo.ejemplo}
+                  </p>
                 ) : null}
               </li>
             ))}
@@ -190,21 +272,44 @@ function TarjetaPropuesta({
         )}
       </div>
 
-      <p className="mt-3 text-[11px] text-tinta-tenue">
-        Visto por primera vez {formatearFecha(propuesto.alta)}
-        {propuesto.codigoAprobado ? ` · aprobado como ${propuesto.codigoAprobado}` : ""}
-      </p>
-
-      {puedeAdministrar && propuesto.estado === "PENDIENTE" ? (
-        <div className="mt-4 flex flex-wrap gap-2 border-t border-borde pt-4">
-          <Boton variante="primario" disabled={enProceso || sinCampos} onClick={alAprobar}>
-            Agregarlo al catalogo
-          </Boton>
-          <Boton disabled={enProceso} onClick={alDescartar}>
-            No nos sirve
-          </Boton>
+      <div className="mt-espacio-5 flex flex-wrap items-center justify-between gap-espacio-4 border-t border-borde pt-espacio-4">
+        <div className="min-w-0 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
+          <p>Visto por primera vez {formatearFecha(propuesto.alta)}</p>
+          {propuesto.codigoAprobado ? (
+            <p className="mt-espacio-1">
+              Aprobado como{" "}
+              <span className="font-semibold text-tinta">
+                {propuesto.codigoAprobado}
+              </span>
+            </p>
+          ) : null}
         </div>
-      ) : null}
+        {puedeAdministrar && propuesto.estado === "PENDIENTE" ? (
+          <div className="flex w-full flex-wrap gap-espacio-2 sm:w-auto">
+            <Boton
+              type="button"
+              variante="primario"
+              disabled={enProceso || sinCampos}
+              cargando={aprobando}
+              onClick={alAprobar}
+              aria-label={"Agregar al catálogo: " + propuesto.codigoSugerido}
+              className="w-full sm:w-auto"
+            >
+              Agregar al catálogo
+            </Boton>
+            <Boton
+              type="button"
+              disabled={enProceso}
+              cargando={descartando}
+              onClick={alDescartar}
+              aria-label={"Descartar propuesta: " + propuesto.codigoSugerido}
+              className="w-full sm:w-auto"
+            >
+              Descartar
+            </Boton>
+          </div>
+        ) : null}
+      </div>
     </Tarjeta>
   );
 }

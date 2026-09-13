@@ -879,3 +879,128 @@ para población ni se amplía la primitiva compartida en este alcance.
 
 FASE 8 termina sin iniciar Tipos propuestos o Procesos, sin push y conservando intacto
 `stash@{0}` (`2a7597caa4a46330a90f8c6569b6ae26de334292`).
+
+## FASE 9 — Tipos propuestos
+
+### Inspección previa
+
+Base `e6cbcfb`. Se inspeccionaron TiposPropuestos, cliente, DTO, AdministracionRestController,
+TipoPropuestoService, repositorio y SembradorCatalogoService antes de modificar la pantalla.
+Query `["tipos-propuestos", estado]` → GET `/api/v1/administracion/tipos-propuestos`,
+parámetro `estado`. Filtro inicial PENDIENTE, opciones PENDIENTE/APROBADO/DESCARTADO; no
+hay búsqueda ni paginación. Orden backend `veces DESC, alta DESC`, filtrado por tenant.
+
+DTO: id, codigoSugerido, nombreSugerido opcional, motivo opcional, veces, estado,
+codigoAprobado opcional, campos y alta opcional. Cada campo trae clave, etiqueta y tipoDato
+opcionales, requerido y ejemplo opcional. No entrega fecha de resolución, documento de
+origen, responsable ni confianza. `veces` es el contador de registros de detección, no una
+query nueva de documentos distintos. No se modifica su valor ni su orden.
+
+GET y ambos POST requieren `tenant.administrar`. El frontend conserva ese permiso para
+navegación y acciones; la ruta directa sigue existiendo y un 403 se presenta como error.
+No hay contrato backend independiente de solo lectura para este recurso.
+
+POST `/{id}/aprobar` y `/{id}/descartar` bajo el endpoint anterior, ambos sin cuerpo.
+Éxitos invalidan `["tipos-propuestos"]`, sin actualización optimista. Aprobar actualiza el
+aviso global y limpia error; descartar limpia aviso/error. Los errores son globales en la
+pantalla actual: aprobar limpia aviso y muestra mensajeDeError; descartar conserva el aviso
+anterior y muestra mensajeDeError. No hay confirmación ni formulario editable.
+
+Frontend ofrece ambas acciones solo para PENDIENTE con permiso; aprobar además exige
+campos.length > 0. Una mutación pendiente bloquea ambas acciones de todas las tarjetas.
+APROBADO y DESCARTADO no tienen acciones en frontend. Backend es más permisivo: aprobar
+rechaza APROBADO pero no excluye DESCARTADO; descartar no restringe estado previo. Esta
+discrepancia preexistente no se corrige ni expone como acciones nuevas en una fase visual.
+
+Aprobar valida campos y claves, crea en el catálogo una PlantillaDocumental y versión 1
+PUBLICADA con sus campos mediante SembradorCatalogoService, y marca APROBADO/codigoAprobado/
+resuelto. Puede fallar por código de plantilla existente. Descartar marca DESCARTADO y
+resuelto, sin crear tipo. No se crean procesos ni funcionalidades de Studio/Marketplace.
+El registro de propuestas conserva su dominio, separado de estados documentales.
+
+Loading, error de consulta con refetch y colección vacía se distinguen. El vacío se refiere
+solo al estado seleccionado. No se deduce ausencia global de tipos o clasificación correcta.
+
+### Referencias y decisiones de presentación
+
+Inspección mediante Figma MCP de UX-06 `2:378` en Product UX `DerqvPxJwtevNP1lcvVpeo`
+con design context y screenshot. Su tabla documental, KPI, responsables e insights son
+conceptuales y no corresponden al DTO de propuestas: no se incorporan.
+
+En Design System NEXT DOC AI `0VZRK69QjDTDy0oAaf8Uv1` se inspeccionó metadata de
+`09 — TIPOS NUEVOS` (`123:20963`), `11 — ESTADOS TRANSVERSALES` (`123:20965`) y
+`12 — DISEÑO RESPONSIVE` (`123:20966`). Se obtuvieron design context y screenshots de
+Pendientes `100:367`, Aprobados `100:532`, Descartados `100:624`, Vacío `100:722`, Error
+global `123:6705` y listado móvil `123:9813` como referencia general de adaptación.
+No hay frame específico de Tipos nuevos mobile/tablet en esa página responsive inspeccionada.
+
+Se conservan tarjetas administrativas con identidad, motivo, campos y acciones al pie.
+Se usan tokens y primitivas vigentes, sin nuevos colores, fuentes, dependencias o componentes
+compartidos. La tarjeta puede crecer para mostrar ejemplos y condición de requerido del DTO,
+que los chips compactos de Figma no desarrollan. No se copian conteos de filtros no cargados,
+estado ilustrativo «Excepción», fecha de aprobación ausente del DTO, motivos de descarte
+inventados ni la conclusión de vacío «Todo lo que llegó encontró su tipo documental».
+No se declara pixel-perfect ni validación de propiedades internas de Follow.
+
+### Implementación
+
+Único archivo de producto modificado: TiposPropuestos.tsx. Documentación en este archivo.
+Se mantiene la query y ambas mutaciones completas, incluidos sus callbacks y mensajes reales.
+El contador junto al filtro es exclusivamente `propuestos.length` de la respuesta activa.
+No hay nuevas consultas, KPI, búsqueda, paginación, navegación o creación manual.
+
+- Título «Tipos propuestos», descripción breve y GrupoSegmentado con su nombre accesible
+  original. El listado es una lista semántica con tarjetas; estado y frecuencia visibles.
+- Nombre con fallback al código, motivo sin truncar, alta con formatearFecha existente y
+  codigoAprobado cuando existe. No se sustituye alta por una fecha ficticia de aprobación.
+- Campos con clave/etiqueta, tipoDato, requerido/opcional y ejemplo cuando existe, incluido
+  el texto «0». Son datos de lectura; no se agregan inputs ni correcciones al payload.
+- Estados de propuesta conservan su mapa TONO_ESTADO propio; no usan ESTADOS_DOCUMENTALES.
+- Acciones «Agregar al catálogo» y «Descartar», con nombres accesibles que incluyen el código.
+  Misma condición de permiso/PENDIENTE y bloqueo de aprobación sin campos. No hay controles
+  en estados finales. Loading se asocia por variables de la mutación al botón activo;
+  enProceso sigue deshabilitando globalmente las dos acciones de todas las propuestas.
+- Boton conserva dimensiones durante loading, aria-busy y disabled efectivo. No hay
+  confirmaciones nuevas ni cambio en los callbacks de aprobación/descarte.
+- ErrorPanel anuncia el error global de mutación sin un retry nuevo; el error de consulta
+  mantiene Reintentar con refetch. Aviso de éxito con role status y aria-atomic. Cargando
+  tiene skeletons decorativos; vacío tiene texto específico para el estado consultado.
+- Heading hierarchy h1/h2/h3, listas de campos nombradas, iconos decorativos ocultos,
+  estados textuales, foco visible y acciones operables con Enter.
+- Desktop: bandeja de tarjetas, campos hasta tres columnas y acciones al pie. 1024/768:
+  campos en dos columnas, cabeceras y controles ajustables. 390: una columna, botones de
+  ancho completo y scroll vertical, sin eliminar evidencia ni acciones.
+
+### Verificación
+
+AST contra `e6cbcfb`: TONO_ESTADO, FILTROS, consulta, refrescar, ambas mutaciones completas,
+propuestos, sinCampos, permiso, condiciones de acción, disabled y callbacks de los botones
+intactos. Cliente API, DTOs, contextos, componentes compartidos, Panel, Procesos y backend
+no tienen cambios. No se modifica estado inicial ni orden de la colección.
+
+Chromium con respuestas controladas verifica los tres estados en 1440/1024/768/390;
+parámetro de filtro; ausencia de acciones finales; datos opcionales; ejemplo «0»; textos
+extensos sin overflow; loading, error y recuperación; vacío por cada estado; aprobación
+sin campos deshabilitada; descarte permitido en ese caso. Ambas mutaciones se prueban con
+Enter, dimensiones estables, bloqueo global, prevención de segundo envío, POST al ID exacto
+sin cuerpo, error real sin perder colección y nueva consulta después del éxito controlado.
+También se conserva el aviso previo cuando falla un descarte, como hacía el código anterior.
+
+Se prueba ocultación de controles con respuesta de lectura controlada, sin afirmar que
+ese perfil tenga acceso real: GET exige administrar. Otro caso representa el 403 real y
+comprueba error visible. No aparecen confirmaciones nuevas ni errores JavaScript.
+Script, resultados y capturas: `/tmp/nextdocs-tipos-nDpYwh/`.
+
+El navegador de la fase anterior ya no estaba en la caché. Se ejecutó el mecanismo autorizado
+`npx playwright install chromium` para Playwright existente (Chromium, headless shell y
+FFmpeg auxiliar descargados por esa herramienta), sin tocar package.json ni lockfile.
+Playwright usó su compilación de respaldo Ubuntu; las verificaciones de navegador pasaron.
+
+`npm run build` y `git diff --check` pasan. `npm run test:e2e` falla en los dos smoke por
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`. API core tampoco disponible en
+`127.0.0.1:8090`. Integración real pendiente; las respuestas controladas no prueban creación
+de plantilla ni descarte en backend. Repetir con los servicios disponibles antes del PR.
+
+Durante esta fase apareció una edición externa de AGENTS.md sobre permisos de backend/target;
+se preserva sin incluirla en el commit. Solo se incluyen TiposPropuestos.tsx y esta documentación.
+No se inicia Procesos/Studio ni se hace push. Stash de CHECKPOINT 2 conservado sin aplicar.
