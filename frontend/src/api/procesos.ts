@@ -183,9 +183,15 @@ export async function obtenerInstancia(instanciaId: string): Promise<InstanciaPr
   return data;
 }
 
-export async function listarInstancias(estado?: string): Promise<InstanciaProceso[]> {
+export async function listarInstancias(
+  estado?: string,
+  definicion?: string,
+): Promise<InstanciaProceso[]> {
   const { data } = await clienteProcesos.get<InstanciaProceso[]>("/instancias", {
-    params: estado ? { estado } : undefined,
+    params: {
+      ...(estado ? { estado } : {}),
+      ...(definicion ? { definicion } : {}),
+    },
   });
   return data;
 }
@@ -223,8 +229,10 @@ export async function cancelarInstancia(
   return data;
 }
 
-export async function listarTareas(): Promise<TareaProceso[]> {
-  const { data } = await clienteProcesos.get<TareaProceso[]>("/tareas");
+export async function listarTareas(estados?: string[]): Promise<TareaProceso[]> {
+  const { data } = await clienteProcesos.get<TareaProceso[]>("/tareas", {
+    params: estados?.length ? { estados: estados.join(",") } : undefined,
+  });
   return data;
 }
 
