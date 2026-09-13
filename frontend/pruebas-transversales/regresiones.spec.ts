@@ -273,7 +273,7 @@ test("AT-06 decidir invalida KPI ya consultados", async ({ page }) => {
   await page.getByRole("button", { name: /^Abrir documento/ }).click();
   await page.getByRole("button", { name: "Aprobar", exact: true }).click();
   await expect(
-    page.getByRole("status").filter({ hasText: "Documento" }),
+    page.getByRole("status").filter({ hasText: "Documento APROBADO" }),
   ).toBeVisible();
   await page.keyboard.press("Escape");
   await navegar(page, "Panel de control");
