@@ -85,6 +85,7 @@ nextdocs:
       - /actuator/info
   almacenamiento:
     endpoint: ${NEXTDOCS_S3_ENDPOINT:http://localhost:9102}
+    endpointPublico: ${NEXTDOCS_S3_ENDPOINT_PUBLICO:}
     region: ${NEXTDOCS_S3_REGION:us-east-1}
     claveAcceso: ${NEXTDOCS_S3_CLAVE_ACCESO:nextdocs}
     claveSecreta: ${NEXTDOCS_S3_CLAVE_SECRETA:nextdocs123}

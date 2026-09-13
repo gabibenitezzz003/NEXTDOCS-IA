@@ -46,9 +46,14 @@ public class AlmacenamientoConfig {
 				.credentialsProvider(proveedorCredenciales())
 				.serviceConfiguration(configuracionServicio());
 		if (!esProduccion()) {
-			builder.endpointOverride(URI.create(propiedades.getEndpoint()));
+			builder.endpointOverride(URI.create(endpointParaFirmar()));
 		}
 		return builder.build();
+	}
+
+	String endpointParaFirmar() {
+		String endpointPublico = propiedades.getEndpointPublico();
+		return endpointPublico != null && !endpointPublico.isBlank() ? endpointPublico : propiedades.getEndpoint();
 	}
 
 	AwsCredentialsProvider proveedorCredenciales() {

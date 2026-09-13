@@ -110,6 +110,7 @@ services:
       NEXTDOCS_REDIS_HOST: redis
       NEXTDOCS_REDIS_PUERTO: "6379"
       NEXTDOCS_S3_ENDPOINT: http://minio:9000
+      NEXTDOCS_S3_ENDPOINT_PUBLICO: http://localhost:9102
       NEXTDOCS_S3_CLAVE_ACCESO: nextdocs
       NEXTDOCS_S3_CLAVE_SECRETA: nextdocs123
       NEXTDOCS_ANTIVIRUS_HOST: clamav

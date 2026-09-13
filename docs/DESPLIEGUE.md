@@ -51,6 +51,10 @@ Compose pisa las URLs de `.env` que apuntan a `localhost`: adentro de la red Doc
 `postgres:5432`, Redis `redis:6379` y MinIO `http://minio:9000`. Los secretos (JWT, Gemini, claves
 de MinIO) sí salen de `.env`.
 
+Las URLs firmadas son la excepción: el `S3Client` habla con MinIO por la red interna, pero el
+presigner firma con `NEXTDOCS_S3_ENDPOINT_PUBLICO` (`http://localhost:9102`) para que el navegador
+del host resuelva el link. Si la variable queda vacía, el firmador cae al endpoint interno.
+
 Listo cuando `/actuator/health` responde `{"status":"UP"}`. El tenant demo se crea si
 `NEXTDOCS_CREAR_TENANT_DEMO=true` (default).
 
