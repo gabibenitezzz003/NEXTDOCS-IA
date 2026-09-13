@@ -1103,3 +1103,111 @@ Verificación final de esta fase: `npm run build` y `git diff --check` pasan. Lo
 `npm run test:e2e` fallan por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`.
 No se declara integración verde ni se atribuye esa indisponibilidad al frontend. Repetir antes
 del PR con Workflow disponible. No se inicia FASE 10 visual.
+
+## FASE 10 — Biblioteca de procesos y Studio existente
+
+El rediseño parte de `387c4ac` y conserva las correcciones funcionales de FASE 9.5.
+Sólo se modifica la presentación de `frontend/src/paginas/Procesos.tsx` y esta documentación.
+La única ruta sigue siendo `/procesos`; biblioteca, creación inline, edición y prueba son
+modos locales. No se modifican clientes API, serialización, permisos, sesión ni Workflow.
+
+### Referencias y decisiones visuales
+
+Se inspeccionaron mediante Figma MCP el contexto y las capturas de Product UX
+[UX-11](https://www.figma.com/design/DerqvPxJwtevNP1lcvVpeo?node-id=2-817) y
+[UX-12](https://www.figma.com/design/DerqvPxJwtevNP1lcvVpeo?node-id=2-901).
+Orientan jerarquía y composición, pero sus tablas documentales, KPI e insights son conceptuales.
+No se trasladan esas cifras, columnas ni acciones a las definiciones de proceso.
+
+El Design System NEXT DOC AI aporta las referencias específicas:
+
+| Estado | Nodo |
+| --- | --- |
+| Lista | `123:1699` |
+| Borrador | `123:1835` |
+| Paso expandido | `123:3115` |
+| Error de validación | `123:3253` |
+| Publicada | `123:3320` |
+| Prueba | `123:3377` |
+
+Todos pertenecen a `0VZRK69QjDTDy0oAaf8Uv1` y se inspeccionaron con contexto y captura.
+Se reutilizan Tarjeta, CabeceraTarjeta, Pastilla, Campo, Selector, Boton, BotonIcono y Estados,
+con los tokens vigentes. No se agregan tokens, dependencias ni un sistema de componentes local.
+No se declara validación interna contra Follow.
+
+La biblioteca presenta nombre, código, familia, fecha de alta si está disponible, indicadores
+reales de versiones y Abrir estudio. El orden de la respuesta se conserva. La fecha se etiqueta
+como creación, nunca como última actualización. No hay búsqueda, filtros, KPI ni paginación nuevos.
+El formulario mantiene código en mayúsculas, trim de los tres campos y apertura tras crear.
+Las insignias siguen representando versiones BORRADOR/PUBLICADA/ARCHIVADA; `vN` usa `numero`.
+
+El Studio mantiene una lista ordenada vertical con Inicio y Fin estructurales. Los pasos tienen
+posición, tipo, nombre, controles de orden/eliminación y configuración expandida. Las conexiones
+son decorativas, no un canvas. Se conservan los nueve tipos y las propiedades editables originales.
+La advertencia de tipos editables pero no publicables permanece visible, sin prometer IA real,
+envío de notificaciones, HTTP ni capacidades de subprocesos.
+
+Se distinguen borrador, cambios sin guardar, guardado y errores. Guardar/Publicar/Nueva versión/
+Probar proceso reutilizan el loading estable de Boton. Publicar continúa bloqueado hasta guardar;
+no hay guardado implícito. Un grafo no representable muestra un mensaje claro y conserva bloqueados
+edición, guardado y publicación, sin dibujar una secuencia parcial. Nueva versión sólo aparece
+cuando no existe borrador, con las condiciones y operación originales. La versión publicada
+conserva su número y hash disponible, con texto adaptable para hashes largos.
+
+PanelPrueba conserva su instancia real, tareas PENDIENTE/VENCIDA, decisiones y seis estados:
+CREADA, ACTIVA, ESPERANDO, BLOQUEADA, COMPLETADA y CANCELADA. Sólo los dos últimos son finales.
+El motivo de rechazo sigue siendo obligatorio tras trim y de hasta 512 caracteres; no cambian
+payload, actor, invalidaciones ni polling de 15 segundos. Su formulario se adapta a móvil y
+Cancelar explicita `type="button"`. Loading y error de consulta se diferencian; el reintento
+usa el refetch existente. El error de detalle del Studio ofrece también el mismo Volver existente.
+
+Diferencias deliberadas con el Design System: no hay estados de versión «Aprobado»/«Excepción»,
+«último guardado hace 2 min», fecha de publicación ficticia, simulación ni instancia aislada.
+Probar proceso advierte en texto visible que crea una instancia REAL persistente de la versión
+publicada y no utiliza cambios del borrador. El shell se conserva sin copiar su navegación
+incompleta o el degradado de algunas referencias.
+
+### Responsive y accesibilidad
+
+Se adapta con grid/flex: biblioteca en filas amplias, controles y configuración reorganizados
+en tablet y una columna en 390 px. No se ocultan pasos, tipos, propiedades ni acciones esenciales.
+Se verifican 1440, 1280, 1024, 768 y 390 px. No existe especificación oficial completa del Studio
+móvil: la adaptación funcional no equivale a fidelidad oficial certificada ni a pixel-perfect.
+
+La biblioteca usa una lista; el Studio usa una lista ordenada, h1/h2/h3 y regiones de configuración
+asociadas al paso. Los controles de expansión incluyen aria-expanded y aria-controls con IDs
+estables. Subir/Bajar/Quitar tienen nombres específicos por paso. Los estados son textuales,
+los errores usan alert y los avisos de guardado usan status. Se mantienen foco visible,
+labels asociados, disabled real y loading accesible de las primitivas compartidas.
+
+### Contratos y límites que permanecen
+
+Queries: `["procesos"]`, `["proceso", procesoId]` y `["instancia-prueba", instanciaPrueba]`.
+Se mantienen endpoints, X-Tenant-Id, catálogo, callbacks, filtros de tareas, serialización y
+condiciones de mutación. La comparación estructural contra FASE 9.5 comprueba 64 declaraciones/
+effects y los 56 atributos de eventos/condiciones originales; sólo añade Volver al error de detalle.
+Cliente Workflow, serializador y los dos archivos de las 27 pruebas no cambian.
+
+Persisten las limitaciones documentadas de FASE 9.5: IAM de Workflow y visibilidad del menú no
+son equivalentes; no se resuelven roles ni conectores; no hay control de concurrencia atómico del
+backend; Atrás/Adelante SPA, logout y expiración no tienen protección global de cambios locales.
+Se conservan Volver, enlaces controlados y beforeunload. UX-09/UX-10 completos, canvas, branching
+gráfico, bandejas globales, KPI Workflow, comparación de versiones y MVP1–MVP4 quedan fuera.
+
+La validación visual utiliza respuestas controladas en Chromium y no demuestra persistencia ni
+éxito real de creación/publicación/rechazo en Workflow. Capturas y verificación reproducible:
+`/tmp/nextdocs-procesos-wLxH9U6F/`. La integración real sigue pendiente antes del PR.
+
+Verificación final: `npm run build` y `git diff --check` pasan; la suite
+`npx playwright test --config playwright.procesos.config.ts` mantiene **27/27 pruebas verdes**.
+Chromium verifica los cinco anchos sin overflow horizontal ni errores JavaScript en los casos
+controlados. Se incluyen biblioteca normal/vacía/error/loading, creación, Studio normal/expandido/
+sin guardar/guardado/publicada/grafo bloqueado/error de validación y detalle, y prueba/rechazo/error.
+La comprobación adicional con teclado valida apertura de creación y configuración por Enter,
+orden de pasos, tabulación de campos, trim/mayúsculas del payload de creación, cancelación de
+rechazo sin envío y dimensiones estables/aria-busy durante guardado.
+
+`npm run test:e2e` no pasa: los dos smoke de Workflow fallan exclusivamente con
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`. Se registra dependencia externa
+inaccesible, no fallo introducido por el rediseño. Hay que repetir integración real antes del PR.
+No se hace push ni se inicia otra fase. AGENTS.md externo y stash@{0} se conservan.
