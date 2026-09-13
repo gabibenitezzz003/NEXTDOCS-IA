@@ -1,7 +1,8 @@
 import type { ComponentType, ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Logotipo } from "./Marca";
+import { Isotipo, Logotipo } from "./Marca";
+import { Boton, BotonIcono } from "./Interfaz";
 import {
   IconoDocumentos,
   IconoExcepciones,
@@ -10,6 +11,8 @@ import {
   IconoProceso,
   IconoResumen,
   IconoSalir,
+  IconoCerrar,
+  IconoFiltro,
 } from "./Iconos";
 import { useSesion } from "../contextos/ProveedorSesion";
 
@@ -22,19 +25,41 @@ interface EntradaNavegacion {
 
 const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
   {
-    titulo: "Operacion",
+    titulo: "Operación",
     entradas: [
-      { a: "/resumen", texto: "Resumen", permiso: "documentos.leer", icono: IconoResumen },
-      { a: "/documentos", texto: "Documentos", permiso: "documentos.leer", icono: IconoDocumentos },
-      { a: "/excepciones", texto: "Excepciones", permiso: "excepciones.leer", icono: IconoExcepciones },
+      {
+        a: "/resumen",
+        texto: "Resumen",
+        permiso: "documentos.leer",
+        icono: IconoResumen,
+      },
+      {
+        a: "/documentos",
+        texto: "Documentos",
+        permiso: "documentos.leer",
+        icono: IconoDocumentos,
+      },
+      {
+        a: "/excepciones",
+        texto: "Excepciones",
+        permiso: "excepciones.leer",
+        icono: IconoExcepciones,
+      },
     ],
   },
   {
-    titulo: "Analisis",
-    entradas: [{ a: "/panel", texto: "Panel de control", permiso: "documentos.leer", icono: IconoPanel }],
+    titulo: "Análisis",
+    entradas: [
+      {
+        a: "/panel",
+        texto: "Panel de control",
+        permiso: "documentos.leer",
+        icono: IconoPanel,
+      },
+    ],
   },
   {
-    titulo: "Configuracion",
+    titulo: "Configuración",
     entradas: [
       {
         a: "/tipos-propuestos",
@@ -52,19 +77,42 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
   },
 ];
 
-const TITULOS: Record<string, string> = {
-  "/resumen": "Resumen",
-  "/panel": "Panel de control",
-  "/documentos": "Documentos",
-  "/excepciones": "Excepciones",
-  "/tipos-propuestos": "Tipos nuevos",
-  "/procesos": "Plantillas de proceso",
-};
+function tituloDeSeccion(ruta: string) {
+  return GRUPOS.flatMap((grupo) => grupo.entradas).find(
+    (entrada) => ruta === entrada.a || ruta.startsWith(`${entrada.a}/`),
+  )?.texto;
+}
 
 export function Disposicion() {
   const { sesion, salir, tienePermiso } = useSesion();
   const navegar = useNavigate();
   const ubicacion = useLocation();
+  const dialogo = useRef<HTMLDialogElement>(null);
+  const [navegacionAbierta, setNavegacionAbierta] = useState(false);
+  const idNavegacion = useId();
+  const seccion = tituloDeSeccion(ubicacion.pathname);
+
+  useEffect(() => {
+    dialogo.current?.close();
+  }, [ubicacion.pathname]);
+
+  useEffect(() => {
+    const escritorio = window.matchMedia("(min-width: 48rem)");
+    function alCambiar() {
+      if (escritorio.matches) dialogo.current?.close();
+    }
+    escritorio.addEventListener("change", alCambiar);
+    return () => escritorio.removeEventListener("change", alCambiar);
+  }, []);
+
+  useEffect(() => {
+    if (!navegacionAbierta) return;
+    const anterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = anterior;
+    };
+  }, [navegacionAbierta]);
 
   const iniciales = (sesion?.nombre ?? "?")
     .split(" ")
@@ -77,67 +125,207 @@ export function Disposicion() {
     entradas: grupo.entradas.filter((entrada) => tienePermiso(entrada.permiso)),
   })).filter((grupo) => grupo.entradas.length);
 
+  const identidad = {
+    iniciales,
+    nombre: sesion?.nombre ?? "",
+    organizacion: sesion?.nombreTenant ?? sesion?.codigoTenant ?? "",
+    email: sesion?.email ?? "",
+  };
+
   return (
-    <div className="flex h-full bg-lienzo">
-      <aside className="superficie-oscura relative z-10 flex w-[248px] shrink-0 flex-col shadow-[8px_0_32px_-12px_rgba(16,18,33,0.28)]">
-        <div className="px-5 py-5">
-          <Logotipo claro />
+    <div className="grid min-h-dvh min-w-0 grid-cols-[minmax(0,1fr)] bg-lienzo md:grid-cols-[var(--ancho-barra-lateral-compacta)_minmax(0,1fr)] xl:grid-cols-[var(--layout-sidebar-desktop)_minmax(0,1fr)]">
+      <a
+        href="#contenido-principal"
+        className="sr-only z-50 rounded-control bg-superficie p-espacio-3 text-tinta focus:not-sr-only focus:fixed focus:left-espacio-4 focus:top-espacio-4"
+      >
+        Ir al contenido
+      </a>
+      <aside
+        aria-label="Barra lateral"
+        className="sticky top-0 hidden h-dvh min-h-0 flex-col bg-superficie-navegacion text-blanco md:flex"
+      >
+        <div className="flex h-(--layout-topbar-height) shrink-0 items-center justify-center border-b border-borde-navegacion xl:justify-start xl:px-espacio-4">
+          <div className="hidden xl:block">
+            <Logotipo claro />
+          </div>
+          <div className="xl:hidden" role="img" aria-label="NEXT DOC AI">
+            <Isotipo />
+          </div>
         </div>
-
-        <nav className="barra-desplazamiento-fina flex-1 space-y-6 overflow-y-auto px-3 pb-4">
-          {grupos.map((grupo) => (
-            <div key={grupo.titulo}>
-              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/30">
-                {grupo.titulo}
-              </p>
-              <div className="space-y-0.5">
-                {grupo.entradas.map((entrada) => {
-                  const Icono = entrada.icono;
-                  return (
-                    <NavLink
-                      key={entrada.a}
-                      to={entrada.a}
-                      className={({ isActive }) =>
-                        `group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-[background-color,color,box-shadow,transform] duration-200 ${
-                          isActive
-                            ? "degradado-marca font-semibold text-white shadow-violeta"
-                            : "font-medium text-white/60 hover:translate-x-0.5 hover:bg-white/[0.07] hover:text-white"
-                        }`
-                      }
-                    >
-                      {({ isActive }) => (
-                        <>
-                          <span className={isActive ? "text-white" : "text-white/45 group-hover:text-white/80"}>
-                            <Icono tamano={18} />
-                          </span>
-                          {entrada.texto}
-                        </>
-                      )}
-                    </NavLink>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </nav>
-
-        <MenuUsuario
-          iniciales={iniciales}
-          nombre={sesion?.nombre ?? ""}
-          organizacion={sesion?.nombreTenant ?? ""}
-          email={sesion?.email ?? ""}
-          alSalir={() => {
-            salir();
-            navegar("/ingresar");
-          }}
-        />
+        <Navegacion grupos={grupos} compactable />
+        <IdentidadLateral {...identidad} compactable />
       </aside>
-
-      <main className="barra-desplazamiento-fina flex-1 overflow-y-auto">
-        <div key={ubicacion.pathname} className="aparecer min-h-full">
-          <Outlet />
+      <div className="flex min-w-0 flex-col">
+        <header
+          aria-label="Barra superior"
+          className="sticky top-0 z-30 flex h-(--layout-topbar-height) shrink-0 items-center justify-between gap-espacio-3 border-b border-borde bg-superficie px-espacio-4 md:px-espacio-8"
+        >
+          <div className="flex min-w-0 items-center gap-espacio-3">
+            <BotonIcono
+              variante="secundario"
+              className="md:hidden"
+              aria-label="Abrir navegación"
+              aria-expanded={navegacionAbierta}
+              aria-controls={idNavegacion}
+              aria-haspopup="dialog"
+              onClick={() => {
+                dialogo.current?.showModal();
+                setNavegacionAbierta(true);
+              }}
+            >
+              <IconoFiltro />
+            </BotonIcono>
+            <div className="min-w-0">
+              <p className="truncate font-titulo text-pequeno font-bold text-tinta">
+                {seccion ?? "NEXT DOC AI"}
+              </p>
+              {identidad.organizacion ? (
+                <p
+                  className="truncate text-pequeno text-tinta-suave"
+                  title={identidad.organizacion}
+                >
+                  {identidad.organizacion}
+                </p>
+              ) : null}
+            </div>
+          </div>
+          <MenuUsuario
+            {...identidad}
+            alSalir={() => {
+              salir();
+              navegar("/ingresar");
+            }}
+          />
+        </header>
+        <main
+          id="contenido-principal"
+          tabIndex={-1}
+          className="min-w-0 flex-1 overflow-x-auto"
+        >
+          <div key={ubicacion.pathname} className="aparecer min-w-0">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+      <dialog
+        ref={dialogo}
+        id={idNavegacion}
+        aria-label="Navegación móvil"
+        onClose={() => setNavegacionAbierta(false)}
+        onClick={(evento) => {
+          if (evento.target === evento.currentTarget) dialogo.current?.close();
+        }}
+        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-(--layout-sidebar-desktop) max-w-[calc(100%-var(--spacing-espacio-8))] border-0 bg-superficie-navegacion p-0 text-blanco shadow-panel-lateral backdrop:bg-grafito/50"
+      >
+        <div className="flex h-full min-h-0 flex-col">
+          <div className="flex h-(--layout-topbar-height) shrink-0 items-center justify-between gap-espacio-2 border-b border-borde-navegacion px-espacio-3">
+            <span className="font-titulo text-pequeno font-bold">
+              NEXT DOC AI
+            </span>
+            <BotonIcono
+              variante="secundario"
+              aria-label="Cerrar navegación"
+              onClick={() => dialogo.current?.close()}
+            >
+              <IconoCerrar />
+            </BotonIcono>
+          </div>
+          <Navegacion
+            grupos={grupos}
+            alNavegar={() => dialogo.current?.close()}
+          />
+          <IdentidadLateral {...identidad} />
         </div>
-      </main>
+      </dialog>
+    </div>
+  );
+}
+
+function Navegacion({
+  grupos,
+  compactable = false,
+  alNavegar,
+}: {
+  grupos: typeof GRUPOS;
+  compactable?: boolean;
+  alNavegar?: () => void;
+}) {
+  return (
+    <nav
+      aria-label="Navegación principal"
+      className="barra-desplazamiento-fina min-h-0 flex-1 space-y-espacio-6 overflow-y-auto px-espacio-2 py-espacio-6"
+    >
+      {grupos.map((grupo) => (
+        <div key={grupo.titulo}>
+          <p
+            className={`mb-espacio-2 px-espacio-2 text-micro uppercase tracking-wider text-texto-navegacion-secundario ${compactable ? "sr-only xl:not-sr-only" : ""}`}
+          >
+            {grupo.titulo}
+          </p>
+          <ul className="space-y-espacio-1">
+            {grupo.entradas.map((entrada) => {
+              const Icono = entrada.icono;
+              return (
+                <li key={entrada.a}>
+                  <NavLink
+                    to={entrada.a}
+                    title={entrada.texto}
+                    onClick={alNavegar}
+                    className={({ isActive }) =>
+                      `flex min-h-control-mediano items-center gap-espacio-2 rounded-control px-espacio-2 py-espacio-2 text-pequeno transition-colors focus-visible:outline-violeta-claro ${compactable ? "justify-center xl:justify-start" : ""} ${isActive ? "bg-accion-primaria font-semibold text-blanco" : "text-texto-navegacion-secundario hover:bg-superficie-navegacion-activa hover:text-blanco"}`
+                    }
+                  >
+                    <span aria-hidden="true" className="shrink-0">
+                      <Icono tamano={18} />
+                    </span>
+                    <span
+                      className={compactable ? "sr-only xl:not-sr-only" : ""}
+                    >
+                      {entrada.texto}
+                    </span>
+                  </NavLink>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ))}
+    </nav>
+  );
+}
+
+function IdentidadLateral({
+  iniciales,
+  nombre,
+  organizacion,
+  compactable = false,
+}: {
+  iniciales: string;
+  nombre: string;
+  organizacion: string;
+  compactable?: boolean;
+}) {
+  return (
+    <div
+      className={`flex shrink-0 items-center gap-espacio-2 border-t border-borde-navegacion px-espacio-3 py-espacio-4 ${compactable ? "justify-center xl:justify-start" : ""}`}
+      title={[nombre, organizacion].filter(Boolean).join(" · ")}
+    >
+      <span
+        aria-hidden="true"
+        className="flex size-espacio-8 shrink-0 items-center justify-center rounded-insignia bg-superficie-navegacion-activa text-pequeno font-semibold text-blanco"
+      >
+        {iniciales}
+      </span>
+      <div className={`min-w-0 ${compactable ? "sr-only xl:not-sr-only" : ""}`}>
+        <p className="truncate text-pequeno font-semibold text-blanco">
+          {nombre}
+        </p>
+        {organizacion ? (
+          <p className="truncate text-micro text-texto-navegacion-secundario">
+            {organizacion}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -157,13 +345,28 @@ function MenuUsuario({
 }) {
   const [abierto, setAbierto] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
+  const disparador = useRef<HTMLDivElement>(null);
+  const id = useId();
+  const ubicacion = useLocation();
+
+  function cerrarConFoco() {
+    setAbierto(false);
+    disparador.current?.querySelector("button")?.focus();
+  }
+
+  useEffect(() => {
+    setAbierto(false);
+  }, [ubicacion.pathname]);
 
   useEffect(() => {
     if (!abierto) {
       return;
     }
     function alClicFuera(evento: MouseEvent) {
-      if (contenedor.current && !contenedor.current.contains(evento.target as Node)) {
+      if (
+        contenedor.current &&
+        !contenedor.current.contains(evento.target as Node)
+      ) {
         setAbierto(false);
       }
     }
@@ -172,40 +375,77 @@ function MenuUsuario({
   }, [abierto]);
 
   return (
-    <div ref={contenedor} className="relative border-t border-white/8 p-3">
-      {abierto ? (
-        <div className="aparecer absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-xl border border-borde bg-white shadow-flotante">
-          <div className="border-b border-borde px-3.5 py-3">
-            <p className="truncate text-sm font-semibold text-tinta">{nombre}</p>
-            <p className="truncate text-xs text-tinta-suave">{email}</p>
-          </div>
-          <button
-            type="button"
-            onClick={alSalir}
-            className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm font-medium text-tinta transition hover:bg-rojo-tenue hover:text-rojo"
+    <div
+      ref={contenedor}
+      className="relative shrink-0"
+      onKeyDown={(evento) => {
+        if (evento.key === "Escape" && abierto) {
+          evento.preventDefault();
+          evento.stopPropagation();
+          cerrarConFoco();
+        }
+      }}
+      onBlur={(evento) => {
+        if (!evento.currentTarget.contains(evento.relatedTarget))
+          setAbierto(false);
+      }}
+    >
+      <div ref={disparador}>
+        <Boton
+          type="button"
+          variante="secundario"
+          aria-label={nombre ? `Menú de usuario: ${nombre}` : "Menú de usuario"}
+          aria-expanded={abierto}
+          aria-controls={id}
+          onClick={() => setAbierto((previo) => !previo)}
+        >
+          <span
+            aria-hidden="true"
+            className="flex size-espacio-6 items-center justify-center rounded-insignia bg-violeta-tenue text-micro font-bold text-violeta"
           >
-            <IconoSalir tamano={16} />
-            Cerrar sesion
-          </button>
+            {iniciales}
+          </span>
+          <span className="hidden max-w-40 truncate sm:inline">
+            {nombre || email}
+          </span>
+        </Boton>
+      </div>
+      {abierto ? (
+        <div
+          id={id}
+          role="region"
+          aria-label="Opciones de usuario"
+          className="absolute right-0 top-full mt-espacio-2 w-72 max-w-[calc(100vw-var(--spacing-espacio-8))] rounded-panel border border-borde bg-superficie p-espacio-4 shadow-superficie-elevada"
+        >
+          <div className="mb-espacio-3 border-b border-borde pb-espacio-3">
+            <p className="text-pequeno font-semibold text-tinta break-words">
+              {nombre}
+            </p>
+            {email ? (
+              <p className="text-pequeno text-tinta-suave break-all">{email}</p>
+            ) : null}
+            {organizacion ? (
+              <p className="mt-espacio-1 text-pequeno text-tinta-suave break-words">
+                {organizacion}
+              </p>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap gap-espacio-2">
+            <Boton
+              type="button"
+              variante="peligro"
+              tamano="sm"
+              onClick={alSalir}
+            >
+              <IconoSalir tamano={16} />
+              Cerrar sesión
+            </Boton>
+            <Boton type="button" tamano="sm" onClick={cerrarConFoco}>
+              Cerrar menú
+            </Boton>
+          </div>
         </div>
       ) : null}
-
-      <button
-        type="button"
-        onClick={() => setAbierto((previo) => !previo)}
-        aria-expanded={abierto}
-        className={`flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left transition ${
-          abierto ? "bg-white/[0.08]" : "hover:bg-white/[0.06]"
-        }`}
-      >
-        <span className="degradado-marca flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-violeta">
-          {iniciales}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-white">{nombre}</span>
-          <span className="block truncate text-xs text-white/45">{organizacion}</span>
-        </span>
-      </button>
     </div>
   );
 }
@@ -220,10 +460,10 @@ export function Encabezado({
   acciones?: ReactNode;
 }) {
   const ubicacion = useLocation();
-  const seccion = TITULOS[ubicacion.pathname];
+  const seccion = tituloDeSeccion(ubicacion.pathname);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-borde bg-white/75 px-8 py-5 shadow-[0_1px_0_rgba(255,255,255,0.8),0_8px_24px_-16px_rgba(16,18,33,0.35)] backdrop-blur-xl">
+    <header className="min-w-0 px-espacio-4 py-espacio-5 md:px-espacio-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           {seccion && seccion !== titulo ? (
@@ -231,17 +471,27 @@ export function Encabezado({
               {seccion}
             </p>
           ) : null}
-          <h1 className="font-titulo text-[28px] leading-tight text-tinta">{titulo}</h1>
+          <h1 className="font-titulo text-titulo-pagina text-tinta break-words">
+            {titulo}
+          </h1>
           {descripcion ? (
-            <p className="mt-1 max-w-2xl text-sm text-tinta-suave">{descripcion}</p>
+            <p className="mt-1 max-w-2xl text-sm text-tinta-suave">
+              {descripcion}
+            </p>
           ) : null}
         </div>
-        {acciones ? <div className="flex flex-wrap items-center gap-2">{acciones}</div> : null}
+        {acciones ? (
+          <div className="flex flex-wrap items-center gap-2">{acciones}</div>
+        ) : null}
       </div>
     </header>
   );
 }
 
 export function Contenido({ children }: { children: ReactNode }) {
-  return <div className="px-8 py-6">{children}</div>;
+  return (
+    <div className="min-w-0 px-espacio-4 py-espacio-6 md:px-espacio-8">
+      {children}
+    </div>
+  );
 }

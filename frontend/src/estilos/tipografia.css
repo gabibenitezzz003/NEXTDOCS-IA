@@ -1,0 +1,67 @@
+@theme static {
+  --font-titulo: "Space Grotesk", system-ui, sans-serif;
+  --font-cuerpo: "Inter", system-ui, sans-serif;
+  --font-codigo: "Roboto Mono", ui-monospace, monospace;
+
+  --text-titulo-pagina: 28px;
+  --text-titulo-pagina--line-height: 36px;
+  --text-titulo-pagina--font-weight: 700;
+  --text-titulo-seccion: 22px;
+  --text-titulo-seccion--line-height: 28px;
+  --text-titulo-seccion--font-weight: 700;
+  --text-titulo-panel: 17px;
+  --text-titulo-panel--line-height: 24px;
+  --text-titulo-panel--font-weight: 700;
+  --text-titulo-destacado: 32px;
+  --text-titulo-destacado--line-height: 40px;
+  --text-titulo-destacado--font-weight: 700;
+  --text-metrica-compacta: 22px;
+  --text-metrica-compacta--line-height: 28px;
+  --text-metrica-compacta--font-weight: 700;
+  --text-metrica-destacada: 56px;
+  --text-metrica-destacada--line-height: 64px;
+  --text-metrica-destacada--font-weight: 700;
+  --text-cuerpo: 15px;
+  --text-cuerpo--line-height: 22px;
+  --text-cuerpo--font-weight: 400;
+  --text-cuerpo-medio: 15px;
+  --text-cuerpo-medio--line-height: 22px;
+  --text-cuerpo-medio--font-weight: 500;
+  --text-pequeno: 13px;
+  --text-pequeno--line-height: 18px;
+  --text-pequeno--font-weight: 400;
+  --text-micro: 10px;
+  --text-micro--line-height: 14px;
+  --text-micro--font-weight: 600;
+  --text-codigo: 13px;
+  --text-codigo--line-height: 18px;
+  --text-codigo--font-weight: 400;
+
+  --tracking-titulo: -0.02em;
+  --tracking-cifra: -0.03em;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-cuerpo);
+    font-size: 14px;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-titulo);
+    font-weight: 700;
+    letter-spacing: var(--tracking-titulo);
+  }
+}
+
+@layer components {
+  .cifra {
+    font-family: var(--font-titulo);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: var(--tracking-cifra);
+  }
+}

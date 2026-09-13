@@ -1,0 +1,130 @@
+@theme static {
+  --color-grafito: #0d0f12;
+  --color-grafito-alto: #15181e;
+  --color-grafito-claro: #1a1d23;
+  --color-grafito-borde: #262a33;
+  --color-grafito-texto: #9aa1b1;
+
+  --color-violeta: #6c38ff;
+  --color-violeta-alto: #5a26f0;
+  --color-violeta-claro: #8a63ff;
+  --color-violeta-tenue: #f0ecff;
+  --color-violeta-borde: #ddd3ff;
+
+  --color-rojo: #ff1e1e;
+  --color-rojo-alto: #d81212;
+  --color-rojo-tenue: #ffecec;
+  --color-rojo-borde: #ffd0d0;
+
+  --color-arena: #f4e9de;
+
+  --color-lienzo: #f5f6f8;
+  --color-tinta: #0f1116;
+  --color-tinta-media: #3d4453;
+  --color-tinta-suave: #6b7285;
+  --color-tinta-tenue: #9aa1b1;
+  --color-borde: #e6e9ef;
+  --color-borde-fuerte: #d3d8e2;
+  --color-blanco: #ffffff;
+}
+
+@theme static {
+  --color-superficie: var(--color-blanco);
+  --color-superficie-navegacion: var(--color-grafito);
+  --color-superficie-navegacion-elevada: var(--color-grafito-alto);
+  --color-superficie-navegacion-activa: var(--color-grafito-claro);
+  --color-borde-navegacion: var(--color-grafito-borde);
+  --color-texto-navegacion-secundario: var(--color-grafito-texto);
+  --color-accion-primaria: var(--color-violeta);
+  --color-accion-primaria-presionada: var(--color-violeta-alto);
+  --color-foco: var(--color-violeta);
+  --color-neutro-texto: #596170;
+  --color-exito-texto: #087540;
+  --color-alerta-texto: #9a5c05;
+
+  --color-exito: #0f9d58;
+  --color-exito-tenue: #e7f6ee;
+  --color-exito-borde: #bde5cf;
+  --color-alerta: #c2760a;
+  --color-alerta-tenue: #fdf2e0;
+  --color-alerta-borde: #f5dcb0;
+  --color-informacion: #1d6fe0;
+  --color-informacion-tenue: #e9f1fd;
+  --color-informacion-borde: #c3dbf8;
+}
+
+@theme static {
+  --radius-xl: 14px;
+  --radius-2xl: 18px;
+  --radius-3xl: 24px;
+
+  --shadow-plano: 0 1px 2px rgba(16, 18, 33, 0.05);
+  --shadow-tarjeta:
+    0 1px 1px rgba(16, 18, 33, 0.04), 0 4px 8px -2px rgba(16, 18, 33, 0.05),
+    0 14px 28px -12px rgba(28, 20, 68, 0.12);
+  --shadow-elevado:
+    0 1px 1px rgba(16, 18, 33, 0.05), 0 8px 16px -4px rgba(16, 18, 33, 0.07),
+    0 26px 52px -16px rgba(28, 20, 68, 0.2);
+  --shadow-flotante:
+    0 2px 4px rgba(16, 18, 33, 0.06), 0 16px 32px -8px rgba(16, 18, 33, 0.12),
+    0 48px 88px -24px rgba(28, 20, 68, 0.32);
+  --shadow-violeta:
+    0 1px 1px rgba(60, 20, 160, 0.24), 0 8px 20px -6px rgba(108, 56, 255, 0.55);
+  --shadow-violeta-alto:
+    0 2px 3px rgba(60, 20, 160, 0.3), 0 14px 30px -8px rgba(108, 56, 255, 0.62);
+  --shadow-hundido:
+    inset 0 1px 3px rgba(16, 18, 33, 0.1),
+    inset 0 0 0 1px rgba(16, 18, 33, 0.03);
+}
+
+@theme static {
+  --spacing-espacio-1: 4px;
+  --spacing-espacio-2: 8px;
+  --spacing-espacio-3: 12px;
+  --spacing-espacio-4: 16px;
+  --spacing-espacio-5: 20px;
+  --spacing-espacio-6: 24px;
+  --spacing-espacio-8: 32px;
+  --spacing-espacio-10: 40px;
+  --spacing-espacio-12: 48px;
+  --spacing-espacio-16: 64px;
+  --spacing-espacio-20: 80px;
+  --spacing-espacio-24: 96px;
+}
+
+@theme static {
+  --spacing-control-pequeno: 34px;
+  --spacing-control-mediano: 42px;
+  --spacing-control-grande: 50px;
+
+  --radius-control: 12px;
+  --radius-metrica: 14px;
+  --radius-panel: 16px;
+  --radius-panel-lateral: 0px;
+  --radius-tarjeta: 20px;
+  --radius-tarjeta-principal: 24px;
+  --radius-insignia: 9999px;
+
+  --shadow-superficie: 0 4px 16px rgb(13 15 18 / 7.0588%);
+  --shadow-superficie-elevada: 0 10px 30px rgb(13 15 18 / 12.1569%);
+  --shadow-panel-lateral: 0 18px 48px rgb(13 15 18 / 18.8235%);
+  --shadow-resplandor-marca: 0 6px 24px rgb(108 56 255 / 25.098%);
+}
+
+:root {
+  --layout-sidebar-desktop: 220px;
+  --layout-topbar-height: 64px;
+
+  --ancho-barra-lateral: 248px;
+  --ancho-barra-lateral-compacta: 64px;
+  --margen-contenido: 32px;
+  --separacion-columnas: 24px;
+  --columnas-escritorio: 12;
+  --grosor-foco: 2px;
+  --separacion-foco: 2px;
+  --degradado-marca: linear-gradient(
+    100deg,
+    var(--color-violeta) 0%,
+    var(--color-rojo) 100%
+  );
+}

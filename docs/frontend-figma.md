@@ -1,0 +1,1213 @@
+# Frontend y Figma
+
+## Alcance
+
+FASE 1 quedó cerrada con las fundaciones de `1d2ae93` y las primitivas de `c53cfcc`.
+FASE 2 quedó aceptada en `dd52b90` con el shell y la navegación. FASE 3 quedó aceptada en
+`9b1fdd5` con Login y restauración de sesión. FASE 4 quedó aceptada en `74437b8` con Resumen.
+FASE 5 trabaja únicamente la presentación de `/documentos`, conservando consultas, filtros,
+búsqueda, paginación, carga individual y apertura del visor existente.
+
+Antes de editar se preservó el trabajo incompleto de CHECKPOINT 2:
+
+```text
+stash@{0} 2a7597caa4a46330a90f8c6569b6ae26de334292
+wip: checkpoint2 antes de realineacion Product UX
+```
+
+No aplicar ni eliminar ese stash durante esta fase.
+
+## Fuentes de verdad
+
+| Aspecto | Fuente primaria | Límite |
+|---|---|---|
+| Funcionalidad y negocio | Código, backend, contratos API y permisos reales | Ningún mockup cambia comportamiento |
+| Producto, UX y roadmap | [Product UX CEO](https://www.figma.com/design/DerqvPxJwtevNP1lcvVpeo) | La composición no crea rutas ni endpoints |
+| Sistema visual específico | [Design System oficial NEXT DOC AI](https://www.figma.com/design/0VZRK69QjDTDy0oAaf8Uv1) | Tokens, tipografía, estados y componentes |
+| Referencia corporativa | Follow Design system | Reutilización cuando corresponda; no sobrescribe automáticamente NEXT DOC AI |
+| Estados y responsive | Design System NEXT DOC AI cuando tenga cobertura | Código para restricciones; Product UX para jerarquía |
+
+Product UX manda en arquitectura, navegación conceptual y composición. El Design System de
+NEXT DOC AI manda en tokens, componentes, tipografía y tratamiento visual salvo contradicción
+demostrable. El código manda siempre en acciones y estados del negocio. Ambos archivos fueron
+inspeccionados con Figma MCP mediante metadata, screenshots, contexto y propiedades de nodos.
+
+Product UX contiene frames conceptuales, patrones genéricos y datos ilustrativos. No es un
+handoff pixel-perfect ni una fuente de datos de producción. Las coordenadas absolutas son
+referencia visual; la implementación futura usará flex, grid, responsive y componentes
+reutilizables.
+
+## Follow Design system
+
+Se verificaron nombres y component keys por MCP, entre ellos:
+
+| Componente | Component key | Candidato React |
+|---|---|---|
+| Desktop/Light/Botón Grande | `abba22564cb911b0b0486f251bda34905943f83a` | `Boton` |
+| Desktop/Dark/Botón Grande | `95219406befb71a767775c17ccbc88d2d525c298` | `Boton` |
+| Desktop/Campo de texto | `8b174f75b72d0096f13c5d03f184e07df7830954` | `Campo` |
+| Desktop/Busqueda | `e95345c2b517721a147d2c4599381f2c1c1e5414` | Búsqueda existente |
+| Desktop/Chip | `f648551cfa18a74db1170fe92273490cfd0c074a` | `Pastilla`, `InsigniaEstado` |
+| Mobile/Elementos barra Nav | `0ebdd83edfaf63f13af44b387eca2dfaac9320bc` | Navegación futura |
+
+Code Connect no permitió leer propiedades internas por la restricción de plan/asiento. Por
+eso no se inventan variantes, tamaños ni estados de Follow y no se afirma «validado contra
+Follow». La correspondencia corporativa queda **PENDIENTE DE VALIDACIÓN CORPORATIVA**; no bloquea
+esta corrección basada en evidencia directa del Design System específico.
+
+## Fundaciones y tokens
+
+`frontend/src/estilos.css` sigue siendo la entrada y conserva la separación. `tokens.css` ahora
+separa paleta base, semántica, compatibilidad, componentes y layout. `tipografia.css` separa
+roles funcionales. Los tokens nuevos no se aplican todavía a páginas.
+
+### Confirmados por NEXT DOC AI
+
+La fuente es Foundations `123:15067` y Spacing/Radius/Shadows/Grid `123:15380`.
+
+| Grupo | Valores |
+|---|---|
+| Grafitos | `#0D0F12`, `#15181E`, `#1A1D23`, `#262A33`, `#9AA1B1` |
+| Violeta | `#6C38FF`, `#5A26F0`, `#8A63FF`, `#F0ECFF`, `#DDD3FF` |
+| Rojo | `#FF1E1E`, `#D81212`, `#FFECEC`, `#FFD0D0` |
+| Fondo/superficie | `#F5F6F8`, `#FFFFFF`, arena `#F4E9DE` |
+| Texto/borde | `#0F1116`, `#3D4453`, `#6B7285`, `#9AA1B1`, `#E6E9EF`, `#D3D8E2` |
+| Semánticos | éxito `#0F9D58`, alerta `#C2760A`, info `#1D6FE0` y sus fondos documentados |
+| Espaciado | 4, 8, 12, 16, 20, 24, 32, 40, 48, 64, 80, 96 px |
+| Focus | anillo violeta, grosor y offset 2 px |
+
+No se sustituyen estos valores por los de un frame Product UX. En particular, el violeta
+continúa siendo `#6C38FF`, no `#6C35FF`; el lienzo continúa siendo `#F5F6F8`, no `#F8FAFC`.
+
+### Semánticos y componentes
+
+Se añadieron referencias funcionales: superficie, navegación, acción primaria, foco y textos
+de navegación. Los controles documentan 34/42/50 px; el botón inspeccionado `123:17392` mide
+42 px y tiene radio 12 px. Los radios funcionales quedan separados:
+
+| Token | Valor | Estado |
+|---|---:|---|
+| `--radius-control` | 12 px | Confirmado por el Design System |
+| `--radius-metrica` | 14 px | Objetivo provisional observado en UX-05 `2:321` |
+| `--radius-panel` | 16 px | Objetivo provisional observado en UX-05 `2:337`, `2:341`, `2:361` |
+| `--radius-panel-lateral` | 0 px | Drawer del Design System `123:20582` |
+| `--radius-tarjeta` / principal | 20 / 24 px | Variantes del Design System, no universales |
+| `--radius-insignia` | pill | Tratamiento de insignia |
+
+La anatomía de drawer `123:20581` usa 18 px en su contenedor ilustrativo; el drawer operativo
+`123:20582` es recto. Se conservan también sombras existentes y las cuatro sombras medidas del
+Design System: superficie 0/4/16, elevada 0/10/30, lateral 0/18/48 y glow violeta 0/6/24.
+Los bordes y sombras de Product UX no se convierten en reglas globales sin migrar sus superficies.
+
+### Layout
+
+Product UX UX-05 usa sidebar 220 px y barra superior 64 px. Se definen como objetivos futuros:
+`--layout-sidebar-desktop: 220px` y `--layout-topbar-height: 64px`. El shell actual conserva
+`--ancho-barra-lateral: 248px`, 64 px compactos, margen 32 px, gutters 24 px y grilla de 12
+columnas como referencia de compatibilidad de FASE 1. FASE 2 aplica los objetivos de 220/64
+al shell mediante sus tokens; ya no utiliza 248 px como ancho efectivo de la sidebar.
+
+## Tipografía
+
+La fuente es Foundations Typography `123:15330`. Se mantienen Inter y Space Grotesk; Roboto Mono
+sigue siendo fallback/objetivo y no se incorpora ninguna fuente binaria.
+
+| Rol | Familia/peso | Tamaño / línea | Estado |
+|---|---|---|---|
+| `text-titulo-pagina` | Space Grotesk 700 | 28 / 36 | 28 px medidos en UX-05; línea provisional porque Figma usa AUTO |
+| `text-titulo-seccion` | Space Grotesk 700 | 22 / 28 | Escala confirmada |
+| `text-titulo-panel` | Space Grotesk 700 | 17 / 24 | Escala confirmada |
+| `text-titulo-destacado` | Space Grotesk 700 | 32 / 40 | Escala confirmada, sólo destacado |
+| `text-metrica-compacta` | Space Grotesk 700 | 22 / 28 | UX-05; línea provisional |
+| `text-metrica-destacada` | Space Grotesk 700 | 56 / 64 | Escala display documentada; provisional porque la muestra mide 48 px |
+| `text-cuerpo` / medio | Inter 400 / 500 | 15 / 22 | Confirmado |
+| `text-pequeno` | Inter 400 | 13 / 18 | Confirmado |
+| `text-micro` | Inter 600 | 10 / 14 | Confirmado |
+| `text-codigo` | Roboto Mono/fallback 400 | 13 / 18 | Objetivo del sistema |
+
+No se usa 56/64 como KPI normal y no se impone 32/40 a todos los H1. La base de `body` sigue
+siendo 14 px y no cambian las medidas efectivas de las páginas existentes.
+
+## Catálogo documental
+
+`ESTADOS_DOCUMENTALES` y el cambio de `Insignias.tsx` de `3c7bfab` se conservan. El catálogo
+contiene sólo estados reales, tonos y colores; no define permisos, decisiones ni transiciones.
+El grupo Document Status `123:17548` respalda neutral para recibido/dividido/cerrado, info para
+procesando/extraído, violeta para validado, alerta para observado, éxito para aprobado y rojo
+para rechazado. `NO_FIGURA` e `ILEGIBLE` siguen siendo distintos.
+
+## Alcance funcional inmediato
+
+El núcleo visual futuro se limita a superficies que ya tienen implementación funcional suficiente:
+`/ingresar`, `/resumen`, `/documentos`, visor documental, `/excepciones`, `/panel`,
+`/tipos-propuestos` y `/procesos` existente. `/excepciones` y `/panel` siguen siendo superficies
+reales aunque Product UX no las represente individualmente con precisión.
+
+UX-07, UX-08, UX-13, UX-15, UX-16, UX-17 global, UX-18, UX-19 y UX-20 no aparecen como pantallas
+nuevas. MVP1–MVP4 (Canvas, Partners, Marketplace, licencias, Sentinel, Simulation Lab, Copilot,
+Enterprise, gobernanza y recuperación) son roadmap y quedan fuera.
+
+Workflow es otro servicio, no el core documental. Sus APIs, permisos y hallazgos no se mezclan
+con los del core. No se inventan endpoints para botones conceptuales como «Guardar corrección»:
+el backend actual lleva `CORREGIR` a `OBSERVADO` y no tiene un guardado neutral.
+
+## Responsive y estados
+
+La página `90 · Responsive & States` de Product UX estaba vacía. La referencia principal es el
+Design System: 1280 `123:9956`, 1024 `126:3616`, 768 `123:9587`/`123:9715`, móvil 390
+`123:9732`/`123:9813`/`123:9885`. Son puntos de revisión, no nuevos breakpoints. Estados normal,
+hover, pressed, focus, disabled y loading están en `123:17332`; contenido loading/empty/error
+en `123:20965`; denied/read-only en `123:6759`/`123:6889`. El código conserva las restricciones
+funcionales cuando un frame omite acciones, permisos o campos.
+
+## Verificación y siguientes fases
+
+El gestor es npm y no se instalaron dependencias. Se ejecutan desde `frontend/`:
+`npm run build` y `npm run test:e2e`; desde la raíz, `git diff --check` y `git status --short
+--branch`. Los smoke sólo cubren health y Workflow con tenant; no certifican portal, permisos,
+accesibilidad, fidelidad visual ni Follow.
+
+El stash continúa intacto. FASE 2 fue aceptada en `dd52b90`. FASE 3 comprende únicamente Login
+y la presentación de la restauración de sesión. Resumen, Documentos y las demás superficies
+requieren autorización independiente para su rediseño interno.
+
+## FASE 2 — Application shell y navegación
+
+La implementación se concentra en `Disposicion.tsx`. `Navegacion` se comparte entre la barra
+lateral y el drawer; ambos reciben los mismos grupos filtrados. `IdentidadLateral` comparte
+la presentación del usuario y su organización. No se modifica `Aplicacion.tsx` ni se crean rutas.
+
+| Destino | Permiso conservado |
+|---|---|
+| `/resumen`, `/documentos`, `/panel` | `documentos.leer` |
+| `/excepciones` | `excepciones.leer` |
+| `/tipos-propuestos` | `tenant.administrar` |
+| `/procesos` | `plantillas.publicar` |
+
+Los grupos vacíos se omiten. No se cambian los permisos de los endpoints ni se agregan guards.
+`NavLink` conserva la coincidencia por segmento de ruta y genera `aria-current="page"` para
+el módulo activo. El contexto de la topbar usa la misma tabla y reconoce prefijos delimitados
+por `/`, sin confundir nombres de rutas que sólo coincidan parcialmente.
+
+### Composición y decisiones de diseño
+
+- Desde 80 rem, sidebar completa de `--layout-sidebar-desktop` (220 px). Marca, grupos
+  Operación/Análisis/Configuración e identidad al pie. El activo usa violeta sólido del sistema.
+- Entre 48 y 80 rem, navegación compacta de `--ancho-barra-lateral-compacta` (64 px), con
+  nombres accesibles y títulos de enlaces. Los seis destinos siguen disponibles según permisos.
+- Por debajo de 48 rem, se retira la sidebar permanente. Un botón abre el drawer con todos los
+  destinos permitidos. Los umbrales se eligen por espacio disponible, no como copia de frames.
+- La topbar mide `--layout-topbar-height` (64 px) y permanece visible durante el scroll.
+  Muestra módulo, organización disponible y acceso al usuario. No hay cifras ni perfiles ficticios.
+- El menú de usuario permite Tab, Enter/Espacio, Escape, cierre explícito y clic exterior.
+  Es un desplegable con botones nativos, sin atribuirle el patrón ARIA de menú de aplicación.
+  Al cerrar mediante Escape o el botón, el foco vuelve al disparador. Logout conserva
+  exactamente `salir()` y la navegación a `/ingresar`.
+- El drawer de navegación usa `dialog.showModal()`: el navegador gestiona modalidad, foco y
+  Escape. Cierra al seleccionar un destino o pasar al breakpoint de navegación permanente.
+  Su semántica y apertura lateral difieren del `Panel` documental; no se modifica esa primitiva.
+- Grid con columnas `minmax(0,1fr)` y contenido con desbordamiento horizontal local permite
+  que las tablas preexistentes sigan desplazándose. La altura crece con el contenido, sin 900 px
+  fijos. `Encabezado` deja de ser otra barra sticky para no competir con la topbar; `Contenido`
+  y `Encabezado` usan padding menor en móvil. Sus props y el contenido de páginas se conservan.
+
+Evidencia: Product UX `2:291` para composición 220/64; Design System `126:3616` para navegación
+compacta, `123:9715` para apertura lateral y `123:9813` para móvil. El drawer conceptual de
+768 tiene texto genérico y la barra inferior de 390 sólo incluye tres destinos: se conserva
+la dirección visual, pero se usa el inventario real completo. No se agregan Tareas, Studio,
+Integraciones, Sentinel ni otros módulos conceptuales.
+
+Los colores permanecen en el Design System NEXT DOC AI: grafito `#0D0F12`, violeta `#6C38FF`,
+lienzo `#F5F6F8`, bordes y superficies existentes. No se copian `#6C35FF` ni `#F8FAFC` de UX-05.
+No se agregan tokens, fuentes ni dependencias de JavaScript. La instalación autorizada de Chromium
+usa el mecanismo de Playwright existente y no cambia `package.json` ni el lockfile.
+
+### Verificación del shell
+
+La comparación visual usa Chromium con respuestas de sesión y datos interceptadas únicamente
+en el navegador de prueba. No representa datos de producción ni valida el backend. Se revisan
+1440, 1024, 768 y 390 px, además de permisos reducidos, nombres largos, scroll y cierre de menús.
+Los smoke HTTP de `npm run test:e2e` siguen dependiendo del Workflow real en `localhost:8091`;
+su resultado se informa por separado. Esta fase no certifica WCAG completo ni validación de Follow.
+
+La verificación en Chromium pasó en los cuatro anchos: topbar de 64 px, sidebar de
+220/64/64/0 px respectivamente, seis destinos navegables, estado activo, menú de usuario,
+Escape, retorno de foco, scroll largo y logout. No hubo desbordamiento horizontal del documento
+en los escenarios revisados. También pasaron las sesiones con tres, uno y cero destinos
+permitidos, organización larga y cierre del drawer al ampliar el viewport.
+
+`npm run build` y `git diff --check` pasaron. `npm run test:e2e` tuvo dos fallos de conexión:
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`, al consultar health y procesos de
+Workflow. E2E no está verde: debe repetirse con ese servicio disponible antes del PR. Este
+resultado no demuestra una regresión del shell ni de las fundaciones de FASE 1.
+
+## FASE 3 — Autenticación y Login
+
+Se inspeccionaron mediante Figma MCP el contexto de diseño y las imágenes de UX-01 (`2:2`)
+y los estados del Design System NEXT: normal `40:2398`, error `40:2473`, cargando `40:2556`,
+móvil `40:2632` y restauración `40:2663`.
+
+UX-01 es conceptual: se conserva la intención de marca, pero el login público no incorpora
+su sidebar, topbar, usuario ficticio ni botones «Continuar». El contrato real exige Organización,
+Email y Clave. Se mantienen el valor inicial `demo`, email y clave vacíos, campos obligatorios,
+validación nativa de email, recorte de espacios en organización/email y clave sin transformación.
+El endpoint, payload, proveedor de sesión, almacenamiento, refresh y destino `/resumen` no cambian.
+
+`Ingresar.tsx` usa una composición fluida de dos columnas desde 64 rem, con fondo grafito,
+marca y contenido institucional existente. Por debajo se prioriza el formulario en una columna
+con marca y pie visibles. El formulario tiene un máximo de 420 px, controles del sistema de
+42 px y acción principal de 50 px. La pantalla crece y permite scroll en viewports bajos.
+
+Se reutilizan `Campo`, `Boton`, `Logotipo` y `ErrorPanel`. El único ajuste de la primitiva de
+error agrega `titulo` opcional, con «No se pudo cargar» como valor por defecto; Login utiliza
+«No pudimos iniciar sesión». Los consumidores anteriores mantienen su presentación y contrato.
+El mensaje sigue saliendo de `mensajeDeError`, incluidos los detalles de campos del backend.
+
+`Marca.tsx` asigna IDs de degradado únicos mediante `useId`. Las instancias simultáneas del
+hero y del encabezado móvil usaban los mismos IDs SVG: cuando el hero estaba oculto, Chromium
+dejaba vacío el isotipo móvil. Sólo se corrigen IDs y referencias; el dibujo, los colores y las
+props de la marca permanecen iguales.
+
+El formulario tiene nombre y descripción accesibles. El error usa `role="alert"` y queda
+asociado al formulario por `aria-describedby`. Se reserva espacio para el feedback habitual;
+los mensajes extensos pueden crecer y nunca se recortan. No se marca una clave como inválida
+por un error general de red o sesión: la validación de campos continúa siendo la nativa del
+navegador, sin inferir errores específicos a partir de un texto genérico.
+
+Durante submit se deshabilitan los campos, `Boton` utiliza `cargando` y el formulario expone
+`aria-busy`. Una referencia evita solicitudes duplicadas, incluso ante eventos consecutivos
+antes del siguiente render. El estado se anuncia fuera del formulario ocupado. No hay overlay.
+Email usa `autocomplete="email"` y Clave `current-password`; el código de organización usa
+`off` para evitar tratarlo como nombre comercial. No se agrega mostrar contraseña ni recuperación.
+
+En `Aplicacion.tsx` sólo cambia el JSX de la rama `cargando`: tarjeta de marca, indicador
+indeterminado decorativo y «Restaurando sesión…» con `role="status"`. Se conserva la decisión
+previa al routing; mientras se restaura no se renderizan Login ni el shell autenticado.
+
+Las diferencias deliberadas con el Design System son la marca existente del producto, la
+omisión de grilla/resplandores decorativos, el acento violeta sólido y las medidas consolidadas
+de las primitivas. El título del formulario usa 32/40 en desktop y 28/36 en móvil. El hero adapta
+los 52 px del frame al espacio disponible. El botón conserva 50 px para la acción táctil, frente
+a 42 px del frame; los campos usan 42 px en lugar de copiar instancias genéricas de 66 px.
+La restauración utiliza radio y sombra de `Tarjeta`, sin inventar un porcentaje de avance.
+No se agregan tokens, fuentes ni dependencias. No se declara pixel-perfect ni validación de Follow.
+
+### Verificación de autenticación
+
+Chromium verificó 1440, 1024, 768 y 390 px con respuestas HTTP interceptadas en el navegador:
+tres campos y valores iniciales, validación required/email, Tab, Enter, foco visible, payload
+con los mismos recortes, bloqueo de envíos duplicados, inputs deshabilitados y dimensiones
+estables durante loading y error habitual. Se comprobaron mensajes generales y detalles de
+campos del contrato, conservación de valores y scroll con una altura de 480 px. No hubo
+desbordamiento horizontal del documento en esos escenarios.
+
+La restauración se verificó en 1440 y 390 px reteniendo la respuesta de refresh: se muestra el
+estado de marca sin formulario ni navegación autenticada. Al responder 401 se conserva el flujo
+existente hacia `/ingresar`. No se simuló un éxito como prueba de integración. El backend real
+en `127.0.0.1:8090` no estaba disponible, por lo que el login exitoso real queda pendiente.
+
+`npm run test:e2e` falló en sus dos smoke por `ECONNREFUSED ::1:8091` y
+`ECONNREFUSED 127.0.0.1:8091`. Workflow debe estar disponible para repetir la suite antes del PR;
+E2E no está verde y esos errores de conexión no demuestran un fallo introducido por Login.
+
+`npm run build` y `git diff --check` pasaron. FASE 3 termina aquí, sin iniciar Resumen ni
+Documentos y sin aplicar o eliminar el stash de CHECKPOINT 2.
+
+## FASE 4 — Resumen operativo
+
+Se inspeccionaron contexto de diseño e imágenes con Figma MCP: Product UX `2:39`; Design
+System normal `40:3580`, vacío `40:3724`, cargando `126:3368` y menú de usuario `40:3801`.
+El shell aceptado permanece intacto; la identidad del tenant y el menú siguen siendo suyos.
+
+### Fuentes funcionales y poblaciones
+
+`obtenerResumen()` consulta `GET /api/v1/documentos/resumen` con query key `["resumen"]`.
+El frontend recibe `Record<string, number>`; `DocumentoRestController.resumen()` exige
+`documentos.leer` y delega en `DocumentoService.resumenPorEstado(tenantId())`.
+`DocumentoRepository.contarPorEstado` cuenta documentos del tenant con `baja IS NULL`, por
+cada estado del enum. No filtra sólo documentos raíz ni aplica una ventana temporal.
+
+| Dato visible | Fuente y cálculo conservados |
+|---|---|
+| Documentos totales | Suma de entradas del resumen, excluyendo `profundidadCola` y `profundidadReintento` |
+| Requieren revisión | `Number(datos.OBSERVADO ?? 0)` |
+| Aprobados | `Number(datos.APROBADO ?? 0)` |
+| Recibidos | `Number(datos.RECIBIDO ?? 0)` |
+| Rechazados | `Number(datos.RECHAZADO ?? 0)` |
+| Porcentaje de cada destacado | `Math.round(parte / total * 100)`; con total cero, `0% del total` |
+| Cola de extracción | `Number(datos.profundidadCola ?? 0)`, mostrada como detalle del total |
+| Distribución | Las mismas entradas documentales, ordenadas por cantidad descendente |
+
+La cola viene de `ColaExtraccionService.profundidad()`: tamaño de la lista Redis configurada
+para el servicio, sin filtro por tenant. Se conserva el dato y se aclara «del servicio»; no se
+presenta como otra población documental. La tarjeta antes titulada «En cola» pasa a «Recibidos»
+porque cuenta exactamente `RECIBIDO`, no la profundidad Redis. `profundidadReintento` sigue
+excluida del total y del gráfico, sin agregar un KPI nuevo.
+
+Las excepciones mantienen query key `["excepciones", "ABIERTA", 0]`, función
+`listarExcepciones("ABIERTA", 0, 5)` y `enabled: tienePermiso("excepciones.leer")`.
+`GET /api/v1/excepciones?estado=ABIERTA&pagina=0&tamano=5` devuelve `Pagina<Excepcion>`.
+El backend filtra tenant, `baja IS NULL` y estado, y ordena por prioridad descendente y alta.
+Se muestran los mismos cinco elementos como máximo, con tipo, severidad y detalle; no se
+convierte el tamaño de esa página en un KPI global ni se incluyen excepciones `EN_CURSO`.
+
+### Presentación y decisiones
+
+- Cinco tarjetas estáticas usan `Tarjeta`, `Metrica` compacta e `InsigniaEstado`. `OBSERVADO`
+  tiene énfasis ámbar. Desaparecen auras, elevación al hover y contadores animados; se muestran
+  las cantidades recibidas sin pasar por ceros animados.
+- Desde 80 rem se muestran cinco KPI en una fila y dos paneles de operación. Entre 40 y
+  80 rem, el total ocupa ambas columnas y los otros cuatro KPI forman una grilla de dos por dos.
+  En móvil se apilan. Los paneles quedan en una columna hasta 80 rem y crecen con su contenido.
+- Se mantienen exclusivamente los enlaces existentes a `/panel` y `/excepciones`. No hay
+  links en KPI estáticos ni CTA de carga, por lo que no se ofrece subida a usuarios sin permiso.
+- `ESTADOS_DOCUMENTALES` es la única fuente de etiquetas y colores documentales. Se eliminan
+  los mapas locales de tonos; `RECIBIDO` y `DIVIDIDO` usan la presentación neutra compartida.
+- `Columnas` acepta `color` opcional por barra para recibir el token del catálogo. Sin esa
+  propiedad conserva el degradado y sombra anteriores, como en su consumidor `Panel.tsx`.
+  El máximo, proporción y mínimo visual de barra no cambian. `min-w-0` evita que las etiquetas
+  impongan un ancho de escritorio. El gráfico mantiene cantidades, agrupación y orden.
+- La distribución incluye una lista textual de todos los estados y cantidades. En móvil esa
+  lista reemplaza visualmente las columnas estrechas; el gráfico decorativo queda oculto al
+  lector de pantalla para evitar duplicación. No se ocultan estados con cantidad cero.
+- Loading usa `Cargando` con cinco espacios de KPI y dos paneles, sin mostrar ceros mientras
+  la consulta está pendiente. Los ceros de una respuesta válida se mantienen como datos reales.
+- Con total cero se muestra `Vacio` en la distribución. Las excepciones conservan su resultado
+  independiente, incluso si todavía no hay documentos. Los errores de resumen y excepciones
+  usan `ErrorPanel`, mensaje real y `refetch`; un error nunca se sustituye por un total cero.
+
+UX-02 aporta jerarquía compacta, pero no se copian automatización, confianza global, variaciones,
+actividad reciente, responsables ilustrativos ni «En revisión»/«Por revisar». Tampoco se agrega
+la tabla documental conceptual o analítica de `/panel`. El Design System aporta superficies,
+estados y tokens; sus instancias genéricas «Guardar»/«Borrador» no son acciones ni estados reales.
+La tarjeta total queda clara y compacta para reservar el énfasis a la revisión humana. Se usan
+radios funcionales de métrica/panel, sin reconstruir la sidebar de 248 px o el header de 104 px.
+No se declara pixel-perfect ni validación corporativa de Follow.
+
+### Verificación del resumen
+
+La validación visual controlada en Chromium cubre 1440, 1024, 768 y 390 px; loading, vacío,
+error completo, error de excepciones, recuperación con Reintentar y permisos reducidos. Se
+contrastan cinco KPI, nueve estados, porcentajes, cola separada, cinco excepciones y navegación.
+Una comparación de AST contra el commit anterior comprueba las dos queries y los cálculos de
+datos, total, destacados, cola, exclusiones técnicas y porcentajes, independientemente del formato.
+
+La integración real no está verificada: el backend en `127.0.0.1:8090` no responde.
+`npm run test:e2e` falla en los dos smoke por `ECONNREFUSED ::1:8091` y
+`ECONNREFUSED 127.0.0.1:8091`; debe repetirse con Workflow disponible antes del PR.
+`npm run build` y `git diff --check` pasaron. No se declara E2E verde.
+FASE 4 termina sin iniciar Documentos ni Visor y conserva el stash.
+
+## FASE 5 — Bandeja documental
+
+### Contratos inspeccionados antes de modificar
+
+| Aspecto | Contrato funcional preservado |
+|---|---|
+| Consulta | `listarDocumentos(filtro)`; query key `["documentos", filtro]` |
+| Endpoint | `GET /api/v1/documentos`; respuesta `Pagina<Documento>` |
+| Parámetros | `estados`, `texto`, `soloRaiz: true`, `pagina`, `tamano: 25`, `orden: "alta,desc"` |
+| Búsqueda | Texto local al escribir; al enviar el formulario se aplica `texto.trim()` y página 0, sin debounce |
+| Semántica del backend | Coincidencia parcial sin distinguir mayúsculas sobre nombre, remitente o ID del objeto referenciado por el sujeto |
+| Filtros | Selección múltiple de los nueve estados documentales; se serializan separados por comas y reinician página 0 |
+| Población | `DocumentoSpecificationBuilder` exige tenant, `baja IS NULL` y documento padre nulo cuando `soloRaiz` es verdadero |
+| Paginación | 25 por página, índice desde 0; total y páginas provienen de `totalElements` y `totalPages` |
+| Carga | `ingresarDocumento(archivo)`; un archivo, sin selección múltiple ni cola local |
+| Payload | `POST /api/v1/documentos` multipart con `archivo` y parte JSON `datos` con `origen: "WEB"`; sin plantilla elegida |
+| Extensiones del selector | `.pdf,.png,.jpg,.jpeg,.tif,.tiff,.webp` |
+| Validación del servidor | Extensiones anteriores y MIME real: `application/pdf`, `image/png`, `image/jpeg`, `image/tiff`, `image/webp`; se mantienen sus rechazos de contenido, tamaño y archivo vacío |
+| Permisos | Backend: `documentos.leer` para GET y `documentos.escribir` para POST. El frontend conserva la condición de escritura para ofrecer la carga |
+| Visor | `documentoAbierto` contiene el mismo ID y monta `VisorDocumento`; cierre mediante `setDocumentoAbierto(null)` |
+| Éxito de carga | Aviso con nombre y estado recibido; invalidaciones de `["documentos"]`, `["resumen"]` y `["kpi"]` |
+| Posición tras cargar | Se conservan búsqueda, filtros y página; no se abre el visor ni se inserta una fila optimista |
+| Error de carga | `mensajeDeError(error)`; el selector se vacía tras seleccionar, como antes |
+| Estados de consulta | `isPending`, `isError` y colección vacía se tratan por separado; Reintentar usa el mismo `refetch` |
+
+Las cinco columnas siguen siendo Documento, Estado, Tipo detectado, Sujeto y Recibido.
+Documento conserva nombre, origen y cantidad de segmentos. Tipo conserva captura genérica,
+código de plantilla o «sin detectar». Sujeto conserva tipo e ID, con «—» si no está asociado.
+`formatearFecha` mantiene exactamente su implementación, también utilizada por el visor.
+
+### Diseño y diferencias deliberadas
+
+Se inspeccionaron con Figma MCP los contextos de diseño de UX-03 `2:123` y UX-04 `2:207` del
+Product UX. También se inspeccionaron contexto e imágenes del Design System: normal `40:9138`,
+filtrada `40:9326`, documento ingresado `40:9444`, vacía `40:9635`, sin resultados `40:9725`,
+cargando `40:9817` y error `126:3289`.
+
+- UX-03 orienta título, acción principal y lectura de la bandeja. No se incorporan KPI,
+  tendencias, insights, responsables ni estados ilustrativos. «Sujeto» conserva su entidad real.
+- UX-04 sigue siendo conceptual: cargar es una acción de `/documentos`; no se crean rutas,
+  validación anticipada, selección múltiple, drag & drop, lote o modal de procesamiento.
+- El Design System orienta tabla con cabecera grafito, superficie clara, filtros de selección
+  violeta y estados separados. Algunas instancias muestran «Guardar», filtros verticales y
+  encabezados superpuestos: se adaptan al flujo real y al espacio disponible, sin copiarlos.
+- Se reutilizan `Boton`, `Campo`, `Pastilla`, `InsigniaEstado`, `Tarjeta`, `Cargando`, `Vacio`
+  y `ErrorPanel`. No se modifica su API ni se agregan tokens, fuentes o dependencias.
+- `ESTADOS_DOCUMENTALES` determina el catálogo de filtros, sus etiquetas y la etiqueta del
+  aviso de ingreso; las insignias siguen usando esa misma fuente. No hay mapas locales de tonos.
+- Desde 64 rem se presenta una tabla nativa con cinco columnas de ancho proporcional. Bajo
+  ese ancho se usa una lista de tarjetas: dos columnas desde 40 rem y una en móvil. Cada
+  tarjeta conserva todos los datos de la fila; el nombre abre el mismo visor.
+- La tabla conserva clic sobre la fila y agrega botón de nombre con foco visible, Enter y
+  Espacio nativos. Las presentaciones comparten funciones locales de nombre, tipo y sujeto;
+  CSS oculta la variante que no corresponde, sin duplicar consultas.
+- Búsqueda tiene label asociado y región `search`; filtros usan `fieldset`, `legend` y
+  botones con `aria-pressed`. La tabla tiene caption y headers `scope="col"`. La paginación
+  tiene nombre accesible y botones realmente deshabilitados en los extremos.
+- Carga usa `Boton` con `cargando`, dimensiones estables, `aria-busy`, bloqueo del botón y
+  del selector mientras espera, y anuncio de «Subiendo documento». No se amplía su contrato.
+- El éxito usa `role="status"`; el error de carga, `role="alert"`. Ambos conservan el mensaje
+  funcional y los iconos decorativos quedan fuera del árbol accesible.
+- Loading usa seis skeletons decorativos. Una lista vacía sin criterios muestra «Todavía no
+  hay documentos»; con búsqueda o estados seleccionados muestra «No hay documentos que
+  coincidan». Esto describe la consulta actual, sin una petición adicional para inferir el
+  tamaño global. Limpiar filtros reutiliza los cuatro cambios locales existentes.
+- El error de listado muestra `ErrorPanel` y el mensaje real, sin convertirlo en una lista
+  vacía. La pantalla no agrega un CTA de carga adicional en el vacío.
+
+No se declara pixel-perfect ni validación corporativa contra Follow. El shell y el interior
+del visor permanecen sin cambios; sus mejoras posteriores quedan fuera de FASE 5.
+
+### Verificación
+
+La comparación de AST contra `74437b8` verifica filtro, query, tamaño de página, totales,
+alternancia de estados, envío de búsqueda, selección de archivo, formatos, invalidaciones,
+ID entregado al visor y función de fecha. No se modifican cliente API, sesión, tipos ni backend.
+
+Chromium verifica normal en 1440, 1024, 768 y 390; filtrada; sin resultados; loading; vacío;
+error con recuperación; carga pendiente, éxito y rechazo; usuario sin escritura; paginación
+de 25; apertura del visor por teclado y clic de fila. Las respuestas se controlan en el
+navegador: una carga simulada verifica presentación y peticiones frontend, no integración real.
+También pasan nombres, tipos y referencias extensos sin overflow en 1024 y 390 px, datos
+ausentes y navegación por Tab. `npm run build` y `git diff --check` pasan.
+
+El browser de Chromium no estaba presente en esta sesión y se descargó con el mecanismo de
+Playwright ya instalado, sin cambios en `package.json` ni lockfile.
+
+La integración real está pendiente: `127.0.0.1:8090` rechaza la conexión. `npm run test:e2e`
+falla en sus dos smoke por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`.
+No se declara E2E verde; se debe repetir con Workflow disponible antes del PR.
+FASE 5 termina sin iniciar el rediseño del visor, sin push y conservando el stash de CHECKPOINT 2.
+
+## FASE 6 — Visor y revisión documental
+
+Base funcional: `811d7f9`. Se moderniza `VisorDocumento.tsx`. En `Documentos.tsx`, el clic
+sobre una celda enfoca el botón de apertura de esa fila antes de montar el visor: esto
+permite devolver el foco a un control útil al cerrar. No cambia el ID ni la apertura.
+No se modifica Excepciones, que continúa utilizando el mismo visor.
+
+### Contratos inspeccionados y preservados
+
+| Aspecto | Contrato real |
+| --- | --- |
+| Invocación | Props `documentoId` y `alCerrar`; montaje desde Documentos y Excepciones, sin rutas nuevas |
+| Detalle | Query key `["documento", documentoId]`; `obtenerDetalle`; GET `/api/v1/documentos/{id}/detalle` |
+| Modelo | `DetalleDocumento`: documento, extracción y validación opcionales, candidatos, revisiones, segmentos y original físico; no se agregan vistas para estos dos últimos |
+| Original | Acción `urlOriginal`, GET `/api/v1/documentos/{id}/original`, respuesta `{url}`; `window.open(url, "_blank", "noopener")`; no es una query ni un preview embebido |
+| Campos | Mismo orden, etiqueta/clave, valor normalizado, presencia, confianza y marca manual; edición condicionada por `documentos.revisar` |
+| Correcciones | Registro local por clave; volver al valor original elimina la corrección; no se envía ninguna petición al editar |
+| Revisión | POST `/api/v1/documentos/{id}/revisiones` con `decision`, `motivo.trim() || undefined` y correcciones cuando existen |
+| Decisiones | Aprobar, Observar y Rechazar conservan `APROBAR`, `OBSERVAR` y `RECHAZAR`, con los mismos chequeos sobre `transicionesPosibles` |
+| Reprocesar / cerrar | POST `/api/v1/documentos/{id}/reprocesar` y `/cerrar`; las condiciones de habilitación permanecen iguales |
+| Asociación | Mismos candidatos, orden, puntaje sin transformar, seleccionado/descartado y selección; POST `/api/v1/documentos/{id}/candidatos/{candidatoId}/seleccionar` |
+| Motivo de asociación | `motivo.trim() || "Seleccion desde el portal"`, sin cambios |
+| Actividad | Mismas revisiones, orden, actor, fecha, decisión, estados, motivo y cambios; no se agregan eventos |
+| Invalidación | Las cuatro claves existentes: documento con ID, documentos, excepciones y resumen |
+| Éxito de revisión | Limpia correcciones y motivo, anuncia el estado devuelto e invalida consultas |
+| Éxito de reproceso/cierre/selección | Conserva correcciones y motivo, muestra el aviso e invalida consultas, como antes |
+| Fallos | Conserva `mensajeDeError` y los borradores locales; ErrorPanel del detalle permite `refetch` y cierre |
+| Cierre del visor | Desmonta y descarta correcciones y motivo locales sin confirmación, igual que antes |
+
+Se inspeccionaron cliente API, DTOs, controlador documental y servicio de revisión. La
+confianza sigue siendo un dato de lectura, nunca una decisión. `CORREGIR` conduce a
+`OBSERVADO`; no existe guardado neutral ni se agrega «Guardar corrección». El texto de
+correcciones pendientes explica que se envían con la decisión.
+
+La discrepancia histórica de permisos queda pendiente de decisión funcional: el frontend
+agrupa Reprocesar y Cerrar bajo `documentos.revisar`, mientras sus endpoints exigen
+`documentos.escribir`. Detalle/original requieren leer; revisión/selección requieren revisar.
+No se amplían ni reducen permisos. Reprocesar conserva su habilitación incluso en un estado
+final cuando no hay una mutación de decisión/reproceso/cierre pendiente.
+
+También se conserva el placeholder histórico de motivo, que menciona «corregir». El backend
+exige motivo para RECHAZAR, OBSERVAR o sobreescritura de hallazgos; una corrección adjunta a
+APROBAR no equivale por sí sola a esa exigencia. No se agrega validación frontend ni se
+cambia esta regla. La selección de candidato conserva su bloqueo independiente.
+
+### Referencias y decisiones visuales
+
+Se inspeccionaron mediante Figma MCP contexto e imagen de Product UX `2:291` y del Design
+System: Campos normal `40:12516`, editados `40:12742`, captura genérica `40:12970`, Hallazgos
+`40:13198`, Hallazgos vacío `40:13281`, Asociación `40:13347`, Actividad `40:13424`, estado
+final `40:13519` y visor móvil `123:9885`. Se revisaron metadatos de visor y responsive para
+identificar las referencias relacionadas. La inspección de Figma fue de solo lectura.
+
+- Se mantiene un drawer modal porque las superficies actuales lo abren sin cambiar ruta.
+  Desde 768 px ocupa `min(90vw, 64rem)`; en móvil, todo el ancho. El límite de 64 rem permite
+  revisar datos reales con más espacio que el drawer de unos 768 px del Design System.
+- Encabezado, pestañas y decisiones rodean un área central desplazable. En viewports de
+  hasta 600 px de alto se desplaza el conjunto para mantener accesibles contenido y acciones.
+  No se fija una altura de frame de Figma ni se altera el shell.
+- Se conservan Campos, Hallazgos, Asociación y Actividad. En móvil las cuatro pestañas se
+  distribuyen en dos filas; las cinco decisiones siguen disponibles según el contrato.
+- Del patrón original/datos/asistencia de UX-05 se incorpora la jerarquía: original siempre
+  accesible en el encabezado, datos editables como vista inicial y hallazgos próximos mediante
+  pestaña. No se agregan preview, asistencia IA, SLA, KPI, confianza global ni proceso sugerido.
+- El Design System orienta superficies claras, separación de campos, selección violeta,
+  estados y decisiones. Se utilizan tokens actuales y primitivas compartidas, sin copiar
+  instancias genéricas de «Guardar» o pestañas ajenas al contrato ni el preview vacío móvil.
+  Se mantiene una cabecera clara coherente con las fundaciones actuales en lugar de copiar
+  la cabecera grafito de la referencia móvil.
+- Se reutilizan Boton, BotonIcono, Campo, Tarjeta, Pastilla, InsigniaEstado, InsigniaPresencia,
+  InsigniaSeveridad, BarraConfianza, Cargando, Vacio y ErrorPanel. No cambian sus APIs ni se
+  agregan tokens, fuentes o dependencias. `ESTADOS_DOCUMENTALES` sigue siendo la fuente
+  compartida de presentación documental; la confianza conserva `role="meter"` y sus ARIA.
+- Loading muestra cinco skeletons decorativos. Error del detalle no muestra decisiones,
+  incluso si existe un dato previo en caché. Se distinguen ausencia de validación y validación
+  sin hallazgos. Sin extracción, candidatos o actividad se muestran mensajes específicos;
+  metadatos opcionales ausentes se omiten o muestran «—», sin datos ilustrativos de relleno.
+
+No se declara pixel-perfect ni validación corporativa de propiedades internas de Follow.
+
+### Modalidad y accesibilidad
+
+Se usa `dialog.showModal()`, `aria-modal`, título y descripción con IDs estables. El foco
+inicial está en el título; el fondo queda inerte. Tab y Shift+Tab recorren los controles
+disponibles dentro del visor: se cierran explícitamente ambos extremos porque Chromium
+puede llevar el foco a la interfaz del navegador al salir del último control nativo.
+Escape, el botón «Cerrar visor» y el clic exterior cierran; el foco vuelve al abridor si
+sigue conectado. El scroll del documento se bloquea y restaura sin alterar su valor previo.
+
+Las pestañas tienen roles tablist/tab/tabpanel, nombres, relaciones ARIA y un único tab stop;
+flechas izquierda/derecha, Home y End activan y enfocan la pestaña correspondiente. Los
+campos tienen nombre y descripción asociados. Mensajes usan status/alert, iconos e
+indicadores decorativos se excluyen del árbol accesible. Loading de acciones mantiene
+dimensiones, comunica aria-busy y conserva exactamente los bloqueos funcionales existentes.
+
+### Verificación y límites
+
+La comparación de AST contra `811d7f9` confirma query, permisos, indicador de trabajo,
+mutaciones, payloads, errores, invalidaciones, apertura del original, correcciones y
+condiciones de habilitación. API, tipos, sesión y backend permanecen sin cambios.
+
+Chromium verifica Campos en 1440, 1024, 768 y 390; las cuatro pestañas en 1440 y 390; footer,
+loading, error y recuperación, ausencia de hallazgos/validación, datos parciales, estado
+final, tres combinaciones de permisos, apertura desde Excepciones y viewport 390×400.
+No hay overflow horizontal en los escenarios capturados. Se verifican foco inicial, fondo
+inerte, Tab/Shift+Tab, flechas/Home/End, Escape, retorno de foco y cierre con cambios locales.
+Las cinco decisiones mantienen payloads y bloqueo mientras esperan; selección conserva
+motivo explícito y fallback. Original conserva URL y apertura externa; sus errores se anuncian.
+
+Estas son pruebas frontend con respuestas controladas, no evidencia de decisiones o
+asociaciones ejecutadas en backend. Script, resultados y capturas locales de esta ejecución:
+`/tmp/nextdocs-visor-heyiYw/`. No se agregan fixtures al producto ni dependencias.
+
+`npm run build` pasa. `npm run test:e2e` falla en sus dos smoke por
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`; Workflow no está disponible.
+La API core también rechaza conexión en `127.0.0.1:8090`. La integración real queda pendiente
+y E2E no está verde: debe repetirse con los servicios disponibles antes del PR.
+FASE 6 se limita al visor y termina sin iniciar Excepciones, sin push y preservando el stash.
+
+## FASE 7 — Excepciones documentales
+
+### Inspección previa a la implementación
+
+Base: `64a7662`. La superficie `/excepciones` es una bandeja de excepciones documentales,
+distinta de hallazgos de validación del visor, Supervisor de procesos y Sentinel.
+
+| Aspecto | Contrato inspeccionado |
+| --- | --- |
+| Query | `["excepciones", estado, pagina]`; `listarExcepciones(estado, pagina, 25)` |
+| Endpoint | GET `/api/v1/excepciones`, parámetros `estado`, `pagina`, `tamano`; conserva el orden recibido del backend |
+| Filtros | ABIERTA inicial, EN_CURSO, RESUELTA, DESCARTADA; cambiar estado reinicia página a cero |
+| Búsqueda / Todas | No existen en esta pantalla; no se agregan |
+| Paginación | Base cero, 25 elementos; `content`, `totalElements`, `totalPages` de la respuesta paginada |
+| Prioridades | BAJA, MEDIA, ALTA, CRITICA; mapa semántico existente neutro/información/alerta/rojo |
+| Lectura | Navegación y endpoint requieren `excepciones.leer`; se preserva la integración actual de rutas |
+| Gestión | `excepciones.gestionar` y estado distinto de RESUELTA muestran Resolver |
+| Resolver | Alterna formulario inline y vacía texto al abrir/cerrar; input requerido con foco inicial; submit sin trim ni transformación |
+| Mutación | POST `/api/v1/excepciones/{id}/resolver`, payload `{resolucion}`; el servicio fija RESUELTA, actor y fecha |
+| Éxito | Cierra formulario, limpia texto y error; invalida `["excepciones"]` y `["kpi"]` |
+| Error | `mensajeDeError`; conserva formulario y texto; consulta usa ErrorPanel y `refetch` |
+| Documento | Botón cuando existe `documentoId`; monta el mismo VisorDocumento y cierra poniendo ID local a null |
+| Fechas y vencimiento | `venceEn`, `vencida` y fecha formateada por la función existente; no se recalculan SLA |
+| Hallazgo / excepción | Un hallazgo pertenece a una validación; una excepción tiene identidad, prioridad, vencimiento, estado y resolución propios, con relación documental opcional |
+
+Dos límites del contrato se conservan expresamente. DESCARTADA permite Resolver en el
+frontend y el servicio no impide pasarla a RESUELTA: no se inventa una restricción de estado
+final en una fase visual. RESUELTA no muestra Resolver. Aunque hay un endpoint de asignación
+en backend, la página no lo utiliza y no se agrega esa acción.
+
+La consulta siempre filtra por estado. Cero resultados no demuestra cero excepciones en el
+tenant, y no hay filtro Todas. El vacío debe describir el estado consultado sin afirmar que
+todo el flujo está al día ni introducir queries adicionales para averiguar el total global.
+El único conteo de la página representa `totalElements` del filtro activo; no se agregan KPI.
+
+### Implementación y referencias visuales
+
+Se inspeccionaron metadatos de las páginas 07 — EXCEPCIONES, 11 — ESTADOS TRANSVERSALES y
+12 — DISEÑO RESPONSIVE con Figma MCP. Se obtuvieron contextos de diseño e imágenes de:
+Abiertas `46:233`, Resolver `46:368`, Resueltas `46:506`, Vacío `46:601`, Cargando `46:663`,
+En curso `126:3451`, Error global `123:6705`, Solo lectura `123:6889` y Excepciones móvil
+`123:9914`. No se modificó Figma. No hay un frame específico de Excepciones tablet en la
+página responsive inspeccionada; la adaptación responde al espacio real y se verifica en navegador.
+
+- El shell permanece intacto. Título, filtros nombrados y total del estado preceden a una
+  lista semántica de Tarjeta. En desktop/tablet, metadatos usan dos columnas; en móvil, una.
+  Acciones y formulario se reorganizan mediante flex/grid, sin anchos de frame fijos.
+- Se conserva información existente y se hace visible información ya disponible en el DTO:
+  ID, código, estado, alta y, cuando existen, responsable, resolución registrada y actor.
+  No se inventan fechas de resolución: el tipo frontend no expone ese timestamp.
+- Estado y prioridad son conceptos separados, con texto explícito. Las prioridades conservan
+  exactamente su mapa semántico. Severidad usa InsigniaSeveridad; `vencida` conserva su indicador
+  «SLA vencido» y su borde. No se interpreta vencimiento ni se ordena nuevamente la colección.
+- El formulario conserva input de una línea, validación `required`, foco inicial, toggle y
+  payload. Usa Campo asociado a «Cómo se resolvió», formulario nombrado, Resolver con
+  `aria-expanded` y `aria-controls`, y Confirmar con loading, disabled y anuncio de guardado.
+  No se copia el textarea de Figma para alterar el comportamiento de Enter.
+- RESUELTA muestra su etiqueta y datos reales de resolución cuando existen, sin Resolver.
+  DESCARTADA conserva su etiqueta propia y la acción permitida por la implementación actual.
+- El botón Ver documento conserva su handler. El dialog de FASE 6 ya captura ese botón y le
+  devuelve el foco: no fue necesario modificar VisorDocumento ni otra superficie.
+- Cargando muestra cinco skeletons decorativos; no se muestra un conteo de cero durante carga
+  o error. ErrorPanel presenta mensajes reales de consulta o resolución; solo la consulta
+  ofrece Reintentar mediante su `refetch` existente.
+- Vacío en ABIERTA dice «No hay excepciones abiertas»; los otros estados, «Sin coincidencias
+  en este estado». Ambos describen el filtro, sin afirmar ausencia global. Si una página queda
+  vacía pero `totalElements > 0`, dice «Sin resultados en esta página» y explica que volver a
+  seleccionar el estado usa el reinicio de página existente. No hay salto de página automático.
+- La paginación conserva 25, límites, condiciones de visibilidad y cambios de página; ahora
+  tiene nombre accesible. Se mantiene el orden por `alta DESC` que aplica el backend por defecto.
+
+El Design System orienta tarjetas, jerarquía, resolución inline y estados. Se descartan
+instancias genéricas «Guardar», cifras «resueltas este mes» sin contrato temporal, afirmaciones
+«el flujo está al día», el filtro ilustrativo PENDIENTES y tiempos de revisión inexistentes.
+El móvil conserva filtros, identificación, documento, estado, prioridad, fechas y acciones
+que la referencia omite. Se usan tokens y primitivas actuales, sin nuevos colores, tokens,
+dependencias o componentes compartidos. No se declara pixel-perfect ni validación interna de Follow.
+
+Product UX aporta la jerarquía general ya adoptada por el producto. UX-13 no reemplaza esta
+pantalla: `/excepciones` ≠ Supervisor ≠ Sentinel. Los hallazgos del visor siguen siendo otra
+entidad, aunque compartan presentación de severidad.
+
+### Validación
+
+Comparación de AST contra `64a7662`: queries, query keys, catálogo de estados, mapa de
+prioridades, mutación completa, invalidaciones, cálculo de totales, callbacks de filtros,
+paginación, resolución y apertura/cierre del visor preservados. API, sesión, DTOs, backend,
+shell, visor y demás páginas permanecen sin cambios.
+
+Chromium con respuestas controladas verifica 1440, 1024, 768 y 390 sin overflow horizontal;
+las cuatro prioridades; filtros; páginas de 25; estados RESUELTA/DESCARTADA; lectura sin
+gestión; apertura del visor con Enter y clic, cierre con Escape y botón y retorno de foco;
+formulario requerido, toggle, envío con Enter, payload sin trim, loading estable, error con
+conservación del texto e invalidación tras éxito. Se verifican loading/error con recuperación,
+vacío filtrado, sin coincidencias, página vacía tras resolver su último elemento, datos
+parciales y textos extensos. Script, resultados y capturas: `/tmp/nextdocs-excepciones-aZDr6u/`.
+
+Las respuestas simuladas validan el frontend, no una resolución ejecutada en backend.
+La API core rechaza conexión en `127.0.0.1:8090`. `npm run test:e2e` falla en los dos smoke
+por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`; Workflow no está disponible.
+E2E no está verde y debe repetirse con los servicios disponibles antes del PR.
+`npm run build` y `git diff --check` pasan sobre la implementación final.
+FASE 7 termina sin iniciar Panel o Tipos propuestos, sin push y conservando el stash.
+
+## FASE 8 — Panel de control
+
+### Inspección previa
+
+Base `a175714`. Panel permanece separado de Resumen. Se inspeccionaron Panel, Graficos,
+cliente KPI, DTOs, KpiRestController, KpiService, modelos de indicadores/rango/barras y los
+repositorios de documentos, excepciones, valores extraídos, archivos y entregas webhook.
+
+Queries conservadas: `["kpi", "resumen", dias]` → GET `/api/v1/kpi/resumen`;
+`["kpi", "plantillas", dias]` → GET `/api/v1/kpi/plantillas`;
+`["kpi", "poblacion", indicador.clave, rango.desde]` → GET `/api/v1/kpi/poblacion`.
+El rango memoizado envía solo `desde = Date.now() - dias * 86400000`, en ISO; población
+agrega `indicador`. Opciones 7/30/90, inicial 30, grupo «Período de los indicadores».
+Backend fija `hasta` a ahora y compara con el intervalo anterior de idéntica duración.
+Los tres endpoints requieren `documentos.leer`; no hay nuevas reglas de permiso.
+
+Todos los KPI siguientes vienen de `KpiResumen.indicadores`, no se calculan en React.
+Las consultas filtran tenant; documentos/excepciones/archivos indican baja lógica donde
+corresponde. La columna de fórmula describe el predicado real, no solo su etiqueta.
+
+| Clave / nombre | Fórmula y población real | Unidad; cero/null | Período |
+| --- | --- | --- | --- |
+| documentosRecibidos / Documentos recibidos | COUNT documentos sin baja, raíz (`documentoPadre IS NULL`), por `recibido` entre límites inclusivos | Conteo; 0 válido | Sí |
+| documentosCerrados / Documentos cerrados | COUNT sin baja con timestamp `cerrado` en rango; incluye segmentos, no exige estado actual CERRADO en la query | Conteo; 0 válido | Sí |
+| automatizacion / Automatización | Cerrados del rango sin ninguna RevisionDocumento / cerrados del rango | %; 0 válido, null si denominador cero | Sí |
+| cumplimientoSla / Cumplimiento SLA | Excepciones con `resuelta` en rango y (`venceEn` nulo o resuelta ≤ venceEn) / todas con `resuelta` en rango | %; 0 válido, null sin resueltas | Sí |
+| tiempoCicloP50 / Tiempo de ciclo p50 | Cerrados en rango con recibido informado; duración truncada a horas enteras, orden ascendente, índice ceil(0,50 × N) − 1 | Horas; 0 válido, null sin ciclos | Sí |
+| tiempoCicloP90 / Tiempo de ciclo p90 | Misma población; índice ceil(0,90 × N) − 1 | Horas; 0 válido, null sin ciclos | Sí |
+| excepcionesAbiertas / Excepciones abiertas | COUNT ABIERTA + COUNT EN_CURSO, sin baja | Conteo; 0 válido | No, actual |
+| excepcionesVencidas / Excepciones vencidas | COUNT sin baja, estado distinto de RESUELTA, venceEn < ahora; incluye DESCARTADA | Conteo; 0 válido | No, actual |
+| documentosPorVencer / Documentos por vencer | COUNT sin baja con retenerHasta entre ahora y ahora + 30 días; sin filtro adicional de estado, raíz o legal hold | Conteo; 0 válido | No, horizonte fijo 30 días |
+| almacenamientoUtilizado / Almacenamiento utilizado | SUM tamaño de archivos sin baja / cuota en bytes del tenant | %; 0 válido, null si cuota ≤ 0 | No, actual |
+| entregaDeEventos / Entrega de eventos | Registros EntregaWebhook con estado ENTREGADO / registros de entrega creados en rango por alta; no cantidad de reintentos | %; 0 válido, null sin registros | Sí |
+
+Razones backend: división con 4 decimales HALF_UP, luego ×100 a un decimal. Variación
+backend: (valor − anterior) ×100 / abs(anterior), a un decimal; SIN_COMPARACION cuando el
+actual/anterior es null o anterior es cero. No se calculan variaciones nuevas en frontend.
+Formato de horas existente: menos de una hora → «< 1 h»; luego horas redondeadas o días y
+resto de horas. Se conserva, incluido 0 h como «< 1 h», distinto de null «Sin datos».
+
+### Poblaciones, gráficos y salud
+
+- `porEstado` cuenta todos los documentos sin baja del tenant, sin fechas ni exclusión de
+  raíces, segmentos o estados finales. «Backlog» aquí no equivale a pendientes de revisión.
+- Embudo conserva RECIBIDO, PROCESANDO, EXTRAIDO, VALIDADO, APROBADO, CERRADO; conserva ceros
+  cuando la clave existe. Su ancho relativo divide por el máximo de esas etapas (mínimo 1),
+  no por recibidos. No es conversión acumulada ni debe sumar 100. OBSERVADO, RECHAZADO y
+  DIVIDIDO continúan en la composición completa, fuera de esas seis etapas.
+- Anillo apilado conserva filtro original cantidad > 0, orden descendente y suma de esas
+  cantidades. Su leyenda conserva round(cantidad/total ×100), sin ajuste para sumar 100.
+  Los estados en cero no se eliminan del contrato ni de las otras visualizaciones.
+- Plantillas agrupa documentos sin baja, con plantilla y recibido en rango, por código y
+  estado. Incluye segmentos; por eso volumen no equivale al KPI de raíces recibidas. Orden
+  backend: volumen descendente. Barras y categorías conservan orden recibido.
+- Avance: (CERRADO + APROBADO + RECHAZADO) / volumen; DIVIDIDO no entra en ese numerador.
+- Completitud: valores con presencia PRESENTE / todos los valores extraídos de documentos
+  con plantilla recibidos en rango. La query de valores no agrega filtros de baja ni última
+  extracción; no se modifica esa población en una fase visual.
+- Automatización por plantilla: APROBADO / (APROBADO + OBSERVADO), distinta del KPI global
+  basado en cerrados sin revisión. Sin excepciones: max(0, 1 − documentos distintos con
+  excepción de estado distinto de RESUELTA / volumen); incluye DESCARTADA, no un conteo
+  de incidencias. Se usan documentos del período y sus excepciones vigentes.
+- Semáforo de cada barra y salud: ≥0,85 verde/OK, ≥0,60 ámbar/ATENCION, menor rojo/CRITICO.
+  Salud toma la menor razón no nula de las cuatro barras; todas nulas → SIN_DATOS. No es
+  confianza de IA ni hay health global numérico en el contrato.
+
+Población auditable existe solo para recibidos, cerrados, p50 y p90. Backend limita la
+respuesta a 200 documentos; para percentiles el listado es la base, no el valor en horas.
+El texto previo «el número de la tarjeta es exactamente este listado» no es válido para
+percentiles o conteos mayores de 200: se ajustó solo la explicación, sin tocar endpoint.
+Se preserva el panel lateral y el enlace existente a `/documentos`, sin deep-links nuevos.
+
+Loading/error de resumen bloquean su contenido; plantillas y población tienen sus propios
+loading/error/refetch. Una lista de plantillas vacía no demuestra ausencia global de
+documentos: puede haber documentos sin plantilla o fuera del rango. Null se presenta como
+sin datos; cero es una medición válida. No se muestran indicadores inventados durante carga.
+
+### Referencias visuales y decisiones
+
+Se inspeccionó mediante Figma MCP la metadata de `08 — PANEL DE CONTROL` (`123:20962`),
+y design context y screenshots de `75:335` (30 días), `75:562` (salud), `75:717`
+(población), `126:3537` (vacío) y `126:3686` (Panel 390), del Design System NEXT DOC AI
+`0VZRK69QjDTDy0oAaf8Uv1`. Se reutilizó la inspección MCP de `11 — ESTADOS TRANSVERSALES`
+(`123:20965`) y `12 — DISEÑO RESPONSIVE` (`123:20966`), incluidos error global
+`123:6705` y lectura `123:6889`, realizada en la fase previa de esta conversación.
+
+Product UX aporta dirección de jerarquía, no contratos: no se importaron KPI del catálogo
+80 ni se fusionó Panel con Resumen. El Design System contiene cifras y categorías
+ilustrativas distintas de las reales; se conservan los once indicadores, seis etapas y
+cuatro barras por plantilla. No se implementa el health global 92% ilustrativo, ni exportar
+población, ni se reduce mobile a tres KPI o tres etapas. Tampoco se replica la navegación
+incompleta del frame móvil: el shell de FASE 2 permanece intacto.
+
+Se sustituye la tarjeta oscura con cifra display y resplandores por superficies y métricas
+compactas de las primitivas vigentes; se mantiene su comparación real con el período
+anterior. Colores, radios, fondos y tipografía usan tokens actuales. No se agregan tokens,
+dependencias ni fuentes. No se declara pixel-perfect ni validación interna contra Follow.
+
+### Implementación y accesibilidad
+
+- Panel reutiliza Tarjeta, Metrica, Pastilla, GrupoSegmentado, Boton y estados compartidos.
+  Se mantienen los tres KPI principales y ocho secundarios, embudo, backlog, volumen,
+  salud y población. Las tarjetas estáticas no adquieren interacción artificial.
+- Se explicitan período y poblaciones sin recalcular nada. Variaciones, anterior,
+  numerador y denominador se muestran únicamente desde el DTO real. Null pasa a «Sin
+  datos», incluso en conteos donde antes se presentaba como cero; 0 y 0% siguen visibles.
+  El centro de los anillos muestra el porcentaje recibido con sus decimales disponibles.
+- Fórmulas de KPI mediante details/summary operable por teclado; fórmulas de barras
+  visibles, sin depender del tooltip nativo anterior. Regiones nombradas, jerarquía de
+  títulos, valores/unidades textuales, colores junto con estado o etiquetas y foco visible.
+- Las representaciones decorativas llevan aria-hidden cuando existe alternativa textual.
+  Embudo conserva lista con cantidades; backlog tiene leyenda completa y texto de estados
+  en cero; volumen tiene lista de definiciones con todas las categorías y valores.
+- Graficos agrega `plano?: boolean`, por defecto false, a Anillo, BarraAnimada, Embudo y
+  AnilloApilado, junto con COLOR_GRAFICO basado en tokens. Solo Panel lo activa; elimina
+  brillos/degradados de esas instancias sin alterar geometría ni fórmulas. Columnas mantiene
+  su API y lógica; Panel pasa su color opcional ya disponible desde FASE 4. Resumen conserva
+  su comportamiento. Los demás cambios de Columnas son formato de Prettier.
+- 1440/1280: tres KPI principales, secundarios en cuatro columnas, distribución en dos.
+  1024: tres principales, secundarios en dos y distribución apilada. 768: recibidos ocupa
+  la fila y los dos anillos comparten la siguiente; secundarios en dos columnas. 390: una
+  columna, textos completos y volumen presentado prioritariamente como valores textuales.
+  Las cuatro barras y todos los estados permanecen alcanzables mediante scroll vertical.
+- Población mantiene apertura, cierre, query y permisos; explica el límite real de 200.
+  Se elimina el anidamiento anterior de botón dentro del enlace a Documentos. No hay rutas
+  nuevas ni cambios en la primitiva compartida PanelLateral.
+  La validación visual detectó que el ancestro animado del shell contenía el overlay fijo:
+  en mobile, tras scroll, su cabecera quedaba fuera de pantalla y el drawer tomaba la altura
+  del contenido. PanelPoblacion ahora usa createPortal hacia document.body, exclusivamente
+  dentro de Panel.tsx. Conserva las props y acciones de PanelLateral; no modifica shell
+  ni agrega dependencias. Se comprueba que el cierre esté dentro del viewport.
+
+### Verificación y límites
+
+Comparación de AST contra `a175714`: mismas queries, claves, rango memoizado, períodos,
+selección de indicadores, filtros, orden, sumas, transformaciones, formatos de valor/horas
+y cálculos de los gráficos. La comparación excluye únicamente color/tono visual cuando
+corresponde. Columnas, useVisible y useContador conservan su AST. Cliente API, DTOs,
+sesión, permisos, backend, shell y demás páginas no tienen cambios.
+
+Chromium con respuestas controladas verifica 1440, 1280, 1024, 768 y 390 sin overflow
+horizontal; períodos 7/30/90 y parámetros emitidos; orden del embudo y backlog; estados
+en cero; fórmulas por teclado; apertura/cierre de población; enlace existente a Documentos;
+null frente a 0, 0% y 0 horas; ausencia de indicadores; textos extensos y categorías
+completas. Resumen, plantillas y población prueban loading/error y recuperación por separado.
+Se verifican población cero, plantillas vacías y población vacía. No aparecen NaN o undefined
+en el caso de datos extensos. Dos errores del script temporal (selector del embudo y conteo
+esperado de textos) se corrigieron; no eran defectos del producto.
+
+Script, resultados y capturas: `/tmp/nextdocs-panel-K9KKNF/`. Capturas normales completas
+del viewport incluyen el shell; los recortes de distribución y salud ocultan únicamente
+la topbar sticky durante la captura para que no tape el recorte. No modifica la aplicación.
+
+`npm run build` y `git diff --check` pasan. `npm run test:e2e` falla en los dos smoke de
+Workflow por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`. No es E2E verde ni
+evidencia de regresión del Panel. La API core tampoco acepta conexión en `127.0.0.1:8090`.
+Las respuestas controladas validan frontend, no integración real; repetir con servicios
+disponibles antes del PR, sin reconfigurar Workflow en esta fase.
+
+Limitación preexistente fuera de esta modificación: PanelLateral conserva role dialog,
+aria-modal, cierre por Escape/botón y bloqueo de scroll, pero no incorpora la contención
+y restauración de foco del visor documental. No se certifica accesibilidad modal completa
+para población ni se amplía la primitiva compartida en este alcance.
+
+FASE 8 termina sin iniciar Tipos propuestos o Procesos, sin push y conservando intacto
+`stash@{0}` (`2a7597caa4a46330a90f8c6569b6ae26de334292`).
+
+## FASE 9 — Tipos propuestos
+
+### Inspección previa
+
+Base `e6cbcfb`. Se inspeccionaron TiposPropuestos, cliente, DTO, AdministracionRestController,
+TipoPropuestoService, repositorio y SembradorCatalogoService antes de modificar la pantalla.
+Query `["tipos-propuestos", estado]` → GET `/api/v1/administracion/tipos-propuestos`,
+parámetro `estado`. Filtro inicial PENDIENTE, opciones PENDIENTE/APROBADO/DESCARTADO; no
+hay búsqueda ni paginación. Orden backend `veces DESC, alta DESC`, filtrado por tenant.
+
+DTO: id, codigoSugerido, nombreSugerido opcional, motivo opcional, veces, estado,
+codigoAprobado opcional, campos y alta opcional. Cada campo trae clave, etiqueta y tipoDato
+opcionales, requerido y ejemplo opcional. No entrega fecha de resolución, documento de
+origen, responsable ni confianza. `veces` es el contador de registros de detección, no una
+query nueva de documentos distintos. No se modifica su valor ni su orden.
+
+GET y ambos POST requieren `tenant.administrar`. El frontend conserva ese permiso para
+navegación y acciones; la ruta directa sigue existiendo y un 403 se presenta como error.
+No hay contrato backend independiente de solo lectura para este recurso.
+
+POST `/{id}/aprobar` y `/{id}/descartar` bajo el endpoint anterior, ambos sin cuerpo.
+Éxitos invalidan `["tipos-propuestos"]`, sin actualización optimista. Aprobar actualiza el
+aviso global y limpia error; descartar limpia aviso/error. Los errores son globales en la
+pantalla actual: aprobar limpia aviso y muestra mensajeDeError; descartar conserva el aviso
+anterior y muestra mensajeDeError. No hay confirmación ni formulario editable.
+
+Frontend ofrece ambas acciones solo para PENDIENTE con permiso; aprobar además exige
+campos.length > 0. Una mutación pendiente bloquea ambas acciones de todas las tarjetas.
+APROBADO y DESCARTADO no tienen acciones en frontend. Backend es más permisivo: aprobar
+rechaza APROBADO pero no excluye DESCARTADO; descartar no restringe estado previo. Esta
+discrepancia preexistente no se corrige ni expone como acciones nuevas en una fase visual.
+
+Aprobar valida campos y claves, crea en el catálogo una PlantillaDocumental y versión 1
+PUBLICADA con sus campos mediante SembradorCatalogoService, y marca APROBADO/codigoAprobado/
+resuelto. Puede fallar por código de plantilla existente. Descartar marca DESCARTADO y
+resuelto, sin crear tipo. No se crean procesos ni funcionalidades de Studio/Marketplace.
+El registro de propuestas conserva su dominio, separado de estados documentales.
+
+Loading, error de consulta con refetch y colección vacía se distinguen. El vacío se refiere
+solo al estado seleccionado. No se deduce ausencia global de tipos o clasificación correcta.
+
+### Referencias y decisiones de presentación
+
+Inspección mediante Figma MCP de UX-06 `2:378` en Product UX `DerqvPxJwtevNP1lcvVpeo`
+con design context y screenshot. Su tabla documental, KPI, responsables e insights son
+conceptuales y no corresponden al DTO de propuestas: no se incorporan.
+
+En Design System NEXT DOC AI `0VZRK69QjDTDy0oAaf8Uv1` se inspeccionó metadata de
+`09 — TIPOS NUEVOS` (`123:20963`), `11 — ESTADOS TRANSVERSALES` (`123:20965`) y
+`12 — DISEÑO RESPONSIVE` (`123:20966`). Se obtuvieron design context y screenshots de
+Pendientes `100:367`, Aprobados `100:532`, Descartados `100:624`, Vacío `100:722`, Error
+global `123:6705` y listado móvil `123:9813` como referencia general de adaptación.
+No hay frame específico de Tipos nuevos mobile/tablet en esa página responsive inspeccionada.
+
+Se conservan tarjetas administrativas con identidad, motivo, campos y acciones al pie.
+Se usan tokens y primitivas vigentes, sin nuevos colores, fuentes, dependencias o componentes
+compartidos. La tarjeta puede crecer para mostrar ejemplos y condición de requerido del DTO,
+que los chips compactos de Figma no desarrollan. No se copian conteos de filtros no cargados,
+estado ilustrativo «Excepción», fecha de aprobación ausente del DTO, motivos de descarte
+inventados ni la conclusión de vacío «Todo lo que llegó encontró su tipo documental».
+No se declara pixel-perfect ni validación de propiedades internas de Follow.
+
+### Implementación
+
+Único archivo de producto modificado: TiposPropuestos.tsx. Documentación en este archivo.
+Se mantiene la query y ambas mutaciones completas, incluidos sus callbacks y mensajes reales.
+El contador junto al filtro es exclusivamente `propuestos.length` de la respuesta activa.
+No hay nuevas consultas, KPI, búsqueda, paginación, navegación o creación manual.
+
+- Título «Tipos propuestos», descripción breve y GrupoSegmentado con su nombre accesible
+  original. El listado es una lista semántica con tarjetas; estado y frecuencia visibles.
+- Nombre con fallback al código, motivo sin truncar, alta con formatearFecha existente y
+  codigoAprobado cuando existe. No se sustituye alta por una fecha ficticia de aprobación.
+- Campos con clave/etiqueta, tipoDato, requerido/opcional y ejemplo cuando existe, incluido
+  el texto «0». Son datos de lectura; no se agregan inputs ni correcciones al payload.
+- Estados de propuesta conservan su mapa TONO_ESTADO propio; no usan ESTADOS_DOCUMENTALES.
+- Acciones «Agregar al catálogo» y «Descartar», con nombres accesibles que incluyen el código.
+  Misma condición de permiso/PENDIENTE y bloqueo de aprobación sin campos. No hay controles
+  en estados finales. Loading se asocia por variables de la mutación al botón activo;
+  enProceso sigue deshabilitando globalmente las dos acciones de todas las propuestas.
+- Boton conserva dimensiones durante loading, aria-busy y disabled efectivo. No hay
+  confirmaciones nuevas ni cambio en los callbacks de aprobación/descarte.
+- ErrorPanel anuncia el error global de mutación sin un retry nuevo; el error de consulta
+  mantiene Reintentar con refetch. Aviso de éxito con role status y aria-atomic. Cargando
+  tiene skeletons decorativos; vacío tiene texto específico para el estado consultado.
+- Heading hierarchy h1/h2/h3, listas de campos nombradas, iconos decorativos ocultos,
+  estados textuales, foco visible y acciones operables con Enter.
+- Desktop: bandeja de tarjetas, campos hasta tres columnas y acciones al pie. 1024/768:
+  campos en dos columnas, cabeceras y controles ajustables. 390: una columna, botones de
+  ancho completo y scroll vertical, sin eliminar evidencia ni acciones.
+
+### Verificación
+
+AST contra `e6cbcfb`: TONO_ESTADO, FILTROS, consulta, refrescar, ambas mutaciones completas,
+propuestos, sinCampos, permiso, condiciones de acción, disabled y callbacks de los botones
+intactos. Cliente API, DTOs, contextos, componentes compartidos, Panel, Procesos y backend
+no tienen cambios. No se modifica estado inicial ni orden de la colección.
+
+Chromium con respuestas controladas verifica los tres estados en 1440/1024/768/390;
+parámetro de filtro; ausencia de acciones finales; datos opcionales; ejemplo «0»; textos
+extensos sin overflow; loading, error y recuperación; vacío por cada estado; aprobación
+sin campos deshabilitada; descarte permitido en ese caso. Ambas mutaciones se prueban con
+Enter, dimensiones estables, bloqueo global, prevención de segundo envío, POST al ID exacto
+sin cuerpo, error real sin perder colección y nueva consulta después del éxito controlado.
+También se conserva el aviso previo cuando falla un descarte, como hacía el código anterior.
+
+Se prueba ocultación de controles con respuesta de lectura controlada, sin afirmar que
+ese perfil tenga acceso real: GET exige administrar. Otro caso representa el 403 real y
+comprueba error visible. No aparecen confirmaciones nuevas ni errores JavaScript.
+Script, resultados y capturas: `/tmp/nextdocs-tipos-nDpYwh/`.
+
+El navegador de la fase anterior ya no estaba en la caché. Se ejecutó el mecanismo autorizado
+`npx playwright install chromium` para Playwright existente (Chromium, headless shell y
+FFmpeg auxiliar descargados por esa herramienta), sin tocar package.json ni lockfile.
+Playwright usó su compilación de respaldo Ubuntu; las verificaciones de navegador pasaron.
+
+`npm run build` y `git diff --check` pasan. `npm run test:e2e` falla en los dos smoke por
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`. API core tampoco disponible en
+`127.0.0.1:8090`. Integración real pendiente; las respuestas controladas no prueban creación
+de plantilla ni descarte en backend. Repetir con los servicios disponibles antes del PR.
+
+Durante esta fase apareció una edición externa de AGENTS.md sobre permisos de backend/target;
+se preserva sin incluirla en el commit. Solo se incluyen TiposPropuestos.tsx y esta documentación.
+No se inicia Procesos/Studio ni se hace push. Stash de CHECKPOINT 2 conservado sin aplicar.
+
+## FASE 9.5 — Correcciones funcionales previas de Procesos
+
+Fase funcional separada del rediseño. No inicia FASE 10 ni incorpora UX-09/UX-10.
+El contrato contrastado pertenece al microservicio hermano Workflow, no al core.
+
+### Preservación del grafo y publicación
+
+`grafoProceso.ts` inspecciona el grafo antes de exponer pasos editables y vuelve a validarlo
+al serializar. Sólo representa una cadena completa con un inicio, un fin, IDs únicos,
+sin condiciones, ciclos, bifurcaciones, nodos desconectados ni tipos no representables.
+Los grafos vacíos iniciales permiten comenzar un borrador. Una estructura no representable
+bloquea edición, guardado y publicación con explicación; no muestra una secuencia parcial
+como si fuera el grafo completo. DECISION y múltiples finales quedan protegidos.
+
+En cadenas representables se preservan identidad y configuración de los extremos, propiedades
+adicionales de nodos y configuración abierta, incluyendo objetos/listas desconocidos. Sólo se
+actualizan las propiedades efectivamente editadas. Reordenar, agregar o quitar pasos cambia
+las conexiones incondicionales de esa cadena de forma explícita. No hay truncamiento a 100 pasos.
+Las propiedades desconocidas de aristas bloquean edición por no poder garantizar su semántica
+al reconectar. El serializador no muta el grafo original y rechaza también invocaciones directas
+sobre grafos incompatibles.
+
+Los cambios locales se comparan con los pasos cargados/guardados. Publicar queda deshabilitado
+hasta guardar correctamente: no guarda automáticamente ni introduce autosave. Un fallo de
+Guardado conserva los cambios y el bloqueo de publicación. El editor queda deshabilitado mientras
+consulta, guarda o publica. La respuesta del guardado actualiza la base local. Una nueva respuesta
+de detalle actualiza la base si está limpia; si hay cambios locales y el grafo remoto cambió,
+bloquea persistencia y pide volver a abrir el estudio. Esto no reemplaza control de concurrencia
+backend: modificaciones externas no observadas entre lectura y escritura no pueden detectarse
+atómicamente con el contrato actual.
+
+Se confirma descarte con Volver y al navegar mediante enlaces de la aplicación. Cerrar/recargar
+la pestaña usa beforeunload. No hay drafts persistidos ni protección global de navegación:
+Atrás/Adelante del historial SPA, logout y una expiración de sesión no se interceptan.
+No se cambia BrowserRouter ni la lógica de sesión.
+
+### Instancia persistente y tareas
+
+El modelo frontend reconoce CREADA, ACTIVA, ESPERANDO, BLOQUEADA, COMPLETADA y CANCELADA.
+Sólo COMPLETADA/CANCELADA son finales; completar tareas requiere ACTIVA/ESPERANDO, como Workflow.
+El panel muestra tareas PENDIENTE y VENCIDA. Para Rechazar pide `motivo`, obligatorio no vacío
+tras trim y de hasta 512 caracteres. El POST conserva `actor` y `decision`, agregando el motivo
+real: `{ actor, decision: "RECHAZADO", motivo }`. Durante el envío bloquea una segunda acción;
+si falla, conserva el motivo y muestra el mensaje real.
+
+El detalle de prueba distingue loading, error y datos; ErrorPanel permite refetch. Se consulta
+cada 15 segundos mientras el estado está en curso, sin polling en segundo plano, y se detiene
+ante error o estado final. Hay evidencia de cambios autónomos: ProgramadorVencimientos ejecuta
+cada 60 segundos el vencimiento de tareas y avance de temporizadores. El GET de detalle es una
+consulta transaccional de lectura. No se modifica ese endpoint ni su query key.
+
+La acción se denomina Probar proceso y advierte que crea una instancia real persistente de la
+versión publicada, sin usar el borrador. No se presenta como simulación, sandbox ni instancia
+aislada. La insignia usa el máximo `numero` publicado, no la cantidad de versiones.
+
+### Catálogos y límites conservados
+
+Tipos declarados: INICIO, FIN, DECISION y los nueve tipos del selector. Tipos editables:
+SOLICITUD_DOCUMENTO, FORMULARIO, VALIDACION_IA, REVISION_HUMANA, TAREA_EXTERNA, NOTIFICACION,
+TEMPORIZADOR, ACCION_API y SUBPROCESO. Publicables según el validador MVP0 inspeccionado:
+INICIO, FIN, SOLICITUD_DOCUMENTO, FORMULARIO, REVISION_HUMANA, DECISION y TEMPORIZADOR.
+No se elimina/amplía el selector ni se modifica el backend. Se advierte que los tipos restantes
+pueden guardarse como borrador, pero Workflow impide publicarlos. DECISION no obtiene editor.
+
+/procesos conserva la protección general de sesión. plantillas.publicar sólo filtra el menú;
+no equivale a autorización completa de Workflow. Se mantienen X-Tenant-Id, endpoints y query keys.
+Fuera de esta fase: IAM/JWT, resolución de roles, conectores productivos, habilitación de tipos,
+formularios avanzados, ejecución real de ACCION_API/notificaciones, subprocesos, bandejas de
+instancias, KPI, nuevas rutas y canvas. AGENTS.md externo y stash@{0} se preservan.
+
+### Regresión reproducible
+
+Se usa Playwright ya instalado, sin dependencias nuevas:
+
+```bash
+cd frontend
+npx playwright test --config playwright.procesos.config.ts
+npm run build
+npm run test:e2e
+git diff --check
+```
+
+La configuración separada levanta Vite y ejecuta pruebas puras del grafo y pruebas frontend con
+respuestas controladas. No reemplaza los smoke de integración de playwright.config.ts contra 8091.
+Se reprodujeron antes de corregir los defectos de ramas/condiciones, versiones, descarte,
+estados de prueba y error de consulta. Se agregó regresión para actualización desde caché.
+
+27 pruebas pasan: cadenas de 1/2/105 pasos, configuración adicional, inmutabilidad del original,
+branching DECISION y no DECISION, condiciones, múltiples finales, ciclos, nodos desconectados,
+IDs duplicados, creación/reordenado, bloqueo de solicitudes destructivas, guardar/publicar,
+fallo de guardado, descarte, seis estados, tareas pendientes/vencidas, rechazo con motivo,
+error de mutación/consulta, recuperación y polling con detención al finalizar.
+Estas respuestas controladas verifican frontend y payloads, no persistencia real en Workflow.
+
+Verificación final de esta fase: `npm run build` y `git diff --check` pasan. Los dos smoke de
+`npm run test:e2e` fallan por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`.
+No se declara integración verde ni se atribuye esa indisponibilidad al frontend. Repetir antes
+del PR con Workflow disponible. No se inicia FASE 10 visual.
+
+## FASE 10 — Biblioteca de procesos y Studio existente
+
+El rediseño parte de `387c4ac` y conserva las correcciones funcionales de FASE 9.5.
+Sólo se modifica la presentación de `frontend/src/paginas/Procesos.tsx` y esta documentación.
+La única ruta sigue siendo `/procesos`; biblioteca, creación inline, edición y prueba son
+modos locales. No se modifican clientes API, serialización, permisos, sesión ni Workflow.
+
+### Referencias y decisiones visuales
+
+Se inspeccionaron mediante Figma MCP el contexto y las capturas de Product UX
+[UX-11](https://www.figma.com/design/DerqvPxJwtevNP1lcvVpeo?node-id=2-817) y
+[UX-12](https://www.figma.com/design/DerqvPxJwtevNP1lcvVpeo?node-id=2-901).
+Orientan jerarquía y composición, pero sus tablas documentales, KPI e insights son conceptuales.
+No se trasladan esas cifras, columnas ni acciones a las definiciones de proceso.
+
+El Design System NEXT DOC AI aporta las referencias específicas:
+
+| Estado | Nodo |
+| --- | --- |
+| Lista | `123:1699` |
+| Borrador | `123:1835` |
+| Paso expandido | `123:3115` |
+| Error de validación | `123:3253` |
+| Publicada | `123:3320` |
+| Prueba | `123:3377` |
+
+Todos pertenecen a `0VZRK69QjDTDy0oAaf8Uv1` y se inspeccionaron con contexto y captura.
+Se reutilizan Tarjeta, CabeceraTarjeta, Pastilla, Campo, Selector, Boton, BotonIcono y Estados,
+con los tokens vigentes. No se agregan tokens, dependencias ni un sistema de componentes local.
+No se declara validación interna contra Follow.
+
+La biblioteca presenta nombre, código, familia, fecha de alta si está disponible, indicadores
+reales de versiones y Abrir estudio. El orden de la respuesta se conserva. La fecha se etiqueta
+como creación, nunca como última actualización. No hay búsqueda, filtros, KPI ni paginación nuevos.
+El formulario mantiene código en mayúsculas, trim de los tres campos y apertura tras crear.
+Las insignias siguen representando versiones BORRADOR/PUBLICADA/ARCHIVADA; `vN` usa `numero`.
+
+El Studio mantiene una lista ordenada vertical con Inicio y Fin estructurales. Los pasos tienen
+posición, tipo, nombre, controles de orden/eliminación y configuración expandida. Las conexiones
+son decorativas, no un canvas. Se conservan los nueve tipos y las propiedades editables originales.
+La advertencia de tipos editables pero no publicables permanece visible, sin prometer IA real,
+envío de notificaciones, HTTP ni capacidades de subprocesos.
+
+Se distinguen borrador, cambios sin guardar, guardado y errores. Guardar/Publicar/Nueva versión/
+Probar proceso reutilizan el loading estable de Boton. Publicar continúa bloqueado hasta guardar;
+no hay guardado implícito. Un grafo no representable muestra un mensaje claro y conserva bloqueados
+edición, guardado y publicación, sin dibujar una secuencia parcial. Nueva versión sólo aparece
+cuando no existe borrador, con las condiciones y operación originales. La versión publicada
+conserva su número y hash disponible, con texto adaptable para hashes largos.
+
+PanelPrueba conserva su instancia real, tareas PENDIENTE/VENCIDA, decisiones y seis estados:
+CREADA, ACTIVA, ESPERANDO, BLOQUEADA, COMPLETADA y CANCELADA. Sólo los dos últimos son finales.
+El motivo de rechazo sigue siendo obligatorio tras trim y de hasta 512 caracteres; no cambian
+payload, actor, invalidaciones ni polling de 15 segundos. Su formulario se adapta a móvil y
+Cancelar explicita `type="button"`. Loading y error de consulta se diferencian; el reintento
+usa el refetch existente. El error de detalle del Studio ofrece también el mismo Volver existente.
+
+Diferencias deliberadas con el Design System: no hay estados de versión «Aprobado»/«Excepción»,
+«último guardado hace 2 min», fecha de publicación ficticia, simulación ni instancia aislada.
+Probar proceso advierte en texto visible que crea una instancia REAL persistente de la versión
+publicada y no utiliza cambios del borrador. El shell se conserva sin copiar su navegación
+incompleta o el degradado de algunas referencias.
+
+### Responsive y accesibilidad
+
+Se adapta con grid/flex: biblioteca en filas amplias, controles y configuración reorganizados
+en tablet y una columna en 390 px. No se ocultan pasos, tipos, propiedades ni acciones esenciales.
+Se verifican 1440, 1280, 1024, 768 y 390 px. No existe especificación oficial completa del Studio
+móvil: la adaptación funcional no equivale a fidelidad oficial certificada ni a pixel-perfect.
+
+La biblioteca usa una lista; el Studio usa una lista ordenada, h1/h2/h3 y regiones de configuración
+asociadas al paso. Los controles de expansión incluyen aria-expanded y aria-controls con IDs
+estables. Subir/Bajar/Quitar tienen nombres específicos por paso. Los estados son textuales,
+los errores usan alert y los avisos de guardado usan status. Se mantienen foco visible,
+labels asociados, disabled real y loading accesible de las primitivas compartidas.
+
+### Contratos y límites que permanecen
+
+Queries: `["procesos"]`, `["proceso", procesoId]` y `["instancia-prueba", instanciaPrueba]`.
+Se mantienen endpoints, X-Tenant-Id, catálogo, callbacks, filtros de tareas, serialización y
+condiciones de mutación. La comparación estructural contra FASE 9.5 comprueba 64 declaraciones/
+effects y los 56 atributos de eventos/condiciones originales; sólo añade Volver al error de detalle.
+Cliente Workflow, serializador y los dos archivos de las 27 pruebas no cambian.
+
+Persisten las limitaciones documentadas de FASE 9.5: IAM de Workflow y visibilidad del menú no
+son equivalentes; no se resuelven roles ni conectores; no hay control de concurrencia atómico del
+backend; Atrás/Adelante SPA, logout y expiración no tienen protección global de cambios locales.
+Se conservan Volver, enlaces controlados y beforeunload. UX-09/UX-10 completos, canvas, branching
+gráfico, bandejas globales, KPI Workflow, comparación de versiones y MVP1–MVP4 quedan fuera.
+
+La validación visual utiliza respuestas controladas en Chromium y no demuestra persistencia ni
+éxito real de creación/publicación/rechazo en Workflow. Capturas y verificación reproducible:
+`/tmp/nextdocs-procesos-wLxH9U6F/`. La integración real sigue pendiente antes del PR.
+
+Verificación final: `npm run build` y `git diff --check` pasan; la suite
+`npx playwright test --config playwright.procesos.config.ts` mantiene **27/27 pruebas verdes**.
+Chromium verifica los cinco anchos sin overflow horizontal ni errores JavaScript en los casos
+controlados. Se incluyen biblioteca normal/vacía/error/loading, creación, Studio normal/expandido/
+sin guardar/guardado/publicada/grafo bloqueado/error de validación y detalle, y prueba/rechazo/error.
+La comprobación adicional con teclado valida apertura de creación y configuración por Enter,
+orden de pasos, tabulación de campos, trim/mayúsculas del payload de creación, cancelación de
+rechazo sin envío y dimensiones estables/aria-busy durante guardado.
+
+`npm run test:e2e` no pasa: los dos smoke de Workflow fallan exclusivamente con
+`ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`. Se registra dependencia externa
+inaccesible, no fallo introducido por el rediseño. Hay que repetir integración real antes del PR.
+No se hace push ni se inicia otra fase. AGENTS.md externo y stash@{0} se conservan.

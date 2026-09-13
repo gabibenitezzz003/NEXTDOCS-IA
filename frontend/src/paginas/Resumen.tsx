@@ -1,46 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
-import { Cargando, CargandoTarjetas, ErrorPanel } from "../componentes/Estados";
-import { CabeceraTarjeta, Metrica, Pastilla, Tarjeta } from "../componentes/Interfaz";
-import { Columnas, useContador, useVisible } from "../componentes/Graficos";
-import type { ClaveTono } from "../componentes/Graficos";
+import {
+  AvisoLinea,
+  Cargando,
+  ErrorPanel,
+  Vacio,
+} from "../componentes/Estados";
+import { CabeceraTarjeta, Metrica, Tarjeta } from "../componentes/Interfaz";
+import { Columnas } from "../componentes/Graficos";
 import { IconoDerecha, IconoReloj } from "../componentes/Iconos";
-import { InsigniaSeveridad } from "../componentes/Insignias";
+import { InsigniaEstado, InsigniaSeveridad } from "../componentes/Insignias";
 import { obtenerResumen } from "../api/documentos";
 import { listarExcepciones } from "../api/excepciones";
 import { mensajeDeError } from "../api/cliente";
 import { useSesion } from "../contextos/ProveedorSesion";
-import type { Tono } from "../componentes/Interfaz";
+import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
+import type { EstadoDocumento } from "../tipos/api";
 
 const TECNICAS = ["profundidadCola", "profundidadReintento"];
-
-const DESTACADOS: { clave: string; etiqueta: string; tono: Tono }[] = [
-  { clave: "OBSERVADO", etiqueta: "Requieren revision", tono: "alerta" },
-  { clave: "APROBADO", etiqueta: "Aprobados", tono: "exito" },
-  { clave: "RECIBIDO", etiqueta: "En cola", tono: "informacion" },
-  { clave: "RECHAZADO", etiqueta: "Rechazados", tono: "rojo" },
+const DESTACADOS: { clave: EstadoDocumento; etiqueta: string }[] = [
+  { clave: "OBSERVADO", etiqueta: "Requieren revisión" },
+  { clave: "APROBADO", etiqueta: "Aprobados" },
+  { clave: "RECIBIDO", etiqueta: "Recibidos" },
+  { clave: "RECHAZADO", etiqueta: "Rechazados" },
 ];
-
-const AURA: Record<Tono, string> = {
-  neutro: "bg-tinta-tenue/10",
-  violeta: "bg-violeta/12",
-  exito: "bg-exito/12",
-  alerta: "bg-alerta/14",
-  rojo: "bg-rojo/10",
-  informacion: "bg-informacion/12",
-};
-
-const TONO_BARRA_ESTADO: Record<string, ClaveTono> = {
-  APROBADO: "exito",
-  CERRADO: "neutro",
-  OBSERVADO: "alerta",
-  RECHAZADO: "rojo",
-  DIVIDIDO: "informacion",
-};
+const GRILLA_METRICAS =
+  "grid min-w-0 gap-espacio-4 sm:grid-cols-2 xl:grid-cols-5";
+const GRILLA_OPERACION =
+  "mt-espacio-6 grid min-w-0 items-start gap-espacio-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]";
 
 export function Resumen() {
-  const { sesion, tienePermiso } = useSesion();
+  const { tienePermiso } = useSesion();
 
   const resumen = useQuery({ queryKey: ["resumen"], queryFn: obtenerResumen });
   const excepciones = useQuery({
@@ -50,170 +41,244 @@ export function Resumen() {
   });
 
   const datos = resumen.data ?? {};
-  const estados = Object.entries(datos).filter(([clave]) => !TECNICAS.includes(clave));
-  const totalDocumentos = estados.reduce((suma, [, valor]) => suma + Number(valor ?? 0), 0);
+  const estados = Object.entries(datos).filter(
+    ([clave]) => !TECNICAS.includes(clave),
+  );
+  const totalDocumentos = estados.reduce(
+    (suma, [, valor]) => suma + Number(valor ?? 0),
+    0,
+  );
   const enCola = Number(datos.profundidadCola ?? 0);
 
   return (
     <>
       <Encabezado
-        titulo={`Hola, ${sesion?.nombre?.split(" ")[0] ?? ""}`}
-        descripcion={`Estado documental de ${sesion?.nombreTenant ?? "tu organizacion"}.`}
+        titulo="Resumen operativo"
+        descripcion="Estado documental actual, sin recorte de fechas."
         acciones={
           <Link
             to="/panel"
-            className="inline-flex h-9.5 items-center gap-1.5 rounded-xl border border-borde bg-white px-4 text-sm font-semibold text-tinta shadow-plano transition hover:border-borde-fuerte hover:bg-lienzo"
+            className="inline-flex min-h-control-mediano items-center gap-espacio-2 rounded-control border border-borde bg-superficie px-espacio-4 text-pequeno font-semibold text-tinta transition-colors hover:bg-lienzo focus-visible:outline-foco"
           >
             Ver panel de control
-            <IconoDerecha tamano={14} />
+            <span aria-hidden="true">
+              <IconoDerecha tamano={14} />
+            </span>
           </Link>
         }
       />
 
       <Contenido>
         {resumen.isPending ? (
-          <CargandoTarjetas />
+          <div role="status" aria-busy="true" aria-atomic="true">
+            <span className="sr-only">Cargando resumen operativo</span>
+            <div aria-hidden="true">
+              <div className={GRILLA_METRICAS}>
+                {Array.from({ length: 5 }).map((_, indice) => (
+                  <div
+                    key={indice}
+                    className={
+                      indice === 0 ? "sm:col-span-2 xl:col-span-1" : ""
+                    }
+                  >
+                    <Cargando filas={1} alto="h-36" />
+                  </div>
+                ))}
+              </div>
+              <div className={GRILLA_OPERACION}>
+                <Cargando filas={1} alto="h-96" />
+                <Cargando filas={1} alto="h-96" />
+              </div>
+            </div>
+          </div>
         ) : resumen.isError ? (
-          <ErrorPanel mensaje={mensajeDeError(resumen.error)} reintentar={() => resumen.refetch()} />
+          <ErrorPanel
+            titulo="No se pudo cargar el resumen"
+            mensaje={mensajeDeError(resumen.error)}
+            reintentar={() => resumen.refetch()}
+          />
         ) : (
           <>
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
-              <TarjetaTotal total={totalDocumentos} enCola={enCola} />
-
-              {DESTACADOS.map((destacado, indice) => {
+            <section
+              aria-label="Indicadores documentales"
+              className={GRILLA_METRICAS}
+            >
+              <Tarjeta
+                padding="p-espacio-4"
+                className="min-h-36 rounded-metrica! sm:col-span-2 xl:col-span-1"
+              >
+                <Metrica
+                  etiqueta="Documentos totales"
+                  valor={totalDocumentos.toLocaleString("es-AR")}
+                  detalle={
+                    <span className="flex items-start gap-espacio-2">
+                      <span aria-hidden="true" className="shrink-0">
+                        <IconoReloj tamano={14} />
+                      </span>
+                      <span>
+                        <span className="tabular-nums">
+                          {enCola.toLocaleString("es-AR")}
+                        </span>{" "}
+                        en cola de extracción del servicio
+                      </span>
+                    </span>
+                  }
+                />
+              </Tarjeta>
+              {DESTACADOS.map((destacado) => {
                 const cantidad = Number(datos[destacado.clave] ?? 0);
                 return (
                   <Tarjeta
                     key={destacado.clave}
-                    padding="px-5 py-4"
-                    indice={indice + 1}
-                    interactiva
-                    className="overflow-hidden"
+                    padding="p-espacio-4"
+                    className={`min-h-36 rounded-metrica! ${destacado.clave === "OBSERVADO" ? "border-alerta-borde! bg-alerta-tenue!" : ""}`}
                   >
-                    <span
-                      aria-hidden
-                      className={`pointer-events-none absolute -right-8 -top-10 size-28 rounded-full blur-2xl ${AURA[destacado.tono]}`}
-                    />
                     <Metrica
                       etiqueta={destacado.etiqueta}
-                      valor={<Contado valor={cantidad} />}
+                      valor={cantidad.toLocaleString("es-AR")}
                       detalle={
-                        <span className="flex items-center gap-2">
-                          <Pastilla tono={destacado.tono}>{destacado.clave}</Pastilla>
-                          <span className="tabular-nums">{porcentaje(cantidad, totalDocumentos)}</span>
+                        <span className="flex flex-wrap items-center gap-espacio-2">
+                          <InsigniaEstado estado={destacado.clave} />
+                          <span className="tabular-nums">
+                            {porcentaje(cantidad, totalDocumentos)}
+                          </span>
                         </span>
                       }
                     />
                   </Tarjeta>
                 );
               })}
-            </div>
+            </section>
 
-            <section className="mt-5 grid gap-5 lg:grid-cols-[1.35fr_1fr]">
-              <Tarjeta indice={5}>
+            <section
+              aria-label="Operación y atención"
+              className={GRILLA_OPERACION}
+            >
+              <Tarjeta className="rounded-panel!">
                 <CabeceraTarjeta
-                  titulo="Distribucion por estado"
-                  descripcion="Backlog actual del tenant, sin recorte de fechas."
+                  titulo="Distribución por estado"
+                  descripcion="Documentos actuales de la organización, sin recorte de fechas."
                 />
-                <div className="mt-6">
-                  <Columnas
-                    barras={estados
-                      .sort((uno, otro) => Number(otro[1]) - Number(uno[1]))
-                      .map(([estado, cantidad]) => ({
-                        etiqueta: estado,
-                        valor: Number(cantidad),
-                        tono: TONO_BARRA_ESTADO[estado] ?? "violeta",
-                      }))}
-                    alto={168}
-                  />
-                </div>
+                {totalDocumentos === 0 ? (
+                  <div className="mt-espacio-6">
+                    <Vacio
+                      titulo="Todavía no hay documentos"
+                      detalle="Cuando ingrese el primer documento, su estado aparecerá aquí."
+                    />
+                  </div>
+                ) : (
+                  <figure className="mt-espacio-6">
+                    <div aria-hidden="true" className="hidden min-w-0 sm:block">
+                      <Columnas
+                        barras={estados
+                          .sort((uno, otro) => Number(otro[1]) - Number(uno[1]))
+                          .map(([estado, cantidad]) => ({
+                            etiqueta:
+                              ESTADOS_DOCUMENTALES[estado as EstadoDocumento]
+                                ?.etiqueta ?? estado,
+                            valor: Number(cantidad),
+                            color:
+                              ESTADOS_DOCUMENTALES[estado as EstadoDocumento]
+                                ?.color ?? "var(--color-tinta-suave)",
+                          }))}
+                        alto={168}
+                      />
+                    </div>
+                    <figcaption className="sr-only">
+                      Cantidad de documentos por estado, de mayor a menor.
+                    </figcaption>
+                    <dl
+                      aria-label="Cantidad por estado"
+                      className="grid min-w-0 gap-x-espacio-6 divide-y divide-borde sm:mt-espacio-6 sm:grid-cols-2"
+                    >
+                      {estados.map(([estado, cantidad]) => (
+                        <div
+                          key={estado}
+                          className="flex min-w-0 flex-wrap items-center justify-between gap-espacio-2 py-espacio-3"
+                        >
+                          <dt>
+                            <InsigniaEstado
+                              estado={estado as EstadoDocumento}
+                            />
+                          </dt>
+                          <dd className="text-pequeno font-semibold text-tinta tabular-nums">
+                            {Number(cantidad).toLocaleString("es-AR")}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </figure>
+                )}
               </Tarjeta>
 
-              <Tarjeta indice={6}>
+              <Tarjeta className="rounded-panel!">
                 <CabeceraTarjeta
                   titulo="Excepciones abiertas"
-                  descripcion="Lo que esta esperando una decision humana."
+                  descripcion="Pendientes de una decisión humana."
                   acciones={
                     tienePermiso("excepciones.leer") ? (
                       <Link
                         to="/excepciones"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-violeta transition hover:gap-1.5"
+                        className="inline-flex min-h-control-pequeno items-center gap-espacio-1 rounded-control text-pequeno font-semibold text-violeta hover:underline focus-visible:outline-foco"
                       >
                         Ver todas
-                        <IconoDerecha tamano={13} />
+                        <span aria-hidden="true">
+                          <IconoDerecha tamano={13} />
+                        </span>
                       </Link>
                     ) : undefined
                   }
                 />
-                {!tienePermiso("excepciones.leer") ? (
-                  <p className="mt-5 text-sm text-tinta-suave">No tenes permiso para ver excepciones.</p>
-                ) : excepciones.isPending ? (
-                  <div className="mt-5">
-                    <Cargando filas={3} alto="h-14" />
-                  </div>
-                ) : excepciones.isError ? (
-                  <p className="mt-5 text-sm text-rojo">{mensajeDeError(excepciones.error)}</p>
-                ) : !excepciones.data?.content.length ? (
-                  <p className="mt-5 rounded-xl bg-exito-tenue px-4 py-3 text-sm text-exito ring-1 ring-inset ring-exito-borde">
-                    No hay excepciones abiertas.
-                  </p>
-                ) : (
-                  <ul className="mt-5 space-y-2.5">
-                    {excepciones.data.content.map((excepcion) => (
-                      <li
-                        key={excepcion.id}
-                        className="rounded-2xl border border-borde px-3.5 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-borde-fuerte hover:bg-lienzo/60 hover:shadow-tarjeta"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <InsigniaSeveridad severidad={excepcion.severidad} />
-                          <span className="text-[11px] font-medium uppercase tracking-wide text-tinta-tenue">
-                            {excepcion.tipo}
-                          </span>
-                        </div>
-                        <p className="mt-1.5 line-clamp-2 text-sm text-tinta-media">{excepcion.detalle}</p>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="mt-espacio-5">
+                  {!tienePermiso("excepciones.leer") ? (
+                    <AvisoLinea>
+                      No tenés permiso para ver excepciones.
+                    </AvisoLinea>
+                  ) : excepciones.isPending ? (
+                    <Cargando filas={3} alto="h-20" />
+                  ) : excepciones.isError ? (
+                    <ErrorPanel
+                      titulo="No se pudieron cargar las excepciones"
+                      mensaje={mensajeDeError(excepciones.error)}
+                      reintentar={() => excepciones.refetch()}
+                    />
+                  ) : !excepciones.data?.content.length ? (
+                    <p
+                      role="status"
+                      aria-atomic="true"
+                      className="rounded-control border border-exito-borde bg-exito-tenue p-espacio-4 text-pequeno text-exito-texto"
+                    >
+                      No hay excepciones abiertas.
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-borde">
+                      {excepciones.data.content.map((excepcion) => (
+                        <li
+                          key={excepcion.id}
+                          className="py-espacio-4 first:pt-0 last:pb-0"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-espacio-2">
+                            <InsigniaSeveridad
+                              severidad={excepcion.severidad}
+                            />
+                            <span className="min-w-0 text-micro uppercase tracking-wide text-tinta-suave [overflow-wrap:anywhere]">
+                              {excepcion.tipo}
+                            </span>
+                          </div>
+                          <p className="mt-espacio-2 text-pequeno text-tinta-media [overflow-wrap:anywhere]">
+                            {excepcion.detalle}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </Tarjeta>
             </section>
           </>
         )}
       </Contenido>
     </>
-  );
-}
-
-function Contado({ valor }: { valor: number }) {
-  const { referencia, visible } = useVisible<HTMLSpanElement>();
-  const animado = useContador(visible ? valor : 0, 900);
-  return <span ref={referencia}>{Math.round(animado).toLocaleString("es-AR")}</span>;
-}
-
-function TarjetaTotal({ total, enCola }: { total: number; enCola: number }) {
-  const { referencia, visible } = useVisible<HTMLElement>();
-  const animado = useContador(visible ? total : 0, 1100);
-
-  return (
-    <article
-      ref={referencia}
-      className="subir superficie-oscura elevar relieve-oscuro relative overflow-hidden rounded-3xl px-5 py-4"
-    >
-      <span
-        aria-hidden
-        className="pointer-events-none absolute -right-10 -top-14 h-40 w-40 rounded-full bg-violeta/35 blur-3xl"
-      />
-      <p className="relative text-[11px] font-semibold uppercase tracking-wider text-white/50">
-        Documentos totales
-      </p>
-      <p className="cifra relative mt-2 text-[34px] leading-none text-white">
-        {Math.round(animado).toLocaleString("es-AR")}
-      </p>
-      <p className="relative mt-2.5 flex items-center gap-1.5 text-xs text-white/55">
-        <IconoReloj tamano={13} />
-        {enCola.toLocaleString("es-AR")} en cola de extraccion
-      </p>
-    </article>
   );
 }
 

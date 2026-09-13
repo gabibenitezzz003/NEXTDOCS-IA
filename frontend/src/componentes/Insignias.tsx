@@ -1,18 +1,11 @@
-import type { EstadoDocumento, PresenciaCampo, SeveridadHallazgo } from "../tipos/api";
-import { Pastilla } from "./Interfaz";
+import type {
+  EstadoDocumento,
+  PresenciaCampo,
+  SeveridadHallazgo,
+} from "../tipos/api";
+import { Pastilla, TONO_BARRA } from "./Interfaz";
 import type { Tono } from "./Interfaz";
-
-const TONO_ESTADO: Record<EstadoDocumento, Tono> = {
-  RECIBIDO: "neutro",
-  PROCESANDO: "violeta",
-  EXTRAIDO: "violeta",
-  VALIDADO: "informacion",
-  OBSERVADO: "alerta",
-  APROBADO: "exito",
-  RECHAZADO: "rojo",
-  CERRADO: "neutro",
-  DIVIDIDO: "informacion",
-};
+import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
 
 const TONO_SEVERIDAD: Record<SeveridadHallazgo, Tono> = {
   INFORMATIVO: "neutro",
@@ -28,29 +21,64 @@ const TONO_PRESENCIA: Record<PresenciaCampo, Tono> = {
 };
 
 export function InsigniaEstado({ estado }: { estado: EstadoDocumento }) {
-  return <Pastilla tono={TONO_ESTADO[estado] ?? "neutro"}>{estado}</Pastilla>;
+  const presentacion = ESTADOS_DOCUMENTALES[estado];
+  return (
+    <Pastilla tono={presentacion?.tono ?? "neutro"}>
+      {presentacion?.etiqueta ?? estado}
+    </Pastilla>
+  );
 }
 
-export function InsigniaSeveridad({ severidad }: { severidad: SeveridadHallazgo }) {
-  return <Pastilla tono={TONO_SEVERIDAD[severidad] ?? "neutro"}>{severidad.replace(/_/g, " ")}</Pastilla>;
+export function InsigniaSeveridad({
+  severidad,
+}: {
+  severidad: SeveridadHallazgo;
+}) {
+  return (
+    <Pastilla tono={TONO_SEVERIDAD[severidad] ?? "neutro"}>
+      {severidad.replace(/_/g, " ")}
+    </Pastilla>
+  );
 }
 
-export function InsigniaPresencia({ presencia }: { presencia: PresenciaCampo }) {
-  return <Pastilla tono={TONO_PRESENCIA[presencia] ?? "neutro"}>{presencia.replace(/_/g, " ")}</Pastilla>;
+export function InsigniaPresencia({
+  presencia,
+}: {
+  presencia: PresenciaCampo;
+}) {
+  return (
+    <Pastilla tono={TONO_PRESENCIA[presencia] ?? "neutro"}>
+      {presencia.replace(/_/g, " ")}
+    </Pastilla>
+  );
 }
 
 export function BarraConfianza({ valor }: { valor?: number }) {
   if (valor === undefined || valor === null) {
-    return <span className="text-xs text-tinta-tenue">sin dato</span>;
+    return <span className="text-pequeno text-tinta-suave">sin dato</span>;
   }
   const porcentaje = Math.round(valor * 100);
-  const color = porcentaje >= 90 ? "bg-exito" : porcentaje >= 70 ? "bg-alerta" : "bg-rojo";
+  const tono: Tono =
+    porcentaje >= 90 ? "exito" : porcentaje >= 70 ? "alerta" : "rojo";
   return (
-    <div className="flex items-center gap-2">
-      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-lienzo ring-1 ring-inset ring-borde">
-        <div className={`h-full rounded-full ${color}`} style={{ width: `${porcentaje}%` }} />
+    <div className="flex items-center gap-espacio-2">
+      <div
+        role="meter"
+        aria-label="Confianza de lectura"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={porcentaje}
+        aria-valuetext={`${porcentaje}%`}
+        className="h-espacio-2 w-espacio-16 overflow-hidden rounded-insignia bg-lienzo ring-1 ring-inset ring-borde"
+      >
+        <div
+          className={`h-full rounded-insignia ${TONO_BARRA[tono]}`}
+          style={{ width: `${porcentaje}%` }}
+        />
       </div>
-      <span className="w-9 text-xs font-medium tabular-nums text-tinta-media">{porcentaje}%</span>
+      <span className="min-w-9 font-cuerpo text-pequeno font-medium tabular-nums text-tinta-media">
+        {porcentaje}%
+      </span>
     </div>
   );
 }
