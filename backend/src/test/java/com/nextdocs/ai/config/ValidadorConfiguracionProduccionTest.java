@@ -123,6 +123,63 @@ class ValidadorConfiguracionProduccionTest {
 				.satisfies(error -> assertThat(error.getMessage()).contains("1. ").contains("2. ").contains("3. "));
 	}
 
+	@Test
+	@DisplayName("en produccion no exige clave secreta de S3 porque usa IAM")
+	void produccionUsaIamParaS3() {
+		propiedades.remove("nextdocs.almacenamiento.claveSecreta");
+
+		assertThatCode(() -> validador.onApplicationEvent(evento("produccion"))).doesNotThrowAnyException();
+	}
+
+	@Test
+	@DisplayName("en produccion un bootstrap habilitado exige un secreto fuerte")
+	void bootstrapHabilitadoSinSecretoRechaza() {
+		propiedades.put("nextdocs.bootstrap.habilitado", "true");
+		propiedades.put("nextdocs.bootstrap.secreto", "");
+
+		assertThatThrownBy(() -> validador.onApplicationEvent(evento("produccion")))
+				.isInstanceOf(ConfiguracionInseguraException.class)
+				.hasMessageContaining("NEXTDOCS_BOOTSTRAP_SECRETO");
+	}
+
+	@Test
+	@DisplayName("en produccion un secreto de bootstrap demasiado corto es rechazado")
+	void bootstrapSecretoCortoRechaza() {
+		propiedades.put("nextdocs.bootstrap.habilitado", "true");
+		propiedades.put("nextdocs.bootstrap.secreto", "secreto-corto");
+
+		assertThatThrownBy(() -> validador.onApplicationEvent(evento("produccion")))
+				.isInstanceOf(ConfiguracionInseguraException.class)
+				.hasMessageContaining("NEXTDOCS_BOOTSTRAP_SECRETO");
+	}
+
+	@Test
+	@DisplayName("en produccion un bootstrap deshabilitado no exige secreto")
+	void bootstrapDeshabilitadoNoExigeSecreto() {
+		propiedades.put("nextdocs.bootstrap.habilitado", "false");
+		propiedades.remove("nextdocs.bootstrap.secreto");
+
+		assertThatCode(() -> validador.onApplicationEvent(evento("produccion"))).doesNotThrowAnyException();
+	}
+
+	@Test
+	@DisplayName("un secreto de bootstrap valido no genera error")
+	void secretoBootstrapValidoNoGeneraError() {
+		propiedades.put("nextdocs.bootstrap.habilitado", "true");
+		propiedades.put("nextdocs.bootstrap.secreto", "secreto-bootstrap-super-largo-para-produccion-123456");
+
+		assertThatCode(() -> validador.onApplicationEvent(evento("produccion"))).doesNotThrowAnyException();
+	}
+
+	@Test
+	@DisplayName("la variable de entorno JWT resuelve la propiedad de seguridad en produccion")
+	void variableEntornoJwtResuelvePropiedad() {
+		propiedades.remove("nextdocs.seguridad.jwtSecreto");
+		propiedades.put("NEXTDOCS_JWT_SECRETO", "secreto-de-entorno-super-largo-para-produccion-123456789");
+
+		assertThatCode(() -> validador.onApplicationEvent(evento("produccion"))).doesNotThrowAnyException();
+	}
+
 	private ApplicationEnvironmentPreparedEvent evento(String perfil) {
 		MockEnvironment entorno = new MockEnvironment();
 		entorno.setActiveProfiles(perfil);

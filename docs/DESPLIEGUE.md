@@ -114,6 +114,60 @@ Antes de exponer el puerto 8090:
 No hay Helm todavía. Un orchestrator puede usar la misma imagen y las mismas variables, con
 liveness/readiness en esos paths.
 
+## AWS — producción en EC2
+
+La instancia `nextdocs-ia-backend-prod` (`i-08d32d6d1248553aa`, Elastic IP `3.213.58.243`,
+us-east-1) corre el stack productivo. El dominio público es `demo.mynextpipe.com`.
+
+| Pieza | Dónde |
+|---|---|
+| Frontend | nginx host → `/var/www/nextdocs-ia` (site en `infra/nginx/nextdocs-ia.conf`) |
+| Backend | `docker compose -f /etc/nextdocs-ia/compose.produccion.yml --env-file /etc/nextdocs-ia/nextdocs.env` — app en `127.0.0.1:8090`, Redis y ClamAV en red interna `nextdocs-interno` |
+| Base | RDS `nextdocs-ia-prod` (PostgreSQL, mismo puerto lógico 5432) |
+| Storage | S3 real: `nextdocs-{documentos,exportaciones,cuarentena}-178313340212-nextdocs`, por rol IAM `NextDocsIA-EC2-Role` (sin claves en env) |
+| Perfil | `SPRING_PROFILES_ACTIVE=produccion`: el validador de arranque frena con defaults de desarrollo |
+
+En producción `AlmacenamientoConfig` usa `DefaultCredentialsProvider` (rol IAM) y no pisa el
+endpoint de S3; fuera de producción sigue MinIO con credenciales estáticas. Como no hay clave
+secreta de S3, el validador no la exige y en cambio vigila `NEXTDOCS_BOOTSTRAP_SECRETO`.
+
+### Primer tenant en producción
+
+`NEXTDOCS_CREAR_TENANT_DEMO=false` en prod: el primer tenant se crea con
+`POST /api/v1/bootstrap/tenant`, habilitado por `NEXTDOCS_BOOTSTRAP_HABILITADO` y protegido por
+el header `X-Bootstrap-Secreto` (`NEXTDOCS_BOOTSTRAP_SECRETO`, mínimo 32 bytes). El endpoint
+falla apenas existe un tenant activo y nginx sólo lo expone a `127.0.0.1`: hay que llamarlo
+desde la propia instancia (SSH o `aws ssm`).
+
+### Deploy automático
+
+`deploy.sh` (raíz del repo) corre en el servidor sobre el clon `/opt/nextdocs-ia/app` y es
+idempotente: diff entre el commit registrado en `/var/lib/nextdocs-ia/deployed_commit` y el
+objetivo, clasifica los archivos y despliega sólo lo que cambió.
+
+- Backend: preserva la imagen anterior como `nextdocs-ia-backup`, buildea, recrea `app`,
+  espera `healthy` y restaura la imagen previa si falla. Flyway migra al arrancar.
+- Frontend: build con contenedor `node:24-alpine` (`npm ci && npm run build`), copia del
+  publicado en `/var/www/nextdocs-ia.prev` y `rsync --delete` a `/var/www/nextdocs-ia`.
+- Cambios en `compose.yml` o `infra/nginx/` no se auto-aplican: quedan marcados para revisión
+  manual (la config productiva vive en `/etc`, no en el clon).
+- Concurrencia con `flock`; el estado sólo se registra si todo terminó bien. `--dry-run`
+  muestra el plan sin tocar nada; `--todo` fuerza despliegue completo; `--ref` fija el commit.
+
+El workflow `.github/workflows/deploy.yml` corre cuando `Verificar` termina en verde sobre
+`main` (o manual con `workflow_dispatch`): snapshot de RDS, luego `ssm send-command` que ejecuta
+`deploy.sh` como `ubuntu`. La autenticación es OIDC (`NextDocsIA-GitHub-Deploy`), sin claves AWS
+en GitHub; el rol sólo puede `SendCommand` a esa instancia y crear snapshots de esa base.
+El secreto del repo `AWS_DEPLOY_ROLE_ARN` contiene el ARN del rol.
+
+SSH de operador: `ssh -i ~/.ssh/nextdocs-ia-prod.pem ubuntu@3.213.58.243` (el SG admite el 22
+sólo desde IPs autorizadas). Alternativa sin puerto 22: `aws ssm start-session`.
+
+### HTTPS
+
+Pendiente hasta que `demo.mynextpipe.com` apunte a `3.213.58.243` por DNS: `certbot --nginx`
+emite el certificado y reescribe el site. El 443 ya está abierto en el security group.
+
 ## Recuperación
 
 | Síntoma | Qué hacer |

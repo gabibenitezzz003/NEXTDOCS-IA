@@ -4,8 +4,11 @@ import java.net.URI;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
@@ -17,33 +20,47 @@ public class AlmacenamientoConfig {
 
 	private final PropiedadesAlmacenamiento propiedades;
 
-	public AlmacenamientoConfig(PropiedadesAlmacenamiento propiedades) {
+	private final Environment entorno;
+
+	public AlmacenamientoConfig(PropiedadesAlmacenamiento propiedades, Environment entorno) {
 		this.propiedades = propiedades;
+		this.entorno = entorno;
 	}
 
 	@Bean
 	public S3Client clienteS3() {
-		return S3Client.builder()
-				.endpointOverride(URI.create(propiedades.getEndpoint()))
+		var builder = S3Client.builder()
 				.region(Region.of(propiedades.getRegion()))
 				.credentialsProvider(proveedorCredenciales())
-				.serviceConfiguration(configuracionServicio())
-				.build();
+				.serviceConfiguration(configuracionServicio());
+		if (!esProduccion()) {
+			builder.endpointOverride(URI.create(propiedades.getEndpoint()));
+		}
+		return builder.build();
 	}
 
 	@Bean
 	public S3Presigner firmadorS3() {
-		return S3Presigner.builder()
-				.endpointOverride(URI.create(propiedades.getEndpoint()))
+		var builder = S3Presigner.builder()
 				.region(Region.of(propiedades.getRegion()))
 				.credentialsProvider(proveedorCredenciales())
-				.serviceConfiguration(configuracionServicio())
-				.build();
+				.serviceConfiguration(configuracionServicio());
+		if (!esProduccion()) {
+			builder.endpointOverride(URI.create(propiedades.getEndpoint()));
+		}
+		return builder.build();
 	}
 
-	private StaticCredentialsProvider proveedorCredenciales() {
+	AwsCredentialsProvider proveedorCredenciales() {
+		if (esProduccion()) {
+			return DefaultCredentialsProvider.create();
+		}
 		return StaticCredentialsProvider
 				.create(AwsBasicCredentials.create(propiedades.getClaveAcceso(), propiedades.getClaveSecreta()));
+	}
+
+	private boolean esProduccion() {
+		return entorno.matchesProfiles(ValidadorConfiguracionProduccion.PERFIL_PRODUCCION);
 	}
 
 	private S3Configuration configuracionServicio() {
