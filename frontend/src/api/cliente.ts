@@ -19,6 +19,10 @@ export function fijarTokenAcceso(token: string | null) {
   tokenAcceso = token;
 }
 
+export function tokenAccesoActual(): string | null {
+  return tokenAcceso;
+}
+
 export function guardarTokenRefresco(token: string | null) {
   if (token) {
     sessionStorage.setItem(CLAVE_REFRESCO, token);

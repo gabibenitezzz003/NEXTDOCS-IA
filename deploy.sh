@@ -8,10 +8,15 @@ PRODUCTION_ENV_FILE="/etc/nextdocs-ia/nextdocs.env"
 PRODUCTION_CONTAINER="nextdocs-ia-app"
 STATE_DIR="/var/lib/nextdocs-ia"
 STATE_FILE="$STATE_DIR/deployed_commit"
+WORKFLOW_STATE_FILE="$STATE_DIR/deployed_workflow_commit"
+WORKFLOW_CONTAINER="nextdocs-ia-workflow"
+WORKFLOW_SERVICE="workflow"
+WORKFLOW_REPO_URL="git@github.com:Follow-Hub/workflow.git"
 LOCK_FILE="$STATE_DIR/deploy.lock"
 WEB_ROOT="/var/www/nextdocs-ia"
 WEB_BACKUP="/var/www/nextdocs-ia.prev"
 BACKUP_IMAGE_TAG="nextdocs-ia-backup"
+BACKUP_WORKFLOW_TAG="nextdocs-ia-workflow-backup"
 FRONTEND_NODE_IMAGE="node:24-alpine"
 HEALTH_TIMEOUT=300
 cd "$ROOT_DIR"
@@ -975,6 +980,141 @@ sincronizar_arbol() {
     git checkout --quiet --detach "$objetivo" || { log "No se pudo hacer checkout de $objetivo."; return 1; }
 }
 
+workflow_presente() {
+    compose_prod config --services 2>/dev/null | grep -qx "$WORKFLOW_SERVICE"
+}
+
+sincronizar_repo_workflow() {
+    local dir="$ROOT_DIR/../workflow"
+
+    if [ ! -d "$dir/.git" ]; then
+        log "Clonando el repositorio workflow en $dir."
+        git clone "$WORKFLOW_REPO_URL" "$dir" || {
+            log "No se pudo clonar $WORKFLOW_REPO_URL."
+            return 1
+        }
+    fi
+
+    git -C "$dir" fetch --quiet origin main \
+        && git -C "$dir" checkout --quiet --detach origin/main \
+        || { log "No se pudo sincronizar el repositorio workflow."; return 1; }
+
+    git -C "$dir" rev-parse HEAD
+}
+
+asegurar_base_workflow() {
+    local url_bd usuario clave anfitrion
+
+    url_bd="$(sudo grep '^NEXTDOCS_BD_URL=' "$PRODUCTION_ENV_FILE" | cut -d= -f2- | tr -d '[:space:]')"
+    usuario="$(sudo grep '^NEXTDOCS_BD_USUARIO=' "$PRODUCTION_ENV_FILE" | cut -d= -f2- | tr -d '[:space:]')"
+    clave="$(sudo grep '^NEXTDOCS_BD_CLAVE=' "$PRODUCTION_ENV_FILE" | cut -d= -f2- | tr -d '[:space:]')"
+
+    anfitrion="$(printf '%s' "$url_bd" | sed -n 's|^jdbc:postgresql://\([^/]*\)/.*|\1|p')"
+    if [ -z "$anfitrion" ] || [ -z "$usuario" ] || [ -z "$clave" ]; then
+        log "No se pudo derivar la conexion a la base para crear nextdocs_workflow."
+        return 1
+    fi
+
+    local existe
+    existe="$(sudo docker run --rm postgres:16-alpine \
+        psql "postgresql://$usuario:$clave@$anfitrion/postgres" -tAc \
+        "SELECT 1 FROM pg_database WHERE datname='nextdocs_workflow'" 2>/dev/null || true)"
+
+    if [ "$existe" = "1" ]; then
+        log "La base nextdocs_workflow ya existe."
+        return 0
+    fi
+
+    log "Creando la base nextdocs_workflow."
+    sudo docker run --rm postgres:16-alpine \
+        psql "postgresql://$usuario:$clave@$anfitrion/postgres" -c \
+        "CREATE DATABASE nextdocs_workflow" >/dev/null
+}
+
+desplegar_workflow() {
+    if ! workflow_presente; then
+        return 0
+    fi
+
+    local commit_workflow
+    commit_workflow="$(sincronizar_repo_workflow)" || return 1
+
+    local estado_workflow=""
+    if sudo test -f "$WORKFLOW_STATE_FILE" 2>/dev/null; then
+        estado_workflow="$(sudo cat "$WORKFLOW_STATE_FILE" | head -n 1 | tr -d '[:space:]')"
+    fi
+
+    if [ "$estado_workflow" = "$commit_workflow" ] \
+        && sudo docker inspect "$WORKFLOW_CONTAINER" >/dev/null 2>&1; then
+        log "Workflow ya esta en $commit_workflow. Sin cambios."
+        return 0
+    fi
+
+    asegurar_base_workflow || return 1
+
+    local imagen_anterior=""
+    local imagen_ref=""
+
+    if sudo docker inspect "$WORKFLOW_CONTAINER" >/dev/null 2>&1; then
+        imagen_anterior="$(sudo docker inspect --format '{{.Image}}' "$WORKFLOW_CONTAINER")"
+        imagen_ref="$(sudo docker inspect --format '{{.Config.Image}}' "$WORKFLOW_CONTAINER")"
+        sudo docker tag "$imagen_anterior" "$BACKUP_WORKFLOW_TAG" >/dev/null
+        log "Imagen anterior del workflow preservada como $BACKUP_WORKFLOW_TAG ($imagen_anterior)"
+    fi
+
+    log "Construyendo la imagen del workflow."
+    if ! compose_prod build workflow; then
+        log "La construccion de la imagen del workflow fallo; el contenedor en ejecucion no se toco."
+        return 1
+    fi
+
+    log "Recreando el servicio workflow."
+    if ! compose_prod up -d --no-deps --force-recreate workflow; then
+        log "No se pudo recrear el servicio workflow."
+        rollback_workflow "$imagen_anterior" "$imagen_ref"
+        return 1
+    fi
+
+    if esperar_saludable "$WORKFLOW_CONTAINER"; then
+        printf '%s\n' "$commit_workflow" | sudo tee "$WORKFLOW_STATE_FILE" >/dev/null
+        log "Workflow desplegado en $commit_workflow."
+        return 0
+    fi
+
+    log "El workflow no quedo saludable tras el despliegue; volviendo a la imagen anterior."
+    rollback_workflow "$imagen_anterior" "$imagen_ref"
+    return 1
+}
+
+rollback_workflow() {
+    local imagen_anterior="$1"
+    local imagen_ref="$2"
+
+    if [ -z "$imagen_anterior" ] || [ -z "$imagen_ref" ]; then
+        log "No habia imagen anterior del workflow; deteniendo el servicio fallido."
+        compose_prod stop workflow >/dev/null 2>&1 || true
+        return 1
+    fi
+
+    if ! sudo docker tag "$imagen_anterior" "$imagen_ref"; then
+        log "No se pudo retaguear la imagen anterior del workflow sobre $imagen_ref."
+        return 1
+    fi
+
+    if ! compose_prod up -d --no-deps --force-recreate workflow; then
+        log "El rollback del workflow no pudo recrear el servicio."
+        return 1
+    fi
+
+    if esperar_saludable "$WORKFLOW_CONTAINER" 180; then
+        log "Rollback del workflow completado: la version anterior volvio a quedar saludable."
+        return 0
+    fi
+
+    log "El rollback del workflow tampoco quedo saludable. Intervencion manual requerida."
+    return 1
+}
+
 registrar_estado() {
     local objetivo="$1"
     printf '%s\n' "$objetivo" | sudo tee "$STATE_FILE" >/dev/null
@@ -1073,6 +1213,10 @@ desplegar() {
 
     if [ "$fallo" -eq 0 ] && [ "$DEPLOY_FRONTEND" -eq 1 ]; then
         desplegar_frontend || fallo=1
+    fi
+
+    if [ "$fallo" -eq 0 ]; then
+        desplegar_workflow || fallo=1
     fi
 
     if [ "$fallo" -ne 0 ]; then

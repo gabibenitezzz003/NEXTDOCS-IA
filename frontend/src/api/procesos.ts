@@ -1,5 +1,5 @@
 import axios from "axios";
-import { mensajeDeError } from "./cliente";
+import { mensajeDeError, tokenAccesoActual } from "./cliente";
 
 export type TipoNodoProceso =
   | "INICIO"
@@ -94,6 +94,10 @@ export const clienteProcesos = axios.create({
 });
 
 clienteProcesos.interceptors.request.use((configuracion) => {
+  const token = tokenAccesoActual();
+  if (token) {
+    configuracion.headers.Authorization = `Bearer ${token}`;
+  }
   if (tenantActual) {
     configuracion.headers["X-Tenant-Id"] = tenantActual;
   }
