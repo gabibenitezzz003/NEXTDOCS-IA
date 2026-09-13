@@ -74,7 +74,7 @@ jobs:
             --instance-ids "$INSTANCIA" \
             --document-name AWS-RunShellScript \
             --comment "deploy $OBJETIVO" \
-            --parameters "{\"commands\":[\"set -o pipefail; sudo -u ubuntu -H bash -lc 'cd /opt/nextdocs-ia/app && ./deploy.sh --ref $OBJETIVO' 2>&1 | tee /var/lib/nextdocs-ia/ultimo-deploy.log\"],\"executionTimeout\":[\"2400\"]}" \
+            --parameters "{\"commands\":[\"install -d -o ubuntu -g ubuntu /var/lib/nextdocs-ia\",\"sudo -u ubuntu -H bash -lc 'set -o pipefail; cd /opt/nextdocs-ia/app && ./deploy.sh --ref $OBJETIVO 2>&1 | tee /var/lib/nextdocs-ia/ultimo-deploy.log'\"],\"executionTimeout\":[\"2400\"]}" \
             --query 'Command.CommandId' --output text)
           echo "comando=$COMANDO" >> "$GITHUB_OUTPUT"
           echo "CommandId: $COMANDO"
