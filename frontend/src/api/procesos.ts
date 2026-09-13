@@ -110,6 +110,21 @@ export interface InstanciaProceso {
   fin?: string;
 }
 
+export interface HallazgoProceso {
+  id: string;
+  instanciaId: string;
+  nodoId?: string;
+  reglaId?: string;
+  tipo: string;
+  severidad?: "BAJA" | "MEDIA" | "ALTA" | "CRITICA";
+  accion?: string;
+  descripcion?: string;
+  estado?: "PENDIENTE" | "APROBADO" | "RECHAZADO";
+  referencia?: Record<string, unknown>;
+  alta?: string;
+  resolucion?: string;
+}
+
 let tenantActual: string | null = null;
 
 export const clienteProcesos = axios.create({
@@ -233,6 +248,25 @@ export async function listarTareas(estados?: string[]): Promise<TareaProceso[]> 
   const { data } = await clienteProcesos.get<TareaProceso[]>("/tareas", {
     params: estados?.length ? { estados: estados.join(",") } : undefined,
   });
+  return data;
+}
+
+export async function listarHallazgos(instanciaId: string): Promise<HallazgoProceso[]> {
+  const { data } = await clienteProcesos.get<HallazgoProceso[]>(
+    `/supervisora/instancias/${instanciaId}/hallazgos`,
+  );
+  return data;
+}
+
+export async function resolverHallazgo(
+  hallazgoId: string,
+  estado: "APROBADO" | "RECHAZADO",
+): Promise<HallazgoProceso> {
+  const { data } = await clienteProcesos.put<HallazgoProceso>(
+    `/supervisora/hallazgos/${hallazgoId}`,
+    estado,
+    { headers: { "Content-Type": "text/plain" } },
+  );
   return data;
 }
 
