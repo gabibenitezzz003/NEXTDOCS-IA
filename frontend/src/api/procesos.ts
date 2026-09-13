@@ -80,7 +80,7 @@ export interface InstanciaProceso {
   definicionId: string;
   codigoDefinicion: string;
   numeroVersion: number;
-  estado: "ACTIVA" | "COMPLETADA" | "CANCELADA";
+  estado: "CREADA" | "ACTIVA" | "ESPERANDO" | "BLOQUEADA" | "COMPLETADA" | "CANCELADA";
   tareas: TareaProceso[];
   alta?: string;
   fin?: string;

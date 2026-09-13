@@ -1004,3 +1004,102 @@ de plantilla ni descarte en backend. Repetir con los servicios disponibles antes
 Durante esta fase apareció una edición externa de AGENTS.md sobre permisos de backend/target;
 se preserva sin incluirla en el commit. Solo se incluyen TiposPropuestos.tsx y esta documentación.
 No se inicia Procesos/Studio ni se hace push. Stash de CHECKPOINT 2 conservado sin aplicar.
+
+## FASE 9.5 — Correcciones funcionales previas de Procesos
+
+Fase funcional separada del rediseño. No inicia FASE 10 ni incorpora UX-09/UX-10.
+El contrato contrastado pertenece al microservicio hermano Workflow, no al core.
+
+### Preservación del grafo y publicación
+
+`grafoProceso.ts` inspecciona el grafo antes de exponer pasos editables y vuelve a validarlo
+al serializar. Sólo representa una cadena completa con un inicio, un fin, IDs únicos,
+sin condiciones, ciclos, bifurcaciones, nodos desconectados ni tipos no representables.
+Los grafos vacíos iniciales permiten comenzar un borrador. Una estructura no representable
+bloquea edición, guardado y publicación con explicación; no muestra una secuencia parcial
+como si fuera el grafo completo. DECISION y múltiples finales quedan protegidos.
+
+En cadenas representables se preservan identidad y configuración de los extremos, propiedades
+adicionales de nodos y configuración abierta, incluyendo objetos/listas desconocidos. Sólo se
+actualizan las propiedades efectivamente editadas. Reordenar, agregar o quitar pasos cambia
+las conexiones incondicionales de esa cadena de forma explícita. No hay truncamiento a 100 pasos.
+Las propiedades desconocidas de aristas bloquean edición por no poder garantizar su semántica
+al reconectar. El serializador no muta el grafo original y rechaza también invocaciones directas
+sobre grafos incompatibles.
+
+Los cambios locales se comparan con los pasos cargados/guardados. Publicar queda deshabilitado
+hasta guardar correctamente: no guarda automáticamente ni introduce autosave. Un fallo de
+Guardado conserva los cambios y el bloqueo de publicación. El editor queda deshabilitado mientras
+consulta, guarda o publica. La respuesta del guardado actualiza la base local. Una nueva respuesta
+de detalle actualiza la base si está limpia; si hay cambios locales y el grafo remoto cambió,
+bloquea persistencia y pide volver a abrir el estudio. Esto no reemplaza control de concurrencia
+backend: modificaciones externas no observadas entre lectura y escritura no pueden detectarse
+atómicamente con el contrato actual.
+
+Se confirma descarte con Volver y al navegar mediante enlaces de la aplicación. Cerrar/recargar
+la pestaña usa beforeunload. No hay drafts persistidos ni protección global de navegación:
+Atrás/Adelante del historial SPA, logout y una expiración de sesión no se interceptan.
+No se cambia BrowserRouter ni la lógica de sesión.
+
+### Instancia persistente y tareas
+
+El modelo frontend reconoce CREADA, ACTIVA, ESPERANDO, BLOQUEADA, COMPLETADA y CANCELADA.
+Sólo COMPLETADA/CANCELADA son finales; completar tareas requiere ACTIVA/ESPERANDO, como Workflow.
+El panel muestra tareas PENDIENTE y VENCIDA. Para Rechazar pide `motivo`, obligatorio no vacío
+tras trim y de hasta 512 caracteres. El POST conserva `actor` y `decision`, agregando el motivo
+real: `{ actor, decision: "RECHAZADO", motivo }`. Durante el envío bloquea una segunda acción;
+si falla, conserva el motivo y muestra el mensaje real.
+
+El detalle de prueba distingue loading, error y datos; ErrorPanel permite refetch. Se consulta
+cada 15 segundos mientras el estado está en curso, sin polling en segundo plano, y se detiene
+ante error o estado final. Hay evidencia de cambios autónomos: ProgramadorVencimientos ejecuta
+cada 60 segundos el vencimiento de tareas y avance de temporizadores. El GET de detalle es una
+consulta transaccional de lectura. No se modifica ese endpoint ni su query key.
+
+La acción se denomina Probar proceso y advierte que crea una instancia real persistente de la
+versión publicada, sin usar el borrador. No se presenta como simulación, sandbox ni instancia
+aislada. La insignia usa el máximo `numero` publicado, no la cantidad de versiones.
+
+### Catálogos y límites conservados
+
+Tipos declarados: INICIO, FIN, DECISION y los nueve tipos del selector. Tipos editables:
+SOLICITUD_DOCUMENTO, FORMULARIO, VALIDACION_IA, REVISION_HUMANA, TAREA_EXTERNA, NOTIFICACION,
+TEMPORIZADOR, ACCION_API y SUBPROCESO. Publicables según el validador MVP0 inspeccionado:
+INICIO, FIN, SOLICITUD_DOCUMENTO, FORMULARIO, REVISION_HUMANA, DECISION y TEMPORIZADOR.
+No se elimina/amplía el selector ni se modifica el backend. Se advierte que los tipos restantes
+pueden guardarse como borrador, pero Workflow impide publicarlos. DECISION no obtiene editor.
+
+/procesos conserva la protección general de sesión. plantillas.publicar sólo filtra el menú;
+no equivale a autorización completa de Workflow. Se mantienen X-Tenant-Id, endpoints y query keys.
+Fuera de esta fase: IAM/JWT, resolución de roles, conectores productivos, habilitación de tipos,
+formularios avanzados, ejecución real de ACCION_API/notificaciones, subprocesos, bandejas de
+instancias, KPI, nuevas rutas y canvas. AGENTS.md externo y stash@{0} se preservan.
+
+### Regresión reproducible
+
+Se usa Playwright ya instalado, sin dependencias nuevas:
+
+```bash
+cd frontend
+npx playwright test --config playwright.procesos.config.ts
+npm run build
+npm run test:e2e
+git diff --check
+```
+
+La configuración separada levanta Vite y ejecuta pruebas puras del grafo y pruebas frontend con
+respuestas controladas. No reemplaza los smoke de integración de playwright.config.ts contra 8091.
+Se reprodujeron antes de corregir los defectos de ramas/condiciones, versiones, descarte,
+estados de prueba y error de consulta. Se agregó regresión para actualización desde caché.
+
+27 pruebas pasan: cadenas de 1/2/105 pasos, configuración adicional, inmutabilidad del original,
+branching DECISION y no DECISION, condiciones, múltiples finales, ciclos, nodos desconectados,
+IDs duplicados, creación/reordenado, bloqueo de solicitudes destructivas, guardar/publicar,
+fallo de guardado, descarte, seis estados, tareas pendientes/vencidas, rechazo con motivo,
+error de mutación/consulta, recuperación y polling con detención al finalizar.
+Estas respuestas controladas verifican frontend y payloads, no persistencia real en Workflow.
+
+Verificación final de esta fase: `npm run build` y `git diff --check` pasan. Los dos smoke de
+`npm run test:e2e` fallan por `ECONNREFUSED ::1:8091` y `ECONNREFUSED 127.0.0.1:8091`.
+No se declara integración verde ni se atribuye esa indisponibilidad al frontend. Repetir antes
+del PR con Workflow disponible. No se inicia FASE 10 visual.
