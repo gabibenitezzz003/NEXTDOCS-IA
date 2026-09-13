@@ -5,6 +5,7 @@ import {
   Boton,
   CabeceraTarjeta,
   Campo,
+  GrupoSegmentado,
   Pastilla,
   Selector,
   Tarjeta,
@@ -14,6 +15,7 @@ import {
   cancelarInstancia,
   completarTarea,
   listarInstancias,
+  listarProcesos,
   listarTareas,
   mensajeDeError,
   obtenerInstancia,
@@ -93,34 +95,62 @@ const ES_FINAL = ["COMPLETADA", "CANCELADA"];
 
 export function BandejaInstancias({ alAbrir }: { alAbrir: (id: string) => void }) {
   const [estado, setEstado] = useState<string>("");
+  const [definicion, setDefinicion] = useState<string>("");
+  const [busqueda, setBusqueda] = useState<string>("");
+
+  const consultaProcesos = useQuery({
+    queryKey: ["procesos"],
+    queryFn: listarProcesos,
+  });
 
   const consulta = useQuery({
-    queryKey: ["instancias", estado],
-    queryFn: () => listarInstancias(estado || undefined),
+    queryKey: ["instancias", estado, definicion],
+    queryFn: () => listarInstancias(estado || undefined, definicion || undefined),
     refetchInterval: 15000,
   });
 
-  const instancias = consulta.data ?? [];
+  const texto = busqueda.trim().toLowerCase();
+  const instancias = (consulta.data ?? []).filter((instancia) =>
+    !texto
+      ? true
+      : instancia.codigoDefinicion.toLowerCase().includes(texto) ||
+        instancia.id.toLowerCase().includes(texto) ||
+        (instancia.sujetoId ?? "").toLowerCase().includes(texto),
+  );
 
   return (
     <>
-      <div className="mb-espacio-4 flex flex-wrap items-end justify-between gap-espacio-4">
+      <div className="mb-espacio-4 grid gap-espacio-4 md:grid-cols-[12rem_minmax(0,1fr)_12rem]">
         <Selector
-          etiqueta="Filtrar por estado"
+          etiqueta="Estado"
           value={estado}
           onChange={(evento) => setEstado(evento.target.value)}
-          className="max-w-56"
         >
-          <option value="">Todos los estados</option>
+          <option value="">Todos</option>
           <option value="ACTIVA">En ejecución</option>
           <option value="ESPERANDO">Esperando tareas</option>
           <option value="BLOQUEADA">Bloqueadas</option>
           <option value="COMPLETADA">Completadas</option>
           <option value="CANCELADA">Canceladas</option>
         </Selector>
-        <p className="text-pequeno text-tinta-suave">
-          Cada instancia conserva la versión del proceso con la que comenzó.
-        </p>
+        <Selector
+          etiqueta="Proceso"
+          value={definicion}
+          onChange={(evento) => setDefinicion(evento.target.value)}
+        >
+          <option value="">Todos los procesos</option>
+          {(consultaProcesos.data ?? []).map((proceso) => (
+            <option key={proceso.id} value={proceso.codigo}>
+              {proceso.nombre}
+            </option>
+          ))}
+        </Selector>
+        <Campo
+          etiqueta="Buscar"
+          placeholder="Código, sujeto o id"
+          value={busqueda}
+          onChange={(evento) => setBusqueda(evento.target.value)}
+        />
       </div>
 
       {consulta.isPending ? (
@@ -356,6 +386,28 @@ export function DetalleInstancia({
         )}
       </Tarjeta>
 
+      {instancia.datos && Object.keys(instancia.datos).length ? (
+        <Tarjeta>
+          <CabeceraTarjeta
+            titulo="Datos del proceso"
+            descripcion="Lo que sabe esta instancia: datos de inicio, validaciones y resultados."
+          />
+          <dl className="mt-espacio-4 space-y-espacio-2">
+            {Object.entries(instancia.datos).map(([clave, valor]) => (
+              <div
+                key={clave}
+                className="grid gap-espacio-1 rounded-control bg-lienzo px-espacio-4 py-espacio-2 md:grid-cols-[16rem_minmax(0,1fr)]"
+              >
+                <dt className="break-all text-pequeno text-tinta-suave">{clave}</dt>
+                <dd className="break-all text-pequeno text-tinta">
+                  {typeof valor === "object" ? JSON.stringify(valor) : String(valor)}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </Tarjeta>
+      ) : null}
+
       <Tarjeta>
         <CabeceraTarjeta
           titulo="Línea de tiempo"
@@ -401,34 +453,59 @@ function LineaTiempo({ eventos }: { eventos: EventoInstancia[] }) {
   );
 }
 
+const ESTADOS_TAREA: Record<string, string[]> = {
+  PENDIENTE: ["PENDIENTE"],
+  VENCIDA: ["VENCIDA"],
+  COMPLETADA: ["COMPLETADA"],
+  CANCELADA: ["CANCELADA"],
+  TODAS: ["PENDIENTE", "VENCIDA", "COMPLETADA", "CANCELADA"],
+};
+
 export function BandejaTareas() {
+  const { sesion } = useSesion();
   const [filtro, setFiltro] = useState<string>("PENDIENTE");
+  const [soloMias, setSoloMias] = useState(false);
 
   const consulta = useQuery({
-    queryKey: ["tareas"],
-    queryFn: listarTareas,
+    queryKey: ["tareas", filtro],
+    queryFn: () => listarTareas(ESTADOS_TAREA[filtro]),
     refetchInterval: 15000,
   });
 
   const tareas = (consulta.data ?? []).filter((tarea) =>
-    filtro === "TODAS" ? true : tarea.estado === filtro,
+    !soloMias
+      ? true
+      : (tarea.asignadoA ?? "").toLowerCase() === (sesion?.email ?? "").toLowerCase(),
   );
 
   return (
     <>
       <div className="mb-espacio-4 flex flex-wrap items-end justify-between gap-espacio-4">
-        <Selector
-          etiqueta="Filtrar por estado"
-          value={filtro}
-          onChange={(evento) => setFiltro(evento.target.value)}
-          className="max-w-56"
-        >
-          <option value="PENDIENTE">Pendientes</option>
-          <option value="VENCIDA">Vencidas</option>
-          <option value="COMPLETADA">Completadas</option>
-          <option value="CANCELADA">Canceladas</option>
-          <option value="TODAS">Todas</option>
-        </Selector>
+        <div className="flex flex-wrap items-end gap-espacio-4">
+          <Selector
+            etiqueta="Estado"
+            value={filtro}
+            onChange={(evento) => setFiltro(evento.target.value)}
+          >
+            <option value="PENDIENTE">Pendientes</option>
+            <option value="VENCIDA">Vencidas</option>
+            <option value="COMPLETADA">Completadas</option>
+            <option value="CANCELADA">Canceladas</option>
+            <option value="TODAS">Todas</option>
+          </Selector>
+          <div>
+            <p className="mb-espacio-1 text-pequeno text-tinta-suave">Responsable</p>
+            <GrupoSegmentado
+              etiqueta="Filtro de responsable"
+              valor={soloMias ? "mias" : "todas"}
+              alCambiar={(valor) => setSoloMias(valor === "mias")}
+              opciones={[
+                { valor: "todas", texto: "Todas" },
+                { valor: "mias", texto: "Mías" },
+              ]}
+            />
+          </div>
+        </div>
         <p className="text-pequeno text-tinta-suave">
           Las tareas de todos los procesos del espacio de trabajo.
         </p>

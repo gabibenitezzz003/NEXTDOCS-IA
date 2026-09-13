@@ -73,6 +73,10 @@ export function Procesos() {
       <EstudioProceso
         procesoId={procesoAbierto}
         alVolver={() => setProcesoAbierto(null)}
+        alAbrirInstancia={(instanciaId) => {
+          setVista("instancias");
+          setInstanciaAbierta(instanciaId);
+        }}
       />
     );
   }
@@ -298,9 +302,11 @@ function VersionesProceso({ versiones }: { versiones: VersionProceso[] }) {
 function EstudioProceso({
   procesoId,
   alVolver,
+  alAbrirInstancia,
 }: {
   procesoId: string;
   alVolver: () => void;
+  alAbrirInstancia: (instanciaId: string) => void;
 }) {
   const idEstudio = useId();
   const { sesion } = useSesion();
@@ -906,6 +912,7 @@ function EstudioProceso({
               instancia={consultaInstancia.data}
               alCompletar={alCompletar}
               completando={completar.isPending}
+              alAbrir={alAbrirInstancia}
             />
           )
         ) : null}
@@ -1013,6 +1020,7 @@ function PanelPrueba({
   instancia,
   alCompletar,
   completando,
+  alAbrir,
 }: {
   instancia?: InstanciaProceso;
   alCompletar: (
@@ -1021,6 +1029,7 @@ function PanelPrueba({
     motivo?: string,
   ) => Promise<boolean>;
   completando: boolean;
+  alAbrir: (instanciaId: string) => void;
 }) {
   const [tareaRechazo, setTareaRechazo] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
@@ -1059,10 +1068,15 @@ function PanelPrueba({
   );
   return (
     <Tarjeta className="mt-espacio-6" padding="p-espacio-4 sm:p-espacio-6">
-      <CabeceraTarjeta
-        titulo={`Prueba: instancia ${instancia.id.slice(0, 8)}`}
-        descripcion={`Estado ${instancia.estado} · v${instancia.numeroVersion}`}
-      />
+      <div className="flex flex-wrap items-start justify-between gap-espacio-4">
+        <CabeceraTarjeta
+          titulo={`Prueba: instancia ${instancia.id.slice(0, 8)}`}
+          descripcion={`Estado ${instancia.estado} · v${instancia.numeroVersion}`}
+        />
+        <Boton variante="fantasma" onClick={() => alAbrir(instancia.id)}>
+          Abrir en Instancias
+        </Boton>
+      </div>
       {finalizada ? (
         <p
           role="status"
