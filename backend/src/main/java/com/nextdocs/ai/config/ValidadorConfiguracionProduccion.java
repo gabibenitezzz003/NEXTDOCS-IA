@@ -35,8 +35,7 @@ public class ValidadorConfiguracionProduccion
 		List<String> problemas = new ArrayList<>();
 		validarSecretoJwt(entorno, problemas);
 		validarTenantDemostracion(entorno, problemas);
-		validarClave(entorno, "nextdocs.almacenamiento.claveSecreta", "la clave secreta del object store",
-				problemas);
+		validarBootstrap(entorno, problemas);
 		validarClave(entorno, "spring.datasource.password", "la clave de la base de datos", problemas);
 		validarAntivirus(entorno, problemas);
 		validarCredencialesEnClaro(entorno, problemas);
@@ -63,7 +62,10 @@ public class ValidadorConfiguracionProduccion
 	}
 
 	private void validarSecretoJwt(ConfigurableEnvironment entorno, List<String> problemas) {
-		String secreto = entorno.getProperty("nextdocs.seguridad.jwtSecreto");
+		String secreto = entorno.getProperty("NEXTDOCS_JWT_SECRETO");
+		if (secreto == null || secreto.isBlank()) {
+			secreto = entorno.getProperty("nextdocs.seguridad.jwtSecreto");
+		}
 		if (secreto == null || secreto.isBlank()) {
 			problemas.add("NEXTDOCS_JWT_SECRETO no esta definido");
 			return;
@@ -75,6 +77,22 @@ public class ValidadorConfiguracionProduccion
 		int bytes = secreto.getBytes(StandardCharsets.UTF_8).length;
 		if (bytes < LONGITUD_MINIMA_SECRETO) {
 			problemas.add("NEXTDOCS_JWT_SECRETO tiene " + bytes + " bytes y el minimo para HS256 es "
+					+ LONGITUD_MINIMA_SECRETO);
+		}
+	}
+
+	private void validarBootstrap(ConfigurableEnvironment entorno, List<String> problemas) {
+		if (!Boolean.parseBoolean(entorno.getProperty("nextdocs.bootstrap.habilitado", "false"))) {
+			return;
+		}
+		String secreto = entorno.getProperty("nextdocs.bootstrap.secreto");
+		if (secreto == null || secreto.isBlank()) {
+			problemas.add("NEXTDOCS_BOOTSTRAP_SECRETO no esta definido mientras el bootstrap esta habilitado");
+			return;
+		}
+		int bytes = secreto.getBytes(StandardCharsets.UTF_8).length;
+		if (bytes < LONGITUD_MINIMA_SECRETO) {
+			problemas.add("NEXTDOCS_BOOTSTRAP_SECRETO tiene " + bytes + " bytes y el minimo requerido es "
 					+ LONGITUD_MINIMA_SECRETO);
 		}
 	}

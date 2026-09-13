@@ -64,6 +64,9 @@ springdoc:
     path: /swagger-ui.html
 
 nextdocs:
+  bootstrap:
+    habilitado: ${NEXTDOCS_BOOTSTRAP_HABILITADO:false}
+    secreto: ${NEXTDOCS_BOOTSTRAP_SECRETO:}
   seguridad:
     jwtSecreto: ${NEXTDOCS_JWT_SECRETO:cambiar-este-secreto-en-produccion-minimo-32-bytes}
     jwtEmisor: nextdocs-ai
@@ -71,6 +74,7 @@ nextdocs:
     jwtDuracionRefrescoDias: ${NEXTDOCS_JWT_DURACION_REFRESCO_DIAS:7}
     rutasPublicas:
       - /api/v1/autenticacion/**
+      - /api/v1/bootstrap/tenant
       - /api/v1/federacion/intercambio
       - /api/v1/federacion/canje
       - /api-docs/**
