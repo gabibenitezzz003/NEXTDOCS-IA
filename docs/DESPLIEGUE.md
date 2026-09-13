@@ -174,6 +174,61 @@ El secreto del repo `AWS_DEPLOY_ROLE_ARN` contiene el ARN del rol.
 SSH de operador: `ssh -i ~/.ssh/nextdocs-ia-prod.pem ubuntu@3.213.58.243` (el SG admite el 22
 sólo desde IPs autorizadas). Alternativa sin puerto 22: `aws ssm start-session`.
 
+### Workflow en producción
+
+El servicio workflow (repo aparte `Follow-Hub/workflow`, puerto interno 8091) valida el mismo
+JWT del core: `Authorization: Bearer` HS256 con `NEXTDOCS_JWT_SECRETO`, emisor `nextdocs-ai` y
+claim `tenantId`. Con `NEXTDOCS_WORKFLOW_SEGURIDAD_JWT_HABILITADA=true` el header `X-Tenant-Id`
+suelto ya no alcanza (401); el frontend manda el Bearer del core automáticamente.
+
+`deploy.sh` lo maneja como unidad propia: clona/sincroniza `Follow-Hub/workflow` en
+`/opt/nextdocs-ia/workflow`, compara contra `/var/lib/nextdocs-ia/deployed_workflow_commit`,
+crea la base `nextdocs_workflow` en RDS si falta, buildea, recrea y espera `healthy` con
+rollback a la imagen anterior (primera vez sin imagen previa: detiene el servicio). Si el
+compose de producción no declara el servicio `workflow`, el paso se salta sin tocar nada.
+
+Bloque a agregar en `/etc/nextdocs-ia/compose.produccion.yml` (contexto = el clon del repo
+workflow al lado del del core):
+
+```yaml
+  workflow:
+    build:
+      context: /opt/nextdocs-ia/workflow
+      dockerfile: Dockerfile
+    container_name: nextdocs-ia-workflow
+    restart: unless-stopped
+    environment:
+      NEXTDOCS_BD_URL: jdbc:postgresql://<rds-endpoint>:5432/nextdocs_workflow
+      NEXTDOCS_BD_USUARIO: ${NEXTDOCS_BD_USUARIO}
+      NEXTDOCS_BD_CLAVE: ${NEXTDOCS_BD_CLAVE}
+      NEXTDOCS_WORKFLOW_SEGURIDAD_JWT_HABILITADA: "true"
+      NEXTDOCS_JWT_SECRETO: ${NEXTDOCS_JWT_SECRETO}
+      NEXTDOCS_JWT_EMISOR: nextdocs-ai
+      NEXTDOCS_WORKFLOW_FIXTURES_HABILITADO: "false"
+    ports:
+      - "127.0.0.1:8091:8091"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8091/actuator/health | grep -q UP"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - nextdocs-interno
+```
+
+Requisitos en la instancia (una sola vez): clave de despliegue SSH de sólo lectura para
+`Follow-Hub/workflow` en el usuario `ubuntu` (el `git clone` corre con ella), y
+`NEXTDOCS_JWT_SECRETO` presente en `/etc/nextdocs-ia/nextdocs.env` con el mismo valor que usa
+el core. nginx ya rutea `/api/v1/{procesos,instancias,tareas,kpi-procesos,partners,
+marketplace,supervisora,colaboracion-externa}` a `127.0.0.1:8091` desde
+`infra/nginx/nextdocs-ia.conf`.
+
+Disparadores: cada push a `main` de `Follow-Hub/workflow` llama `repository_dispatch`
+(`workflow-actualizado`) sobre este repo vía `.github/workflows/despachar.yml` (secreto
+`NEXTDOCS_DISPATCH_TOKEN` en ese repo), y el deploy normal del core también sincroniza el
+workflow si cambió — un merge del core que no toca el workflow no lo rebuildeará.
+
 ### HTTPS
 
 Pendiente hasta que `demo.mynextpipe.com` apunte a `3.213.58.243` por DNS: `certbot --nginx`

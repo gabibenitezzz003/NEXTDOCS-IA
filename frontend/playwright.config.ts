@@ -1,4 +1,17 @@
 import { defineConfig, devices } from '@playwright/test';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+
+try {
+  const env = readFileSync(resolve(process.cwd(), '../.env'), 'utf8');
+  for (const linea of env.split('\n')) {
+    const limpia = linea.trim();
+    if (!limpia || limpia.startsWith('#') || !limpia.includes('=')) continue;
+    const [clave, ...resto] = limpia.split('=');
+    if (!(clave in process.env)) process.env[clave] = resto.join('=').trim();
+  }
+} catch {
+}
 
 export default defineConfig({
   testDir: './e2e',
