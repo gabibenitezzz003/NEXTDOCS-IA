@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Clonar el servicio workflow (repo publico aparte)
+        run: git clone --depth 1 https://github.com/Follow-Hub/workflow ../workflow
       - uses: actions/setup-node@v4
         with:
           node-version: 20
