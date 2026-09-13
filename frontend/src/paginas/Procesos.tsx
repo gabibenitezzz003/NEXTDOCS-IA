@@ -7,6 +7,7 @@ import {
   BotonIcono,
   CabeceraTarjeta,
   Campo,
+  GrupoSegmentado,
   Pastilla,
   Selector,
   Tarjeta,
@@ -42,6 +43,11 @@ import {
   type Paso,
 } from "../utilidades/grafoProceso";
 import { useSesion } from "../contextos/ProveedorSesion";
+import {
+  BandejaInstancias,
+  BandejaTareas,
+  DetalleInstancia,
+} from "./ProcesosOperacion";
 
 const TIPOS_PASO: { valor: TipoNodoProceso; texto: string }[] = [
   { valor: "SOLICITUD_DOCUMENTO", texto: "Solicitar documento" },
@@ -55,8 +61,12 @@ const TIPOS_PASO: { valor: TipoNodoProceso; texto: string }[] = [
   { valor: "SUBPROCESO", texto: "Subproceso" },
 ];
 
+type VistaProcesos = "definiciones" | "instancias" | "tareas";
+
 export function Procesos() {
+  const [vista, setVista] = useState<VistaProcesos>("definiciones");
   const [procesoAbierto, setProcesoAbierto] = useState<string | null>(null);
+  const [instanciaAbierta, setInstanciaAbierta] = useState<string | null>(null);
 
   if (procesoAbierto) {
     return (
@@ -66,7 +76,43 @@ export function Procesos() {
       />
     );
   }
-  return <ListaProcesos alAbrir={setProcesoAbierto} />;
+
+  return (
+    <>
+      <Encabezado
+        titulo="Procesos"
+        descripcion="Diseñá procesos en el Studio, ejecutalos y resolvé las tareas pendientes desde las bandejas."
+        acciones={
+          <GrupoSegmentado
+            etiqueta="Vistas de procesos"
+            valor={vista}
+            alCambiar={setVista}
+            opciones={[
+              { valor: "definiciones", texto: "Definiciones" },
+              { valor: "instancias", texto: "Instancias" },
+              { valor: "tareas", texto: "Tareas" },
+            ]}
+          />
+        }
+      />
+      <Contenido>
+        {vista === "definiciones" ? (
+          <ListaProcesos alAbrir={setProcesoAbierto} />
+        ) : vista === "instancias" ? (
+          instanciaAbierta ? (
+            <DetalleInstancia
+              instanciaId={instanciaAbierta}
+              alVolver={() => setInstanciaAbierta(null)}
+            />
+          ) : (
+            <BandejaInstancias alAbrir={setInstanciaAbierta} />
+          )
+        ) : (
+          <BandejaTareas />
+        )}
+      </Contenido>
+    </>
+  );
 }
 
 function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
@@ -99,23 +145,22 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
   const procesos = consulta.data ?? [];
 
   return (
-    <>
-      <Encabezado
-        titulo="Plantillas de proceso"
-        descripcion="Biblioteca de definiciones de proceso. Configurá sus pasos en el Studio y gestioná sus versiones."
-        acciones={
-          <Boton
-            variante={creando ? "secundario" : "primario"}
-            aria-expanded={creando}
-            aria-controls={creando ? "crear-proceso" : undefined}
-            onClick={() => setCreando((valor) => !valor)}
-          >
-            {creando ? "Cancelar" : "Nuevo proceso"}
-          </Boton>
-        }
-      />
-      <Contenido>
-        {error ? (
+    <div>
+      <div className="mb-espacio-4 flex flex-wrap items-end justify-between gap-espacio-4">
+        <p className="max-w-xl text-pequeno text-tinta-suave">
+          Biblioteca de definiciones del espacio de trabajo. Abrí el Studio para
+          configurar los pasos de cada proceso y publicar una versión.
+        </p>
+        <Boton
+          variante={creando ? "secundario" : "primario"}
+          aria-expanded={creando}
+          aria-controls={creando ? "crear-proceso" : undefined}
+          onClick={() => setCreando((valor) => !valor)}
+        >
+          {creando ? "Cancelar" : "Nuevo proceso"}
+        </Boton>
+      </div>
+      {error ? (
           <div
             role="alert"
             className="aparecer mb-espacio-4 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-4 py-espacio-3 text-pequeno text-rojo-alto"
@@ -225,8 +270,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
             ))}
           </ul>
         )}
-      </Contenido>
-    </>
+    </div>
   );
 }
 
