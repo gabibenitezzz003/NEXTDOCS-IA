@@ -26,6 +26,7 @@ docker run --rm --network host                               \
   maven:3.9-eclipse-temurin-21 mvn verify
 ```
 
+- Ojo: el contenedor corre como root y deja `backend/target/` con dueño root. Si el build embebido del IDE (m2e) falla con `FileSystemException: Operación no permitida` al copiar recursos, borrarlo así: `docker run --rm -v "$PWD/backend":/app -w /app maven:3.9-eclipse-temurin-21 rm -rf target`. Para prevenirlo, agregar `; chown -R $(stat -c %u:%g /app) /app/target` vía `sh -c` al comando Maven.
 - API: `http://localhost:8090` · Swagger: `/swagger-ui.html`
 - Tenant demo de arranque: `admin@nextdocs.ai` / `nextdocs123` (se desactiva con `NEXTDOCS_CREAR_TENANT_DEMO=false`). Sin `NEXTDOCS_GEMINI_CLAVE` arranca igual con el proveedor `SIMULADO`.
 - Frontend: `cd frontend && npm run dev` (puerto **5175**, proxy `/api` → `:8090`). Typecheck = `npm run build` (`tsc -b && vite build`). No hay lint; formatter = `npm run format` (prettier).
