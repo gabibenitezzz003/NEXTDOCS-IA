@@ -51,6 +51,17 @@ Compose pisa las URLs de `.env` que apuntan a `localhost`: adentro de la red Doc
 `postgres:5432`, Redis `redis:6379` y MinIO `http://minio:9000`. Los secretos (JWT, Gemini, claves
 de MinIO) sí salen de `.env`.
 
+Las URLs firmadas son la excepción: el `S3Client` habla con MinIO por la red interna, pero el
+presigner firma con `NEXTDOCS_S3_ENDPOINT_PUBLICO` (`http://localhost:9102`) para que el navegador
+del host resuelva el link. Si la variable queda vacía, el firmador cae al endpoint interno.
+
+El frontend envía a Workflow el UUID real del tenant de la sesión como `X-Tenant-Id`. Para que
+`/procesos` tenga datos en dev, el tenant demo del core nace con id fijo
+(`NEXTDOCS_TENANT_DEMO_ID`, default `00000000-0000-4000-8000-000000000001`) y el fixture de
+Workflow siembra `WFL-APROBACION-DEMO` bajo ese mismo tenant. Con una base dev ya existente el
+tenant conserva su UUID original: hay que copiar ese id en `NEXTDOCS_WORKFLOW_FIXTURES_TENANT_ID`
+del `.env` (`SELECT id FROM tenant WHERE codigo='demo'`) para que el fixture siembre ahí.
+
 Listo cuando `/actuator/health` responde `{"status":"UP"}`. El tenant demo se crea si
 `NEXTDOCS_CREAR_TENANT_DEMO=true` (default).
 

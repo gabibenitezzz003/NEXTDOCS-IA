@@ -70,7 +70,7 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
       {
         a: "/procesos",
         texto: "Plantillas de proceso",
-        permiso: "plantillas.publicar",
+        permiso: "tenant.administrar",
         icono: IconoProceso,
       },
     ],

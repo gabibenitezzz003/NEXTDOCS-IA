@@ -9,7 +9,12 @@ import org.springframework.core.env.StandardEnvironment;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import java.net.URL;
+import java.time.Duration;
+
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 class AlmacenamientoConfigTest {
 
@@ -56,10 +61,58 @@ class AlmacenamientoConfigTest {
 		}
 	}
 
+	@Test
+	@DisplayName("el firmador firma URLs con el endpoint publico cuando esta configurado")
+	void firmadorUsaEndpointPublico() {
+		PropiedadesAlmacenamiento propiedades = propiedades();
+		propiedades.setEndpoint("http://minio:9000");
+		propiedades.setEndpointPublico("http://localhost:9102");
+		AlmacenamientoConfig configuracion = new AlmacenamientoConfig(propiedades, entorno("desarrollo"));
+
+		try (S3Presigner firmador = configuracion.firmadorS3()) {
+			assertThat(urlFirmada(firmador).getHost()).isEqualTo("localhost");
+			assertThat(urlFirmada(firmador).getPort()).isEqualTo(9102);
+		}
+	}
+
+	@Test
+	@DisplayName("sin endpoint publico el firmador cae al endpoint interno")
+	void firmadorSinEndpointPublicoUsaEndpointInterno() {
+		AlmacenamientoConfig configuracion = configuracion("desarrollo");
+
+		assertThat(configuracion.endpointParaFirmar()).isEqualTo("http://localhost:9102");
+	}
+
+	@Test
+	@DisplayName("en produccion el firmador no pisa el endpoint: firma contra S3 real")
+	void produccionFirmadorUsaEndpointAws() {
+		System.setProperty("aws.accessKeyId", "prueba");
+		System.setProperty("aws.secretAccessKey", "prueba");
+		AlmacenamientoConfig configuracion = configuracion("produccion");
+
+		try (S3Presigner firmador = configuracion.firmadorS3()) {
+			assertThat(urlFirmada(firmador).getHost()).endsWith("amazonaws.com");
+		} finally {
+			System.clearProperty("aws.accessKeyId");
+			System.clearProperty("aws.secretAccessKey");
+		}
+	}
+
+	private URL urlFirmada(S3Presigner firmador) {
+		return firmador.presignGetObject(peticion -> peticion
+						.signatureDuration(Duration.ofMinutes(5))
+						.getObjectRequest(GetObjectRequest.builder().bucket("bucket").key("clave").build()))
+				.url();
+	}
+
 	private AlmacenamientoConfig configuracion(String perfil) {
+		return new AlmacenamientoConfig(propiedades(), entorno(perfil));
+	}
+
+	private StandardEnvironment entorno(String perfil) {
 		StandardEnvironment entorno = new StandardEnvironment();
 		entorno.setActiveProfiles(perfil);
-		return new AlmacenamientoConfig(propiedades(), entorno);
+		return entorno;
 	}
 
 	private PropiedadesAlmacenamiento propiedades() {

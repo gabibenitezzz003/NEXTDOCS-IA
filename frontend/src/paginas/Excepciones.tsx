@@ -260,11 +260,13 @@ export function Excepciones() {
                           ) : null}
                         </div>
                       ) : null}
-                      {excepcion.documentoId ||
+                      {(excepcion.documentoId &&
+                        tienePermiso("documentos.leer")) ||
                       (tienePermiso("excepciones.gestionar") &&
                         excepcion.estado !== "RESUELTA") ? (
                         <div className="mt-espacio-4 flex flex-wrap justify-end gap-espacio-2">
-                          {excepcion.documentoId ? (
+                          {excepcion.documentoId &&
+                          tienePermiso("documentos.leer") ? (
                             <Boton
                               type="button"
                               onClick={() =>

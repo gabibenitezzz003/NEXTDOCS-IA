@@ -156,6 +156,7 @@ export function VisorDocumento({
   const detalle = consulta.data;
   const documento = detalle?.documento;
   const puedeRevisar = tienePermiso("documentos.revisar");
+  const puedeEscribir = tienePermiso("documentos.escribir");
   const trabajando =
     decidir.isPending ||
     reproceso.isPending ||
@@ -459,12 +460,12 @@ export function VisorDocumento({
           )}
         </div>
 
-        {puedeRevisar && documento && !consulta.isError ? (
+        {(puedeRevisar || puedeEscribir) && documento && !consulta.isError ? (
           <footer
             aria-label="Decisiones documentales"
             className="shrink-0 border-t border-borde bg-superficie p-espacio-4 sm:px-espacio-6"
           >
-            {Object.keys(correcciones).length ? (
+            {puedeRevisar && Object.keys(correcciones).length ? (
               <p
                 role="status"
                 aria-atomic="true"
@@ -474,72 +475,88 @@ export function VisorDocumento({
                 enviar. Se envían con la decisión.
               </p>
             ) : null}
-            <Campo
-              etiqueta="Motivo de la decisión"
-              value={motivo}
-              disabled={trabajando}
-              onChange={(evento) => setMotivo(evento.target.value)}
-              placeholder="Motivo de la decisión (obligatorio para rechazar, observar o corregir)"
-            />
-            <div className="mt-espacio-3 grid grid-cols-2 gap-espacio-2 sm:flex sm:flex-wrap">
-              <Boton
-                type="button"
-                variante="primario"
-                disabled={
-                  trabajando ||
-                  !documento.transicionesPosibles.includes("APROBADO")
-                }
-                cargando={decidir.isPending && decidir.variables === "APROBAR"}
-                onClick={() => decidir.mutate("APROBAR")}
-              >
-                Aprobar
-              </Boton>
-              <Boton
-                type="button"
-                disabled={
-                  trabajando ||
-                  !documento.transicionesPosibles.includes("OBSERVADO")
-                }
-                cargando={decidir.isPending && decidir.variables === "OBSERVAR"}
-                onClick={() => decidir.mutate("OBSERVAR")}
-              >
-                Observar
-              </Boton>
-              <Boton
-                type="button"
-                variante="peligro"
-                disabled={
-                  trabajando ||
-                  !documento.transicionesPosibles.includes("RECHAZADO")
-                }
-                cargando={decidir.isPending && decidir.variables === "RECHAZAR"}
-                onClick={() => decidir.mutate("RECHAZAR")}
-              >
-                Rechazar
-              </Boton>
-              <Boton
-                type="button"
+            {puedeRevisar ? (
+              <Campo
+                etiqueta="Motivo de la decisión"
+                value={motivo}
                 disabled={trabajando}
-                cargando={reproceso.isPending}
-                onClick={() => reproceso.mutate()}
-              >
-                <span aria-hidden="true">
-                  <IconoRecargar tamano={14} />
-                </span>
-                Reprocesar
-              </Boton>
-              <Boton
-                type="button"
-                disabled={
-                  trabajando ||
-                  !documento.transicionesPosibles.includes("CERRADO")
-                }
-                cargando={cierre.isPending}
-                onClick={() => cierre.mutate()}
-                className="col-span-2"
-              >
-                Cerrar documento
-              </Boton>
+                onChange={(evento) => setMotivo(evento.target.value)}
+                placeholder="Motivo de la decisión (obligatorio para rechazar, observar o corregir)"
+              />
+            ) : null}
+            <div className="mt-espacio-3 grid grid-cols-2 gap-espacio-2 sm:flex sm:flex-wrap">
+              {puedeRevisar ? (
+                <>
+                  <Boton
+                    type="button"
+                    variante="primario"
+                    disabled={
+                      trabajando ||
+                      !documento.transicionesPosibles.includes("APROBADO")
+                    }
+                    cargando={
+                      decidir.isPending && decidir.variables === "APROBAR"
+                    }
+                    onClick={() => decidir.mutate("APROBAR")}
+                  >
+                    Aprobar
+                  </Boton>
+                  <Boton
+                    type="button"
+                    disabled={
+                      trabajando ||
+                      !documento.transicionesPosibles.includes("OBSERVADO")
+                    }
+                    cargando={
+                      decidir.isPending && decidir.variables === "OBSERVAR"
+                    }
+                    onClick={() => decidir.mutate("OBSERVAR")}
+                  >
+                    Observar
+                  </Boton>
+                  <Boton
+                    type="button"
+                    variante="peligro"
+                    disabled={
+                      trabajando ||
+                      !documento.transicionesPosibles.includes("RECHAZADO")
+                    }
+                    cargando={
+                      decidir.isPending && decidir.variables === "RECHAZAR"
+                    }
+                    onClick={() => decidir.mutate("RECHAZAR")}
+                  >
+                    Rechazar
+                  </Boton>
+                </>
+              ) : null}
+              {puedeEscribir ? (
+                <>
+                  <Boton
+                    type="button"
+                    disabled={trabajando}
+                    cargando={reproceso.isPending}
+                    onClick={() => reproceso.mutate()}
+                  >
+                    <span aria-hidden="true">
+                      <IconoRecargar tamano={14} />
+                    </span>
+                    Reprocesar
+                  </Boton>
+                  <Boton
+                    type="button"
+                    disabled={
+                      trabajando ||
+                      !documento.transicionesPosibles.includes("CERRADO")
+                    }
+                    cargando={cierre.isPending}
+                    onClick={() => cierre.mutate()}
+                    className="col-span-2"
+                  >
+                    Cerrar documento
+                  </Boton>
+                </>
+              ) : null}
             </div>
             <span role="status" aria-atomic="true" className="sr-only">
               {trabajando ? "Enviando acción documental" : ""}

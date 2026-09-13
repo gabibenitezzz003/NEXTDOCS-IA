@@ -10,6 +10,8 @@ public class PropiedadesAlmacenamiento {
 
 	private String endpoint;
 
+	private String endpointPublico;
+
 	private String region;
 
 	private String claveAcceso;
