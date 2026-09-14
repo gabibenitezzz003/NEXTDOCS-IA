@@ -18,13 +18,13 @@ No es un módulo de Follow: Follow, CIMA y Valid360.ai son **consumidores opcion
 nextdocs-ai/
 ├── backend/           Spring Boot 3.4 · Java 21 — núcleo documental
 ├── frontend/          React 19 · TypeScript · Vite · Tailwind 4 — portal
-├── infra/             Keycloak realm y configuración de identidad
+├── infra/             Keycloak realm, identidad y nginx de producción
 ├── docs/              Arquitectura, API, despliegue, TODOs, verificaciones
 ├── compose.yml        Infra + perfiles app/workflow/antivirus
 └── README.md          Este archivo
 ```
 
-El motor de procesos vive en el repositorio hermano `Follow-Hub/workflow` y se levanta desde acá a través del perfil `workflow` de `compose.yml`.
+El motor de procesos vive en el repositorio hermano `gabibenitezzz003/nextdocs-workflow` y se levanta desde acá a través del perfil `workflow` de `compose.yml`.
 
 ---
 
@@ -33,16 +33,18 @@ El motor de procesos vive en el repositorio hermano `Follow-Hub/workflow` y se l
 | Componente | Estado | Notas |
 |---|---|---|
 | **Core documental** | ✅ Cerrado y verificado | Ingesta, clasificación, extracción (Gemini/DeepSeek/SIMULADO), validación, revisión humana, excepciones, auditoría, gobernanza, exportación, retención, costo por tenant |
-| **Workflow Core** | ✅ Cerrado y verificado | Definición de procesos, versiones, grafo, instancias, tareas, decisiones, temporizadores, estados V11 (`CREADA`, `ACTIVA`, `ESPERANDO`, `BLOQUEADA`, `COMPLETADA`, `CANCELADA`) |
+| **Workflow runtime** | ✅ En producción | Semántica real por tipo de nodo (R1): temporizadores que avanzan solos, tareas externas con enlace de un solo uso, solicitud de documento validada, validación IA que bloquea, acciones API, notificaciones, decisiones y subprocesos |
+| **Operación de procesos (R2)** | ✅ En producción | Bandejas de instancias y tareas con filtros por estado/proceso/responsable, detalle con datos del proceso y timeline |
+| **IA Supervisora (R3/R6)** | ✅ En producción | Motor de condiciones real (umbral + operador), evaluación automática al completar tareas, hallazgos resolubles y pantalla de reglas |
+| **SLA y KPIs (R4/R5)** | ✅ En producción | SLA por plantilla heredable a tareas, editable desde el portal; KPIs de procesos visibles en la bandeja |
 | **P0-05 Colaboración externa** | ✅ Cerrado | Cuentas externas + Secure Action Link con TTL, scope y usos máximos |
-| **P0-06 IA Supervisora v0** | ✅ Cerrado | Reglas, hallazgos, acciones/severidad, evaluación y resolución en instancias |
 | **P0-07 Partner Foundation** | ✅ Cerrado | Organizaciones partner y delegación de scopes con expiración |
 | **P0-08 Marketplace-ready** | ✅ Cerrado | Modelo de instalación, overlay, provenance y términos comerciales |
 | **P0-09 Biblioteca COMEX** | ✅ Cerrado | Fixture con 14 plantillas base + multimodales (`EX-MAR-FCL`, `IM-AIR`, `EX-MM-ROAD-SEA`, etc.) |
-| **P0-11 E2E y seguridad** | ✅ Scaffolding listo | Playwright instalado, smoke tests contra `/actuator/health` y `/api/v1/procesos`, CI `.github/workflows/e2e.yml` |
-| **P0-12 Dataset real** | ✅ Suite lista | `PilotoComexTest` con 8 escenarios: happy path, missing doc, low confidence, formato inválido, cross-doc mismatch, incoterm no permitido, vigencia vencida, nueva versión |
-| **P0-14 KPI operativo** | ✅ Cerrado | `/api/v1/kpi-procesos` con 13 indicadores de procesos |
-| **P0-03/P0-04 Studio guiado** | ⚠️ Backend listo, UI en camino | El servicio de definición/runtime funciona; el editor visual de procesos entra con la fase UX |
+| **P0-11 E2E y seguridad** | ✅ Cerrado | Playwright con JWT real: smoke e2e, suite de procesos y suite transversal; CI `.github/workflows/e2e.yml` |
+| **P0-12 Dataset real** | ✅ Cerrado | `PilotoComexTest` con 8 escenarios + generador de dataset con respuesta conocida y cargador masivo |
+| **Frontend (portal)** | ✅ Rediseñado | Alineado al Design System NEXT DOC AI v0.2 con tema claro/oscuro; bandejas, detalle de instancia, hallazgos, KPIs y reglas de la supervisora |
+| **Despliegue continuo** | ✅ Activo | Merge a `main` → verificación → deploy automático a EC2; el repo workflow dispara el deploy del core por `repository_dispatch` |
 | **P0-10 Follow Context/Template Recommender** | ❌ Pendiente | Contrato canónico de contexto y recomendador de plantillas |
 | **P0-13 Load y operaciones** | ❌ Pendiente | Baseline de rendimiento, backup/restore, observabilidad y rotación de secretos |
 | **P0-15 Release comercial** | ❌ Pendiente | Demo punta a punta, runbook y acta de salida |
@@ -56,7 +58,8 @@ Evidencias de cada gate en [`docs/verificaciones/`](docs/verificaciones/).
 | Repositorio | Rol | Rama principal |
 |---|---|---|
 | `gabibenitezzz003/NEXTDOCS-IA` | Core documental, portal y orquestación local | `main` |
-| `Follow-Hub/workflow` | Microservicio de procesos | `main` |
+| `gabibenitezzz003/nextdocs-workflow` | Microservicio de procesos (motor de ejecución) | `main` |
+| `gabibenitezzz003/next-doc-ai-design-system` | Design System v0.2: catálogo, SDK y tokens | `main` |
 | `gabibenitezzz003/docvance-ai` | Servicio auxiliar de IA documental | `next-ai` |
 | `Follow-Hub/follow-backend` | Consumidor vía conector. **No es dependencia.** | `integraciones-pedidos` |
 | `Follow-Hub/follow-front` | Consumidor embebido vía SSO. **No es dependencia.** | `Integraciones-front` |
@@ -126,7 +129,7 @@ Sin `NEXTDOCS_GEMINI_CLAVE` el sistema arranca igual y usa el proveedor `SIMULAD
 | Servicio | URL | Credenciales |
 |---|---|---|
 | Core API | `http://localhost:8090` | Swagger: `/swagger-ui.html` |
-| Workflow API | `http://localhost:8091` | `X-Tenant-Id: tenant-demo` |
+| Workflow API | `http://localhost:8091` | `Authorization: Bearer` del login del core |
 | Portal | `http://localhost:5175` | demo: `admin@nextdocs.ai` / `nextdocs123` |
 | Keycloak | `http://localhost:8089` | `admin` / `admin` |
 | MinIO console | `http://localhost:9101` | `nextdocs` / `nextdocs123` |
@@ -165,7 +168,9 @@ docker run --rm --network host \
 cd frontend
 npm install
 npm run build          # typecheck + build
-npm run test:e2e     # requiere workflow y core corriendo
+npm run test:e2e       # smoke contra el stack real (requiere workflow y core corriendo)
+npx playwright test --config playwright.procesos.config.ts
+npx playwright test --config playwright.transversales.config.ts
 ```
 
 ---
@@ -204,34 +209,46 @@ RECIBIDO → PROCESANDO → EXTRAIDO → VALIDADO → APROBADO → CERRADO
 
 ## Workflow
 
-El microservicio `workflow` vive en `../workflow` y expone:
+El microservicio `workflow` vive en `gabibenitezzz003/nextdocs-workflow` (clone local en
+`../workflow`), valida el JWT del core y expone:
 
-- `POST /api/v1/procesos` — crear definición
-- `GET/PUT /api/v1/procesos/{definicionId}/versiones` — versiones y grafo
-- `POST /api/v1/procesos/versiones/{versionId}/publicar` — publicar versión
-- `POST /api/v1/instancias` — iniciar instancia
-- `GET /api/v1/tareas` — listar tareas
-- `POST /api/v1/tareas/{tareaId}/completar` — completar tarea
-- `POST /api/v1/colaboracion-externa/...` — cuentas externas y enlaces seguros
-- `GET/POST /api/v1/supervisora/...` — reglas y hallazgos de la IA supervisora
-- `GET /api/v1/kpi-procesos` — KPI operativo de procesos
+- `POST/GET /api/v1/procesos` — definiciones, versiones, validación y publicación del grafo
+- `POST/GET /api/v1/instancias` — instancias con filtros por estado y proceso
+- `POST /api/v1/instancias/{id}/pausar|reanudar|bloquear|cancelar` — operación del ciclo de vida
+- `GET /api/v1/tareas` — tareas con filtros por estado e instancia
+- `POST /api/v1/tareas/{tareaId}/completar` — completar tarea con actor, decisión, datos y motivo
+- `POST /api/v1/colaboracion-externa/...` — cuentas externas y enlaces seguros de un solo uso
+- `GET/POST /api/v1/supervisora/...` — reglas con umbral y operador, evaluación automática, hallazgos resolubles
+- `GET /api/v1/kpi-procesos` — KPI operativo de procesos (resumen y población)
+- `GET/POST /api/v1/partners`, `/api/v1/marketplace` — fundaciones de partners e instalaciones
+
+Semántica real por tipo de nodo, SLA por plantilla, supervisora con motor de condiciones y
+bitácora completa por instancia. Detalle en el README del repo workflow.
 
 Para levantar el fixture de plantillas COMEX:
 
 ```bash
-docker compose --profile workflow up -d --build -e NEXTDOCS_WORKFLOW_COMEX_HABILITADO=true
+NEXTDOCS_WORKFLOW_COMEX_HABILITADO=true docker compose --profile workflow up -d --build
 ```
 
 ---
+
+## Producción
+
+Desplegado en AWS EC2 (`3.213.58.243`): merge a `main` corre verificación y deploya solo;
+nginx sirve el portal y rutea `/api/` al core y los prefijos de procesos al workflow.
+Swagger: `http://3.213.58.243/swagger-ui.html` (core) y
+`http://3.213.58.243/workflow-swagger` (workflow). HTTPS pendiente de un dominio propio;
+detalle en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
 
 ## Próximos pasos
 
 En orden de dependencia:
 
-1. **UI/UX (`UX-01`..`UX-38`)** — editor de procesos (P0-04), bandeja de tareas, visor de hallazgos, panel de KPIs.
-2. **P0-10 Follow Context/Template Recommender** — contrato canónico de contexto y recomendación de plantillas.
-3. **P0-13 Load y operaciones** — baseline de rendimiento, backup/restore, observabilidad, alertas y runbooks.
-4. **P0-15 Release comercial** — demo end-to-end, acta de salida y rotación de la API key de Gemini.
+1. **P0-10 Follow Context/Template Recommender** — contrato canónico de contexto y recomendación de plantillas.
+2. **P0-13 Load y operaciones** — baseline de rendimiento, backup/restore, observabilidad, alertas y runbooks.
+3. **P0-15 Release comercial** — demo end-to-end, acta de salida y rotación de la API key de Gemini.
+4. **Evolución de procesos** — canvas visual con branching (UX-21), marketplace/partners en el portal.
 
 Plan completo en [`docs/TODO_MVP0_COMERCIAL.md`](docs/TODO_MVP0_COMERCIAL.md).
 
