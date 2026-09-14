@@ -46,7 +46,7 @@ Verifiqué que las pruebas discriminan: anulando la condición `origenTipo === "
 visor fallan exactamente las dos que miran el aviso, y siguen pasando la de la bandeja (vive en
 otro archivo) y las de campos, que no dependen del aviso.
 
-## 3. Cargar 10–15 documentos · herramientas listas, falta correrlo
+## 3. Cargar 10–15 documentos · hecho, con Gemini real
 
 Están los dos scripts que hacen falta, documentados en [DATASET_PRUEBA.md](DATASET_PRUEBA.md):
 
@@ -56,14 +56,57 @@ Están los dos scripts que hacen falta, documentados en [DATASET_PRUEBA.md](DATA
 - `scripts/cargar-dataset.mjs` los sube y arma un informe con el tipo detectado, la confianza,
   los campos extraídos y los hallazgos abiertos, midiendo el acierto contra lo esperado.
 
-Falta correr la carga: necesita credenciales de una organización del entorno, que van por
-variable de entorno. La respuesta conocida es lo que convierte el ejercicio en una medición y no
-en una impresión: sin ella, cargar quince documentos solo dice que no se rompió nada.
+### Resultado de la corrida
+
+15 documentos cargados sobre el tenant `demo`, con el proveedor **GEMINI** real
+(`gemini-2.5-flash`, confianza 0.95–1.00). **15/15 cargados y 15/15 con el tipo correcto.**
+
+El informe marcó 14/15 porque yo había anotado que el contrato de locación debía caer al esquema
+genérico. Estaba mal: el tenant tiene 16 plantillas, entre ellas `CONTRATO_DE_LOCACION`, así que
+el sistema lo clasificó bien y la respuesta esperada era mía y estaba equivocada.
+
+El manual de AFIP de 32 páginas —un PDF real, no generado— cayó al esquema genérico como
+correspondía y extrajo 5 de 9 campos. Es la confirmación del punto 2 sobre un documento real.
+
+### Lo que la corrida no pudo comprobar
+
+Los dos defectos plantados (CUIT con dígito verificador mal calculado y factura con fecha de
+emisión futura) **no abrieron hallazgo**. La causa no es el motor: las plantillas del tenant
+`demo` se cargaron a mano por API y no tienen esas reglas. La única regla que disparó fue
+`MONEDA_VALIDA`, que no existe en el código y confirma que ese catálogo es data, no semilla.
+
+Para que los defectos plantados sirvan de medición hace falta un tenant sembrado desde
+`CatalogoDocumentalBase`, que sí declara `fechaNoFutura` y `cuitValido` sobre la factura.
 
 Los documentos generados tienen formato válido pero datos ficticios. **No reemplazan
 documentación real de un cliente**, que sigue siendo lo que va a decir si la detección sirve de
 verdad; sirven como piso medible mientras tanto. DNI y licencia de conducir quedan fuera a
 propósito, por el motivo que explica `DATASET_PRUEBA.md`.
+
+## Lo que apareció buscando eso: la validación de CUIT no existía
+
+Persiguiendo por qué el CUIT inválido no abría hallazgo apareció un defecto real, independiente
+del tenant.
+
+`CatalogoDocumentalBase` declara la regla `CUIT_INVALIDO` ("CUIT con digito verificador
+invalido") como una regla de tipo `FORMATO` sobre cuatro plantillas: factura —y por herencia
+nota de crédito y nota de débito—, constancia de CUIT, DNI y remito.
+
+Pero `FORMATO` está implementado como una comparación contra una expresión regular, y
+`cumpleFormato` devuelve `true` cuando no hay expresión configurada. El record `ReglaBase` del
+catálogo **no tiene campo de configuración**, así que toda regla sembrada desde el código nace
+con `configuracion = null`. No había, además, ninguna función que calculara un dígito
+verificador en todo el backend.
+
+Resultado: el producto decía validar el CUIT y no lo validaba. Una factura con un CUIT
+inventado pasaba a `VALIDADO` y podía autoaprobarse.
+
+El arreglo agrega `utiles/ValidadorCuit`, con el cálculo de módulo 11 y los dos casos borde del
+dígito verificador (resto 11 → 0, resto 10 → 9), y hace que la regla `CUIT_INVALIDO` lo use en
+lugar de caer en la rama de expresión regular. Van 20 casos de prueba.
+
+No pude demostrarlo de punta a punta contra el entorno porque el tenant `demo` no usa el
+catálogo del código. Queda cubierto por pruebas unitarias.
 
 ## 4. Rotar la clave de Gemini · pendiente, acción manual
 
