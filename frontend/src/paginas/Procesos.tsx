@@ -451,6 +451,8 @@ function EstudioProceso({
   const [error, setError] = useState<string | null>(null);
   const [detalles, setDetalles] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [pasoAgregado, setPasoAgregado] = useState<string | null>(null);
+  const [tipoNuevoPaso, setTipoNuevoPaso] = useState("");
 
   const consulta = useQuery({
     queryKey: ["proceso", procesoId],
@@ -542,6 +544,13 @@ function EstudioProceso({
       setPasos(iniciales);
     }
   }, [borrador]);
+
+  useEffect(() => {
+    if (!pasoAgregado) return;
+    const elemento = document.getElementById("paso-" + pasoAgregado);
+    elemento?.scrollIntoView({ block: "center", behavior: "smooth" });
+    setPasoAgregado(null);
+  }, [pasoAgregado]);
 
   const refrescar = () =>
     clienteConsultas.invalidateQueries({ queryKey: ["proceso", procesoId] });
@@ -681,6 +690,8 @@ function EstudioProceso({
     publicar.isPending;
 
   function agregarPaso(tipo: TipoNodoProceso) {
+    const nombre =
+      TIPOS_PASO.find((opcion) => opcion.valor === tipo)?.texto ?? tipo;
     const paso: Paso = {
       id:
         "paso-" +
@@ -688,10 +699,12 @@ function EstudioProceso({
         "-" +
         Math.random().toString(36).slice(2, 6),
       tipo,
-      nombre: TIPOS_PASO.find((opcion) => opcion.valor === tipo)?.texto ?? tipo,
+      nombre,
     };
     setPasos((actuales) => [...actuales, paso]);
     setExpandido(paso.id);
+    setPasoAgregado(paso.id);
+    setAviso(`Se agrego el paso "${nombre}" al final. Configuralo y guarda el borrador.`);
   }
 
   function mover(id: string, desplazamiento: -1 | 1) {
@@ -868,7 +881,7 @@ function EstudioProceso({
                 >
                   <PasoFijo etiqueta="Inicio" />
                   {pasos.map((paso, indice) => (
-                    <li key={paso.id}>
+                    <li key={paso.id} id={"paso-" + paso.id}>
                       <Tarjeta
                         padding="p-0"
                         className={
@@ -980,11 +993,14 @@ function EstudioProceso({
               <div className="mt-espacio-6 grid gap-espacio-5 border-t border-borde pt-espacio-5">
                 <Selector
                   etiqueta="Agregar paso"
-                  value=""
+                  ayuda="El paso nuevo se suma al final del recorrido y se abre para que lo configures."
+                  value={tipoNuevoPaso}
                   onChange={(evento) => {
-                    if (evento.target.value) {
-                      agregarPaso(evento.target.value as TipoNodoProceso);
-                      evento.target.value = "";
+                    const elegido = evento.target.value;
+                    setTipoNuevoPaso(elegido);
+                    if (elegido) {
+                      agregarPaso(elegido as TipoNodoProceso);
+                      setTipoNuevoPaso("");
                     }
                   }}
                   className="w-full sm:max-w-sm"
@@ -1028,9 +1044,46 @@ function EstudioProceso({
               descripcion="Las instancias nuevas usan esta versión. Una instancia ya iniciada conserva su versión aunque publiques otra."
               acciones={<Pastilla tono="exito">Publicada</Pastilla>}
             />
-            <p className="mt-espacio-3 break-all rounded-control bg-lienzo p-espacio-3 font-codigo text-codigo text-tinta-suave">
-              Hash: {publicada.hash ?? "—"}
-            </p>
+            <dl className="mt-espacio-4 grid gap-espacio-4 sm:grid-cols-3">
+              <div>
+                <dt className="text-micro uppercase tracking-wide text-tinta-suave">
+                  Publicada
+                </dt>
+                <dd className="mt-espacio-1 text-pequeno text-tinta">
+                  {publicada.publicada ? formatearFecha(publicada.publicada) : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-micro uppercase tracking-wide text-tinta-suave">
+                  Pasos del recorrido
+                </dt>
+                <dd className="mt-espacio-1 text-pequeno text-tinta tabular-nums">
+                  {inspeccionarGrafo(publicada.grafo).pasos.length}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-micro uppercase tracking-wide text-tinta-suave">
+                  Nota de la versión
+                </dt>
+                <dd className="mt-espacio-1 text-pequeno text-tinta [overflow-wrap:anywhere]">
+                  {publicada.cambios?.trim() || "Sin nota"}
+                </dd>
+              </div>
+            </dl>
+            {publicada.hash ? (
+              <details className="mt-espacio-4 border-t border-borde pt-espacio-3">
+                <summary className="cursor-pointer text-pequeno text-tinta-suave">
+                  Huella de integridad
+                </summary>
+                <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+                  Identifica de forma única el contenido de esta versión. Sirve para auditoría:
+                  si el recorrido publicado cambiara, la huella cambia.
+                </p>
+                <p className="mt-espacio-2 break-all rounded-control bg-lienzo p-espacio-3 font-codigo text-codigo text-tinta-suave">
+                  {publicada.hash}
+                </p>
+              </details>
+            ) : null}
           </Tarjeta>
         ) : null}
 

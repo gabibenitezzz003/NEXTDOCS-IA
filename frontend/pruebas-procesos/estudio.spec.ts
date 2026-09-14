@@ -63,6 +63,9 @@ async function preparar(pagina: Page, grafo = grafoLineal()) {
     codigoDefinicion: "PRUEBA",
     numero: 8,
     estado: "BORRADOR",
+    hash: "73ec716e3e3323b0cbecca025fcba0360165250b78ff6a1cf7110f213358bbce",
+    publicada: "2026-09-01T12:00:00Z",
+    cambios: "Version de prueba",
     grafo: control.grafo,
   });
   const proceso = () => ({
@@ -275,4 +278,38 @@ test("bloquea también un grafo actualizado después de abrir desde caché", asy
   await page.getByRole("button", { name: "Abrir estudio" }).click();
   await expect(page.getByText(/no puede representar fielmente/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Guardar borrador" })).toBeDisabled();
+});
+
+test("agregar un paso avisa que se agrego y lo deja abierto para configurar", async ({
+  page,
+}) => {
+  await preparar(page);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+
+  const pasos = page.locator('ol li[id^="paso-"]');
+  await expect(pasos).toHaveCount(1);
+  const antes = await pasos.count();
+
+  await page.getByLabel("Agregar paso").selectOption("NOTIFICACION");
+
+  await expect(pasos).toHaveCount(antes + 1);
+  await expect(page.getByText(/Se agrego el paso "Notificar" al final/)).toBeVisible();
+  await expect(page.getByLabel("Agregar paso")).toHaveValue("");
+});
+
+test("la version publicada muestra datos utiles y esconde la huella tecnica", async ({
+  page,
+}) => {
+  await preparar(page);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+
+  const tarjeta = page.locator("section", { hasText: "Versión publicada v7" }).first();
+  await expect(tarjeta.getByText("Publicada", { exact: true }).first()).toBeVisible();
+  await expect(tarjeta.getByText("Pasos del recorrido")).toBeVisible();
+  await expect(tarjeta.getByText("Nota de la versión")).toBeVisible();
+
+  await expect(tarjeta.getByText(/^Hash:/)).toHaveCount(0);
+  const huella = tarjeta.locator("details");
+  await expect(huella.getByText("Huella de integridad")).toBeVisible();
+  await expect(huella).not.toHaveAttribute("open", /.*/);
 });
