@@ -46,11 +46,24 @@ Verifiqué que las pruebas discriminan: anulando la condición `origenTipo === "
 visor fallan exactamente las dos que miran el aviso, y siguen pasando la de la bandeja (vive en
 otro archivo) y las de campos, que no dependen del aviso.
 
-## 3. Cargar 10–15 documentos reales · pendiente, necesita los documentos
+## 3. Cargar 10–15 documentos · herramientas listas, falta correrlo
 
-Es el único punto que no se puede cerrar desde el repositorio: hace falta documentación real de
-un cliente, de tipos variados. Es también el que más valor tiene, porque es lo único que va a
-decir si la clasificación automática y la extracción sirven de verdad.
+Están los dos scripts que hacen falta, documentados en [DATASET_PRUEBA.md](DATASET_PRUEBA.md):
+
+- `scripts/generar-dataset.mjs` arma 14 documentos argentinos en PDF con **respuesta conocida**
+  (`esperado.json`), incluyendo dos con defectos plantados para ver si las reglas de validación
+  se aplican, y un contrato que no está en el catálogo para ejercitar el esquema genérico;
+- `scripts/cargar-dataset.mjs` los sube y arma un informe con el tipo detectado, la confianza,
+  los campos extraídos y los hallazgos abiertos, midiendo el acierto contra lo esperado.
+
+Falta correr la carga: necesita credenciales de una organización del entorno, que van por
+variable de entorno. La respuesta conocida es lo que convierte el ejercicio en una medición y no
+en una impresión: sin ella, cargar quince documentos solo dice que no se rompió nada.
+
+Los documentos generados tienen formato válido pero datos ficticios. **No reemplazan
+documentación real de un cliente**, que sigue siendo lo que va a decir si la detección sirve de
+verdad; sirven como piso medible mientras tanto. DNI y licencia de conducir quedan fuera a
+propósito, por el motivo que explica `DATASET_PRUEBA.md`.
 
 ## 4. Rotar la clave de Gemini · pendiente, acción manual
 
