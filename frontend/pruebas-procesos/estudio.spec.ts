@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import type { GrafoProceso, InstanciaProceso } from "../src/api/procesos";
+import { desplegable, elegirEnDesplegable } from "../pruebas-transversales/desplegable";
 
 function grafoLineal(): GrafoProceso {
   return {
@@ -162,7 +163,7 @@ for (const caso of ["ramas", "condición"]) {
     await expect(page.getByText(/no puede representar fielmente/i)).toBeVisible();
     await expect(page.getByRole("button", { name: "Guardar borrador" })).toBeDisabled();
     await expect(page.getByRole("button", { name: "Publicar v8" })).toBeDisabled();
-    await expect(page.getByLabel("Agregar paso")).toBeDisabled();
+    await expect(desplegable(page, "Agregar paso")).toHaveAttribute("aria-disabled", "true");
     expect(control.guardados).toEqual([]);
     expect(control.publicaciones).toBe(0);
   });
@@ -290,11 +291,11 @@ test("agregar un paso avisa que se agrego y lo deja abierto para configurar", as
   await expect(pasos).toHaveCount(1);
   const antes = await pasos.count();
 
-  await page.getByLabel("Agregar paso").selectOption("NOTIFICACION");
+  await elegirEnDesplegable(page, "Agregar paso", "Notificar");
 
   await expect(pasos).toHaveCount(antes + 1);
   await expect(page.getByText(/Se agrego el paso "Notificar" al final/)).toBeVisible();
-  await expect(page.getByLabel("Agregar paso")).toHaveValue("");
+  await expect(desplegable(page, "Agregar paso")).toContainText("Elegi un tipo de paso");
 });
 
 test("la version publicada muestra datos utiles y esconde la huella tecnica", async ({

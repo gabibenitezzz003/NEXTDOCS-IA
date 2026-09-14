@@ -2,12 +2,13 @@ import type {
   ButtonHTMLAttributes,
   CSSProperties,
   InputHTMLAttributes,
+  KeyboardEvent,
   ReactElement,
   ReactNode,
   SelectHTMLAttributes,
 } from "react";
-import { useEffect, useId, useRef } from "react";
-import { IconoCerrar } from "./Iconos";
+import { Children, isValidElement, useEffect, useId, useRef, useState } from "react";
+import { IconoCerrar, IconoFlechaAbajo } from "./Iconos";
 
 export type Tono =
   "neutro" | "violeta" | "exito" | "alerta" | "rojo" | "informacion";
@@ -229,6 +230,7 @@ function MarcoCampo({
     <div className="min-w-0">
       {etiqueta ? (
         <label
+          id={`${id}-etiqueta`}
           htmlFor={id}
           className="mb-espacio-2 block text-pequeno font-semibold text-tinta-media"
         >
@@ -309,6 +311,30 @@ export function Campo({
   );
 }
 
+interface OpcionSelector {
+  valor: string;
+  texto: string;
+  deshabilitada: boolean;
+}
+
+function leerOpciones(children: ReactNode): OpcionSelector[] {
+  const opciones: OpcionSelector[] = [];
+  Children.forEach(children, (hijo) => {
+    if (!isValidElement(hijo)) return;
+    const props = hijo.props as {
+      value?: string | number;
+      children?: ReactNode;
+      disabled?: boolean;
+    };
+    opciones.push({
+      valor: String(props.value ?? ""),
+      texto: String(props.children ?? ""),
+      deshabilitada: Boolean(props.disabled),
+    });
+  });
+  return opciones;
+}
+
 export function Selector({
   etiqueta,
   ayuda,
@@ -318,7 +344,10 @@ export function Selector({
   "aria-invalid": invalido,
   children,
   className = "",
-  ...resto
+  value,
+  onChange,
+  disabled,
+  name,
 }: SelectHTMLAttributes<HTMLSelectElement> & MensajesCampo) {
   const { identificador, descritoPor } = useDescripcionCampo(
     id,
@@ -326,6 +355,103 @@ export function Selector({
     error,
     descripcion,
   );
+  const opciones = leerOpciones(children);
+  const seleccionada = String(value ?? "");
+  const indiceActual = Math.max(
+    0,
+    opciones.findIndex((opcion) => opcion.valor === seleccionada),
+  );
+
+  const [abierto, setAbierto] = useState(false);
+  const [resaltada, setResaltada] = useState(indiceActual);
+  const contenedor = useRef<HTMLDivElement>(null);
+  const lista = useRef<HTMLUListElement>(null);
+
+  useEffect(() => {
+    if (!abierto) return;
+    function alClicFuera(evento: MouseEvent) {
+      if (!contenedor.current?.contains(evento.target as Node)) setAbierto(false);
+    }
+    document.addEventListener("mousedown", alClicFuera);
+    return () => document.removeEventListener("mousedown", alClicFuera);
+  }, [abierto]);
+
+  useEffect(() => {
+    if (!abierto) return;
+    lista.current?.children[resaltada]?.scrollIntoView({ block: "nearest" });
+  }, [abierto, resaltada]);
+
+  function elegir(indice: number) {
+    const opcion = opciones[indice];
+    if (!opcion || opcion.deshabilitada) return;
+    setAbierto(false);
+    if (opcion.valor === seleccionada) return;
+    onChange?.({
+      target: { value: opcion.valor, name: name ?? "" },
+      currentTarget: { value: opcion.valor, name: name ?? "" },
+    } as never);
+  }
+
+  function mover(salto: number) {
+    setResaltada((actual) => {
+      let siguiente = actual;
+      for (let intento = 0; intento < opciones.length; intento++) {
+        siguiente =
+          (siguiente + salto + opciones.length) % opciones.length;
+        if (!opciones[siguiente].deshabilitada) return siguiente;
+      }
+      return actual;
+    });
+  }
+
+  function alTeclado(evento: KeyboardEvent<HTMLDivElement>) {
+    if (disabled) return;
+    if (evento.key === "Escape" && abierto) {
+      evento.preventDefault();
+      setAbierto(false);
+      return;
+    }
+    if (evento.key === "Tab") {
+      setAbierto(false);
+      return;
+    }
+    if (!abierto) {
+      if (["Enter", " ", "ArrowDown", "ArrowUp"].includes(evento.key)) {
+        evento.preventDefault();
+        setResaltada(indiceActual);
+        setAbierto(true);
+      }
+      return;
+    }
+    if (evento.key === "ArrowDown") {
+      evento.preventDefault();
+      mover(1);
+    } else if (evento.key === "ArrowUp") {
+      evento.preventDefault();
+      mover(-1);
+    } else if (evento.key === "Home") {
+      evento.preventDefault();
+      setResaltada(0);
+    } else if (evento.key === "End") {
+      evento.preventDefault();
+      setResaltada(opciones.length - 1);
+    } else if (evento.key === "Enter" || evento.key === " ") {
+      evento.preventDefault();
+      elegir(resaltada);
+    } else if (evento.key.length === 1) {
+      const buscado = evento.key.toLowerCase();
+      const encontrado = opciones.findIndex(
+        (opcion) =>
+          !opcion.deshabilitada &&
+          opcion.texto.toLowerCase().startsWith(buscado),
+      );
+      if (encontrado >= 0) setResaltada(encontrado);
+    }
+  }
+
+  const textoVisible = opciones[indiceActual]?.texto ?? "";
+  const idLista = `${identificador}-lista`;
+
   return (
     <MarcoCampo
       id={identificador}
@@ -333,15 +459,67 @@ export function Selector({
       ayuda={ayuda}
       error={error}
     >
-      <select
-        {...resto}
-        id={identificador}
-        aria-describedby={descritoPor}
-        aria-invalid={error ? true : invalido}
-        className={`${CAMPO_BASE} cursor-pointer pr-espacio-8 ${className}`}
-      >
-        {children}
-      </select>
+      <div ref={contenedor} className={`relative min-w-0 ${className}`}>
+        <div
+          id={identificador}
+          role="combobox"
+          tabIndex={disabled ? -1 : 0}
+          aria-expanded={abierto}
+          aria-controls={abierto ? idLista : undefined}
+          aria-haspopup="listbox"
+          aria-labelledby={etiqueta ? `${identificador}-etiqueta` : undefined}
+          aria-describedby={descritoPor}
+          aria-invalid={error ? true : invalido}
+          aria-disabled={disabled}
+          onKeyDown={alTeclado}
+          onClick={() => {
+            if (disabled) return;
+            setResaltada(indiceActual);
+            setAbierto((valor) => !valor);
+          }}
+          className={`${CAMPO_BASE} flex cursor-pointer items-center justify-between gap-espacio-2 pr-espacio-3 ${
+            disabled ? "cursor-not-allowed bg-lienzo text-tinta-tenue" : ""
+          } ${abierto ? "border-foco" : ""}`}
+        >
+          <span className="truncate">{textoVisible}</span>
+          <span
+            aria-hidden="true"
+            className={`shrink-0 text-tinta-suave transition-transform ${abierto ? "rotate-180" : ""}`}
+          >
+            <IconoFlechaAbajo tamano={14} />
+          </span>
+        </div>
+        {abierto ? (
+          <ul
+            ref={lista}
+            id={idLista}
+            role="listbox"
+            aria-labelledby={etiqueta ? `${identificador}-etiqueta` : undefined}
+            className="absolute z-50 mt-espacio-1 max-h-64 w-full overflow-auto rounded-control border border-borde bg-superficie py-espacio-1 shadow-elevado"
+          >
+            {opciones.map((opcion, indice) => (
+              <li
+                key={opcion.valor + indice}
+                role="option"
+                aria-selected={opcion.valor === seleccionada}
+                aria-disabled={opcion.deshabilitada || undefined}
+                onMouseEnter={() => setResaltada(indice)}
+                onMouseDown={(evento) => evento.preventDefault()}
+                onClick={() => elegir(indice)}
+                className={`cursor-pointer px-espacio-3 py-espacio-2 text-pequeno ${
+                  opcion.deshabilitada
+                    ? "cursor-not-allowed text-tinta-tenue"
+                    : indice === resaltada
+                      ? "bg-violeta-tenue text-accion-tonal-texto"
+                      : "text-tinta"
+                }`}
+              >
+                {opcion.texto}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
     </MarcoCampo>
   );
 }
