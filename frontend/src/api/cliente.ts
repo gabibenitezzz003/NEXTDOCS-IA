@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, type AxiosInstance } from "axios";
 import type { ErrorApi, Sesion } from "../tipos/api";
 
 const CLAVE_REFRESCO = "nextdocs.tokenRefresco";
@@ -65,27 +65,41 @@ async function refrescar(): Promise<string | null> {
   }
 }
 
-cliente.interceptors.response.use(
-  (respuesta) => respuesta,
-  async (error: AxiosError<ErrorApi>) => {
-    const original = error.config as (typeof error.config & { _reintentado?: boolean; _versionSesion?: number }) | undefined;
-    if (error.response?.status === 401 && original && !original._reintentado) {
-      if (original._versionSesion !== versionSesion) return Promise.reject(error);
-      original._reintentado = true;
-      const solicitud = refrescoEnCurso ?? refrescar();
-      refrescoEnCurso = solicitud;
-      const nuevo = await solicitud;
-      if (refrescoEnCurso === solicitud) refrescoEnCurso = null;
-      if (original._versionSesion !== versionSesion) return Promise.reject(error);
-      if (nuevo) {
-        original.headers.Authorization = `Bearer ${nuevo}`;
-        return cliente(original);
+export function instalarRefrescoDeSesion(instancia: AxiosInstance) {
+  instancia.interceptors.request.use((configuracion) => {
+    const contexto = configuracion as typeof configuracion & {
+      _versionSesion?: number;
+    };
+    contexto._versionSesion = versionSesion;
+    return configuracion;
+  });
+
+  instancia.interceptors.response.use(
+    (respuesta) => respuesta,
+    async (error: AxiosError<ErrorApi>) => {
+      const original = error.config as
+        | (typeof error.config & { _reintentado?: boolean; _versionSesion?: number })
+        | undefined;
+      if (error.response?.status === 401 && original && !original._reintentado) {
+        if (original._versionSesion !== versionSesion) return Promise.reject(error);
+        original._reintentado = true;
+        const solicitud = refrescoEnCurso ?? refrescar();
+        refrescoEnCurso = solicitud;
+        const nuevo = await solicitud;
+        if (refrescoEnCurso === solicitud) refrescoEnCurso = null;
+        if (original._versionSesion !== versionSesion) return Promise.reject(error);
+        if (nuevo) {
+          original.headers.Authorization = `Bearer ${nuevo}`;
+          return instancia(original);
+        }
+        alExpirarSesion?.();
       }
-      alExpirarSesion?.();
-    }
-    return Promise.reject(error);
-  },
-);
+      return Promise.reject(error);
+    },
+  );
+}
+
+instalarRefrescoDeSesion(cliente);
 
 export function mensajeDeError(error: unknown): string {
   if (axios.isAxiosError<ErrorApi>(error)) {
@@ -107,6 +121,26 @@ export function mensajeDeError(error: unknown): string {
     if (!error.response) {
       return "No se pudo contactar al servidor. Verifica que el backend este levantado";
     }
+    return porEstado(error.response.status);
   }
   return "Ocurrio un error inesperado";
+}
+
+function porEstado(estado: number): string {
+  if (estado === 401) {
+    return "La sesion no es valida para este servicio. Volve a entrar";
+  }
+  if (estado === 403) {
+    return "Tu usuario no tiene permiso para esta operacion";
+  }
+  if (estado === 404) {
+    return "El servicio no reconoce esta direccion (404). Puede estar desactualizado";
+  }
+  if (estado === 502 || estado === 503 || estado === 504) {
+    return `El servicio no esta respondiendo (${estado}). Reintenta en unos segundos`;
+  }
+  if (estado >= 500) {
+    return `El servicio respondio con un error (${estado})`;
+  }
+  return `La peticion fue rechazada (${estado})`;
 }

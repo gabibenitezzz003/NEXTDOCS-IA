@@ -1,5 +1,9 @@
 import axios from "axios";
-import { mensajeDeError, tokenAccesoActual } from "./cliente";
+import {
+  instalarRefrescoDeSesion,
+  mensajeDeError,
+  tokenAccesoActual,
+} from "./cliente";
 
 export type TipoNodoProceso =
   | "INICIO"
@@ -204,6 +208,8 @@ clienteProcesos.interceptors.request.use((configuracion) => {
   }
   return configuracion;
 });
+
+instalarRefrescoDeSesion(clienteProcesos);
 
 export function fijarTenantProcesos(tenantId: string | null) {
   tenantActual = tenantId;
