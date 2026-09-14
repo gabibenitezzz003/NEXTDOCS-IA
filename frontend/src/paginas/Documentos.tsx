@@ -445,7 +445,7 @@ function NombreDocumento({
           evento.stopPropagation();
           alAbrir();
         }}
-        className="h-auto! min-h-control-pequeno max-w-full justify-start px-0! text-left whitespace-normal! text-tinta hover:underline group-hover:text-violeta"
+        className="h-auto! min-h-control-pequeno max-w-full justify-start px-0! text-left whitespace-normal! text-tinta hover:underline group-hover:text-accion-tonal-texto"
       >
         <span className="min-w-0">{documento.nombre ?? "Sin nombre"}</span>
       </Boton>

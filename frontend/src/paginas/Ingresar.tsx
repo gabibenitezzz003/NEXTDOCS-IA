@@ -5,6 +5,7 @@ import { Logotipo } from "../componentes/Marca";
 import { Boton, Campo } from "../componentes/Interfaz";
 import { ErrorPanel } from "../componentes/Estados";
 import { IconoCandado, IconoCheck } from "../componentes/Iconos";
+import { AlternarTema } from "../componentes/Tema";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { mensajeDeError } from "../api/cliente";
 
@@ -87,9 +88,12 @@ export function Ingresar() {
         <div className="w-full max-w-[420px] lg:hidden">
           <Logotipo />
         </div>
-        <p className="hidden w-full max-w-[420px] text-micro uppercase tracking-widest text-tinta-suave lg:block">
-          Portal seguro · acceso empresarial
-        </p>
+        <div className="hidden w-full max-w-[420px] items-center justify-between gap-espacio-3 lg:flex">
+          <p className="text-micro uppercase tracking-widest text-tinta-suave">
+            Portal seguro · acceso empresarial
+          </p>
+          <AlternarTema />
+        </div>
         <div className="flex w-full max-w-[420px] flex-1 items-start sm:items-center">
           <form
             onSubmit={enviar}

@@ -1,49 +1,42 @@
-import { useId } from "react";
+import logotipo from "../assets/next-doc-ai-logo.png";
+import simbolo from "../assets/next-doc-ai-symbol.png";
 
-export function Isotipo({ tamano = 32, animado = false }: { tamano?: number; animado?: boolean }) {
-  const fondo = useId();
-  const brillo = useId();
+/*
+ * Marca institucional NEXT DOC AI. Los archivos son los oficiales del Design
+ * System v0.2 (proyecto-next-doc/src/assets). El documento del símbolo es
+ * grafito, así que sobre fondo oscuro se apoya en una placa blanca, que es el
+ * tratamiento que define .nd-brand en el SDK.
+ */
+
+const PROPORCION_LOGO = 505 / 157;
+const PROPORCION_SIMBOLO = 189 / 157;
+
+export function Isotipo({
+  tamano = 32,
+  claro = false,
+}: {
+  tamano?: number;
+  claro?: boolean;
+}) {
   return (
-    <svg width={tamano} height={tamano} viewBox="0 0 40 40" fill="none" aria-hidden>
-      <defs>
-        <linearGradient id={fondo} x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#8A63FF" />
-          <stop offset="46%" stopColor="#6C38FF" />
-          <stop offset="100%" stopColor="#FF1E1E" />
-        </linearGradient>
-        <linearGradient id={brillo} x1="0" y1="0" x2="0" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.34" />
-          <stop offset="55%" stopColor="#FFFFFF" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-
-      <rect width="40" height="40" rx="11" fill={`url(#${fondo})`} />
-      <rect width="40" height="40" rx="11" fill={`url(#${brillo})`} />
-      <rect x="0.6" y="0.6" width="38.8" height="38.8" rx="10.4" stroke="#FFFFFF" strokeOpacity="0.22" strokeWidth="1.2" />
-
-      <g fill="#FFFFFF">
-        <rect x="10" y="11" width="13" height="2.6" rx="1.3" fillOpacity="0.95" />
-        <rect x="10" y="18.7" width="9" height="2.6" rx="1.3" fillOpacity="0.72" />
-        <rect x="10" y="26.4" width="6" height="2.6" rx="1.3" fillOpacity="0.5" />
-      </g>
-
-      <path
-        d="M23.2 15.4 29.6 20l-6.4 4.6"
-        stroke="#FFFFFF"
-        strokeWidth="2.7"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {animado ? (
-          <animate
-            attributeName="opacity"
-            values="0.45;1;0.45"
-            dur="2.6s"
-            repeatCount="indefinite"
-          />
-        ) : null}
-      </path>
-    </svg>
+    <span
+      className={
+        claro
+          ? "inline-flex items-center justify-center rounded-[6px] bg-blanco p-[3px]"
+          : "inline-flex items-center justify-center"
+      }
+    >
+      <img
+        src={simbolo}
+        alt=""
+        aria-hidden
+        width={Math.round(tamano * PROPORCION_SIMBOLO)}
+        height={tamano}
+        style={{ height: tamano, width: "auto" }}
+        className="block select-none"
+        draggable={false}
+      />
+    </span>
   );
 }
 
@@ -56,25 +49,27 @@ export function Logotipo({
   tamano?: number;
   escala?: number;
 }) {
+  const alto = tamano * escala;
   return (
-    <div className="flex items-center" style={{ gap: 11 * escala }}>
-      <Isotipo tamano={tamano} />
-      <span className="flex items-baseline" style={{ gap: 6 * escala }}>
-        <span
-          className={`font-titulo font-bold leading-none tracking-[-0.035em] ${
-            claro ? "text-white" : "text-grafito"
-          }`}
-          style={{ fontSize: 22 * escala }}
-        >
-          NEXT
-        </span>
-        <span
-          className="font-titulo font-bold uppercase leading-none text-rojo"
-          style={{ fontSize: 11.5 * escala, letterSpacing: 0.06 * escala + "em" }}
-        >
-          DOC AI
-        </span>
-      </span>
-    </div>
+    <span
+      role="img"
+      aria-label="NEXT DOC AI"
+      className={
+        claro
+          ? "inline-flex items-center rounded-[10px] bg-blanco px-[8px] py-[6px]"
+          : "inline-flex items-center"
+      }
+    >
+      <img
+        src={logotipo}
+        alt=""
+        aria-hidden
+        width={Math.round(alto * PROPORCION_LOGO)}
+        height={alto}
+        style={{ height: alto, width: "auto" }}
+        className="block select-none"
+        draggable={false}
+      />
+    </span>
   );
 }

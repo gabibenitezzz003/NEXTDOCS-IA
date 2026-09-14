@@ -14,7 +14,7 @@ export type Tono =
 
 const TONO_SUAVE: Record<Tono, string> = {
   neutro: "bg-lienzo text-neutro-texto ring-borde",
-  violeta: "bg-violeta-tenue text-violeta ring-violeta-borde",
+  violeta: "bg-violeta-tenue text-accion-tonal-texto ring-violeta-borde",
   exito: "bg-exito-tenue text-exito-texto ring-exito-borde",
   alerta: "bg-alerta-tenue text-alerta-texto ring-alerta-borde",
   rojo: "bg-rojo-tenue text-rojo-alto ring-rojo-borde",
@@ -125,7 +125,7 @@ export type VarianteBoton = "primario" | "secundario" | "fantasma" | "peligro";
 
 const VARIANTE_BOTON: Record<VarianteBoton, string> = {
   primario:
-    "bg-accion-primaria text-blanco enabled:hover:bg-accion-primaria-presionada enabled:active:bg-accion-primaria-presionada",
+    "bg-accion-primaria text-blanco enabled:hover:bg-accion-primaria-activa enabled:active:bg-accion-primaria-presionada",
   secundario:
     "border border-borde bg-superficie text-tinta enabled:hover:border-borde-fuerte enabled:hover:bg-lienzo enabled:active:bg-borde",
   fantasma:

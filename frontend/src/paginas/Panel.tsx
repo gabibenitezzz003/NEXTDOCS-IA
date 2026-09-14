@@ -340,7 +340,7 @@ export function Panel() {
                   accion={
                     <Link
                       to="/documentos"
-                      className="rounded-control px-espacio-4 py-espacio-3 text-pequeno font-semibold text-violeta hover:bg-violeta-tenue focus-visible:outline-foco"
+                      className="rounded-control px-espacio-4 py-espacio-3 text-pequeno font-semibold text-accion-tonal-texto hover:bg-violeta-tenue focus-visible:outline-foco"
                     >
                       Ir a documentos
                     </Link>
@@ -443,7 +443,7 @@ function DetalleIndicador({ indicador }: { indicador: IndicadorKpi }) {
         <p className="mt-espacio-2">{indicador.detalle}</p>
       ) : null}
       <details className="mt-espacio-2">
-        <summary className="w-fit cursor-pointer rounded-control text-violeta focus-visible:outline-foco">
+        <summary className="w-fit cursor-pointer rounded-control text-accion-tonal-texto focus-visible:outline-foco">
           Fórmula del indicador
         </summary>
         <p className="mt-espacio-2 [overflow-wrap:anywhere]">
@@ -632,7 +632,7 @@ function TarjetaIndicador({
             className="w-full rounded-control text-left focus-visible:outline-foco"
           >
             {contenido}
-            <span className="mt-espacio-2 inline-block text-pequeno font-semibold text-violeta">
+            <span className="mt-espacio-2 inline-block text-pequeno font-semibold text-accion-tonal-texto">
               Ver población
             </span>
           </button>
@@ -800,7 +800,7 @@ function PanelPoblacion({
         />
       ) : (
         <>
-          <p className="flex items-center gap-espacio-2 rounded-control bg-violeta-tenue px-espacio-4 py-espacio-3 text-pequeno text-violeta ring-1 ring-inset ring-violeta-borde">
+          <p className="flex items-center gap-espacio-2 rounded-control bg-violeta-tenue px-espacio-4 py-espacio-3 text-pequeno text-accion-tonal-texto ring-1 ring-inset ring-violeta-borde">
             <span aria-hidden="true" className="shrink-0">
               <IconoInfo tamano={15} />
             </span>

@@ -219,7 +219,7 @@ export function Resumen() {
                     tienePermiso("excepciones.leer") ? (
                       <Link
                         to="/excepciones"
-                        className="inline-flex min-h-control-pequeno items-center gap-espacio-1 rounded-control text-pequeno font-semibold text-violeta hover:underline focus-visible:outline-foco"
+                        className="inline-flex min-h-control-pequeno items-center gap-espacio-1 rounded-control text-pequeno font-semibold text-accion-tonal-texto hover:underline focus-visible:outline-foco"
                       >
                         Ver todas
                         <span aria-hidden="true">
