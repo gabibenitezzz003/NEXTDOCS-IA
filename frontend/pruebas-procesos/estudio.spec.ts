@@ -127,22 +127,22 @@ test("guardar conserva extremos y configuración adicional; publicar exige guard
   page,
 }) => {
   const control = await preparar(page);
-  await expect(page.getByText("v7 publicada", { exact: true })).toBeVisible();
+  await expect(page.getByText("Version 7 publicada", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Abrir estudio" }).click();
   await page.getByRole("button", { name: "Configurar", exact: true }).click();
   await page.getByLabel("Nombre del paso").fill("Paso modificado");
-  await expect(page.getByRole("button", { name: "Publicar v8" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Publicar version 8" })).toBeDisabled();
   control.errorGuardar = true;
   await page.getByRole("button", { name: "Guardar borrador" }).click();
   await expect(page.getByText("No se pudo guardar", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Publicar v8" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Publicar version 8" })).toBeDisabled();
   control.errorGuardar = false;
   await page.getByRole("button", { name: "Guardar borrador" }).click();
-  await expect(page.getByRole("button", { name: "Publicar v8" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Publicar version 8" })).toBeEnabled();
   const esperado = grafoLineal();
   esperado.nodos[1].nombre = "Paso modificado";
   expect(control.guardados).toEqual([esperado]);
-  await page.getByRole("button", { name: "Publicar v8" }).click();
+  await page.getByRole("button", { name: "Publicar version 8" }).click();
   await expect.poll(() => control.publicaciones).toBe(1);
 });
 
@@ -162,7 +162,7 @@ for (const caso of ["ramas", "condición"]) {
     await page.getByRole("button", { name: "Abrir estudio" }).click();
     await expect(page.getByText(/no puede representar fielmente/i)).toBeVisible();
     await expect(page.getByRole("button", { name: "Guardar borrador" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Publicar v8" })).toBeDisabled();
+    await expect(page.getByRole("button", { name: "Publicar version 8" })).toBeDisabled();
     await expect(desplegable(page, "Agregar paso")).toHaveAttribute("aria-disabled", "true");
     expect(control.guardados).toEqual([]);
     expect(control.publicaciones).toBe(0);
@@ -229,7 +229,7 @@ for (const estado of [
     control.instancia.tareas[0].estado = "PENDIENTE";
     await page.getByRole("button", { name: "Abrir estudio" }).click();
     await page.getByRole("button", { name: /Probar/ }).click();
-    await expect(page.getByText(`Estado ${estado} · v7`, { exact: true })).toBeVisible();
+    await expect(page.getByText(`Estado ${estado} · version 7`, { exact: true })).toBeVisible();
     const finalizada = estado === "COMPLETADA" || estado === "CANCELADA";
     await expect(page.getByText(/La instancia terminó/)).toHaveCount(finalizada ? 1 : 0);
     await expect(page.getByRole("button", { name: "Aprobar", exact: true })).toHaveCount(
@@ -243,7 +243,7 @@ test("actualiza por polling y se detiene al finalizar", async ({ page }) => {
   const control = await preparar(page);
   await page.getByRole("button", { name: "Abrir estudio" }).click();
   await page.getByRole("button", { name: /Probar/ }).click();
-  await expect(page.getByText("Estado ESPERANDO · v7", { exact: true })).toBeVisible();
+  await expect(page.getByText("Estado ESPERANDO · version 7", { exact: true })).toBeVisible();
   const inicial = control.consultasInstancia;
   control.instancia.estado = "COMPLETADA";
   await page.clock.fastForward(15_001);
@@ -304,7 +304,7 @@ test("la version publicada muestra datos utiles y esconde la huella tecnica", as
   await preparar(page);
   await page.getByRole("button", { name: "Abrir estudio" }).click();
 
-  const tarjeta = page.locator("section", { hasText: "Versión publicada v7" }).first();
+  const tarjeta = page.locator("section", { hasText: "Versión 7 publicada" }).first();
   await expect(tarjeta.getByText("Publicada", { exact: true }).first()).toBeVisible();
   await expect(tarjeta.getByText("Pasos del recorrido")).toBeVisible();
   await expect(tarjeta.getByText("Nota de la versión")).toBeVisible();

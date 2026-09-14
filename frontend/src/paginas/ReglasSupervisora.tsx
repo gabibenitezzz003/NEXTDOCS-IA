@@ -77,6 +77,7 @@ export function ReglasSupervisora() {
     return (
       <ErrorPanel
         mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
         reintentar={() => consulta.refetch()}
       />
     );

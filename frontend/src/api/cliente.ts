@@ -126,6 +126,21 @@ export function mensajeDeError(error: unknown): string {
   return "Ocurrio un error inesperado";
 }
 
+export function tituloDeError(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    if (!error.response) return "Sin conexión";
+    const estado = error.response.status;
+    if (estado === 401) return "Sesión expirada";
+    if (estado === 403) return "Sin permiso";
+    if (estado === 404) return "No encontrado";
+    if (estado === 409) return "Conflicto";
+    if (estado === 429) return "Demasiadas peticiones";
+    if (estado >= 500) return "Error del servidor";
+    if (estado >= 400) return "Petición rechazada";
+  }
+  return "Error inesperado";
+}
+
 function porEstado(estado: number): string {
   if (estado === 401) {
     return "La sesion no es valida para este servicio. Volve a entrar";

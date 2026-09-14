@@ -328,8 +328,9 @@ export function VisorDocumento({
             <Cargando filas={5} />
           ) : consulta.isError ? (
             <ErrorPanel
-              titulo="No se pudo cargar el documento"
+              contexto="No se pudo cargar el documento"
               mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
               reintentar={() => consulta.refetch()}
             />
           ) : !detalle ? (
@@ -348,7 +349,7 @@ export function VisorDocumento({
                       documento?.codigoPlantilla
                         ? documento.codigoPlantilla +
                           (documento.numeroVersionPlantilla != null
-                            ? " v" + documento.numeroVersionPlantilla
+                            ? ` · version ${documento.numeroVersionPlantilla}`
                             : "")
                         : "Sin plantilla",
                     ],

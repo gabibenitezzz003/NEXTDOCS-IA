@@ -252,6 +252,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
         ) : consulta.isError ? (
           <ErrorPanel
             mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
             reintentar={() => consulta.refetch()}
           />
         ) : procesos.length === 0 ? (
@@ -423,7 +424,7 @@ function VersionesProceso({ versiones }: { versiones: VersionProceso[] }) {
   return (
     <div className="flex flex-wrap items-center gap-espacio-2">
       {publicada ? (
-        <Pastilla tono="exito">v{publicada.numero} publicada</Pastilla>
+        <Pastilla tono="exito">Version {publicada.numero} publicada</Pastilla>
       ) : null}
       {borrador ? <Pastilla tono="alerta">borrador</Pastilla> : null}
       {!publicada && !borrador ? (
@@ -746,8 +747,9 @@ function EstudioProceso({
         />
         <Contenido>
           <ErrorPanel
-            titulo="No se pudo abrir el Studio"
+            contexto="No se pudo cargar el editor de procesos"
             mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
             reintentar={() => consulta.refetch()}
           />
         </Contenido>
@@ -785,7 +787,7 @@ function EstudioProceso({
             className="mb-espacio-6 rounded-panel border border-informacion-borde bg-informacion-tenue p-espacio-4 text-pequeno text-tinta-media"
           >
             Probar proceso crea una instancia real persistente de la versión
-            publicada v{publicada.numero}. No utiliza los cambios del borrador.
+            publicada, la version {publicada.numero}. No utiliza los cambios del borrador.
           </p>
         ) : null}
         {aviso ? (
@@ -839,7 +841,7 @@ function EstudioProceso({
             padding="p-espacio-4 sm:p-espacio-6"
           >
             <CabeceraTarjeta
-              titulo={`Borrador v${borrador.numero}`}
+              titulo={`Borrador · version ${borrador.numero}`}
               descripcion="Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados."
               acciones={
                 <Pastilla tono={hayCambios ? "alerta" : "neutro"}>
@@ -1030,7 +1032,7 @@ function EstudioProceso({
                     }
                     onClick={() => publicar.mutate()}
                   >
-                    Publicar v{borrador.numero}
+                    Publicar version {borrador.numero}
                   </Boton>
                 </div>
               </div>
@@ -1041,7 +1043,7 @@ function EstudioProceso({
         {publicada ? (
           <Tarjeta>
             <CabeceraTarjeta
-              titulo={`Versión publicada v${publicada.numero}`}
+              titulo={`Versión ${publicada.numero} publicada`}
               descripcion="Las instancias nuevas usan esta versión. Una instancia ya iniciada conserva su versión aunque publiques otra."
               acciones={<Pastilla tono="exito">Publicada</Pastilla>}
             />
@@ -1092,6 +1094,7 @@ function EstudioProceso({
           consultaInstancia.isError ? (
             <ErrorPanel
               mensaje={mensajeDeError(consultaInstancia.error)}
+          error={consultaInstancia.error}
               reintentar={() => consultaInstancia.refetch()}
             />
           ) : (
@@ -1259,7 +1262,7 @@ function PanelPrueba({
       <div className="flex flex-wrap items-start justify-between gap-espacio-4">
         <CabeceraTarjeta
           titulo={`Prueba: instancia ${instancia.id.slice(0, 8)}`}
-          descripcion={`Estado ${instancia.estado} · v${instancia.numeroVersion}`}
+          descripcion={`Estado ${instancia.estado} · version ${instancia.numeroVersion}`}
         />
         <Boton variante="fantasma" onClick={() => alAbrir(instancia.id)}>
           Abrir en Instancias

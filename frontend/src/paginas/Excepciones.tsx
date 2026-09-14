@@ -118,8 +118,9 @@ export function Excepciones() {
           <Cargando filas={5} alto="h-48" />
         ) : consulta.isError ? (
           <ErrorPanel
-            titulo="No se pudieron cargar las excepciones"
+            contexto="No se pudo cargar las excepciones"
             mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
             reintentar={() => consulta.refetch()}
           />
         ) : excepciones.length === 0 ? (
