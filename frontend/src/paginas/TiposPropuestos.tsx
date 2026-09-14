@@ -126,6 +126,7 @@ export function TiposPropuestos() {
         ) : consulta.isError ? (
           <ErrorPanel
             mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
             reintentar={() => consulta.refetch()}
           />
         ) : propuestos.length === 0 ? (

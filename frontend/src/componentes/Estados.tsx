@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { tituloDeError } from "../api/cliente";
 import { IconoInfo, IconoRecargar, IconoVacio } from "./Iconos";
 import { Boton } from "./Interfaz";
 
@@ -85,12 +86,19 @@ export function Vacio({
 export function ErrorPanel({
   mensaje,
   reintentar,
-  titulo = "No se pudo cargar",
+  titulo,
+  error,
+  contexto,
 }: {
   mensaje: string;
   reintentar?: () => void;
   titulo?: string;
+  error?: unknown;
+  contexto?: string;
 }) {
+  const encabezado =
+    titulo ?? (error === undefined ? "No se pudo cargar" : tituloDeError(error));
+  const detalle = contexto ? `${contexto}. ${mensaje}` : mensaje;
   return (
     <div
       role="alert"
@@ -101,9 +109,9 @@ export function ErrorPanel({
         <IconoInfo tamano={18} />
       </span>
       <div className="min-w-0 flex-1">
-        <p className="text-pequeno font-semibold text-rojo-alto">{titulo}</p>
+        <p className="text-pequeno font-semibold text-rojo-alto">{encabezado}</p>
         <p className="mt-espacio-1 text-pequeno text-tinta-media break-words">
-          {mensaje}
+          {detalle}
         </p>
       </div>
       {reintentar ? (

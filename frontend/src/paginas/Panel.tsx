@@ -173,6 +173,7 @@ export function Panel() {
         ) : resumen.isError ? (
           <ErrorPanel
             mensaje={mensajeDeError(resumen.error)}
+          error={resumen.error}
             reintentar={() => resumen.refetch()}
           />
         ) : (
@@ -331,6 +332,7 @@ export function Panel() {
               ) : plantillas.isError ? (
                 <ErrorPanel
                   mensaje={mensajeDeError(plantillas.error)}
+          error={plantillas.error}
                   reintentar={() => plantillas.refetch()}
                 />
               ) : !plantillas.data.length ? (
@@ -791,6 +793,7 @@ function PanelPoblacion({
       ) : poblacion.isError ? (
         <ErrorPanel
           mensaje={mensajeDeError(poblacion.error)}
+          error={poblacion.error}
           reintentar={() => poblacion.refetch()}
         />
       ) : !poblacion.data.length ? (

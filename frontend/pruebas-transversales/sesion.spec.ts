@@ -183,6 +183,9 @@ test("un error del motor de procesos dice que paso en vez de un mensaje generico
 
   await page.goto("/procesos");
 
-  await expect(page.getByText(/El servicio no esta respondiendo \(502\)/)).toBeVisible();
+  const alerta = page.getByRole("alert").first();
+  await expect(alerta).toContainText("Error del servidor");
+  await expect(alerta).toContainText("El servicio no esta respondiendo (502)");
   await expect(page.getByText("Ocurrio un error inesperado")).toHaveCount(0);
+  await expect(page.getByText(/No se pudieron cargar los/)).toHaveCount(0);
 });

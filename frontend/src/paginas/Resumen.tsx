@@ -93,8 +93,9 @@ export function Resumen() {
           </div>
         ) : resumen.isError ? (
           <ErrorPanel
-            titulo="No se pudo cargar el resumen"
+            contexto="No se pudo cargar el resumen"
             mensaje={mensajeDeError(resumen.error)}
+          error={resumen.error}
             reintentar={() => resumen.refetch()}
           />
         ) : (
@@ -238,8 +239,9 @@ export function Resumen() {
                     <Cargando filas={3} alto="h-20" />
                   ) : excepciones.isError ? (
                     <ErrorPanel
-                      titulo="No se pudieron cargar las excepciones"
+                      contexto="No se pudo cargar las excepciones"
                       mensaje={mensajeDeError(excepciones.error)}
+          error={excepciones.error}
                       reintentar={() => excepciones.refetch()}
                     />
                   ) : !excepciones.data?.content.length ? (
