@@ -99,10 +99,10 @@ en procesos, terceros, partners y contenido COMEX.
 | **A. Docs Core** | ✅ Completo: ingesta segura, clasificación automática, captura genérica, extracción Gemini/DeepSeek, validación, revisión, aprendizaje, excepciones, auditoría, API/webhooks | Documentación real de un cliente (P0-02 punto 3) |
 | **B. Workflow Core** | ✅ Motor completo: 8 controladores, 48 endpoints, 16 entidades, 11 migraciones, 107 pruebas. Los 12 nodos del MVP0, instancia fijada a versión, SLA de plantilla y de nodo | Conectores productivos e IAM real |
 | **C. Studio guiado** | ✅ Editor de pasos con panel de configuración, borrador, versionado, probar y publicar | Duplicar una plantilla: el backend expone `/clonar` y el portal no lo usa (P0-04) |
-| **D. Colaboración externa** | ✅ Cuenta externa y enlace de acción seguro con token, scopes, expiración y usos máximos | Superficie de UI propia |
-| **E. IA Supervisora v0** | ✅ Reglas configurables por plantilla con umbral y operador, hallazgos, bloqueo de instancia y pantalla de administración | Controles cross-doc y de secuencia |
+| **D. Colaboración externa** | ✅ Cuenta externa y enlace de acción seguro con token, scopes, expiración y usos máximos | Portal del tercero — **fuera del MVP0** (§6) |
+| **E. IA Supervisora v0** | ✅ Reglas configurables por plantilla con umbral y operador, hallazgos, bloqueo de instancia y pantalla de administración | Controles cross-doc y de secuencia — **fuera del MVP0** (§6) |
 | **F. Biblioteca COMEX/Follow** | ✅ Catálogo argentino de 11 tipos documentales y plantillas de proceso COMEX con fixtures | Overlays por vertical |
-| **G. Partner Foundation** | ✅ Partner org, delegated grants, ownership/provenance/fork/install | Sin superficie de UI: hay 11 endpoints de partners y marketplace que el portal no consume |
+| **G. Partner Foundation** | ✅ Partner org, delegated grants, ownership/provenance/fork/install | Pantalla de delegaciones — **fuera del MVP0** (§6). 11 endpoints de partners y marketplace sin consumir |
 | **H. Gobernanza & KPI** | ✅ Auditoría, reconstrucción de decisión, 11 KPI documentales y 14 de proceso con drill-down, export con manifiesto, costo por tenant | — |
 | **I. Integración** | ✅ API REST, webhooks HMAC, SSO, FollowConnector de matching | Context Contract + Template Recommender + `subject_ref` genérico (P0-10) |
 
@@ -232,6 +232,9 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   indicadores de tareas.
 - [ ] **P0-15 · Release comercial** (E14 · gate 0H) — nueva en V11
   Demo de proceso completa, runbook, soporte, rollback y acta de salida (0A–0G con evidencia).
+  El runbook está en [RUNBOOK_OPERACION.md](RUNBOOK_OPERACION.md) y el alcance quedó acotado al
+  núcleo documental más procesos (ver §6). Faltan los dos puntos del checklist —rotar la clave y
+  cargar documentación real— y el acta.
 
 ### P1 — apenas cierre el MVP0 (hacia MVP1)
 
@@ -297,20 +300,53 @@ Las convenciones de `EMPEZAR_ACA.md` siguen vigentes y son particularmente sensi
 
 ## 6. Criterios de salida del MVP0 Comercial
 
-Checklist de cierre (§13 del análisis de desvíos):
+### Qué entra y qué no
 
-- [ ] Un tenant nuevo opera standalone sin Follow: crea usuarios, sube documentos y ejecuta una plantilla de proceso.
-- [ ] Un Process Admin duplica una plantilla, cambia responsables/documentos/SLA/controles, prueba y publica versión nueva sin soporte de desarrollo.
-- [ ] Una instancia iniciada en v1 continúa en v1 aunque se publique v2; migración sólo explícita.
-- [ ] Un tercero completa una tarea por cuenta limitada o Secure Action Link sin acceder a otro recurso/tenant.
-- [ ] La IA Supervisora detecta documento faltante, baja confianza, inconsistencia cross-doc configurada y SLA vencido; crea acción auditada.
-- [ ] Un partner con delegación explícita configura plantillas en un cliente sin visibilidad de otros clientes.
-- [ ] Una plantilla conserva autor, owner, provenance, versión e instalación; un fork del cliente no altera el original del partner.
-- [ ] Las 14 plantillas COMEX pasan validación estructural con fixtures; los overlays se componen sin duplicar lógica.
-- [ ] Follow solicita recomendación por contexto y activa una instancia sin hardcodear nombre de plantilla.
-- [ ] Playwright cubre los recorridos críticos; cross-tenant/secure link/publicación están en CI.
-- [ ] Existe baseline de rendimiento y costo por documento/proceso; backup/restore y observabilidad probados.
-- [ ] Datos reales de piloto producen salidas útiles o excepciones accionables; secretos de desarrollo rotados.
+El checklist original (§13 del análisis de desvíos) describía un producto más ancho que el que
+hoy es demostrable. Se acota el MVP0 al **núcleo documental más el motor de procesos**, que es lo
+que está construido, verificado y se puede mostrar.
+
+El criterio no es nuevo: P0-08 ya declaraba `marketplace_listing` y `commercial_terms`
+**dormantes en MVP0** — modelados desde el día uno para no romper trazabilidad después, sin
+superficie hasta que haga falta. Se aplica el mismo criterio a partners y colaboración externa,
+que están en la misma situación: backend completo, cero pantallas.
+
+| Fuera del MVP0 | Estado | Por qué se pospone |
+|---|---|---|
+| Marketplace de plantillas | tablas modeladas, dormantes | Ya estaba declarado así en P0-08 |
+| Partners: pantalla de delegaciones | 7 endpoints, sin UI | Sin partners reales todavía; la delegación se configura por API |
+| Colaboración externa: portal del tercero | 7 endpoints, sin UI | El enlace de acción seguro funciona; falta la pantalla que lo consume |
+| Supervisora cross-document | motor de umbral sobre un dato | Comparar entre documentos es otro motor, no un ajuste |
+| Duplicar plantilla desde el portal | `POST /procesos/{id}/clonar` sin consumir | Único hueco del Studio; entra si se decide cerrarlo antes |
+
+Nada de esto se borra ni se esconde: el backend queda donde está, probado, y la superficie se
+agrega cuando exista la demanda que la justifique. Lo que **no** se hace es dar por cumplido un
+criterio porque el endpoint existe.
+
+### Checklist acotado
+
+- [x] Un documento entra por el portal, el sistema detecta su tipo, extrae los campos, valida y abre excepción accionable cuando algo no cierra.
+- [x] El visor muestra los datos también cuando el documento cayó al esquema genérico, y lo señala.
+- [x] Una corrección humana viaja con la decisión y queda auditada.
+- [x] Un proceso se diseña en el Studio, se prueba y se publica con versionado.
+- [x] Una instancia iniciada en v1 continúa en v1 aunque se publique v2.
+- [x] Las tareas se resuelven desde la bandeja, con SLA heredado de la plantilla o propio del nodo.
+- [x] La IA Supervisora evalúa reglas configurables por plantilla, abre hallazgos y bloquea la instancia cuando corresponde, con pantalla propia de administración.
+- [x] Los indicadores de proceso son visibles y su drill-down devuelve la población exacta.
+- [x] Follow solicita recomendación por contexto y recibe la plantilla sin hardcodear su nombre.
+- [x] Playwright cubre los recorridos críticos del portal: 67 pruebas en tres suites.
+- [x] Existe línea base de rendimiento; backup y restore verificados sobre las dos mitades.
+- [ ] **Rotar la clave de Gemini usada en desarrollo.**
+- [ ] **Cargar documentación real de un cliente y comprobar que produce salidas útiles o excepciones accionables.**
+
+Quedan dos, y ninguno es desarrollo. El segundo es el único que todavía puede cambiar la
+conclusión: todo lo cargado hasta ahora lo armamos nosotros.
+
+### Lo que queda para producción, no para la demo
+
+Del runbook: exponer las métricas del core al scraper sin romper la autenticación, límite de
+peticiones en el motor de procesos si sale de la red interna, alertas configuradas contra los
+umbrales, y respaldo automático programado con su verificación.
 
 ---
 

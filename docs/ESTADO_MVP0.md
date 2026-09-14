@@ -214,6 +214,21 @@ es carga de datos, no desarrollo.
 
 ---
 
+## Alcance del cierre
+
+El MVP0 se cierra sobre el **núcleo documental más el motor de procesos**. Quedan fuera, con el
+backend construido y probado pero sin pantalla, tres cosas: el marketplace de plantillas —que ya
+estaba declarado dormante desde el principio—, la pantalla de delegaciones de partners y el portal
+del tercero. También queda fuera el control cross-document de la Supervisora, que es otro motor y
+no un ajuste del que hay.
+
+No se borra nada: el backend queda donde está y la superficie se agrega cuando exista la demanda
+que la justifique. El detalle y la razón de cada uno están en
+[TODO_MVP0_COMERCIAL.md](TODO_MVP0_COMERCIAL.md) §6.
+
+La alternativa era dar por cumplidos esos criterios porque el endpoint existe. Un criterio que
+dice "un tercero completa una tarea" no se cumple con un endpoint que nadie puede usar.
+
 ## Conclusión
 
 El MVP 0 está construido **y verificado**. La versión anterior de este documento pedía confirmarlo
