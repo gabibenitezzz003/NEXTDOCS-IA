@@ -1,7 +1,7 @@
 /*
  * Tokens NEXT DOC AI.
  *
- * Los valores provienen de NEXT_DOC_AI_Make_Cursor_v0.2/tokens/tokens.json (Design
+ * Los valores provienen de NEXT_DOC_AI_DesignSystem_v0.2/tokens/tokens.json (Design
  * System v0.2). Los nombres en español se conservan porque son la superficie que
  * consumen las páginas; al cambiar sólo los valores, el tema oscuro se resuelve
  * redefiniendo las mismas variables bajo [data-nd-theme="dark"].
