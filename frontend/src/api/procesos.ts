@@ -186,6 +186,15 @@ export interface NuevoProceso {
   familia: string;
   nombre: string;
   descripcion?: string;
+  slaHoras?: number;
+}
+
+export interface CambiosProceso {
+  familia: string;
+  nombre: string;
+  descripcion?: string;
+  etiquetas?: string;
+  slaHoras?: number;
 }
 
 export async function listarProcesos(): Promise<Proceso[]> {
@@ -200,6 +209,14 @@ export async function crearProceso(requerimiento: NuevoProceso): Promise<Proceso
 
 export async function obtenerProceso(definicionId: string): Promise<Proceso> {
   const { data } = await clienteProcesos.get<Proceso>(`/procesos/${definicionId}`);
+  return data;
+}
+
+export async function actualizarProceso(
+  definicionId: string,
+  cambios: CambiosProceso,
+): Promise<Proceso> {
+  const { data } = await clienteProcesos.put<Proceso>(`/procesos/${definicionId}`, cambios);
   return data;
 }
 
