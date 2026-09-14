@@ -14,6 +14,7 @@ import { formatearFecha } from "./Documentos";
 import {
   cancelarInstancia,
   completarTarea,
+  listarHallazgos,
   listarInstancias,
   listarProcesos,
   listarTareas,
@@ -21,6 +22,7 @@ import {
   obtenerInstancia,
   pausarInstancia,
   reanudarInstancia,
+  resolverHallazgo,
 } from "../api/procesos";
 import type {
   EstadoInstanciaProceso,
@@ -386,6 +388,8 @@ export function DetalleInstancia({
         )}
       </Tarjeta>
 
+      <PanelHallazgos instanciaId={instancia.id} />
+
       {instancia.datos && Object.keys(instancia.datos).length ? (
         <Tarjeta>
           <CabeceraTarjeta
@@ -416,6 +420,119 @@ export function DetalleInstancia({
         <LineaTiempo eventos={instancia.eventos ?? []} />
       </Tarjeta>
     </div>
+  );
+}
+
+function tonoSeveridad(severidad?: string) {
+  switch (severidad) {
+    case "CRITICA":
+      return "rojo" as const;
+    case "ALTA":
+      return "alerta" as const;
+    case "MEDIA":
+      return "informacion" as const;
+    default:
+      return "neutro" as const;
+  }
+}
+
+function PanelHallazgos({ instanciaId }: { instanciaId: string }) {
+  const clienteConsultas = useQueryClient();
+  const [error, setError] = useState<string | null>(null);
+
+  const consulta = useQuery({
+    queryKey: ["hallazgos", instanciaId],
+    queryFn: () => listarHallazgos(instanciaId),
+    refetchInterval: 15000,
+  });
+
+  const resolver = useMutation({
+    mutationFn: ({ hallazgoId, estado }: { hallazgoId: string; estado: "APROBADO" | "RECHAZADO" }) =>
+      resolverHallazgo(hallazgoId, estado),
+    onSuccess: () => {
+      setError(null);
+      clienteConsultas.invalidateQueries({ queryKey: ["hallazgos", instanciaId] });
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  const hallazgos = consulta.data ?? [];
+
+  return (
+    <Tarjeta>
+      <CabeceraTarjeta
+        titulo="Hallazgos de la supervisora"
+        descripcion="Reglas de la IA supervisora que se dispararon sobre los datos del proceso. Resolvé cada hallazgo para dejar registro."
+      />
+      {consulta.isError ? (
+        <p className="mt-espacio-3 text-pequeno text-tinta-suave">
+          No se pudieron cargar los hallazgos.
+        </p>
+      ) : hallazgos.length === 0 ? (
+        <p className="mt-espacio-3 text-pequeno text-tinta-suave">
+          Sin hallazgos: ninguna regla se disparó sobre este proceso.
+        </p>
+      ) : (
+        <ul className="mt-espacio-4 space-y-espacio-3" aria-label="Hallazgos del proceso">
+          {hallazgos.map((hallazgo) => (
+            <li
+              key={hallazgo.id}
+              className="rounded-control bg-lienzo px-espacio-4 py-espacio-3"
+            >
+              <div className="flex flex-wrap items-center gap-espacio-3">
+                <Pastilla tono={tonoSeveridad(hallazgo.severidad)}>
+                  {hallazgo.severidad ?? "HALLAZGO"}
+                </Pastilla>
+                <Pastilla tono={hallazgo.estado === "PENDIENTE" ? "informacion" : "neutro"}>
+                  {hallazgo.estado ?? "PENDIENTE"}
+                </Pastilla>
+                <span className="text-pequeno text-tinta-suave">
+                  {hallazgo.tipo}
+                  {hallazgo.accion ? ` · ${hallazgo.accion}` : ""}
+                </span>
+              </div>
+              {hallazgo.descripcion ? (
+                <p className="mt-espacio-2 text-pequeno text-tinta">{hallazgo.descripcion}</p>
+              ) : null}
+              {hallazgo.estado === "PENDIENTE" ? (
+                <div className="mt-espacio-3 flex flex-wrap gap-espacio-2">
+                  <Boton
+                    variante="primario"
+                    tamano="sm"
+                    cargando={resolver.isPending}
+                    disabled={resolver.isPending}
+                    onClick={() =>
+                      resolver.mutate({ hallazgoId: hallazgo.id, estado: "APROBADO" })
+                    }
+                  >
+                    Aprobar
+                  </Boton>
+                  <Boton
+                    variante="peligro"
+                    tamano="sm"
+                    cargando={resolver.isPending}
+                    disabled={resolver.isPending}
+                    onClick={() =>
+                      resolver.mutate({ hallazgoId: hallazgo.id, estado: "RECHAZADO" })
+                    }
+                  >
+                    Rechazar
+                  </Boton>
+                </div>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+      {error ? (
+        <div
+          role="alert"
+          className="mt-espacio-3 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-4 py-espacio-3 text-pequeno text-rojo-alto"
+        >
+          {error}
+        </div>
+      ) : null}
+    </Tarjeta>
   );
 }
 
