@@ -56,6 +56,7 @@ export interface Proceso {
   descripcion?: string;
   visibilidad?: string;
   etiquetas?: string;
+  slaHoras?: number;
   versiones: VersionProceso[];
   alta?: string;
 }
@@ -123,6 +124,37 @@ export interface HallazgoProceso {
   referencia?: Record<string, unknown>;
   alta?: string;
   resolucion?: string;
+}
+
+export interface KpiProcesoIndicador {
+  codigo: string;
+  nombre: string;
+  valor?: number | null;
+  unidad?: string;
+  formula?: string;
+  fuente?: string;
+  tendencia?: string;
+  estadoFuente?: string;
+  drilldown?: string;
+}
+
+export interface KpiProcesoResumen {
+  desde?: string;
+  hasta?: string;
+  indicadores: KpiProcesoIndicador[];
+}
+
+export interface KpiProcesoPoblacion {
+  id: string;
+  entidad: string;
+  codigoDefinicion?: string;
+  nodoId?: string;
+  estado?: string;
+  asignadoA?: string;
+  alta?: string;
+  fin?: string;
+  vencimiento?: string;
+  duracionMinutos?: number | null;
 }
 
 let tenantActual: string | null = null;
@@ -248,6 +280,32 @@ export async function listarTareas(estados?: string[]): Promise<TareaProceso[]> 
   const { data } = await clienteProcesos.get<TareaProceso[]>("/tareas", {
     params: estados?.length ? { estados: estados.join(",") } : undefined,
   });
+  return data;
+}
+
+export const INDICADOR_CUELLOS = "tareasCompletadas";
+
+function ventana(dias: number): { desde: string; hasta: string } {
+  const hasta = new Date();
+  const desde = new Date(hasta.getTime() - dias * 24 * 60 * 60 * 1000);
+  return { desde: desde.toISOString(), hasta: hasta.toISOString() };
+}
+
+export async function resumenKpiProcesos(dias: number): Promise<KpiProcesoResumen> {
+  const { data } = await clienteProcesos.get<KpiProcesoResumen>("/kpi-procesos", {
+    params: ventana(dias),
+  });
+  return data;
+}
+
+export async function poblacionKpiProcesos(
+  indicador: string,
+  dias: number,
+): Promise<KpiProcesoPoblacion[]> {
+  const { data } = await clienteProcesos.get<KpiProcesoPoblacion[]>(
+    "/kpi-procesos/poblacion",
+    { params: { indicador, ...ventana(dias) } },
+  );
   return data;
 }
 
