@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import type { ReglaSupervisora } from "../src/api/procesos";
+import { elegirEnDesplegable } from "../pruebas-transversales/desplegable";
 
 function reglaBase(): ReglaSupervisora {
   return {
@@ -102,9 +103,9 @@ test("crear una regla exige nombre, dato y umbral, y manda el cuerpo completo", 
   await page.getByLabel("Umbral").fill("500");
   await expect(crear).toBeEnabled();
 
-  await page.getByLabel("Condicion").selectOption("MAYOR");
-  await page.getByLabel("Que hace la supervisora").selectOption("BLOQUEAR");
-  await page.getByLabel("Severidad del hallazgo").selectOption("CRITICA");
+  await elegirEnDesplegable(page, "Condicion", "es mayor que");
+  await elegirEnDesplegable(page, "Que hace la supervisora", "Bloquear la instancia");
+  await elegirEnDesplegable(page, "Severidad del hallazgo", "Critica");
   await crear.click();
 
   expect(control.creadas).toEqual([

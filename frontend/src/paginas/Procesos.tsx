@@ -994,6 +994,7 @@ function EstudioProceso({
                 <Selector
                   etiqueta="Agregar paso"
                   ayuda="El paso nuevo se suma al final del recorrido y se abre para que lo configures."
+                  disabled={editandoBloqueado}
                   value={tipoNuevoPaso}
                   onChange={(evento) => {
                     const elegido = evento.target.value;
