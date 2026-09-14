@@ -96,18 +96,19 @@ en procesos, terceros, partners y contenido COMEX.
 
 | Módulo | Estado hoy | Qué falta |
 |---|---|---|
-| **A. Docs Core** | ✅ Completo: ingesta segura, clasificación automática, captura genérica, extracción Gemini/DeepSeek, validación, revisión, aprendizaje, excepciones, auditoría, API/webhooks | Validación E2E en navegador y dataset real (P0-02, P0-12) |
-| **B. Workflow Core** | ⚠️ Fase C cerrada: C1-C12 implementados y verificados con 53 tests; endpoints levantados en Docker | Conectores productivos, IAM real, fixtures COMEX, nodo VALIDACION_IA/NOTIFICACION (P0-03) |
-| **C. Studio guiado** | ❌ Las plantillas se sacaron del portal | Editor lista/timeline sobre el mismo JSON/schema del futuro Canvas (P0-04) |
-| **D. Colaboración externa** | ⚠️ SSO/embed funciona (16) | External User con cuenta limitada + Secure Action Link (P0-05, viejas 23–24) |
-| **E. IA Supervisora v0** | ❌ Sólo excepciones documentales | Controles configurables por plantilla: completitud, confidence, cross-doc, secuencia, SLA, versiones (P0-06) |
-| **F. Biblioteca COMEX/Follow** | ❌ Catálogo sembrado argentino de 10 tipos documentales (remito, factura...); sin plantillas de proceso | 10 plantillas V7 + 4 multimodales + overlays + fixtures (P0-09) |
-| **G. Partner Foundation** | ❌ Parcial | partner org, delegated grants, ownership/provenance/fork/install (P0-07, P0-08) |
-| **H. Gobernanza & KPI** | ✅ Auditoría, reconstrucción de decisión, 11 KPI con drill-down, export con manifiesto, costo por tenant | KPI de procesos y SLA una vez exista Workflow |
+| **A. Docs Core** | ✅ Completo: ingesta segura, clasificación automática, captura genérica, extracción Gemini/DeepSeek, validación, revisión, aprendizaje, excepciones, auditoría, API/webhooks | Documentación real de un cliente (P0-02 punto 3) |
+| **B. Workflow Core** | ✅ Motor completo: 8 controladores, 48 endpoints, 16 entidades, 11 migraciones, 107 pruebas. Los 12 nodos del MVP0, instancia fijada a versión, SLA de plantilla y de nodo | Conectores productivos e IAM real |
+| **C. Studio guiado** | ✅ Editor de pasos con panel de configuración, borrador, versionado, probar y publicar | Duplicar una plantilla: el backend expone `/clonar` y el portal no lo usa (P0-04) |
+| **D. Colaboración externa** | ✅ Cuenta externa y enlace de acción seguro con token, scopes, expiración y usos máximos | Superficie de UI propia |
+| **E. IA Supervisora v0** | ✅ Reglas configurables por plantilla con umbral y operador, hallazgos, bloqueo de instancia y pantalla de administración | Controles cross-doc y de secuencia |
+| **F. Biblioteca COMEX/Follow** | ✅ Catálogo argentino de 11 tipos documentales y plantillas de proceso COMEX con fixtures | Overlays por vertical |
+| **G. Partner Foundation** | ✅ Partner org, delegated grants, ownership/provenance/fork/install | Sin superficie de UI: hay 11 endpoints de partners y marketplace que el portal no consume |
+| **H. Gobernanza & KPI** | ✅ Auditoría, reconstrucción de decisión, 11 KPI documentales y 14 de proceso con drill-down, export con manifiesto, costo por tenant | — |
 | **I. Integración** | ✅ API REST, webhooks HMAC, SSO, FollowConnector de matching | Context Contract + Template Recommender + `subject_ref` genérico (P0-10) |
 
-**Lo que ya está es la mitad difícil del MVP0:** Docs Core con 247 pruebas automáticas contra
-infraestructura real, versionado de plantillas con quality gate, y la infra de despliegue. El
+**Lo que ya está es la mitad difícil del MVP0:** Docs Core con 121 pruebas unitarias y 175 de
+integración contra infraestructura real, el motor de procesos con 107, 67 pruebas de navegador,
+versionado de plantillas con quality gate, y la infra de despliegue. El
 cierre es construir el eje de procesos sobre esa base sin desestabilizarla.
 
 ---
@@ -125,27 +126,29 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   un pase de revista de `README.md` y `EMPEZAR_ACA.md` cuando cierre el P0-02.
 
 - [ ] **P0-02 · Cerrar la validación del MVP0 técnico** (E01 · gate G-DEMO) · *Esfuerzo: S*
-  Los cuatro puntos de `ESTADO_MVP0.md`: (1) recorrido humano punta a punta en el navegador,
-  (2) confirmar que el visor muestra los datos de la captura genérica, (3) cargar 10–15
-  documentos reales, (4) rotar la clave de Gemini. **Nada de lo demás importa si esto no sale
-  bien: es la base sobre la que se vende.**
+  Tres de los cuatro puntos cerrados; detalle en [P0_02_VALIDACION.md](P0_02_VALIDACION.md).
+  (1) Recorrido punta a punta automatizado con una captura por paso · **hecho**.
+  (2) El visor muestra la captura genérica, con aviso propio y marca en la bandeja · **confirmado**.
+  (3) 15 documentos cargados con Gemini 2.5 Flash real, 15/15 con el tipo correcto · **hecho con
+  dataset propio**; falta documentación real de un cliente.
+  (4) Rotar la clave de Gemini · **pendiente, es la única que bloquea el gate**.
+  De acá salió el hallazgo de que la validación del dígito verificador del CUIT no existía.
 
-- [ ] **P0-03 · Workflow Definition + Runtime** (E02+E03+E04 · gates 0B/0C) · *Esfuerzo: L* · *Depende de: nada (arranca ya)*
-  Definitions/versiones, instancias fijadas a versión, tareas, responsables, decisiones,
-  timers/SLA, cierre y auditoría. Nodos del MVP0: START/END, DOCUMENT REQUEST, FORM, AI VALIDATE,
-  HUMAN REVIEW, DECISION, EXTERNAL TASK, NOTIFICATION, TIMER/SLA, API/WEBHOOK ACTION, SUBPROCESS.
-  Instancia iniciada en v1 sigue en v1 aunque se publique v2.
-  *En el repo:* es la fusión de las viejas tareas 21 (nodos, aristas, versiones, validador de
-  grafo) y 22 (tokens, ramas, joins, timers, reintentos). Va en el microservicio `workflow`, no
-  en el core (regla de `EMPEZAR_ACA.md` §7: el núcleo documental no depende del motor de
-  procesos, y apagar Workflow no puede afectar captura/extracción/validación).
+- [x] **P0-03 · Workflow Definition + Runtime** (E02+E03+E04 · gates 0B/0C) · *Esfuerzo: L*
+  Implementado en el microservicio `workflow`: 8 controladores, 48 endpoints, 16 entidades,
+  11 migraciones y 107 pruebas. Los 12 nodos del MVP0 están en `TipoNodoProceso`
+  (INICIO, FIN, SOLICITUD_DOCUMENTO, FORMULARIO, VALIDACION_IA, REVISION_HUMANA, DECISION,
+  TAREA_EXTERNA, NOTIFICACION, TEMPORIZADOR, ACCION_API, SUBPROCESO). La instancia queda fijada
+  a la versión con la que nació: publicar v2 no mueve las instancias de v1.
+  El SLA se hereda de la plantilla y el nodo lo pisa si define el suyo.
 
 - [ ] **P0-04 · Studio guiado** (E05 · gate 0D) · *Esfuerzo: M/L* · *Depende de: P0-03*
-  Editor lista/timeline con panel lateral de configuración y vista previa; crear desde cero o
-  duplicar, definir pasos/documentos/roles/SLA/controles/notificaciones, probar y publicar con
-  versionado. **Mismo JSON/schema de definición que usará el Canvas de MVP1** (no migrar después).
-  *En el repo:* reutiliza el ciclo publish/versionado/quality gate ya construido para plantillas
-  documentales (tarea 1/2 del plan viejo) como referencia de diseño.
+  Construido casi entero: editor de pasos con panel de configuración, guardar borrador, nueva
+  versión, probar con una instancia real y publicar con versionado, todo sobre el mismo JSON de
+  definición que va a usar el Canvas de MVP1.
+  **Falta una sola cosa: duplicar una plantilla.** El backend ya expone
+  `POST /procesos/{id}/clonar` y el portal no lo consume — el botón "Nueva version" del estudio
+  crea otro borrador de la *misma* definición, que es algo distinto.
 
 - [x] **P0-05 · External Collaboration** (E06 · gate 0D) · *Esfuerzo: M* · *Depende de: P0-03*
   Cuenta externa + enlace de accion seguro con token, scopes, expiracion y usos maximos. Implementado en workflow.
@@ -210,16 +213,23 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   Suite `PilotoComexTest` con escenarios de plantilla COMEX: happy path, missing doc, low confidence,
   formato invalido, cross-doc mismatch montos, incoterm no permitido, documento vencido, nueva
   version requiere campo adicional. Core `mvn verify` OK.
+  Se le suma el dataset cargable de 15 documentos con respuesta conocida
+  (`scripts/generar-dataset.mjs` y `scripts/cargar-dataset.mjs`, ver
+  [DATASET_PRUEBA.md](DATASET_PRUEBA.md)), corrido contra Gemini real con 15/15 de acierto.
+  **Sigue faltando documentación real de un cliente**: todo lo anterior lo armamos nosotros.
 
 - [ ] **P0-13 · Load y operaciones** (E13 · gate 0G) · *Esfuerzo: M*
   Baseline p95/throughput/colas/costo por documento y por proceso; backup/restore probado;
   observabilidad, alertas, runbooks y rotación de secretos. Sin esto no hay salida a producción.
 
 - [x] **P0-14 · KPI operativo de procesos** (E11 · gate 0H) — nueva en V11
-  Endpoints `/api/v1/kpi-procesos` y `/api/v1/kpi-procesos/poblacion` con 13 indicadores del workflow.
-  Población, fórmulas visibles y drill-down de procesos (tareas en plazo, ciclo del proceso,
-  bloqueos) sobre `GOV`, con la misma invariante del `KpiIT` del core: el número es el tamaño
-  exacto de su población.
+  Endpoints `/api/v1/kpi-procesos` y `/api/v1/kpi-procesos/poblacion` con **14 indicadores** del
+  workflow, visibles en la bandeja de instancias del portal con selector de 7/30/90 días y tabla
+  de cuellos de botella. Población, fórmulas visibles y drill-down sobre `GOV`, con la misma
+  invariante del `KpiIT` del core: el número es el tamaño exacto de su población.
+  Esa invariante estaba rota para `tareasEnPlazo` por un typo en el switch del drilldown, que
+  devolvía población vacía en silencio; corregido con una prueba que la exige para todos los
+  indicadores de tareas.
 - [ ] **P0-15 · Release comercial** (E14 · gate 0H) — nueva en V11
   Demo de proceso completa, runbook, soporte, rollback y acta de salida (0A–0G con evidencia).
 
