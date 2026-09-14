@@ -124,7 +124,7 @@ El problema es: ¿cómo definir un baseline único, verificable y gobernado que 
 | Riesgo | Severidad | Mitigación |
 |---|---|---|
 | El workflow con desvíos sigue creciendo antes de cerrar Fase C | Alto | Gate 0C no se cierra hasta evidencia de C1..C12; regla de oro: no extender sobre spec incumplida. |
-| Se confunde el core documental con el motor de procesos | Medio | ADR + reglas `.cursor` + separación de repos; ningún servicio del core importa modelos de workflow. |
+| Se confunde el core documental con el motor de procesos | Medio | ADR + reglas de proyecto + separación de repos; ningún servicio del core importa modelos de workflow. |
 | Se reintroducen canales retirados por presión de MVP | Medio | Documento explícito en ADR y matriz; cualquier canal nuevo pasa por E17 con sandbox real. |
 | El frontend consume APIs inexistentes de COMEX/Partner antes de tener backend | Medio | Feature flags por MVP; UI no muestra datos ficticios de futuros. |
 | Falta de autenticación JWT en workflow expone datos cross-tenant | Alto | D05 en curso; hasta entonces `X-Tenant-Id` no se considera seguro para producción. |
@@ -137,4 +137,4 @@ El problema es: ¿cómo definir un baseline único, verificable y gobernado que 
 - `docs/implementation-v11/matriz-requisito-implementacion-gap.md` — mapeo historia por historia.
 - `docs/TODO_MVP0_COMERCIAL.md` — plan de cierre MVP0 Comercial.
 - `docs/EMPEZAR_ACA.md` — reglas no negociables y trampas.
-- `docs/implementation-v11/NEXT_DOC_AI_V11_4_IMPLEMENTACION_CURSOR_COMPLETA/00_LEEME_PRIMERO.md` — kit V11.
+- `docs/implementation-v11/NEXT_DOC_AI_V11_4_IMPLEMENTACION/00_LEEME_PRIMERO.md` — kit V11.

@@ -4,7 +4,7 @@ Documento generado por el Prompt 00 de descubrimiento del kit V11.
 Fecha: 2026-09-07 (baseline reportado) / descubrimiento ejecutado en la sesión actual.  
 Repositorio core: `/home/gabibenitezzz/Escritorio/NEXT AI/nextdocs-ai`.  
 Repositorio workflow: `/home/gabibenitezzz/Escritorio/NEXT AI/workflow`.  
-Kit V11: `/home/gabibenitezzz/Escritorio/NEXT AI/nextdocs-ai/docs/implementation-v11/NEXT_DOC_AI_V11_4_IMPLEMENTACION_CURSOR_COMPLETA`.
+Kit V11: `/home/gabibenitezzz/Escritorio/NEXT AI/nextdocs-ai/docs/implementation-v11/NEXT_DOC_AI_V11_4_IMPLEMENTACION`.
 
 ---
 
@@ -374,4 +374,4 @@ Resumen de resultados:
 - `docs/implementation-v11/matriz-requisito-implementacion-gap.md` — matriz de historias vs estado real.
 - `docs/TODO_MVP0_COMERCIAL.md` — plan de cierre MVP0 Comercial (rebaseline 06/09/2026).
 - `docs/EMPEZAR_ACA.md` — reglas no negociables y trampas de dominio.
-- `docs/implementation-v11/NEXT_DOC_AI_V11_4_IMPLEMENTACION_CURSOR_COMPLETA/11_BASELINE/backend_20260907/10-INVENTARIO-CODIGO-FUENTE.md` — inventario del kit.
+- `docs/implementation-v11/NEXT_DOC_AI_V11_4_IMPLEMENTACION/11_BASELINE/backend_20260907/10-INVENTARIO-CODIGO-FUENTE.md` — inventario del kit.
