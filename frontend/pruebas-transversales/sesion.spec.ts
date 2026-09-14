@@ -120,3 +120,69 @@ test("AT-01 la sesión vigente conserva refresh y reintento de la query", async 
   ).toBe("A-renovado");
   expect(control.errores).toEqual([]);
 });
+
+test("AT-01 un 401 del motor de procesos tambien refresca y reintenta", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  await page.goto("/procesos");
+  await expect(page.getByText("Proceso controlado")).toBeVisible();
+
+  await page.route("**/api/v1/autenticacion/refrescar", (ruta) =>
+    ruta.fulfill({
+      json: { ...sesionControlada("A"), tokenAcceso: "A-renovado" },
+    }),
+  );
+  await page.route("**/api/v1/instancias**", (ruta) =>
+    ruta.request().headers().authorization === "Bearer A"
+      ? ruta.fulfill({ status: 401, json: { mensaje: "Acceso expirado" } })
+      : ruta.fallback(),
+  );
+
+  await page.getByRole("button", { name: "Instancias" }).click();
+
+  await expect(page.getByText("Ocurrio un error inesperado")).toHaveCount(0);
+  await expect(page.getByText(/La sesion no es valida/)).toHaveCount(0);
+  await expect
+    .poll(() =>
+      control.peticiones
+        .filter((p) => p.ruta === "/api/v1/instancias")
+        .at(-1)?.tenant,
+    )
+    .toBe("A-renovado");
+});
+
+test("AT-01 un 401 irrecuperable del motor de procesos cierra la sesion, no deja paneles rotos", async ({
+  page,
+}) => {
+  await preparar(page);
+  await page.route("**/api/v1/autenticacion/refrescar", (ruta) =>
+    ruta.fulfill({ status: 401, json: { mensaje: "Refresco vencido" } }),
+  );
+  await page.route("**/api/v1/procesos", (ruta) =>
+    ruta.fulfill({ status: 401, body: "", headers: { "content-type": "text/plain" } }),
+  );
+
+  await page.goto("/procesos");
+
+  await expect(page.getByLabel("Organización", { exact: true })).toBeVisible();
+  await expect(page.getByText("Ocurrio un error inesperado")).toHaveCount(0);
+});
+
+test("un error del motor de procesos dice que paso en vez de un mensaje generico", async ({
+  page,
+}) => {
+  await preparar(page);
+  await page.route("**/api/v1/procesos", (ruta) =>
+    ruta.fulfill({
+      status: 502,
+      body: "<html>bad gateway</html>",
+      headers: { "content-type": "text/html" },
+    }),
+  );
+
+  await page.goto("/procesos");
+
+  await expect(page.getByText(/El servicio no esta respondiendo \(502\)/)).toBeVisible();
+  await expect(page.getByText("Ocurrio un error inesperado")).toHaveCount(0);
+});
