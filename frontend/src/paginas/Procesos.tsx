@@ -21,6 +21,7 @@ import {
 import { formatearFecha } from "./Documentos";
 import {
   actualizarGrafo,
+  actualizarProceso,
   completarTarea,
   crearProceso,
   iniciarInstancia,
@@ -34,6 +35,7 @@ import {
 import type {
   GrafoProceso,
   InstanciaProceso,
+  Proceso,
   TipoNodoProceso,
   VersionProceso,
 } from "../api/procesos";
@@ -125,7 +127,9 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
   const [codigo, setCodigo] = useState("");
   const [familia, setFamilia] = useState("");
   const [nombre, setNombre] = useState("");
+  const [sla, setSla] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [editando, setEditando] = useState<string | null>(null);
 
   const consulta = useQuery({
     queryKey: ["procesos"],
@@ -140,6 +144,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
       setCodigo("");
       setFamilia("");
       setNombre("");
+      setSla("");
       clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
       alAbrir(proceso.id);
     },
@@ -180,7 +185,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                 titulo="Nuevo proceso"
                 descripcion="Creá una definición con su primera versión en borrador."
               />
-              <div className="mt-espacio-5 grid gap-espacio-4 md:grid-cols-3">
+              <div className="mt-espacio-5 grid gap-espacio-4 md:grid-cols-2 xl:grid-cols-4">
                 <Campo
                   etiqueta="Codigo"
                   placeholder="COMEX-EX-MAR-FCL"
@@ -201,6 +206,16 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                   value={nombre}
                   onChange={(evento) => setNombre(evento.target.value)}
                 />
+                <Campo
+                  etiqueta="SLA de la plantilla (horas)"
+                  type="number"
+                  min="0.01"
+                  step="0.25"
+                  placeholder="24"
+                  value={sla}
+                  onChange={(evento) => setSla(evento.target.value)}
+                  ayuda="Cada paso hereda este plazo salvo que defina el suyo."
+                />
               </div>
               <div className="mt-4 flex justify-end">
                 <Boton
@@ -217,6 +232,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                       codigo: codigo.trim(),
                       familia: familia.trim(),
                       nombre: nombre.trim(),
+                      slaHoras: slaNumerico(sla),
                     })
                   }
                 >
@@ -246,34 +262,148 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
           >
             {procesos.map((proceso) => (
               <li key={proceso.id}>
-                <Tarjeta className="grid items-center gap-espacio-4 lg:grid-cols-[minmax(0,1fr)_auto]">
-                  <div className="min-w-0 flex-1">
-                    <h2 className="break-words font-titulo text-titulo-panel text-tinta">
-                      {proceso.nombre}
-                    </h2>
-                    <p className="mt-espacio-1 break-words text-pequeno text-tinta-suave">
-                      {proceso.codigo} · {proceso.familia}
-                    </p>
-                    {proceso.alta ? (
-                      <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-                        Creado el {formatearFecha(proceso.alta)}
+                <Tarjeta>
+                  <div className="grid items-center gap-espacio-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-espacio-3">
+                        <h2 className="break-words font-titulo text-titulo-panel text-tinta">
+                          {proceso.nombre}
+                        </h2>
+                        <Pastilla tono={proceso.slaHoras == null ? "neutro" : "violeta"}>
+                          {textoSla(proceso.slaHoras)}
+                        </Pastilla>
+                      </div>
+                      <p className="mt-espacio-1 break-words text-pequeno text-tinta-suave">
+                        {proceso.codigo} · {proceso.familia}
                       </p>
-                    ) : null}
+                      {proceso.alta ? (
+                        <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+                          Creado el {formatearFecha(proceso.alta)}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-espacio-4 lg:justify-end">
+                      <VersionesProceso versiones={proceso.versiones} />
+                      <Boton
+                        variante="fantasma"
+                        aria-expanded={editando === proceso.id}
+                        onClick={() =>
+                          setEditando((actual) =>
+                            actual === proceso.id ? null : proceso.id,
+                          )
+                        }
+                      >
+                        {editando === proceso.id ? "Cerrar" : "Editar"}
+                      </Boton>
+                      <Boton
+                        variante="secundario"
+                        onClick={() => alAbrir(proceso.id)}
+                      >
+                        Abrir estudio
+                      </Boton>
+                    </div>
                   </div>
-                  <div className="flex flex-wrap items-center justify-between gap-espacio-4 lg:justify-end">
-                    <VersionesProceso versiones={proceso.versiones} />
-                    <Boton
-                      variante="secundario"
-                      onClick={() => alAbrir(proceso.id)}
-                    >
-                      Abrir estudio
-                    </Boton>
-                  </div>
+                  {editando === proceso.id ? (
+                    <EditorProceso
+                      proceso={proceso}
+                      alCerrar={() => setEditando(null)}
+                    />
+                  ) : null}
                 </Tarjeta>
               </li>
             ))}
           </ul>
         )}
+    </div>
+  );
+}
+
+function slaNumerico(texto: string): number | undefined {
+  const valor = Number(texto.trim());
+  return texto.trim() && Number.isFinite(valor) && valor > 0 ? valor : undefined;
+}
+
+function textoSla(horas?: number): string {
+  if (horas == null) return "sin SLA";
+  if (Number.isInteger(horas)) return `SLA ${horas} h`;
+  return `SLA ${horas.toFixed(2).replace(/0$/, "")} h`;
+}
+
+function EditorProceso({
+  proceso,
+  alCerrar,
+}: {
+  proceso: Proceso;
+  alCerrar: () => void;
+}) {
+  const clienteConsultas = useQueryClient();
+  const [familia, setFamilia] = useState(proceso.familia);
+  const [nombre, setNombre] = useState(proceso.nombre);
+  const [sla, setSla] = useState(proceso.slaHoras == null ? "" : String(proceso.slaHoras));
+  const [error, setError] = useState<string | null>(null);
+
+  const guardar = useMutation({
+    mutationFn: () =>
+      actualizarProceso(proceso.id, {
+        familia: familia.trim(),
+        nombre: nombre.trim(),
+        descripcion: proceso.descripcion,
+        etiquetas: proceso.etiquetas,
+        slaHoras: slaNumerico(sla),
+      }),
+    onSuccess: () => {
+      setError(null);
+      clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
+      alCerrar();
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  return (
+    <div className="mt-espacio-4 border-t border-borde pt-espacio-4">
+      {error ? (
+        <div
+          role="alert"
+          className="mb-espacio-3 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-3 py-espacio-2 text-pequeno text-rojo-alto"
+        >
+          {error}
+        </div>
+      ) : null}
+      <div className="grid gap-espacio-4 md:grid-cols-3">
+        <Campo
+          etiqueta="Familia"
+          value={familia}
+          onChange={(evento) => setFamilia(evento.target.value)}
+        />
+        <Campo
+          etiqueta="Nombre"
+          value={nombre}
+          onChange={(evento) => setNombre(evento.target.value)}
+        />
+        <Campo
+          etiqueta="SLA de la plantilla (horas)"
+          type="number"
+          min="0.01"
+          step="0.25"
+          placeholder="sin SLA"
+          value={sla}
+          onChange={(evento) => setSla(evento.target.value)}
+          ayuda="Vaciar el campo quita el SLA heredado."
+        />
+      </div>
+      <div className="mt-espacio-4 flex justify-end gap-espacio-2">
+        <Boton variante="secundario" onClick={alCerrar} disabled={guardar.isPending}>
+          Cancelar
+        </Boton>
+        <Boton
+          variante="primario"
+          cargando={guardar.isPending}
+          disabled={guardar.isPending || !familia.trim() || !nombre.trim()}
+          onClick={() => guardar.mutate()}
+        >
+          Guardar
+        </Boton>
+      </div>
     </div>
   );
 }
