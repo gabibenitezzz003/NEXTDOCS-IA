@@ -126,6 +126,36 @@ export interface HallazgoProceso {
   resolucion?: string;
 }
 
+export type OperadorRegla = "MAYOR" | "MENOR";
+
+export type AccionRegla = "SOLICITAR" | "ADVERTIR" | "BLOQUEAR" | "REVIEW";
+
+export type SeveridadRegla = "BAJA" | "MEDIA" | "ALTA" | "CRITICA";
+
+export interface ReglaSupervisora {
+  id: string;
+  plantillaId?: string;
+  nombre: string;
+  tipo: string;
+  umbral: number;
+  operador?: OperadorRegla;
+  accion?: AccionRegla;
+  severidad?: SeveridadRegla;
+  mensaje?: string;
+  alta?: string;
+}
+
+export interface CambiosRegla {
+  plantillaId?: string;
+  nombre: string;
+  tipo: string;
+  umbral: number;
+  operador?: OperadorRegla;
+  accion?: AccionRegla;
+  severidad?: SeveridadRegla;
+  mensaje?: string;
+}
+
 export interface KpiProcesoIndicador {
   codigo: string;
   nombre: string;
@@ -324,6 +354,33 @@ export async function poblacionKpiProcesos(
     { params: { indicador, ...ventana(dias) } },
   );
   return data;
+}
+
+export async function listarReglas(plantillaId?: string): Promise<ReglaSupervisora[]> {
+  const { data } = await clienteProcesos.get<ReglaSupervisora[]>("/supervisora/reglas", {
+    params: plantillaId ? { plantillaId } : undefined,
+  });
+  return data;
+}
+
+export async function crearRegla(regla: CambiosRegla): Promise<ReglaSupervisora> {
+  const { data } = await clienteProcesos.post<ReglaSupervisora>("/supervisora/reglas", regla);
+  return data;
+}
+
+export async function actualizarRegla(
+  reglaId: string,
+  cambios: CambiosRegla,
+): Promise<ReglaSupervisora> {
+  const { data } = await clienteProcesos.put<ReglaSupervisora>(
+    `/supervisora/reglas/${reglaId}`,
+    cambios,
+  );
+  return data;
+}
+
+export async function darDeBajaRegla(reglaId: string): Promise<void> {
+  await clienteProcesos.delete(`/supervisora/reglas/${reglaId}`);
 }
 
 export async function listarHallazgos(instanciaId: string): Promise<HallazgoProceso[]> {

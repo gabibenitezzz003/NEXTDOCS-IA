@@ -50,6 +50,7 @@ import {
   BandejaTareas,
   DetalleInstancia,
 } from "./ProcesosOperacion";
+import { ReglasSupervisora } from "./ReglasSupervisora";
 
 const TIPOS_PASO: { valor: TipoNodoProceso; texto: string }[] = [
   { valor: "SOLICITUD_DOCUMENTO", texto: "Solicitar documento" },
@@ -63,7 +64,7 @@ const TIPOS_PASO: { valor: TipoNodoProceso; texto: string }[] = [
   { valor: "SUBPROCESO", texto: "Subproceso" },
 ];
 
-type VistaProcesos = "definiciones" | "instancias" | "tareas";
+type VistaProcesos = "definiciones" | "instancias" | "tareas" | "reglas";
 
 export function Procesos() {
   const [vista, setVista] = useState<VistaProcesos>("definiciones");
@@ -97,6 +98,7 @@ export function Procesos() {
               { valor: "definiciones", texto: "Definiciones" },
               { valor: "instancias", texto: "Instancias" },
               { valor: "tareas", texto: "Tareas" },
+              { valor: "reglas", texto: "Reglas" },
             ]}
           />
         }
@@ -113,6 +115,8 @@ export function Procesos() {
           ) : (
             <BandejaInstancias alAbrir={setInstanciaAbierta} />
           )
+        ) : vista === "reglas" ? (
+          <ReglasSupervisora />
         ) : (
           <BandejaTareas />
         )}
