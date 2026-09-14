@@ -27,6 +27,7 @@ import com.nextdocs.ai.enumeraciones.SeveridadHallazgo;
 import com.nextdocs.ai.repositorios.CampoPlantillaRepository;
 import com.nextdocs.ai.repositorios.EjecucionValidacionRepository;
 import com.nextdocs.ai.repositorios.HallazgoValidacionRepository;
+import com.nextdocs.ai.utiles.ValidadorCuit;
 import com.nextdocs.ai.repositorios.ReglaPlantillaRepository;
 import com.nextdocs.ai.repositorios.ValorExtraidoRepository;
 import com.nextdocs.ai.utiles.ContextoCorrelacion;
@@ -44,6 +45,8 @@ public class ValidacionDocumentalService {
 	public static final String CODIGO_CAMPO_ILEGIBLE = "CAMPO_ILEGIBLE";
 
 	public static final String CODIGO_CONFIANZA_BAJA = "CONFIANZA_BAJA";
+
+	public static final String CODIGO_CUIT_INVALIDO = "CUIT_INVALIDO";
 
 	private static final Logger log = LoggerFactory.getLogger(ValidacionDocumentalService.class);
 
@@ -231,6 +234,9 @@ public class ValidacionDocumentalService {
 
 	private boolean cumple(ReglaPlantilla regla, Map<String, ValorExtraido> porClave) {
 		ValorExtraido valor = porClave.get(regla.getCampoObjetivo());
+		if (CODIGO_CUIT_INVALIDO.equals(regla.getCodigo())) {
+			return cumpleCuit(valor);
+		}
 		JsonNode configuracion = leerConfiguracion(regla);
 		return switch (regla.getTipo()) {
 			case OBLIGATORIO -> valor != null && valor.getPresencia() == PresenciaCampo.PRESENTE;
@@ -242,6 +248,14 @@ public class ValidacionDocumentalService {
 			case CONFIANZA_MINIMA -> cumpleConfianza(valor, configuracion);
 			case EXPRESION -> true;
 		};
+	}
+
+	private boolean cumpleCuit(ValorExtraido valor) {
+		String candidato = normalizado(valor);
+		if (candidato == null || candidato.isBlank()) {
+			return true;
+		}
+		return ValidadorCuit.esValido(candidato);
 	}
 
 	private boolean cumpleFormato(ValorExtraido valor, JsonNode configuracion) {
