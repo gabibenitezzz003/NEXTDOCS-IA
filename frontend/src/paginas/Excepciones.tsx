@@ -177,7 +177,7 @@ export function Excepciones() {
                             </Pastilla>
                           ) : null}
                         </div>
-                        <h2 className="min-w-0 font-titulo text-pequeno font-bold text-violeta [overflow-wrap:anywhere]">
+                        <h2 className="min-w-0 font-titulo text-pequeno font-bold text-accion-tonal-texto [overflow-wrap:anywhere]">
                           {excepcion.tipo}
                         </h2>
                       </div>

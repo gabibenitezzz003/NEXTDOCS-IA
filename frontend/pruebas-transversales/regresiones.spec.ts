@@ -339,8 +339,13 @@ test("AT-07 labels informativos conservan contraste legible sobre lienzo", async
           .map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4))
           .reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0);
       const texto = luminancia(rgb(getComputedStyle(e).color));
-      const fondo = luminancia([245, 246, 248]);
-      return (fondo + 0.05) / (texto + 0.05);
+      // El lienzo se lee del tema activo en vez de fijarlo: así el umbral sigue
+      // siendo real si cambian los tokens o se evalúa en tema oscuro.
+      const fondo = luminancia(
+        rgb(getComputedStyle(document.body).backgroundColor),
+      );
+      const [claro, oscuro] = fondo >= texto ? [fondo, texto] : [texto, fondo];
+      return (claro + 0.05) / (oscuro + 0.05);
     });
   expect(contraste).toBeGreaterThanOrEqual(4.5);
 });

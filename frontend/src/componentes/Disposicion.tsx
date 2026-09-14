@@ -15,6 +15,7 @@ import {
   IconoFiltro,
 } from "./Iconos";
 import { useSesion } from "../contextos/ProveedorSesion";
+import { AlternarTema } from "./Tema";
 
 interface EntradaNavegacion {
   a: string;
@@ -149,7 +150,7 @@ export function Disposicion() {
             <Logotipo claro />
           </div>
           <div className="xl:hidden" role="img" aria-label="NEXT DOC AI">
-            <Isotipo />
+            <Isotipo claro />
           </div>
         </div>
         <Navegacion grupos={grupos} compactable />
@@ -189,13 +190,16 @@ export function Disposicion() {
               ) : null}
             </div>
           </div>
-          <MenuUsuario
-            {...identidad}
-            alSalir={() => {
-              salir();
-              navegar("/ingresar");
-            }}
-          />
+          <div className="flex shrink-0 items-center gap-espacio-2">
+            <AlternarTema />
+            <MenuUsuario
+              {...identidad}
+              alSalir={() => {
+                salir();
+                navegar("/ingresar");
+              }}
+            />
+          </div>
         </header>
         <main
           id="contenido-principal"
@@ -401,7 +405,7 @@ function MenuUsuario({
         >
           <span
             aria-hidden="true"
-            className="flex size-espacio-6 items-center justify-center rounded-insignia bg-violeta-tenue text-micro font-bold text-violeta"
+            className="flex size-espacio-6 items-center justify-center rounded-insignia bg-violeta-tenue text-micro font-bold text-accion-tonal-texto"
           >
             {iniciales}
           </span>

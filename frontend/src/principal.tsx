@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { Aplicacion } from "./Aplicacion";
 import { ProveedorSesion } from "./contextos/ProveedorSesion";
+import { ProveedorTema } from "./contextos/ProveedorTema";
 import "./estilos.css";
 
 const clienteConsultas = new QueryClient({
@@ -18,12 +19,14 @@ const clienteConsultas = new QueryClient({
 
 createRoot(document.getElementById("raiz")!).render(
   <StrictMode>
-    <QueryClientProvider client={clienteConsultas}>
-      <BrowserRouter>
-        <ProveedorSesion>
-          <Aplicacion />
-        </ProveedorSesion>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <ProveedorTema>
+      <QueryClientProvider client={clienteConsultas}>
+        <BrowserRouter>
+          <ProveedorSesion>
+            <Aplicacion />
+          </ProveedorSesion>
+        </BrowserRouter>
+      </QueryClientProvider>
+    </ProveedorTema>
   </StrictMode>,
 );

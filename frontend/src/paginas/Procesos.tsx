@@ -744,7 +744,7 @@ function EstudioProceso({
                         <div className="flex flex-wrap items-center gap-espacio-3 p-espacio-4">
                           <span
                             aria-hidden="true"
-                            className="flex size-control-pequeno shrink-0 items-center justify-center rounded-control bg-violeta-tenue text-pequeno font-semibold tabular-nums text-violeta"
+                            className="flex size-control-pequeno shrink-0 items-center justify-center rounded-control bg-violeta-tenue text-pequeno font-semibold tabular-nums text-accion-tonal-texto"
                           >
                             {String(indice + 1).padStart(2, "0")}
                           </span>

@@ -469,7 +469,7 @@ export function VisorDocumento({
               <p
                 role="status"
                 aria-atomic="true"
-                className="mb-espacio-2 text-pequeno font-semibold text-violeta"
+                className="mb-espacio-2 text-pequeno font-semibold text-accion-tonal-texto"
               >
                 {Object.keys(correcciones).length} campo(s) corregido(s) sin
                 enviar. Se envían con la decisión.
@@ -668,7 +668,7 @@ function CampoExtraido({
             }}
             className={
               corregido !== undefined
-                ? "border-violeta! bg-violeta-tenue! font-medium text-violeta"
+                ? "border-violeta! bg-violeta-tenue! font-medium text-accion-tonal-texto"
                 : ""
             }
           />
@@ -678,7 +678,7 @@ function CampoExtraido({
           </p>
         )}
         {valor.corregidoManualmente ? (
-          <p className="mt-espacio-1 text-micro text-violeta">
+          <p className="mt-espacio-1 text-micro text-accion-tonal-texto">
             corregido manualmente
           </p>
         ) : null}
@@ -743,7 +743,7 @@ function PanelHallazgos({ detalle }: { detalle: DetalleDocumento }) {
                 {hallazgo.mensaje ?? "Sin mensaje disponible"}
               </p>
               {hallazgo.sobreescrito ? (
-                <p className="mt-espacio-2 text-pequeno text-violeta [overflow-wrap:anywhere]">
+                <p className="mt-espacio-2 text-pequeno text-accion-tonal-texto [overflow-wrap:anywhere]">
                   Sobreescrito
                   {hallazgo.sobreescritoPor
                     ? " por " + hallazgo.sobreescritoPor
@@ -899,7 +899,7 @@ function PanelActividad({ detalle }: { detalle: DetalleDocumento }) {
                         {cambio.valorAnterior ?? "vacío"}
                       </span>
                       {" → "}
-                      <span className="text-violeta">
+                      <span className="text-accion-tonal-texto">
                         {cambio.valorNuevo ?? "vacío"}
                       </span>
                     </li>

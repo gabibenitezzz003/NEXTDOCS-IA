@@ -1,56 +1,133 @@
-@theme static {
-  --color-grafito: #0d0f12;
-  --color-grafito-alto: #15181e;
-  --color-grafito-claro: #1a1d23;
-  --color-grafito-borde: #262a33;
-  --color-grafito-texto: #9aa1b1;
+/*
+ * Tokens NEXT DOC AI.
+ *
+ * Los valores provienen de NEXT_DOC_AI_Make_Cursor_v0.2/tokens/tokens.json (Design
+ * System v0.2). Los nombres en español se conservan porque son la superficie que
+ * consumen las páginas; al cambiar sólo los valores, el tema oscuro se resuelve
+ * redefiniendo las mismas variables bajo [data-nd-theme="dark"].
+ */
 
-  --color-violeta: #6c38ff;
-  --color-violeta-alto: #5a26f0;
-  --color-violeta-claro: #8a63ff;
-  --color-violeta-tenue: #f0ecff;
+@theme static {
+  /* Identidad institucional: estos cinco no cambian entre temas. */
+  --color-grafito: #0d0f12;
+  --color-violeta: #6c36ff;
+  --color-rojo: #ff1e1e;
+  --color-arena: #f4e9de;
+  --color-blanco: #ffffff;
+
+  /* Grafito: superficies de la barra lateral, oscura en ambos temas. */
+  --color-grafito-alto: #20252e;
+  --color-grafito-claro: #2a303b;
+  --color-grafito-borde: #344054;
+  --color-grafito-texto: #b8c1d0;
+
+  --color-violeta-alto: #5422d6;
+  --color-violeta-presionado: #4318b5;
+  --color-violeta-claro: #7b4dff;
+  --color-violeta-tenue: #f4f0ff;
   --color-violeta-borde: #ddd3ff;
 
-  --color-rojo: #ff1e1e;
-  --color-rojo-alto: #d81212;
-  --color-rojo-tenue: #ffecec;
-  --color-rojo-borde: #ffd0d0;
+  /* rojo-alto es el rojo de estado (error/destructivo); --color-rojo es la marca. */
+  --color-rojo-alto: #b42318;
+  --color-rojo-tenue: #fef3f2;
+  --color-rojo-borde: #fecdca;
 
-  --color-arena: #f4e9de;
-
-  --color-lienzo: #f5f6f8;
-  --color-tinta: #0f1116;
-  --color-tinta-media: #3d4453;
-  --color-tinta-suave: #6b7285;
-  --color-tinta-tenue: #9aa1b1;
-  --color-borde: #e6e9ef;
-  --color-borde-fuerte: #d3d8e2;
-  --color-blanco: #ffffff;
+  --color-lienzo: #f7f9fc;
+  --color-tinta: #111827;
+  --color-tinta-media: #344054;
+  --color-tinta-suave: #667085;
+  --color-tinta-tenue: #98a2b3;
+  --color-borde: #e2e7ef;
+  --color-borde-fuerte: #98a2b3;
 }
 
 @theme static {
-  --color-superficie: var(--color-blanco);
+  --color-superficie: #ffffff;
   --color-superficie-navegacion: var(--color-grafito);
   --color-superficie-navegacion-elevada: var(--color-grafito-alto);
   --color-superficie-navegacion-activa: var(--color-grafito-claro);
   --color-borde-navegacion: var(--color-grafito-borde);
   --color-texto-navegacion-secundario: var(--color-grafito-texto);
   --color-accion-primaria: var(--color-violeta);
-  --color-accion-primaria-presionada: var(--color-violeta-alto);
+  --color-accion-primaria-activa: var(--color-violeta-alto);
+  --color-accion-primaria-presionada: var(--color-violeta-presionado);
+  --color-accion-tonal: var(--color-violeta-tenue);
+  --color-accion-tonal-texto: var(--color-violeta-alto);
   --color-foco: var(--color-violeta);
-  --color-neutro-texto: #596170;
-  --color-exito-texto: #087540;
-  --color-alerta-texto: #9a5c05;
+  --color-desactivado: #eaecf0;
+  --color-desactivado-texto: #667085;
+  --color-neutro-texto: #344054;
+  --color-neutro-tenue: #f2f4f7;
+  --color-exito-texto: #067647;
+  --color-alerta-texto: #92400e;
 
-  --color-exito: #0f9d58;
-  --color-exito-tenue: #e7f6ee;
-  --color-exito-borde: #bde5cf;
-  --color-alerta: #c2760a;
-  --color-alerta-tenue: #fdf2e0;
-  --color-alerta-borde: #f5dcb0;
-  --color-informacion: #1d6fe0;
-  --color-informacion-tenue: #e9f1fd;
-  --color-informacion-borde: #c3dbf8;
+  --color-exito: #067647;
+  --color-exito-tenue: #ecfdf3;
+  --color-exito-borde: #abefc6;
+  --color-alerta: #92400e;
+  --color-alerta-tenue: #fffaeb;
+  --color-alerta-borde: #fedf89;
+  --color-informacion: #1849a9;
+  --color-informacion-tenue: #eff8ff;
+  --color-informacion-borde: #b2ddff;
+}
+
+/*
+ * Tema oscuro. Sólo se redefinen las variables semánticas: las utilidades de
+ * Tailwind compilan a var(--color-*), así que heredan el valor del tema activo.
+ * La barra lateral ya es grafito en claro, por eso su bloque no se repite aquí.
+ *
+ * El atributo vive en <html>, que es el mismo elemento que matchea :root. Con
+ * un selector plano ambos empatarían en especificidad y ganaría el :root de más
+ * abajo, así que se califica con :root[...] para que el tema oscuro prevalezca.
+ */
+:root[data-nd-theme="dark"],
+[data-nd-theme="dark"] {
+  --color-lienzo: #0d0f12;
+  --color-superficie: #20252e;
+  --color-tinta: #f2f4f7;
+  --color-tinta-media: #d0d5dd;
+  --color-tinta-suave: #b8c1d0;
+  --color-tinta-tenue: #98a2b3;
+  --color-borde: #344054;
+  --color-borde-fuerte: #667085;
+
+  --color-violeta-alto: #7b4dff;
+  --color-violeta-presionado: #5422d6;
+  --color-violeta-tenue: #2f1b58;
+  --color-violeta-borde: #4c3688;
+  --color-accion-tonal-texto: #d9cbff;
+  --color-foco: #b7a0ff;
+
+  --color-desactivado: #344054;
+  --color-desactivado-texto: #98a2b3;
+  --color-neutro-texto: #d0d5dd;
+  --color-neutro-tenue: #344054;
+
+  /* En oscuro el color de estado pasa a ser el tono claro y el fondo el oscuro. */
+  --color-rojo-alto: #fda29b;
+  --color-rojo-tenue: #55160c;
+  --color-rojo-borde: #7a271a;
+  --color-exito: #75e0a7;
+  --color-exito-texto: #75e0a7;
+  --color-exito-tenue: #053321;
+  --color-exito-borde: #085d3a;
+  --color-alerta: #fedf89;
+  --color-alerta-texto: #fedf89;
+  --color-alerta-tenue: #4e2c0c;
+  --color-alerta-borde: #93370d;
+  --color-informacion: #84caff;
+  --color-informacion-tenue: #102a56;
+  --color-informacion-borde: #1849a9;
+
+  --velo-lienzo:
+    radial-gradient(60rem 40rem at 12% -8%, rgb(108 54 255 / 18%) 0%, transparent 62%),
+    radial-gradient(48rem 36rem at 105% 8%, rgb(255 30 30 / 10%) 0%, transparent 58%);
+  --filo-superior: rgb(255 255 255 / 8%);
+  --color-esqueleto: #2a303b;
+  --brillo-esqueleto: rgb(255 255 255 / 10%);
+
+  color-scheme: dark;
 }
 
 @theme static {
@@ -58,26 +135,27 @@
   --radius-2xl: 18px;
   --radius-3xl: 24px;
 
-  --shadow-plano: 0 1px 2px rgba(16, 18, 33, 0.05);
+  --shadow-plano: 0 1px 2px rgba(13, 15, 18, 0.05);
   --shadow-tarjeta:
-    0 1px 1px rgba(16, 18, 33, 0.04), 0 4px 8px -2px rgba(16, 18, 33, 0.05),
+    0 1px 1px rgba(13, 15, 18, 0.04), 0 4px 8px -2px rgba(13, 15, 18, 0.05),
     0 14px 28px -12px rgba(28, 20, 68, 0.12);
   --shadow-elevado:
-    0 1px 1px rgba(16, 18, 33, 0.05), 0 8px 16px -4px rgba(16, 18, 33, 0.07),
+    0 1px 1px rgba(13, 15, 18, 0.05), 0 8px 16px -4px rgba(13, 15, 18, 0.07),
     0 26px 52px -16px rgba(28, 20, 68, 0.2);
   --shadow-flotante:
-    0 2px 4px rgba(16, 18, 33, 0.06), 0 16px 32px -8px rgba(16, 18, 33, 0.12),
+    0 2px 4px rgba(13, 15, 18, 0.06), 0 16px 32px -8px rgba(13, 15, 18, 0.12),
     0 48px 88px -24px rgba(28, 20, 68, 0.32);
   --shadow-violeta:
-    0 1px 1px rgba(60, 20, 160, 0.24), 0 8px 20px -6px rgba(108, 56, 255, 0.55);
+    0 1px 1px rgba(60, 20, 160, 0.24), 0 8px 20px -6px rgba(108, 54, 255, 0.55);
   --shadow-violeta-alto:
-    0 2px 3px rgba(60, 20, 160, 0.3), 0 14px 30px -8px rgba(108, 56, 255, 0.62);
+    0 2px 3px rgba(60, 20, 160, 0.3), 0 14px 30px -8px rgba(108, 54, 255, 0.62);
   --shadow-hundido:
-    inset 0 1px 3px rgba(16, 18, 33, 0.1),
-    inset 0 0 0 1px rgba(16, 18, 33, 0.03);
+    inset 0 1px 3px rgba(13, 15, 18, 0.1),
+    inset 0 0 0 1px rgba(13, 15, 18, 0.03);
 }
 
 @theme static {
+  /* Escala de espaciado del Design System: 0-4-8-12-16-20-24-32-40-48-64. */
   --spacing-espacio-1: 4px;
   --spacing-espacio-2: 8px;
   --spacing-espacio-3: 12px;
@@ -93,29 +171,41 @@
 }
 
 @theme static {
-  --spacing-control-pequeno: 34px;
-  --spacing-control-mediano: 42px;
-  --spacing-control-grande: 50px;
+  /* Alturas de control del DS: small 32, desktop 40, mobile 48. */
+  --spacing-control-pequeno: 32px;
+  --spacing-control-mediano: 40px;
+  --spacing-control-grande: 48px;
 
-  --radius-control: 12px;
+  /* Radios del DS: 6-10-14-20-999. */
+  --radius-control: 10px;
   --radius-metrica: 14px;
-  --radius-panel: 16px;
+  --radius-panel: 14px;
   --radius-panel-lateral: 0px;
-  --radius-tarjeta: 20px;
-  --radius-tarjeta-principal: 24px;
-  --radius-insignia: 9999px;
+  --radius-tarjeta: 14px;
+  --radius-tarjeta-principal: 20px;
+  --radius-insignia: 999px;
 
-  --shadow-superficie: 0 4px 16px rgb(13 15 18 / 7.0588%);
-  --shadow-superficie-elevada: 0 10px 30px rgb(13 15 18 / 12.1569%);
-  --shadow-panel-lateral: 0 18px 48px rgb(13 15 18 / 18.8235%);
-  --shadow-resplandor-marca: 0 6px 24px rgb(108 56 255 / 25.098%);
+  --shadow-superficie: 0 2px 5px rgb(13 15 18 / 5%);
+  --shadow-superficie-elevada: 0 12px 32px rgb(13 15 18 / 12%);
+  --shadow-panel-lateral: 0 18px 48px rgb(13 15 18 / 19%);
+  --shadow-resplandor-marca: 0 6px 24px rgb(108 54 255 / 25%);
 }
 
 :root {
-  --layout-sidebar-desktop: 220px;
+  /* Velo ambiental del lienzo y filo de luz de las tarjetas, por tema. */
+  --velo-lienzo:
+    radial-gradient(60rem 40rem at 12% -8%, rgb(108 54 255 / 7%) 0%, transparent 62%),
+    radial-gradient(48rem 36rem at 105% 8%, rgb(255 30 30 / 5%) 0%, transparent 58%),
+    radial-gradient(56rem 44rem at 50% 118%, rgb(244 233 222 / 55%) 0%, transparent 60%);
+  --filo-superior: rgb(255 255 255 / 90%);
+  --color-esqueleto: #eceef3;
+  --brillo-esqueleto: rgb(255 255 255 / 70%);
+
+  /* Marco de aplicación: 1440x900 de referencia, sidebar 232px, topbar 64px. */
+  --layout-sidebar-desktop: 232px;
   --layout-topbar-height: 64px;
 
-  --ancho-barra-lateral: 248px;
+  --ancho-barra-lateral: 232px;
   --ancho-barra-lateral-compacta: 64px;
   --margen-contenido: 32px;
   --separacion-columnas: 24px;
