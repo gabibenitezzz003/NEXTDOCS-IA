@@ -222,8 +222,9 @@ export function Documentos() {
           </Tarjeta>
         ) : consulta.isError ? (
           <ErrorPanel
-            titulo="No se pudieron cargar los documentos"
+            contexto="No se pudo cargar la bandeja de documentos"
             mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
             reintentar={() => consulta.refetch()}
           />
         ) : documentos.length === 0 ? (
