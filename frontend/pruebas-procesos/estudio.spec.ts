@@ -314,3 +314,45 @@ test("la version publicada muestra datos utiles y esconde la huella tecnica", as
   await expect(huella.getByText("Huella de integridad")).toBeVisible();
   await expect(huella).not.toHaveAttribute("open", /.*/);
 });
+
+test("el diagrama deja ver un recorrido con ramas que la lista bloquea", async ({
+  page,
+}) => {
+  const grafo = grafoLineal();
+  grafo.nodos[1].tipo = "DECISION";
+  grafo.nodos.push({ id: "otra-salida", tipo: "NOTIFICACION", nombre: "Avisar" });
+  grafo.aristas.push({
+    origen: "a",
+    destino: "otra-salida",
+    condicion: "decision=RECHAZADO",
+  });
+  grafo.aristas.push({ origen: "otra-salida", destino: "salida" });
+
+  await preparar(page, grafo);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+
+  await expect(page.getByText(/no puede representar fielmente/i)).toBeVisible();
+
+  await page.getByRole("button", { name: "Diagrama" }).click();
+
+  const diagrama = page.getByRole("img", { name: /Diagrama del recorrido/ });
+  await expect(diagrama).toBeVisible();
+  await expect(diagrama).toContainText("Paso A");
+  await expect(diagrama).toContainText("Avisar");
+  await expect(diagrama).toContainText("decision=RECHAZADO");
+  await expect(page.getByText(/el recorrido tiene ramas/)).toBeVisible();
+});
+
+test("el diagrama y la lista son dos vistas del mismo recorrido", async ({ page }) => {
+  await preparar(page);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+
+  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Diagrama" }).click();
+  await expect(page.getByRole("img", { name: /Diagrama del recorrido/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeHidden();
+
+  await page.getByRole("button", { name: "Lista" }).click();
+  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
+});
