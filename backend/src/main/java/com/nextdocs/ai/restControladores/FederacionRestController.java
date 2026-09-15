@@ -7,8 +7,10 @@ import com.nextdocs.ai.modelos.CodigoEmbedModel;
 import com.nextdocs.ai.modelos.IntercambioFederadoReqModel;
 import com.nextdocs.ai.modelos.NuevoProveedorIdentidadReqModel;
 import com.nextdocs.ai.modelos.ProveedorIdentidadModel;
+import com.nextdocs.ai.modelos.ProveedorOauthPublicoModel;
 import com.nextdocs.ai.modelos.SesionResModel;
 import com.nextdocs.ai.servicios.FederacionIdentidadService;
+import com.nextdocs.ai.servicios.OauthLoginService;
 import com.nextdocs.ai.servicios.ProveedorIdentidadService;
 
 import jakarta.validation.Valid;
@@ -33,10 +35,13 @@ public class FederacionRestController extends ControladorRest<FederacionRestCont
 
 	private final ProveedorIdentidadService proveedorIdentidadService;
 
+	private final OauthLoginService oauthLoginService;
+
 	public FederacionRestController(FederacionIdentidadService federacionIdentidadService,
-			ProveedorIdentidadService proveedorIdentidadService) {
+			ProveedorIdentidadService proveedorIdentidadService, OauthLoginService oauthLoginService) {
 		this.federacionIdentidadService = federacionIdentidadService;
 		this.proveedorIdentidadService = proveedorIdentidadService;
+		this.oauthLoginService = oauthLoginService;
 	}
 
 	@PostMapping("/intercambio")
@@ -48,6 +53,27 @@ public class FederacionRestController extends ControladorRest<FederacionRestCont
 	@PostMapping("/canje")
 	public ResponseEntity<SesionResModel> canjear(@Valid @RequestBody CanjeEmbedReqModel datos) {
 		return new ResponseEntity<>(federacionIdentidadService.canjear(datos.getCodigo()), HttpStatus.OK);
+	}
+
+	@GetMapping("/oauth/proveedores")
+	public ResponseEntity<List<ProveedorOauthPublicoModel>> proveedoresOauth(
+			@RequestParam String tenant) {
+		return new ResponseEntity<>(oauthLoginService.listarPublicos(tenant), HttpStatus.OK);
+	}
+
+	@GetMapping("/oauth/{codigoTenant}/{codigoProveedor}/iniciar")
+	public ResponseEntity<Void> iniciar(@PathVariable String codigoTenant,
+			@PathVariable String codigoProveedor, @RequestParam(required = false) String retorno) {
+		String destino = oauthLoginService.iniciar(codigoTenant, codigoProveedor, retorno);
+		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
+	}
+
+	@GetMapping("/oauth/callback")
+	public ResponseEntity<Void> callback(@RequestParam(required = false) String code,
+			@RequestParam(required = false) String state,
+			@RequestParam(required = false) String error) {
+		String destino = oauthLoginService.resolverCallback(code, state, error);
+		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
 	}
 
 	@PreAuthorize("hasAuthority('tenant.administrar')")

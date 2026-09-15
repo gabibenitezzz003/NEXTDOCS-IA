@@ -78,6 +78,21 @@ public class ProveedorIdentidad implements Serializable {
 
 	private int segundosVigenciaCodigo;
 
+	@Column(length = 256)
+	private String clienteId;
+
+	@Column(length = 512)
+	private String clienteSecreto;
+
+	@Column(length = 512)
+	private String urlAutorizacion;
+
+	@Column(length = 512)
+	private String urlToken;
+
+	@Column(length = 512)
+	private String alcances;
+
 	private boolean activo;
 
 	private Instant alta;

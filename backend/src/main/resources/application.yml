@@ -77,6 +77,7 @@ nextdocs:
       - /api/v1/bootstrap/tenant
       - /api/v1/federacion/intercambio
       - /api/v1/federacion/canje
+      - /api/v1/federacion/oauth/**
       - /api-docs/**
       - /swagger-ui/**
       - /swagger-ui.html
@@ -160,6 +161,8 @@ nextdocs:
     toleranciaRelojSegundos: ${NEXTDOCS_FEDERACION_RELOJ:60}
     segundosVigenciaCodigo: ${NEXTDOCS_FEDERACION_VIGENCIA_CODIGO:60}
     exigirEmisorSeguro: ${NEXTDOCS_FEDERACION_EXIGIR_HTTPS:true}
+    urlBaseApi: ${NEXTDOCS_FEDERACION_URL_BASE_API:http://localhost:8090}
+    urlBasePortal: ${NEXTDOCS_FEDERACION_URL_BASE_PORTAL:http://localhost:5175}
     intervaloLimpiezaMilisegundos: 900000
     retrasoInicialMilisegundos: 60000
   catalogo:

@@ -1,8 +1,10 @@
 package com.nextdocs.ai.servicios;
 
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.nextdocs.ai.entidades.ProveedorIdentidad;
 import com.nextdocs.ai.entidades.Tenant;
@@ -75,9 +77,10 @@ public class ProveedorIdentidadService {
 		proveedor.setPermitirJit(datos.isPermitirJit());
 		proveedor.setPermitirVinculoPorEmail(datos.isPermitirVinculoPorEmail());
 		proveedor.setCodigoRolPorDefecto(datos.getCodigoRolPorDefecto());
-		proveedor.setDominiosPermitidos(datos.getDominiosPermitidos());
+		proveedor.setDominiosPermitidos(normalizarDominios(datos.getDominiosPermitidos()));
 		proveedor.setOrigenesEmbedPermitidos(datos.getOrigenesEmbedPermitidos());
 		proveedor.setSegundosVigenciaCodigo(datos.getSegundosVigenciaCodigo());
+		configurarOauth(proveedor, datos);
 		proveedor.setActivo(true);
 		proveedor.setAlta(Instant.now());
 		proveedorIdentidadRepository.save(proveedor);
@@ -135,9 +138,56 @@ public class ProveedorIdentidadService {
 		modelo.setDominiosPermitidos(proveedor.getDominiosPermitidos());
 		modelo.setOrigenesEmbedPermitidos(proveedor.getOrigenesEmbedPermitidos());
 		modelo.setSegundosVigenciaCodigo(proveedor.getSegundosVigenciaCodigo());
+		modelo.setClienteId(proveedor.getClienteId());
+		modelo.setUrlAutorizacion(proveedor.getUrlAutorizacion());
+		modelo.setUrlToken(proveedor.getUrlToken());
+		modelo.setAlcances(proveedor.getAlcances());
+		modelo.setOauthListo(oauthCompleto(proveedor));
 		modelo.setActivo(proveedor.isActivo());
 		modelo.setAlta(proveedor.getAlta());
 		return modelo;
+	}
+
+	private void configurarOauth(ProveedorIdentidad proveedor, NuevoProveedorIdentidadReqModel datos) {
+		boolean algunCampo = datos.getClienteId() != null || datos.getClienteSecreto() != null
+				|| datos.getUrlAutorizacion() != null || datos.getUrlToken() != null
+				|| datos.getAlcances() != null;
+		if (!algunCampo) {
+			return;
+		}
+		if (esVacio(datos.getClienteId()) || esVacio(datos.getClienteSecreto())
+				|| esVacio(datos.getUrlAutorizacion()) || esVacio(datos.getUrlToken())) {
+			throw new ValidacionException(
+					"Para habilitar el login social hacen falta clienteId, clienteSecreto,"
+							+ " urlAutorizacion y urlToken juntos");
+		}
+		exigirHttps(datos.getUrlAutorizacion(), "urlAutorizacion");
+		exigirHttps(datos.getUrlToken(), "urlToken");
+		proveedor.setClienteId(datos.getClienteId().trim());
+		proveedor.setClienteSecreto(datos.getClienteSecreto().trim());
+		proveedor.setUrlAutorizacion(datos.getUrlAutorizacion().trim());
+		proveedor.setUrlToken(datos.getUrlToken().trim());
+		proveedor.setAlcances(datos.getAlcances());
+	}
+
+	public static boolean oauthCompleto(ProveedorIdentidad proveedor) {
+		return proveedor.getClienteId() != null && proveedor.getClienteSecreto() != null
+				&& proveedor.getUrlAutorizacion() != null && proveedor.getUrlToken() != null
+				&& !proveedor.getClienteId().isBlank() && !proveedor.getUrlAutorizacion().isBlank()
+				&& !proveedor.getUrlToken().isBlank();
+	}
+
+	private boolean esVacio(String valor) {
+		return valor == null || valor.isBlank();
+	}
+
+	private String normalizarDominios(String dominios) {
+		if (dominios == null || dominios.isBlank()) {
+			return dominios;
+		}
+		return Arrays.stream(dominios.split(",")).map(String::trim).filter(texto -> !texto.isEmpty())
+				.map(dominio -> dominio.startsWith("@") ? dominio : "@" + dominio)
+				.collect(Collectors.joining(","));
 	}
 
 	private void exigirHttps(String url, String campo) {

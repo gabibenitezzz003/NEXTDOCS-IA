@@ -60,4 +60,19 @@ public class NuevoProveedorIdentidadReqModel implements Serializable {
 	@Min(0)
 	@Max(600)
 	private int segundosVigenciaCodigo;
+
+	@Size(max = 256)
+	private String clienteId;
+
+	@Size(max = 512)
+	private String clienteSecreto;
+
+	@Size(max = 512)
+	private String urlAutorizacion;
+
+	@Size(max = 512)
+	private String urlToken;
+
+	@Size(max = 512)
+	private String alcances;
 }
