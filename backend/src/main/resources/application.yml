@@ -75,6 +75,7 @@ nextdocs:
     rutasPublicas:
       - /api/v1/autenticacion/**
       - /api/v1/bootstrap/tenant
+      - /api/v1/registro
       - /api/v1/federacion/intercambio
       - /api/v1/federacion/canje
       - /api/v1/federacion/oauth/**

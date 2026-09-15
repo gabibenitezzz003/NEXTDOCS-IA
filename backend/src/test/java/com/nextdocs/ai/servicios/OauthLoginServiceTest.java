@@ -189,6 +189,7 @@ class OauthLoginServiceTest {
 		assertThat(estado.get("p").asText()).isEqualTo(PROVEEDOR);
 		assertThat(estado.get("n").asText()).isEqualTo(parametro(url, "nonce"));
 		assertThat(estado.get("r").asText()).isEqualTo("http://localhost:5175");
+		assertThat(estado.has("s")).isFalse();
 	}
 
 	@Test
@@ -236,6 +237,7 @@ class OauthLoginServiceTest {
 
 		assertThat(url).startsWith("https://accounts.google.com/o/oauth2/v2/auth?");
 		assertThat(estadoDecodificado(url).get("t").asText()).isEqualTo(TENANT);
+		assertThat(estadoDecodificado(url).get("s").asInt()).isEqualTo(1);
 	}
 
 	@Test

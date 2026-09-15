@@ -32,6 +32,14 @@ export interface Sesion {
   permisos: string[];
 }
 
+export interface RegistroOrganizacion {
+  nombreOrganizacion: string;
+  codigoOrganizacion: string;
+  nombreAdministrador: string;
+  emailAdministrador: string;
+  claveAdministrador: string;
+}
+
 export interface ArchivoDocumento {
   id: string;
   nombreArchivo: string;

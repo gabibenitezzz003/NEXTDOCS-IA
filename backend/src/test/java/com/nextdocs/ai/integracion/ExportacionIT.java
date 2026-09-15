@@ -235,6 +235,7 @@ class ExportacionIT extends PruebaIntegracion {
 	@DisplayName("el aviso de vencimiento se emite una sola vez")
 	void avisoPrevioUnaVez() {
 		ingresar("uno");
+		trabajadorExportacionService.avisarPorVencer();
 		LoteExportacion lote = generar(solicitar(new NuevoLoteExportacionReqModel()));
 		lote.setVenceEn(Instant.now().plus(1, ChronoUnit.DAYS));
 		loteExportacionRepository.save(lote);

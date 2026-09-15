@@ -31,4 +31,6 @@ public class IntercambioFederadoReqModel implements Serializable {
 
 	@Size(max = 512)
 	private String urlRetorno;
+
+	private boolean tenantPropio;
 }
