@@ -147,6 +147,7 @@ export function Ingresar() {
   function iniciarOauth(codigoProveedor: string) {
     setError(null);
     if (
+      tenantLimpio.length > 0 &&
       proveedoresOauth &&
       !proveedoresOauth.some((p) => p.codigo === codigoProveedor)
     ) {
@@ -363,7 +364,7 @@ export function Ingresar() {
                     type="button"
                     variante="secundario"
                     tamano="lg"
-                    disabled={enviando || canjeando || tenantLimpio.length === 0}
+                    disabled={enviando || canjeando}
                     aria-label={t("ingresar.continuarCon", { proveedor: proveedor.nombre })}
                     className="elevar w-full"
                     onClick={() => iniciarOauth(proveedor.codigo)}

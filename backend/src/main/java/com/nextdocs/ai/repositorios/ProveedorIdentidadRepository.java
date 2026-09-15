@@ -27,4 +27,7 @@ public interface ProveedorIdentidadRepository extends JpaRepository<ProveedorIde
 	@Query("SELECT p FROM ProveedorIdentidad p WHERE p.baja IS NULL AND p.tenant.id = :tenantId "
 			+ "AND p.codigo = :codigo")
 	Optional<ProveedorIdentidad> buscarPorCodigo(@Param("tenantId") String tenantId, @Param("codigo") String codigo);
+
+	@Query("SELECT p FROM ProveedorIdentidad p JOIN FETCH p.tenant t WHERE p.baja IS NULL AND p.codigo = :codigo")
+	List<ProveedorIdentidad> listarPorCodigoGlobal(@Param("codigo") String codigo);
 }

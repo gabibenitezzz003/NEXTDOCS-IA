@@ -14,5 +14,8 @@ export async function listarProveedoresOauth(codigoTenant: string): Promise<Prov
 
 export function urlInicioOauth(codigoTenant: string, codigoProveedor: string): string {
   const retorno = encodeURIComponent(window.location.origin);
-  return `/api/v1/federacion/oauth/${encodeURIComponent(codigoTenant)}/${encodeURIComponent(codigoProveedor)}/iniciar?retorno=${retorno}`;
+  const base = codigoTenant
+    ? `/api/v1/federacion/oauth/${encodeURIComponent(codigoTenant)}/${encodeURIComponent(codigoProveedor)}/iniciar`
+    : `/api/v1/federacion/oauth/${encodeURIComponent(codigoProveedor)}/iniciar`;
+  return `${base}?retorno=${retorno}`;
 }

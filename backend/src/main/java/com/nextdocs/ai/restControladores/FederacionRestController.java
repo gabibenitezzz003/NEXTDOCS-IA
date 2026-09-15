@@ -76,6 +76,19 @@ public class FederacionRestController extends ControladorRest<FederacionRestCont
 		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
 	}
 
+	@GetMapping("/oauth/{codigoProveedor}/iniciar")
+	public ResponseEntity<Void> iniciarSinTenant(@PathVariable String codigoProveedor,
+			@RequestParam(required = false) String retorno) {
+		String destino;
+		try {
+			destino = oauthLoginService.iniciarSinTenant(codigoProveedor, retorno);
+		}
+		catch (RuntimeException e) {
+			destino = oauthLoginService.urlErrorInicio(e.getMessage());
+		}
+		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
+	}
+
 	@GetMapping("/oauth/callback")
 	public ResponseEntity<Void> callback(@RequestParam(required = false) String code,
 			@RequestParam(required = false) String state, @RequestParam(required = false) String error,

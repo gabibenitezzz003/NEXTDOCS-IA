@@ -55,7 +55,7 @@ POST /api/v1/federacion/proveedores
   "claimNombre": "name",
   "permitirJit": true,
   "permitirVinculoPorEmail": true,
-  "codigoRolPorDefecto": "REVISOR",
+  "codigoRolPorDefecto": "ADMINISTRADOR",
   "dominiosPermitidos": "@empresa.com,@gmail.com",
   "origenesEmbedPermitidos": "http://localhost:5175,https://<dominio>",
   "segundosVigenciaCodigo": 60,
@@ -72,6 +72,7 @@ Notas:
 - `clienteId`, `clienteSecreto`, `urlAutorizacion` y `urlToken` habilitan el login social solo si van los cuatro juntos; `audiencia` debe coincidir con el `clienteId` (el `aud` del `id_token`).
 - `dominiosPermitidos` acepta entradas con o sin `@` (se normalizan a `@dominio`); vacío permite cualquier dominio.
 - `origenesEmbedPermitidos` debe incluir el origen del portal si el frontend envía `retorno`.
+- En el MVP el `codigoRolPorDefecto` es `ADMINISTRADOR`: cualquier persona que entre por Google o Microsoft ve y ejecuta todo. Cuando se divida por roles, bajarlo a `REVISOR` y promover usuarios a mano.
 - El secreto se guarda en la base y **nunca** sale en las respuestas de la API (`ProveedorIdentidadModel` no lo serializa).
 - Rotar un secreto hoy requiere actualizar la fila (`eliminar` es baja lógica y el código queda reservado); un endpoint de actualización queda como pendiente.
 - El `client_secret` también puede venir de un gestor de secretos: cargarlo en la fila del proveedor al momento del alta, no en el repositorio ni en el frontend.
