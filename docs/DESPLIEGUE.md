@@ -205,6 +205,8 @@ workflow al lado del del core):
       NEXTDOCS_JWT_SECRETO: ${NEXTDOCS_JWT_SECRETO}
       NEXTDOCS_JWT_EMISOR: nextdocs-ai
       NEXTDOCS_WORKFLOW_FIXTURES_HABILITADO: "false"
+      NEXTDOCS_WORKFLOW_DOCUMENTAL_URL_BASE: http://app:8090
+      NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES: ${NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES}
     ports:
       - "127.0.0.1:8091:8091"
     healthcheck:
@@ -216,6 +218,24 @@ workflow al lado del del core):
     networks:
       - nextdocs-interno
 ```
+
+#### Conector documental
+
+Los nodos `SOLICITUD_DOCUMENTO` resuelven sus documentos contra el core. La autenticación va por
+cuenta de servicio, que en el core pertenece a un tenant, así que la clave se configura **por
+tenant**: `NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES` es una lista `tenantId=clave` separada por comas.
+
+Para dar de alta la cuenta y dejar la clave en el `.env`:
+
+```bash
+CORE=https://<host> TENANT=<codigo> EMAIL=<admin> CLAVE=<clave> scripts/alta-cuenta-motor.sh
+```
+
+La clave en claro se muestra una sola vez, por eso el script la guarda en lugar de imprimirla.
+
+**Un tenant sin clave no resuelve documentos.** El nodo queda con `documentosEsperados` y sin
+`documentosEncontrados`: la falta de configuración produce ausencia, nunca documentos inventados.
+No hay conector simulado al que caer.
 
 Requisitos en la instancia (una sola vez): clave de despliegue SSH de sólo lectura para
 `gabibenitezzz003/nextdocs-workflow` en el usuario `ubuntu` (el `git clone` corre con ella), y
