@@ -216,6 +216,8 @@ export async function preparar(pagina: Page, restaurar = true) {
       return responder([detalle.documento]);
     if (camino === "/api/v1/procesos") return responder([proceso]);
     if (camino === "/api/v1/procesos/proceso") return responder(proceso);
+    if (camino === "/api/v1/federacion/oauth/proveedores")
+      return responder([]);
     if (peticion.method() === "POST") {
       if (control.demoraMutacion) await control.demoraMutacion;
       if (control.errorMutacion)
