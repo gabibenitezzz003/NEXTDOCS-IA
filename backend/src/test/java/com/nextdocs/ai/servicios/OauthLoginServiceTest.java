@@ -25,6 +25,7 @@ import com.nextdocs.ai.enumeraciones.EstadoTenant;
 import com.nextdocs.ai.enumeraciones.OrigenIdentidad;
 import com.nextdocs.ai.exceptions.NoAutorizadoException;
 import com.nextdocs.ai.exceptions.ProhibidoException;
+import com.nextdocs.ai.exceptions.ValidacionException;
 import com.nextdocs.ai.modelos.CodigoEmbedModel;
 import com.nextdocs.ai.modelos.IntercambioFederadoReqModel;
 import com.nextdocs.ai.modelos.ProveedorOauthPublicoModel;
@@ -217,6 +218,53 @@ class OauthLoginServiceTest {
 
 		assertThatThrownBy(() -> servicio.iniciar(TENANT, "fantasma", null))
 				.isInstanceOf(NoAutorizadoException.class);
+	}
+
+	@Test
+	@DisplayName("iniciarSinTenant resuelve el proveedor unico activo sin pedir organizacion")
+	void iniciarSinTenantResuelveUnico() throws Exception {
+		Tenant tenant = new Tenant();
+		tenant.setCodigo(TENANT);
+		tenant.setEstado(EstadoTenant.ACTIVO);
+		ProveedorIdentidad proveedor = proveedor();
+		proveedor.setTenant(tenant);
+		when(proveedorIdentidadRepository.listarPorCodigoGlobal(PROVEEDOR))
+				.thenReturn(List.of(proveedor));
+
+		String url = servicio.iniciarSinTenant(PROVEEDOR, "http://localhost:5175");
+
+		assertThat(url).startsWith("https://accounts.google.com/o/oauth2/v2/auth?");
+		assertThat(estadoDecodificado(url).get("t").asText()).isEqualTo(TENANT);
+	}
+
+	@Test
+	@DisplayName("iniciarSinTenant rechaza cuando no hay proveedor configurado")
+	void iniciarSinTenantSinProveedor() {
+		when(proveedorIdentidadRepository.listarPorCodigoGlobal("fantasma"))
+				.thenReturn(List.of());
+
+		assertThatThrownBy(() -> servicio.iniciarSinTenant("fantasma", null))
+				.isInstanceOf(NoAutorizadoException.class);
+	}
+
+	@Test
+	@DisplayName("iniciarSinTenant pide la organizacion cuando el acceso es ambiguo")
+	void iniciarSinTenantAmbiguo() {
+		Tenant tenant = new Tenant();
+		tenant.setCodigo(TENANT);
+		tenant.setEstado(EstadoTenant.ACTIVO);
+		ProveedorIdentidad primero = proveedor();
+		primero.setTenant(tenant);
+		Tenant otro = new Tenant();
+		otro.setCodigo("otro");
+		otro.setEstado(EstadoTenant.ACTIVO);
+		ProveedorIdentidad segundo = proveedor();
+		segundo.setTenant(otro);
+		when(proveedorIdentidadRepository.listarPorCodigoGlobal(PROVEEDOR))
+				.thenReturn(List.of(primero, segundo));
+
+		assertThatThrownBy(() -> servicio.iniciarSinTenant(PROVEEDOR, null))
+				.isInstanceOf(ValidacionException.class);
 	}
 
 	@Test

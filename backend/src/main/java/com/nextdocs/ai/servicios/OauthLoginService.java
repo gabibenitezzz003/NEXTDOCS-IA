@@ -103,6 +103,31 @@ public class OauthLoginService {
 	@Transactional(readOnly = true)
 	public String iniciar(String codigoTenant, String codigoProveedor, String retorno) {
 		ProveedorIdentidad proveedor = proveedorOauth(codigoTenant, codigoProveedor);
+		return construirUrlAutorizacion(proveedor, codigoTenant, retorno);
+	}
+
+	@Transactional(readOnly = true)
+	public String iniciarSinTenant(String codigoProveedor, String retorno) {
+		List<ProveedorIdentidad> candidatos = proveedorIdentidadRepository
+				.listarPorCodigoGlobal(codigoProveedor).stream()
+				.filter(ProveedorIdentidad::isActivo)
+				.filter(ProveedorIdentidadService::oauthCompleto)
+				.filter(p -> p.getTenant().getEstado() == EstadoTenant.ACTIVO
+						&& p.getTenant().getBaja() == null)
+				.toList();
+		if (candidatos.isEmpty()) {
+			throw new NoAutorizadoException("Ese acceso no esta habilitado");
+		}
+		if (candidatos.size() > 1) {
+			throw new ValidacionException(
+					"Hay varias organizaciones con ese acceso. Escribi el nombre de tu organizacion para continuar");
+		}
+		ProveedorIdentidad proveedor = candidatos.get(0);
+		return construirUrlAutorizacion(proveedor, proveedor.getTenant().getCodigo(), retorno);
+	}
+
+	private String construirUrlAutorizacion(ProveedorIdentidad proveedor, String codigoTenant,
+			String retorno) {
 		String destino = validarRetorno(proveedor, retorno);
 		String nonce = aleatorio();
 		String estado = firmarEstado(codigoTenant, proveedor.getCodigo(), nonce, destino);
