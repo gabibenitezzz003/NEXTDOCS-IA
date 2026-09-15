@@ -287,6 +287,10 @@ public class OauthLoginService {
 		return propiedades.getUrlBasePortal();
 	}
 
+	public String urlErrorInicio(String mensaje) {
+		return urlError(mensaje);
+	}
+
 	private String urlError(String mensaje) {
 		return urlErrorPortal(urlPortal(), mensaje);
 	}
