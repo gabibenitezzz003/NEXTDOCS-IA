@@ -40,6 +40,7 @@ async function preparar(pagina: Page, grafo = grafoLineal()) {
     errorInstancia: false,
     errorCompletar: false,
     consultasInstancia: 0,
+    validaciones: 0,
     completadas: [] as unknown[],
     instancia: {
       id: "instancia-prueba",
@@ -104,6 +105,10 @@ async function preparar(pagina: Page, grafo = grafoLineal()) {
       control.publicaciones++;
       return responder({ ...version(), estado: "PUBLICADA" });
     }
+    if (camino.endsWith("/validar")) {
+      control.validaciones++;
+      return responder(version());
+    }
     if (camino === "/api/v1/instancias") return responder(control.instancia);
     if (camino === "/api/v1/instancias/instancia-prueba") {
       control.consultasInstancia++;
@@ -147,7 +152,7 @@ test("guardar conserva extremos y configuración adicional; publicar exige guard
 });
 
 for (const caso of ["ramas", "condición"]) {
-  test(`no permite sobrescribir un grafo con ${caso}`, async ({ page }) => {
+  test(`el canvas conserva un grafo con ${caso} al guardar`, async ({ page }) => {
     const grafo = grafoLineal();
     if (caso === "ramas") {
       grafo.nodos[1].tipo = "DECISION";
@@ -160,12 +165,12 @@ for (const caso of ["ramas", "condición"]) {
     } else grafo.aristas[0].condicion = "decision=APROBADO";
     const control = await preparar(page, grafo);
     await page.getByRole("button", { name: "Abrir estudio" }).click();
-    await expect(page.getByText(/no puede representar fielmente/i)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Guardar borrador" })).toBeDisabled();
-    await expect(page.getByRole("button", { name: "Publicar versión 8" })).toBeDisabled();
-    await expect(desplegable(page, "Agregar paso")).toHaveAttribute("aria-disabled", "true");
-    expect(control.guardados).toEqual([]);
-    expect(control.publicaciones).toBe(0);
+    await expect(
+      page.getByRole("application", { name: /Canvas del recorrido/ }),
+    ).toBeVisible();
+    await page.getByRole("button", { name: "Guardar borrador" }).click();
+    await expect.poll(() => control.guardados.length).toBe(1);
+    expect(control.guardados[0]).toEqual(grafo);
   });
 }
 
@@ -276,7 +281,7 @@ test("el rechazo conserva motivo y muestra error si falla el envío", async ({ p
   await expect(page.getByRole("button", { name: "Confirmar rechazo" })).toBeEnabled();
 });
 
-test("bloquea también un grafo actualizado después de abrir desde caché", async ({ page }) => {
+test("un grafo con ramas abre en canvas tras actualizar desde caché", async ({ page }) => {
   await page.clock.install();
   const control = await preparar(page);
   await page.getByRole("button", { name: "Abrir estudio" }).click();
@@ -286,8 +291,10 @@ test("bloquea también un grafo actualizado después de abrir desde caché", asy
   control.grafo.aristas[0].condicion = "decision=APROBADO";
   await page.clock.fastForward(16_000);
   await page.getByRole("button", { name: "Abrir estudio" }).click();
-  await expect(page.getByText(/no puede representar fielmente/i)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Guardar borrador" })).toBeDisabled();
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido/ }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Guardar borrador" })).toBeEnabled();
 });
 
 test("agregar un paso avisa que se agrego y lo deja abierto para configurar", async ({
@@ -324,7 +331,7 @@ test("la version publicada muestra datos utiles y esconde la huella tecnica", as
   await expect(huella).not.toHaveAttribute("open", /.*/);
 });
 
-test("el diagrama deja ver un recorrido con ramas que la lista bloquea", async ({
+test("el canvas muestra un recorrido con ramas que la lista bloquea", async ({
   page,
 }) => {
   const grafo = grafoLineal();
@@ -340,28 +347,105 @@ test("el diagrama deja ver un recorrido con ramas que la lista bloquea", async (
   await preparar(page, grafo);
   await page.getByRole("button", { name: "Abrir estudio" }).click();
 
-  await expect(page.getByText(/no puede representar fielmente/i)).toBeVisible();
-
-  await page.getByRole("button", { name: "Diagrama" }).click();
-
-  const diagrama = page.getByRole("img", { name: /Diagrama del recorrido/ });
-  await expect(diagrama).toBeVisible();
-  await expect(diagrama).toContainText("Paso A");
-  await expect(diagrama).toContainText("Avisar");
-  await expect(diagrama).toContainText("decision=RECHAZADO");
-  await expect(page.getByText(/el recorrido tiene ramas/)).toBeVisible();
+  const canvas = page.getByRole("application", {
+    name: /Canvas del recorrido/,
+  });
+  await expect(canvas).toBeVisible();
+  await expect(canvas).toContainText("Paso A");
+  await expect(canvas).toContainText("Avisar");
+  await expect(canvas).toContainText("decision=RECHAZADO");
 });
 
-test("el diagrama y la lista son dos vistas del mismo recorrido", async ({ page }) => {
+test("el canvas y la lista son dos vistas del mismo recorrido", async ({ page }) => {
   await preparar(page);
   await page.getByRole("button", { name: "Abrir estudio" }).click();
 
   await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
 
-  await page.getByRole("button", { name: "Diagrama" }).click();
-  await expect(page.getByRole("img", { name: /Diagrama del recorrido/ })).toBeVisible();
+  await page.getByRole("button", { name: "Canvas" }).click();
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido/ }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeHidden();
 
   await page.getByRole("button", { name: "Lista" }).click();
   await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
+});
+
+test("el canvas permite seleccionar un paso, editar su nombre y guardar", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Canvas" }).click();
+
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await expect(canvas).toBeVisible();
+  await canvas.getByText("Paso A", { exact: true }).click();
+
+  await expect(page.getByText("Propiedades del paso")).toBeVisible();
+  await page.getByLabel("Nombre del paso").fill("Paso renombrado");
+
+  await expect(page.getByText("Sin guardar", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect.poll(() => control.guardados.length).toBe(1);
+  expect(
+    control.guardados[0].nodos.find((nodo) => nodo.id === "a")?.nombre,
+  ).toBe("Paso renombrado");
+});
+
+test("arrastrar un paso en el canvas guarda su posición", async ({ page }) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Canvas" }).click();
+
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  const paso = canvas.getByText("Paso A", { exact: true });
+  const caja = await paso.boundingBox();
+  expect(caja).not.toBeNull();
+  await page.mouse.move(caja!.x + 8, caja!.y + 8);
+  await page.mouse.down();
+  await page.mouse.move(caja!.x + 90, caja!.y + 70, { steps: 5 });
+  await page.mouse.up();
+
+  await expect(page.getByText("Sin guardar", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect.poll(() => control.guardados.length).toBe(1);
+  const posicion = control.guardados[0].nodos.find((nodo) => nodo.id === "a")
+    ?.configuracion?.posicion as { x?: unknown; y?: unknown } | undefined;
+  expect(typeof posicion?.x).toBe("number");
+  expect(typeof posicion?.y).toBe("number");
+});
+
+test("el canvas permite editar la condición de una conexión", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Canvas" }).click();
+
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await canvas.locator("path.cursor-pointer").first().dispatchEvent("click");
+  await expect(page.getByText("Conexión", { exact: true })).toBeVisible();
+  await page.getByLabel("Condición (opcional)").fill("decision=APROBADO");
+  await expect(canvas).toContainText("decision=APROBADO");
+
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect.poll(() => control.guardados.length).toBe(1);
+  expect(
+    control.guardados[0].aristas.find(
+      (arista) => arista.origen === "entrada" && arista.destino === "a",
+    )?.condicion,
+  ).toBe("decision=APROBADO");
+});
+
+test("validar consulta al workflow y muestra el resultado", async ({ page }) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await expect(
+    page.getByRole("button", { name: "Validar", exact: true }),
+  ).toBeEnabled();
+  await page.getByRole("button", { name: "Validar", exact: true }).click();
+  await expect.poll(() => control.validaciones).toBe(1);
+  await expect(page.getByText(/es válida/)).toBeVisible();
 });

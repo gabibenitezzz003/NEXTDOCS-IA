@@ -120,6 +120,34 @@ export function IconoFlechaAbajo(props: PropsIcono) {
   );
 }
 
+export function IconoMas(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </Base>
+  );
+}
+
+export function IconoMenos(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M5 12h14" />
+    </Base>
+  );
+}
+
+export function IconoAjustar(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M15 3h6v6" />
+      <path d="M9 21H3v-6" />
+      <path d="M21 3l-7 7" />
+      <path d="M3 21l7-7" />
+    </Base>
+  );
+}
+
 export function IconoIgual(props: PropsIcono) {
   return (
     <Base {...props}>

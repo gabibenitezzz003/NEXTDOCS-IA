@@ -268,6 +268,11 @@ export async function actualizarGrafo(versionId: string, grafo: GrafoProceso): P
   return data;
 }
 
+export async function validarVersion(versionId: string): Promise<VersionProceso> {
+  const { data } = await clienteProcesos.post<VersionProceso>(`/procesos/versiones/${versionId}/validar`);
+  return data;
+}
+
 export async function publicarVersion(versionId: string): Promise<VersionProceso> {
   const { data } = await clienteProcesos.post<VersionProceso>(`/procesos/versiones/${versionId}/publicar`);
   return data;

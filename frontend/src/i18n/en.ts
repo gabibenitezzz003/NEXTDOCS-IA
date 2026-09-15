@@ -194,6 +194,28 @@ export const en: Diccionario = {
     nodoCancelado: "Cancelled",
     nodoPendiente: "Not reached",
   },
+  canvas: {
+    agregarNodo: "＋ Add step",
+    ayudaBreve:
+      "Drag the steps to position them; drag from a step's violet dot to another step to connect them.",
+    ariaRecorrido: "Route canvas: {cantidad} steps",
+    pasos: "{cantidad} steps",
+    alejar: "Zoom out",
+    acercar: "Zoom in",
+    ajustar: "Recenter the route",
+    propiedades: "Properties",
+    propiedadesDesc: "Nothing selected",
+    propiedadesPaso: "Step properties",
+    conexion: "Connection",
+    condicion: "Condition (optional)",
+    condicionPlaceholder: "E.g.: decision=APPROVED",
+    condicionAyuda:
+      "On decision steps, the condition distinguishes each output.",
+    eliminarPaso: "Delete step",
+    eliminarConexion: "Delete connection",
+    ayuda:
+      "Click a step to configure it, or a connection to edit its condition. Start and End steps are fixed.",
+  },
   resumen: {
     titulo: "Operational overview",
     descripcion: "Current document status, with no date filtering.",
@@ -647,10 +669,13 @@ export const en: Diccionario = {
       "Edit the sequence and save the draft before publishing. Workflow validates the route and enabled types.",
     formaVerRecorrido: "How to view the route",
     lista: "List",
-    diagrama: "Diagram",
+    canvas: "Canvas",
+    validar: "Validate",
+    validacionOk: "The version is valid: it can be published.",
     sinGuardar: "Unsaved",
     versionNoEditable: "This version cannot be edited safely",
-    versionNoEditableDesc: "{bloqueo} You can view it in the diagram.",
+    versionNoEditableDesc:
+      "{bloqueo} The list cannot faithfully represent this route: edit it in the Canvas view.",
     hayCambios:
       "There are unsaved changes. Save the draft before publishing.",
     catalogoNota:

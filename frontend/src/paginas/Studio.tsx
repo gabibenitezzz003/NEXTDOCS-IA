@@ -32,6 +32,7 @@ import {
   obtenerInstancia,
   obtenerProceso,
   publicarVersion,
+  validarVersion,
 } from "../api/procesos";
 import type {
   GrafoProceso,
@@ -41,13 +42,19 @@ import type {
   VersionProceso,
 } from "../api/procesos";
 import {
+  aplicarCambioPaso,
+  comoPaso,
   inspeccionarGrafo,
   serializarGrafo,
   type Paso,
 } from "../utilidades/grafoProceso";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
-import { DiagramaProceso } from "../componentes/DiagramaProceso";
+import {
+  CanvasProceso,
+  claveArista,
+  type SeleccionCanvas,
+} from "../componentes/CanvasProceso";
 
 const TIPOS_PASO: TipoNodoProceso[] = [
   "SOLICITUD_DOCUMENTO",
@@ -428,7 +435,7 @@ function EstudioProceso({
   const { sesion } = useSesion();
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
-  const [pasos, setPasos] = useState<Paso[]>([]);
+  const [grafoTrabajo, setGrafoTrabajo] = useState<GrafoProceso | null>(null);
   const [expandido, setExpandido] = useState<string | null>(null);
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -436,7 +443,8 @@ function EstudioProceso({
   const [aviso, setAviso] = useState<string | null>(null);
   const [pasoAgregado, setPasoAgregado] = useState<string | null>(null);
   const [tipoNuevoPaso, setTipoNuevoPaso] = useState("");
-  const [vistaRecorrido, setVistaRecorrido] = useState<"lista" | "diagrama">("lista");
+  const [vistaRecorrido, setVistaRecorrido] = useState<"lista" | "canvas">("lista");
+  const [seleccion, setSeleccion] = useState<SeleccionCanvas | null>(null);
 
   const consulta = useQuery({
     queryKey: ["proceso", procesoId],
@@ -455,15 +463,17 @@ function EstudioProceso({
   const [base, setBase] = useState<{
     versionId: string;
     grafo: GrafoProceso;
-    pasos: Paso[];
   } | null>(null);
-  const analisis = base ? inspeccionarGrafo(base.grafo) : null;
-  const bloqueo = analisis?.bloqueo ? t(analisis.bloqueo) : conflicto;
+  const analisisTrabajo = grafoTrabajo ? inspeccionarGrafo(grafoTrabajo) : null;
+  const pasos = analisisTrabajo?.pasos ?? [];
+  const bloqueoLista = analisisTrabajo?.bloqueo
+    ? t(analisisTrabajo.bloqueo)
+    : null;
   const baseLista = !!borrador && base?.versionId === borrador.id;
   const hayCambios =
     baseLista &&
-    !analisis?.bloqueo &&
-    JSON.stringify(pasos) !== JSON.stringify(base.pasos);
+    !!grafoTrabajo &&
+    JSON.stringify(grafoTrabajo) !== JSON.stringify(base.grafo);
   const advertenciaSalida = t("procesos.advertenciaSalida");
 
   useEffect(() => {
@@ -520,9 +530,9 @@ function EstudioProceso({
       versionCargada.current = { id: borrador.id, grafo: firma };
       setConflicto(null);
       const grafo = structuredClone(borrador.grafo);
-      const iniciales = inspeccionarGrafo(grafo).pasos;
-      setBase({ versionId: borrador.id, grafo, pasos: iniciales });
-      setPasos(iniciales);
+      setBase({ versionId: borrador.id, grafo });
+      setGrafoTrabajo(structuredClone(grafo));
+      if (inspeccionarGrafo(grafo).bloqueo) setVistaRecorrido("canvas");
     }
   }, [borrador]);
 
@@ -538,10 +548,9 @@ function EstudioProceso({
 
   const guardar = useMutation({
     mutationFn: () => {
-      if (!baseLista || bloqueo || consulta.isFetching)
-        throw new Error(bloqueo ?? t("procesos.borradorNoDisponible"));
-      const grafo = serializarGrafo(base.grafo, pasos);
-      return actualizarGrafo(borrador!.id, grafo);
+      if (!baseLista || conflicto || consulta.isFetching || !grafoTrabajo)
+        throw new Error(conflicto ?? t("procesos.borradorNoDisponible"));
+      return actualizarGrafo(borrador!.id, grafoTrabajo);
     },
     onSuccess: (version) => {
       versionCargada.current = {
@@ -549,9 +558,8 @@ function EstudioProceso({
         grafo: JSON.stringify(version.grafo),
       };
       const grafo = structuredClone(version.grafo);
-      const guardados = inspeccionarGrafo(grafo).pasos;
-      setBase({ versionId: version.id, grafo, pasos: guardados });
-      setPasos(guardados);
+      setBase({ versionId: version.id, grafo });
+      setGrafoTrabajo(structuredClone(grafo));
       setError(null);
       setDetalles([]);
       setAviso(t("procesos.guardadoOk"));
@@ -566,8 +574,8 @@ function EstudioProceso({
 
   const publicar = useMutation({
     mutationFn: () => {
-      if (!baseLista || bloqueo || hayCambios || consulta.isFetching)
-        throw new Error(bloqueo ?? t("procesos.guardarAntesDePublicar"));
+      if (!baseLista || conflicto || hayCambios || consulta.isFetching)
+        throw new Error(conflicto ?? t("procesos.guardarAntesDePublicar"));
       return publicarVersion(borrador!.id);
     },
     onSuccess: () => {
@@ -576,6 +584,24 @@ function EstudioProceso({
       setAviso(t("procesos.publicadoOk"));
       refrescar();
       clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
+    },
+    onError: (fallo) => {
+      setAviso(null);
+      setError(mensajeDeError(fallo));
+      setDetalles(erroresDeValidacion(fallo));
+    },
+  });
+
+  const validar = useMutation({
+    mutationFn: () => {
+      if (!baseLista || conflicto || hayCambios || consulta.isFetching)
+        throw new Error(conflicto ?? t("procesos.guardarAntesDePublicar"));
+      return validarVersion(borrador!.id);
+    },
+    onSuccess: () => {
+      setError(null);
+      setDetalles([]);
+      setAviso(t("procesos.validacionOk"));
     },
     onError: (fallo) => {
       setAviso(null);
@@ -665,10 +691,16 @@ function EstudioProceso({
 
   const editandoBloqueado =
     !baseLista ||
-    !!bloqueo ||
+    !!conflicto ||
     consulta.isFetching ||
     guardar.isPending ||
     publicar.isPending;
+
+  function aplicarPasos(nuevos: Paso[]) {
+    setGrafoTrabajo((actual) =>
+      actual ? serializarGrafo(actual, nuevos) : actual,
+    );
+  }
 
   function agregarPaso(tipo: TipoNodoProceso) {
     const nombre = t(`tipoPaso.${tipo}`);
@@ -681,23 +713,76 @@ function EstudioProceso({
       tipo,
       nombre,
     };
-    setPasos((actuales) => [...actuales, paso]);
+    aplicarPasos([...pasos, paso]);
     setExpandido(paso.id);
     setPasoAgregado(paso.id);
     setAviso(t("procesos.pasoAgregado", { nombre }));
   }
 
   function mover(id: string, desplazamiento: -1 | 1) {
-    setPasos((actuales) => {
-      const copia = [...actuales];
-      const indice = copia.findIndex((paso) => paso.id === id);
-      const destino = indice + desplazamiento;
-      if (indice < 0 || destino < 0 || destino >= copia.length) {
-        return actuales;
-      }
-      [copia[indice], copia[destino]] = [copia[destino], copia[indice]];
-      return copia;
-    });
+    const copia = [...pasos];
+    const indice = copia.findIndex((paso) => paso.id === id);
+    const destino = indice + desplazamiento;
+    if (indice < 0 || destino < 0 || destino >= copia.length) return;
+    [copia[indice], copia[destino]] = [copia[destino], copia[indice]];
+    aplicarPasos(copia);
+  }
+
+  function editarNodo(id: string, cambio: Partial<Paso>) {
+    setGrafoTrabajo((actual) =>
+      actual
+        ? {
+            ...actual,
+            nodos: actual.nodos.map((nodo) =>
+              nodo.id === id ? aplicarCambioPaso(nodo, cambio) : nodo,
+            ),
+          }
+        : actual,
+    );
+  }
+
+  function eliminarNodo(id: string) {
+    setGrafoTrabajo((actual) =>
+      actual
+        ? {
+            ...actual,
+            nodos: actual.nodos.filter((nodo) => nodo.id !== id),
+            aristas: actual.aristas.filter(
+              (arista) => arista.origen !== id && arista.destino !== id,
+            ),
+          }
+        : actual,
+    );
+    setSeleccion(null);
+  }
+
+  function editarArista(clave: string, condicion?: string) {
+    setGrafoTrabajo((actual) =>
+      actual
+        ? {
+            ...actual,
+            aristas: actual.aristas.map((arista) =>
+              claveArista(arista) === clave
+                ? { ...arista, condicion: condicion?.trim() || undefined }
+                : arista,
+            ),
+          }
+        : actual,
+    );
+  }
+
+  function eliminarArista(clave: string) {
+    setGrafoTrabajo((actual) =>
+      actual
+        ? {
+            ...actual,
+            aristas: actual.aristas.filter(
+              (arista) => claveArista(arista) !== clave,
+            ),
+          }
+        : actual,
+    );
+    setSeleccion(null);
   }
 
   if (consulta.isPending) {
@@ -831,7 +916,7 @@ function EstudioProceso({
                     alCambiar={setVistaRecorrido}
                     opciones={[
                       { valor: "lista", texto: t("procesos.lista") },
-                      { valor: "diagrama", texto: t("procesos.diagrama") },
+                      { valor: "canvas", texto: t("procesos.canvas") },
                     ]}
                   />
                   <Pastilla tono={hayCambios ? "alerta" : "neutro"}>
@@ -842,17 +927,42 @@ function EstudioProceso({
                 </div>
               }
             />
-            {bloqueo ? (
+            {conflicto ? (
               <div className="mt-espacio-4">
                 <ErrorPanel
                   titulo={t("procesos.versionNoEditable")}
-                  mensaje={t("procesos.versionNoEditableDesc", { bloqueo })}
+                  mensaje={conflicto}
                 />
               </div>
             ) : null}
-            {vistaRecorrido === "diagrama" ? (
-              <div className="mt-espacio-5">
-                <DiagramaProceso grafo={base?.grafo ?? borrador.grafo} />
+            {bloqueoLista && vistaRecorrido === "lista" ? (
+              <div className="mt-espacio-4">
+                <ErrorPanel
+                  titulo={t("procesos.versionNoEditable")}
+                  mensaje={t("procesos.versionNoEditableDesc", {
+                    bloqueo: bloqueoLista,
+                  })}
+                />
+              </div>
+            ) : null}
+            {vistaRecorrido === "canvas" && grafoTrabajo ? (
+              <div className="mt-espacio-5 grid items-start gap-espacio-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
+                <CanvasProceso
+                  grafo={grafoTrabajo}
+                  alCambiar={setGrafoTrabajo}
+                  seleccion={seleccion}
+                  alSeleccionar={setSeleccion}
+                  deshabilitado={editandoBloqueado}
+                />
+                <PanelSeleccion
+                  seleccion={seleccion}
+                  grafo={grafoTrabajo}
+                  alCambiarNodo={editarNodo}
+                  alEliminarNodo={eliminarNodo}
+                  alCambiarArista={editarArista}
+                  alEliminarArista={eliminarArista}
+                  deshabilitado={editandoBloqueado}
+                />
               </div>
             ) : null}
             {hayCambios ? (
@@ -870,11 +980,11 @@ function EstudioProceso({
               {t("procesos.catalogoNota")}
             </p>
             <fieldset
-              disabled={editandoBloqueado}
-              className={`min-w-0 ${vistaRecorrido === "diagrama" ? "hidden" : ""}`}
+              disabled={editandoBloqueado || !!bloqueoLista}
+              className={`min-w-0 ${vistaRecorrido === "canvas" ? "hidden" : ""}`}
             >
               <legend className="sr-only">{t("procesos.edicionBorrador")}</legend>
-              {!bloqueo ? (
+              {!bloqueoLista ? (
                 <ol
                   aria-label={t("procesos.secuenciaPasos")}
                   className="mt-espacio-4 [&>li+li]:before:mx-auto [&>li+li]:before:block [&>li+li]:before:h-espacio-5 [&>li+li]:before:w-px [&>li+li]:before:bg-violeta-borde"
@@ -943,10 +1053,8 @@ function EstudioProceso({
                                   nombre: paso.nombre,
                                 })}
                                 onClick={() =>
-                                  setPasos((actuales) =>
-                                    actuales.filter(
-                                      (otro) => otro.id !== paso.id,
-                                    ),
+                                  aplicarPasos(
+                                    pasos.filter((otro) => otro.id !== paso.id),
                                   )
                                 }
                                 className="text-rojo-alto"
@@ -984,8 +1092,8 @@ function EstudioProceso({
                             <ConfiguracionPaso
                               paso={paso}
                               alCambiar={(cambio) =>
-                                setPasos((actuales) =>
-                                  actuales.map((otro) =>
+                                aplicarPasos(
+                                  pasos.map((otro) =>
                                     otro.id === paso.id
                                       ? { ...otro, ...cambio }
                                       : otro,
@@ -1024,30 +1132,51 @@ function EstudioProceso({
                     </option>
                   ))}
                 </Selector>
-                <div className="grid gap-espacio-3 sm:flex sm:justify-end">
-                  <Boton
-                    variante="secundario"
-                    cargando={guardar.isPending}
-                    disabled={guardar.isPending}
-                    onClick={() => guardar.mutate()}
-                  >
-                    {t("procesos.guardarBorrador")}
-                  </Boton>
-                  <Boton
-                    variante="primario"
-                    cargando={publicar.isPending}
-                    disabled={
-                      editandoBloqueado || hayCambios || pasos.length === 0
-                    }
-                    onClick={() => publicar.mutate()}
-                  >
-                    {t("procesos.publicarVersion", {
-                      numero: borrador.numero,
-                    })}
-                  </Boton>
-                </div>
               </div>
             </fieldset>
+            <div className="mt-espacio-6 grid gap-espacio-3 border-t border-borde pt-espacio-5 sm:flex sm:justify-end">
+              <Boton
+                variante="secundario"
+                cargando={guardar.isPending}
+                disabled={
+                  editandoBloqueado ||
+                  (vistaRecorrido === "lista" && !!bloqueoLista)
+                }
+                onClick={() => guardar.mutate()}
+              >
+                {t("procesos.guardarBorrador")}
+              </Boton>
+              <Boton
+                variante="secundario"
+                cargando={validar.isPending}
+                disabled={
+                  editandoBloqueado ||
+                  validar.isPending ||
+                  hayCambios ||
+                  !grafoTrabajo
+                }
+                onClick={() => validar.mutate()}
+              >
+                {t("procesos.validar")}
+              </Boton>
+              <Boton
+                variante="primario"
+                cargando={publicar.isPending}
+                disabled={
+                  editandoBloqueado ||
+                  hayCambios ||
+                  !grafoTrabajo ||
+                  grafoTrabajo.nodos.filter(
+                    (nodo) => nodo.tipo !== "INICIO" && nodo.tipo !== "FIN",
+                  ).length === 0
+                }
+                onClick={() => publicar.mutate()}
+              >
+                {t("procesos.publicarVersion", {
+                  numero: borrador.numero,
+                })}
+              </Boton>
+            </div>
           </Tarjeta>
         )}
 
@@ -1434,6 +1563,116 @@ function PanelPrueba({
           ) : null}
         </>
       )}
+    </Tarjeta>
+  );
+}
+
+function PanelSeleccion({
+  seleccion,
+  grafo,
+  alCambiarNodo,
+  alEliminarNodo,
+  alCambiarArista,
+  alEliminarArista,
+  deshabilitado,
+}: {
+  seleccion: SeleccionCanvas | null;
+  grafo: GrafoProceso;
+  alCambiarNodo: (id: string, cambio: Partial<Paso>) => void;
+  alEliminarNodo: (id: string) => void;
+  alCambiarArista: (clave: string, condicion?: string) => void;
+  alEliminarArista: (clave: string) => void;
+  deshabilitado: boolean;
+}) {
+  const { t } = useIdioma();
+
+  const nodo =
+    seleccion?.tipo === "nodo"
+      ? grafo.nodos.find((actual) => actual.id === seleccion.id)
+      : undefined;
+  const arista =
+    seleccion?.tipo === "arista"
+      ? grafo.aristas.find(
+          (actual) => claveArista(actual) === seleccion.id,
+        )
+      : undefined;
+
+  if (nodo) {
+    const extremo = nodo.tipo === "INICIO" || nodo.tipo === "FIN";
+    return (
+      <Tarjeta padding="p-0" className="overflow-hidden">
+        <div className="p-espacio-4 sm:p-espacio-5">
+          <CabeceraTarjeta
+            titulo={t("canvas.propiedadesPaso")}
+            descripcion={t(`tipoNodo.${nodo.tipo}`)}
+          />
+        </div>
+        <fieldset disabled={deshabilitado} className="min-w-0">
+          <ConfiguracionPaso
+            paso={comoPaso(nodo)}
+            alCambiar={(cambio) => alCambiarNodo(nodo.id, cambio)}
+          />
+        </fieldset>
+        {!extremo ? (
+          <div className="border-t border-borde p-espacio-4">
+            <Boton
+              variante="peligro"
+              tamano="sm"
+              disabled={deshabilitado}
+              onClick={() => alEliminarNodo(nodo.id)}
+            >
+              {t("canvas.eliminarPaso")}
+            </Boton>
+          </div>
+        ) : null}
+      </Tarjeta>
+    );
+  }
+
+  if (arista) {
+    return (
+      <Tarjeta>
+        <CabeceraTarjeta
+          titulo={t("canvas.conexion")}
+          descripcion={`${arista.origen} → ${arista.destino}`}
+        />
+        <div className="mt-espacio-4">
+          <Campo
+            etiqueta={t("canvas.condicion")}
+            placeholder={t("canvas.condicionPlaceholder")}
+            value={arista.condicion ?? ""}
+            disabled={deshabilitado}
+            onChange={(evento) =>
+              alCambiarArista(claveArista(arista), evento.target.value)
+            }
+          />
+          <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+            {t("canvas.condicionAyuda")}
+          </p>
+        </div>
+        <div className="mt-espacio-4 border-t border-borde pt-espacio-4">
+          <Boton
+            variante="peligro"
+            tamano="sm"
+            disabled={deshabilitado}
+            onClick={() => alEliminarArista(claveArista(arista))}
+          >
+            {t("canvas.eliminarConexion")}
+          </Boton>
+        </div>
+      </Tarjeta>
+    );
+  }
+
+  return (
+    <Tarjeta>
+      <CabeceraTarjeta
+        titulo={t("canvas.propiedades")}
+        descripcion={t("canvas.propiedadesDesc")}
+      />
+      <p className="mt-espacio-4 text-pequeno text-tinta-suave">
+        {t("canvas.ayuda")}
+      </p>
     </Tarjeta>
   );
 }
