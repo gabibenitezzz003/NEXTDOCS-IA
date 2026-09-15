@@ -16,12 +16,21 @@ import {
 import { AlternarTema } from "../componentes/Tema";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { mensajeDeError } from "../api/cliente";
-import { listarProveedoresOauth, urlInicioOauth } from "../api/federacion";
+import {
+  listarProveedoresOauth,
+  urlInicioOauth,
+  type ProveedorOauth,
+} from "../api/federacion";
 
 const PILARES = [
   "Extracción con evidencia por campo y confianza trazable",
   "Validación por reglas versionadas, sin decisiones opacas",
   "Auditoría completa: quién decidió qué, cuándo y por qué",
+];
+
+const PROVEEDORES_DEFECTO: ProveedorOauth[] = [
+  { codigo: "GOOGLE", nombre: "Google" },
+  { codigo: "MICROSOFT", nombre: "Microsoft" },
 ];
 
 const CAMPOS_DEMO = [
@@ -106,6 +115,11 @@ export function Ingresar() {
     staleTime: 60_000,
     retry: false,
   });
+
+  const proveedoresVisibles =
+    proveedoresOauth && proveedoresOauth.length > 0
+      ? proveedoresOauth
+      : PROVEEDORES_DEFECTO;
 
   useEffect(() => {
     const codigo = parametros.get("codigo");
@@ -320,37 +334,35 @@ export function Ingresar() {
                 Completando el ingreso con tu proveedor…
               </div>
             ) : null}
-            {proveedoresOauth && proveedoresOauth.length > 0 ? (
-              <div
-                className="subir mt-espacio-8"
-                style={{ "--retraso": "240ms" } as React.CSSProperties}
-              >
-                <div className="flex items-center gap-espacio-3" aria-hidden="true">
-                  <span className="h-px flex-1 bg-borde" />
-                  <span className="text-micro uppercase tracking-widest text-tinta-suave">
-                    o continuá con
-                  </span>
-                  <span className="h-px flex-1 bg-borde" />
-                </div>
-                <div className="mt-espacio-4 space-y-espacio-3">
-                  {proveedoresOauth.map((proveedor) => (
-                    <Boton
-                      key={proveedor.codigo}
-                      type="button"
-                      variante="secundario"
-                      tamano="lg"
-                      disabled={enviando || canjeando || tenantLimpio.length === 0}
-                      aria-label={`Continuar con ${proveedor.nombre}`}
-                      className="elevar w-full"
-                      onClick={() => iniciarOauth(proveedor.codigo)}
-                    >
-                      <IconoProveedor codigo={proveedor.codigo} />
-                      Continuar con {proveedor.nombre}
-                    </Boton>
-                  ))}
-                </div>
+            <div
+              className="subir mt-espacio-8"
+              style={{ "--retraso": "240ms" } as React.CSSProperties}
+            >
+              <div className="flex items-center gap-espacio-3" aria-hidden="true">
+                <span className="h-px flex-1 bg-borde" />
+                <span className="text-micro uppercase tracking-widest text-tinta-suave">
+                  o continuá con
+                </span>
+                <span className="h-px flex-1 bg-borde" />
               </div>
-            ) : null}
+              <div className="mt-espacio-4 space-y-espacio-3">
+                {proveedoresVisibles.map((proveedor) => (
+                  <Boton
+                    key={proveedor.codigo}
+                    type="button"
+                    variante="secundario"
+                    tamano="lg"
+                    disabled={enviando || canjeando || tenantLimpio.length === 0}
+                    aria-label={`Continuar con ${proveedor.nombre}`}
+                    className="elevar w-full"
+                    onClick={() => iniciarOauth(proveedor.codigo)}
+                  >
+                    <IconoProveedor codigo={proveedor.codigo} />
+                    Continuar con {proveedor.nombre}
+                  </Boton>
+                ))}
+              </div>
+            </div>
           </form>
         </div>
         <p role="status" aria-atomic="true" className="sr-only">
