@@ -193,6 +193,28 @@ export const es = {
     nodoCancelado: "Cancelado",
     nodoPendiente: "Sin llegar",
   },
+  canvas: {
+    agregarNodo: "＋ Agregar paso",
+    ayudaBreve:
+      "Arrastrá los pasos para ubicarlos; tirá del punto violeta de un paso hasta otro para conectarlos.",
+    ariaRecorrido: "Canvas del recorrido: {cantidad} pasos",
+    pasos: "{cantidad} pasos",
+    alejar: "Alejar",
+    acercar: "Acercar",
+    ajustar: "Recentrar el recorrido",
+    propiedades: "Propiedades",
+    propiedadesDesc: "Nada seleccionado",
+    propiedadesPaso: "Propiedades del paso",
+    conexion: "Conexión",
+    condicion: "Condición (opcional)",
+    condicionPlaceholder: "Ej.: decision=APROBADO",
+    condicionAyuda:
+      "En pasos de decisión, la condición distingue cada salida.",
+    eliminarPaso: "Eliminar paso",
+    eliminarConexion: "Eliminar conexión",
+    ayuda:
+      "Tocá un paso para configurarlo, o una conexión para editar su condición. Los pasos Inicio y Fin son fijos.",
+  },
   resumen: {
     titulo: "Resumen operativo",
     descripcion: "Estado documental actual, sin recorte de fechas.",
@@ -648,10 +670,13 @@ export const es = {
       "Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados.",
     formaVerRecorrido: "Forma de ver el recorrido",
     lista: "Lista",
-    diagrama: "Diagrama",
+    canvas: "Canvas",
+    validar: "Validar",
+    validacionOk: "La versión es válida: puede publicarse.",
     sinGuardar: "Sin guardar",
     versionNoEditable: "Esta versión no se puede editar de forma segura",
-    versionNoEditableDesc: "{bloqueo} Podés verlo en el diagrama.",
+    versionNoEditableDesc:
+      "{bloqueo} La lista no puede representar fielmente este recorrido: editalo en la vista Canvas.",
     hayCambios:
       "Hay cambios sin guardar. Guardá el borrador antes de publicar.",
     catalogoNota:

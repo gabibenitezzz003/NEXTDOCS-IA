@@ -13,7 +13,7 @@ export interface Paso {
 const mensajeBloqueo = "procesos.bloqueoSecuencial";
 const propiedades = ["tipoDocumento", "subprocesoCodigo", "asignadoA", "slaHoras"] as const;
 
-function comoPaso(nodo: NodoProceso): Paso {
+export function comoPaso(nodo: NodoProceso): Paso {
   const configuracion = nodo.configuracion ?? {};
   return {
     id: nodo.id,
@@ -100,6 +100,21 @@ export function inspeccionarGrafo(grafo: GrafoProceso): {
   }
   if (visitados.size !== nodos.size || !visitados.has(finales[0].id)) return bloquear();
   return { pasos, bloqueo: null };
+}
+
+export function aplicarCambioPaso(nodo: NodoProceso, cambio: Partial<Paso>): NodoProceso {
+  const siguiente: NodoProceso = { ...nodo };
+  if (cambio.nombre !== undefined) siguiente.nombre = cambio.nombre;
+  const configuracion = { ...nodo.configuracion };
+  let toco = false;
+  for (const propiedad of propiedades) {
+    if (!(propiedad in cambio)) continue;
+    toco = true;
+    if (cambio[propiedad] === undefined) delete configuracion[propiedad];
+    else configuracion[propiedad] = cambio[propiedad] as string | number;
+  }
+  if (toco) siguiente.configuracion = configuracion;
+  return siguiente;
 }
 
 export function serializarGrafo(grafo: GrafoProceso, pasos: Paso[]): GrafoProceso {

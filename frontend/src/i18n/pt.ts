@@ -195,6 +195,28 @@ export const pt: Diccionario = {
     nodoCancelado: "Cancelado",
     nodoPendiente: "Não alcançado",
   },
+  canvas: {
+    agregarNodo: "＋ Adicionar passo",
+    ayudaBreve:
+      "Arraste os passos para posicioná-los; arraste do ponto violeta de um passo até outro para conectá-los.",
+    ariaRecorrido: "Canvas do percurso: {cantidad} passos",
+    pasos: "{cantidad} passos",
+    alejar: "Afastar",
+    acercar: "Aproximar",
+    ajustar: "Recentrar o percurso",
+    propiedades: "Propriedades",
+    propiedadesDesc: "Nada selecionado",
+    propiedadesPaso: "Propriedades do passo",
+    conexion: "Conexão",
+    condicion: "Condição (opcional)",
+    condicionPlaceholder: "Ex.: decision=APROVADO",
+    condicionAyuda:
+      "Em passos de decisão, a condição distingue cada saída.",
+    eliminarPaso: "Excluir passo",
+    eliminarConexion: "Excluir conexão",
+    ayuda:
+      "Toque em um passo para configurá-lo, ou em uma conexão para editar sua condição. Os passos Início e Fim são fixos.",
+  },
   resumen: {
     titulo: "Resumo operacional",
     descripcion: "Estado documental atual, sem recorte de datas.",
@@ -650,10 +672,13 @@ export const pt: Diccionario = {
       "Edite a sequência e salve o rascunho antes de publicar. O Workflow valida o percurso e os tipos habilitados.",
     formaVerRecorrido: "Forma de ver o percurso",
     lista: "Lista",
-    diagrama: "Diagrama",
+    canvas: "Canvas",
+    validar: "Validar",
+    validacionOk: "A versão é válida: pode ser publicada.",
     sinGuardar: "Não salvo",
     versionNoEditable: "Esta versão não pode ser editada com segurança",
-    versionNoEditableDesc: "{bloqueo} Você pode vê-la no diagrama.",
+    versionNoEditableDesc:
+      "{bloqueo} A lista não consegue representar fielmente este percurso: edite-o na visualização Canvas.",
     hayCambios:
       "Há alterações não salvas. Salve o rascunho antes de publicar.",
     catalogoNota:
