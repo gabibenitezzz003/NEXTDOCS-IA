@@ -78,13 +78,13 @@ public class FederacionRestController extends ControladorRest<FederacionRestCont
 
 	@GetMapping("/oauth/{codigoProveedor}/iniciar")
 	public ResponseEntity<Void> iniciarSinTenant(@PathVariable String codigoProveedor,
-			@RequestParam(required = false) String retorno) {
+			@RequestParam(required = false) String retorno, HttpServletRequest peticion) {
 		String destino;
 		try {
 			destino = oauthLoginService.iniciarSinTenant(codigoProveedor, retorno);
 		}
 		catch (RuntimeException e) {
-			destino = oauthLoginService.urlErrorInicio(e.getMessage());
+			destino = oauthLoginService.urlErrorInicio(e.getMessage(), peticion.getHeader("Accept-Language"));
 		}
 		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
 	}
