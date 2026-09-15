@@ -1,0 +1,141 @@
+services:
+
+  app:
+    build:
+      context: /opt/nextdocs-ia/app/backend
+      dockerfile: Dockerfile
+    container_name: nextdocs-ia-app
+    restart: unless-stopped
+    env_file:
+      - /etc/nextdocs-ia/nextdocs.env
+    ports:
+      - "127.0.0.1:8090:8090"
+    depends_on:
+      redis:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
+    networks:
+      - nextdocs-interno
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://127.0.0.1:8090/actuator/health
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nextdocs-ia-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --appendonly
+      - yes
+      - --save
+      - "60"
+      - "1000"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nextdocs-interno
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  clamav:
+    image: clamav/clamav:1.4
+    container_name: nextdocs-ia-clamav
+    restart: unless-stopped
+    volumes:
+      - clamav_data:/var/lib/clamav
+    networks:
+      - nextdocs-interno
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - clamdscan --ping 3
+      interval: 30s
+      timeout: 10s
+      start_period: 180s
+      retries: 10
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+
+  workflow:
+    build:
+      context: /opt/nextdocs-ia/workflow
+      dockerfile: Dockerfile
+    container_name: nextdocs-ia-workflow
+    restart: unless-stopped
+    environment:
+      NEXTDOCS_BD_URL: jdbc:postgresql://nextdocs-ia-prod.cspyua8o6elx.us-east-1.rds.amazonaws.com:5432/nextdocs_workflow
+      NEXTDOCS_BD_USUARIO: ${NEXTDOCS_BD_USUARIO}
+      NEXTDOCS_BD_CLAVE: ${NEXTDOCS_BD_CLAVE}
+      NEXTDOCS_WORKFLOW_SEGURIDAD_JWT_HABILITADA: "true"
+      NEXTDOCS_JWT_SECRETO: ${NEXTDOCS_JWT_SECRETO}
+      NEXTDOCS_JWT_EMISOR: nextdocs-ai
+      NEXTDOCS_WORKFLOW_FIXTURES_HABILITADO: "false"
+      NEXTDOCS_WORKFLOW_DOCUMENTAL_URL_BASE: ${NEXTDOCS_WORKFLOW_DOCUMENTAL_URL_BASE}
+      NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES: ${NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES}
+    ports:
+      - "127.0.0.1:8091:8091"
+    networks:
+      - nextdocs-interno
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - curl -fsS http://127.0.0.1:8091/actuator/health
+      interval: 30s
+      timeout: 5s
+      start_period: 120s
+      retries: 5
+
+networks:
+  nextdocs-interno:
+    driver: bridge
+
+volumes:
+  redis_data:
+    name: nextdocs-ia-redis-data
+  clamav_data:
+    name: nextdocs-ia-clamav-data
