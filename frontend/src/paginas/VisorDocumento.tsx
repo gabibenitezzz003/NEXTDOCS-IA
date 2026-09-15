@@ -1,7 +1,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
-import type { DetalleDocumento, ValorExtraido } from "../tipos/api";
+import type {
+  DetalleDocumento,
+  EstadoDocumento,
+  ValorExtraido,
+} from "../tipos/api";
 import {
   Boton,
   BotonIcono,
@@ -34,6 +38,13 @@ import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 
 type Pestana = "campos" | "hallazgos" | "asociacion" | "actividad";
+
+const EN_CURSO: EstadoDocumento[] = [
+  "RECIBIDO",
+  "PROCESANDO",
+  "EXTRAIDO",
+  "VALIDADO",
+];
 
 export function VisorDocumento({
   documentoId,
@@ -76,6 +87,10 @@ export function VisorDocumento({
   const consulta = useQuery({
     queryKey: ["documento", documentoId],
     queryFn: () => obtenerDetalle(documentoId),
+    refetchInterval: (consultaActiva) => {
+      const estado = consultaActiva.state.data?.documento?.estado;
+      return estado && EN_CURSO.includes(estado) ? 3000 : false;
+    },
   });
 
   function invalidar(actualizarIndicadores = false) {
@@ -462,11 +477,6 @@ export function VisorDocumento({
                 className="mt-espacio-5 grid min-w-0 grid-cols-2 gap-espacio-3 sm:grid-cols-4"
               >
                 {[
-                  [
-                    t("visor.proveedor"),
-                    detalle.extraccion?.proveedor ?? "—",
-                  ],
-                  [t("visor.modelo"), detalle.extraccion?.modelo ?? "—"],
                   [
                     t("visor.validacion"),
                     detalle.validacion?.resultado ?? "—",

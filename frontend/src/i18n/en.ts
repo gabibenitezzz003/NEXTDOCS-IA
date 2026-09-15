@@ -74,7 +74,7 @@ export const en: Diccionario = {
     navExcepciones: "Exceptions",
     navProcesos: "Processes",
     navPanel: "Dashboard",
-    navTiposNuevos: "New types",
+    navTiposNuevos: "Detected types",
   },
   ingresar: {
     titulo: "Sign in to the portal",
@@ -216,11 +216,16 @@ export const en: Diccionario = {
   },
   documentos: {
     titulo: "Document inbox",
-    descripcion: "Browse documents, their status and traceability.",
+    descripcion:
+      "Upload a document and the system reads it with AI, classifies it, validates it against the rules and lets you know if it needs your attention. Follow every step here.",
     seleccionarArchivo: "Select a document to upload",
     cargarDocumento: "Upload document",
     subiendo: "Uploading document",
-    ingresadoEnEstado: "{nombre} entered in status {estado}",
+    ingresadoEnEstado:
+      "{nombre} received. The system is reading and classifying it; the status updates itself.",
+    procesando: "Reading {cantidad} {etiqueta}…",
+    unDocumento: "document",
+    muchosDocumentos: "documents",
     buscarDocumentos: "Search documents",
     buscarDocumento: "Search document",
     buscarPlaceholder: "Search by name, sender or external reference",
@@ -278,8 +283,9 @@ export const en: Diccionario = {
     paginacion: "Exception pagination",
   },
   tiposPropuestos: {
-    titulo: "Proposed types",
-    descripcion: "Proposals detected by the system to expand the document catalog. Review the reason and suggested fields before deciding.",
+    titulo: "Detected types",
+    descripcion:
+      "When a document does not match any known type, the system creates the new type with the fields suggested by AI, and the next similar documents classify themselves. You can review or dismiss them here.",
     grupoEstado: "Proposed type status",
     pendientes: "Pending",
     aprobados: "Approved",
@@ -289,10 +295,11 @@ export const en: Diccionario = {
     muchasPropuestas: "proposals",
     aprobadoAviso: "{codigo} is now a catalog type. Incoming documents classify themselves.",
     errorAccion: "Could not complete the action",
-    sinPendientes: "No pending proposals",
-    sinAprobadas: "No approved proposals",
-    sinDescartadas: "No dismissed proposals",
-    vacioDetalle: "No proposals found for the selected status. New system proposals appear under Pending.",
+    sinPendientes: "No pending types",
+    sinAprobadas: "No new types detected yet",
+    sinDescartadas: "No dismissed types",
+    vacioDetalle:
+      "When a document of an unknown type arrives, the system detects it and creates the type automatically. If it cannot suggest fields, it stays pending for you to complete.",
     lista: "Document type proposals",
     unDocumento: "document",
     muchosDocumentos: "documents",

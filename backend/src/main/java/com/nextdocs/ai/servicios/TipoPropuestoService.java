@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nextdocs.ai.entidades.Documento;
+import com.nextdocs.ai.entidades.PlantillaDocumental;
 import com.nextdocs.ai.entidades.Tenant;
 import com.nextdocs.ai.entidades.TipoPropuesto;
 import com.nextdocs.ai.enumeraciones.AccionAuditoria;
@@ -19,6 +20,7 @@ import com.nextdocs.ai.modelos.CampoSugeridoModel;
 import com.nextdocs.ai.modelos.ResultadoClasificacionModel;
 import com.nextdocs.ai.enumeraciones.PoliticaOriginalFisico;
 import com.nextdocs.ai.enumeraciones.TipoDatoCampo;
+import com.nextdocs.ai.repositorios.PlantillaDocumentalRepository;
 import com.nextdocs.ai.repositorios.TipoPropuestoRepository;
 import com.nextdocs.ai.servicios.catalogo.CatalogoDocumentalBase;
 
@@ -44,15 +46,19 @@ public class TipoPropuestoService {
 
 	private final SembradorCatalogoService sembradorCatalogoService;
 
+	private final PlantillaDocumentalRepository plantillaDocumentalRepository;
+
 	private final AuditoriaService auditoriaService;
 
 	private final ObjectMapper objectMapper;
 
 	public TipoPropuestoService(TipoPropuestoRepository tipoPropuestoRepository,
-			SembradorCatalogoService sembradorCatalogoService, AuditoriaService auditoriaService,
+			SembradorCatalogoService sembradorCatalogoService,
+			PlantillaDocumentalRepository plantillaDocumentalRepository, AuditoriaService auditoriaService,
 			ObjectMapper objectMapper) {
 		this.tipoPropuestoRepository = tipoPropuestoRepository;
 		this.sembradorCatalogoService = sembradorCatalogoService;
+		this.plantillaDocumentalRepository = plantillaDocumentalRepository;
 		this.auditoriaService = auditoriaService;
 		this.objectMapper = objectMapper;
 	}
@@ -66,12 +72,11 @@ public class TipoPropuestoService {
 		TipoPropuesto propuesto = tipoPropuestoRepository
 				.buscarPorCodigo(documento.getTenant().getId(), codigo)
 				.orElseGet(() -> nuevo(documento, codigo, resultado));
-		if (propuesto.getEstado() == EstadoTipoPropuesto.APROBADO) {
-			return propuesto;
-		}
 		propuesto.setVeces(propuesto.getVeces() + 1);
 		propuesto.setUltimoDocumento(documento);
-		if (propuesto.getCamposSugeridos() == null && !resultado.getCamposSugeridos().isEmpty()) {
+		if (propuesto.getEstado() != EstadoTipoPropuesto.APROBADO
+				&& propuesto.getCamposSugeridos() == null
+				&& !resultado.getCamposSugeridos().isEmpty()) {
 			propuesto.setCamposSugeridos(serializar(resultado.getCamposSugeridos()));
 		}
 		tipoPropuestoRepository.save(propuesto);
@@ -103,19 +108,62 @@ public class TipoPropuestoService {
 	}
 
 	@Transactional
+	public PlantillaDocumental crearAutomatico(Documento documento, ResultadoClasificacionModel resultado) {
+		TipoPropuesto propuesto = registrar(documento, resultado);
+		if (propuesto == null) {
+			return null;
+		}
+		Tenant tenant = documento.getTenant();
+		if (propuesto.getCodigoAprobado() != null) {
+			return plantillaDocumentalRepository
+					.buscarPorCodigo(tenant.getId(), propuesto.getCodigoAprobado()).orElse(null);
+		}
+		List<CatalogoDocumentalBase.CampoBase> campos = camposUtilizables(propuesto);
+		if (campos.isEmpty()) {
+			return null;
+		}
+		CatalogoDocumentalBase.TipoBase tipo = tipoDe(propuesto, campos);
+		try {
+			sembradorCatalogoService.crearTipo(tenant, tipo);
+		} catch (ValidacionException e) {
+			log.info("La plantilla {} ya existia en el tenant {}; se reutiliza", tipo.codigo(),
+					tenant.getId());
+		}
+		marcarAprobado(propuesto, tipo.codigo());
+		auditoriaService.registrarConDetalle(tenant.getId(), AccionAuditoria.PLANTILLA_PUBLICADA, ENTIDAD,
+				propuesto.getId(), Map.of("codigo", tipo.codigo(), "campos", campos.size(),
+						"vecesVisto", propuesto.getVeces(), "automatico", true));
+		log.info("Tipo {} creado automaticamente en el tenant {} a partir del documento {}",
+				tipo.codigo(), tenant.getId(), documento.getId());
+		return plantillaDocumentalRepository.buscarPorCodigo(tenant.getId(), tipo.codigo()).orElse(null);
+	}
+
+	@Transactional
 	public TipoPropuesto aprobar(Tenant tenant, String propuestoId) {
 		TipoPropuesto propuesto = buscar(tenant.getId(), propuestoId);
 		if (propuesto.getEstado() == EstadoTipoPropuesto.APROBADO) {
 			throw new ValidacionException("El tipo " + propuesto.getCodigoSugerido() + " ya fue aprobado");
 		}
-		List<CampoSugeridoModel> sugeridos = camposDe(propuesto);
-		if (sugeridos.isEmpty()) {
+		List<CatalogoDocumentalBase.CampoBase> campos = camposUtilizables(propuesto);
+		if (campos.isEmpty()) {
 			throw new ValidacionException("La propuesta " + propuesto.getCodigoSugerido()
 					+ " no trae campos sugeridos, asi que aprobarla dejaria una plantilla que no extrae nada");
 		}
 
+		CatalogoDocumentalBase.TipoBase tipo = tipoDe(propuesto, campos);
+		sembradorCatalogoService.crearTipo(tenant, tipo);
+
+		marcarAprobado(propuesto, tipo.codigo());
+		auditoriaService.registrarConDetalle(tenant.getId(), AccionAuditoria.PLANTILLA_PUBLICADA, ENTIDAD,
+				propuesto.getId(), Map.of("codigo", tipo.codigo(), "campos", campos.size(),
+						"vecesVisto", propuesto.getVeces()));
+		log.info("Tipo propuesto {} aprobado como plantilla en el tenant {}", tipo.codigo(), tenant.getId());
+		return propuesto;
+	}
+
+	private List<CatalogoDocumentalBase.CampoBase> camposUtilizables(TipoPropuesto propuesto) {
 		List<CatalogoDocumentalBase.CampoBase> campos = new ArrayList<>();
-		for (CampoSugeridoModel sugerido : sugeridos) {
+		for (CampoSugeridoModel sugerido : camposDe(propuesto)) {
 			String clave = sugerido.getClave() == null ? null : sugerido.getClave().trim();
 			if (clave == null || clave.isBlank()) {
 				continue;
@@ -125,25 +173,17 @@ public class TipoPropuestoService {
 					sugerido.getTipoDato() == null ? TipoDatoCampo.TEXTO : sugerido.getTipoDato(),
 					sugerido.isRequerido(), UMBRAL_PROPUESTO));
 		}
-		if (campos.isEmpty()) {
-			throw new ValidacionException("Ninguno de los campos sugeridos tiene clave utilizable");
-		}
+		return campos;
+	}
 
-		CatalogoDocumentalBase.TipoBase tipo = new CatalogoDocumentalBase.TipoBase(
-				propuesto.getCodigoSugerido(),
+	private CatalogoDocumentalBase.TipoBase tipoDe(TipoPropuesto propuesto,
+			List<CatalogoDocumentalBase.CampoBase> campos) {
+		return new CatalogoDocumentalBase.TipoBase(propuesto.getCodigoSugerido(),
 				propuesto.getNombreSugerido() == null ? propuesto.getCodigoSugerido()
 						: propuesto.getNombreSugerido(),
 				"PROPUESTO",
 				propuesto.getMotivo() == null ? "Tipo propuesto por el clasificador" : propuesto.getMotivo(),
 				UMBRAL_AUTOAPROBACION, PoliticaOriginalFisico.NO_REQUIERE, campos, List.of());
-		sembradorCatalogoService.crearTipo(tenant, tipo);
-
-		marcarAprobado(propuesto, tipo.codigo());
-		auditoriaService.registrarConDetalle(tenant.getId(), AccionAuditoria.PLANTILLA_PUBLICADA, ENTIDAD,
-				propuesto.getId(), Map.of("codigo", tipo.codigo(), "campos", campos.size(),
-						"vecesVisto", propuesto.getVeces()));
-		log.info("Tipo propuesto {} aprobado como plantilla en el tenant {}", tipo.codigo(), tenant.getId());
-		return propuesto;
 	}
 
 	@Transactional
