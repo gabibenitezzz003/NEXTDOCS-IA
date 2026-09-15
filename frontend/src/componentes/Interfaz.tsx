@@ -9,6 +9,7 @@ import type {
 } from "react";
 import { Children, isValidElement, useEffect, useId, useRef, useState } from "react";
 import { IconoCerrar, IconoFlechaAbajo } from "./Iconos";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 
 export type Tono =
   "neutro" | "violeta" | "exito" | "alerta" | "rojo" | "informacion";
@@ -601,6 +602,7 @@ export function Panel({
   children: ReactNode;
   pie?: ReactNode;
 }) {
+  const { t } = useIdioma();
   const identificador = useId();
   const dialogo = useRef<HTMLDialogElement>(null);
   const encabezado = useRef<HTMLHeadingElement>(null);
@@ -694,7 +696,7 @@ export function Panel({
             variante="fantasma"
             tamano="sm"
             onClick={alCerrar}
-            aria-label="Cerrar"
+            aria-label={t("comun.cerrar")}
           >
             <IconoCerrar tamano={16} />
           </BotonIcono>

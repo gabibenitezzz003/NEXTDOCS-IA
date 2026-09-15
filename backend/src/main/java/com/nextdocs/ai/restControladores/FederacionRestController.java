@@ -13,6 +13,7 @@ import com.nextdocs.ai.servicios.FederacionIdentidadService;
 import com.nextdocs.ai.servicios.OauthLoginService;
 import com.nextdocs.ai.servicios.ProveedorIdentidadService;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -63,22 +64,24 @@ public class FederacionRestController extends ControladorRest<FederacionRestCont
 
 	@GetMapping("/oauth/{codigoTenant}/{codigoProveedor}/iniciar")
 	public ResponseEntity<Void> iniciar(@PathVariable String codigoTenant,
-			@PathVariable String codigoProveedor, @RequestParam(required = false) String retorno) {
+			@PathVariable String codigoProveedor, @RequestParam(required = false) String retorno,
+			HttpServletRequest peticion) {
 		String destino;
 		try {
 			destino = oauthLoginService.iniciar(codigoTenant, codigoProveedor, retorno);
 		}
 		catch (RuntimeException e) {
-			destino = oauthLoginService.urlErrorInicio(e.getMessage());
+			destino = oauthLoginService.urlErrorInicio(e.getMessage(), peticion.getHeader("Accept-Language"));
 		}
 		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
 	}
 
 	@GetMapping("/oauth/callback")
 	public ResponseEntity<Void> callback(@RequestParam(required = false) String code,
-			@RequestParam(required = false) String state,
-			@RequestParam(required = false) String error) {
-		String destino = oauthLoginService.resolverCallback(code, state, error);
+			@RequestParam(required = false) String state, @RequestParam(required = false) String error,
+			HttpServletRequest peticion) {
+		String destino = oauthLoginService.resolverCallback(code, state, error,
+				peticion.getHeader("Accept-Language"));
 		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
 	}
 

@@ -14,6 +14,8 @@ import {
   IconoRecargar,
 } from "../componentes/Iconos";
 import { AlternarTema } from "../componentes/Tema";
+import { SelectorIdioma } from "../componentes/Idioma";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { mensajeDeError } from "../api/cliente";
 import {
@@ -22,11 +24,7 @@ import {
   type ProveedorOauth,
 } from "../api/federacion";
 
-const PILARES = [
-  "Extracción con evidencia por campo y confianza trazable",
-  "Validación por reglas versionadas, sin decisiones opacas",
-  "Auditoría completa: quién decidió qué, cuándo y por qué",
-];
+const PILARES = ["ingresar.pilar1", "ingresar.pilar2", "ingresar.pilar3"];
 
 const PROVEEDORES_DEFECTO: ProveedorOauth[] = [
   { codigo: "GOOGLE", nombre: "Google" },
@@ -34,9 +32,9 @@ const PROVEEDORES_DEFECTO: ProveedorOauth[] = [
 ];
 
 const CAMPOS_DEMO = [
-  { etiqueta: "Proveedor", valor: "Fenix Logistics S.A.", ancho: "96%", retraso: 700 },
+  { etiqueta: "ingresar.campoProveedor", valor: "Fenix Logistics S.A.", ancho: "96%", retraso: 700 },
   { etiqueta: "CUIT", valor: "30-71589423-1", ancho: "84%", retraso: 850 },
-  { etiqueta: "Total", valor: "USD 12.480,00", ancho: "72%", retraso: 1000 },
+  { etiqueta: "ingresar.campoTotal", valor: "USD 12.480,00", ancho: "72%", retraso: 1000 },
 ];
 
 function IconoProveedor({ codigo, tamano = 18 }: { codigo: string; tamano?: number }) {
@@ -46,6 +44,7 @@ function IconoProveedor({ codigo, tamano = 18 }: { codigo: string; tamano?: numb
 }
 
 function TarjetaDocumento() {
+  const { t } = useIdioma();
   return (
     <div
       aria-hidden="true"
@@ -60,18 +59,20 @@ function TarjetaDocumento() {
             <p className="truncate text-pequeno font-semibold text-blanco">
               factura-0042.pdf
             </p>
-            <p className="text-micro text-grafito-texto">Extracción completa</p>
+            <p className="text-micro text-grafito-texto">{t("ingresar.extraccionCompleta")}</p>
           </div>
         </div>
         <Pastilla tono="exito" solido>
-          Validado
+          {t("ingresar.validado")}
         </Pastilla>
       </div>
       <div className="mt-espacio-4 space-y-espacio-3">
         {CAMPOS_DEMO.map((campo) => (
           <div key={campo.etiqueta}>
             <div className="flex items-baseline justify-between gap-espacio-2 text-micro">
-              <span className="text-grafito-texto">{campo.etiqueta}</span>
+              <span className="text-grafito-texto">
+                {campo.etiqueta === "CUIT" ? campo.etiqueta : t(campo.etiqueta)}
+              </span>
               <span className="font-semibold text-blanco">{campo.valor}</span>
             </div>
             <div className="destello relative mt-espacio-1 h-espacio-1 overflow-hidden rounded-insignia bg-grafito-claro">
@@ -94,6 +95,7 @@ function TarjetaDocumento() {
 
 export function Ingresar() {
   const { ingresar, ingresarConCodigo } = useSesion();
+  const { t } = useIdioma();
   const navegar = useNavigate();
   const [parametros, fijarParametros] = useSearchParams();
   const [codigoTenant, setCodigoTenant] = useState("demo");
@@ -148,9 +150,7 @@ export function Ingresar() {
       proveedoresOauth &&
       !proveedoresOauth.some((p) => p.codigo === codigoProveedor)
     ) {
-      setError(
-        `La organización "${tenantLimpio}" no tiene habilitado ese acceso. Revisá el nombre de tu organización.`,
-      );
+      setError(t("ingresar.accesoNoHabilitado", { tenant: tenantLimpio }));
       return;
     }
     window.location.assign(urlInicioOauth(tenantLimpio, codigoProveedor));
@@ -201,7 +201,7 @@ export function Ingresar() {
         </div>
         <div className="relative max-w-[590px]">
           <h2 className="subir font-titulo text-[clamp(32px,3.7vw,52px)] leading-tight">
-            Tus documentos saben qué hacer después.
+            {t("ingresar.tituloMarca")}
           </h2>
           <div
             aria-hidden="true"
@@ -211,8 +211,7 @@ export function Ingresar() {
             className="subir mt-espacio-5 text-cuerpo text-grafito-texto"
             style={{ "--retraso": "80ms" } as React.CSSProperties}
           >
-            Inteligencia documental y automatización de procesos sobre una
-            plataforma propia.
+            {t("ingresar.subtituloMarca")}
           </p>
           <ul className="mt-espacio-8 space-y-espacio-4">
             {PILARES.map((pilar, indice) => (
@@ -229,7 +228,7 @@ export function Ingresar() {
                 >
                   <IconoCheck tamano={13} />
                 </span>
-                <span className="text-pequeno">{pilar}</span>
+                <span className="text-pequeno">{t(pilar)}</span>
               </li>
             ))}
           </ul>
@@ -241,7 +240,7 @@ export function Ingresar() {
           <span aria-hidden="true">
             <IconoCandado tamano={16} />
           </span>
-          Sesión cifrada · aislamiento por organización
+          {t("ingresar.sesionCifrada")}
         </p>
       </section>
 
@@ -251,9 +250,12 @@ export function Ingresar() {
         </div>
         <div className="hidden w-full max-w-[420px] items-center justify-between gap-espacio-3 lg:flex">
           <p className="text-micro uppercase tracking-widest text-tinta-suave">
-            Portal seguro · acceso empresarial
+            {t("ingresar.portalSeguro")}
           </p>
-          <AlternarTema />
+          <div className="flex items-center gap-espacio-2">
+            <SelectorIdioma />
+            <AlternarTema />
+          </div>
         </div>
         <div className="flex w-full max-w-[420px] flex-1 items-start sm:items-center">
           <form
@@ -269,14 +271,14 @@ export function Ingresar() {
               id={`${id}-titulo`}
               className="subir font-titulo text-titulo-pagina text-tinta lg:text-titulo-destacado"
             >
-              Ingresar al portal
+              {t("ingresar.titulo")}
             </h1>
             <p
               id={`${id}-descripcion`}
               className="subir mt-espacio-2 text-cuerpo text-tinta-suave"
               style={{ "--retraso": "60ms" } as React.CSSProperties}
             >
-              Usá las credenciales de tu organización.
+              {t("ingresar.descripcion")}
             </p>
             <div
               id={`${id}-error`}
@@ -284,7 +286,7 @@ export function Ingresar() {
             >
               {error ? (
                 <ErrorPanel
-                  titulo="No pudimos iniciar sesión"
+                  titulo={t("ingresar.errorTitulo")}
                   mensaje={error}
                 />
               ) : null}
@@ -294,7 +296,7 @@ export function Ingresar() {
               style={{ "--retraso": "120ms" } as React.CSSProperties}
             >
               <Campo
-                etiqueta="Organización"
+                etiqueta={t("ingresar.organizacion")}
                 value={codigoTenant}
                 onChange={(evento) => setCodigoTenant(evento.target.value)}
                 required
@@ -303,7 +305,7 @@ export function Ingresar() {
                 placeholder="demo"
               />
               <Campo
-                etiqueta="Email"
+                etiqueta={t("ingresar.email")}
                 type="email"
                 value={email}
                 onChange={(evento) => setEmail(evento.target.value)}
@@ -313,7 +315,7 @@ export function Ingresar() {
                 placeholder="nombre@empresa.com"
               />
               <Campo
-                etiqueta="Clave"
+                etiqueta={t("ingresar.clave")}
                 type="password"
                 value={clave}
                 onChange={(evento) => setClave(evento.target.value)}
@@ -328,11 +330,11 @@ export function Ingresar() {
               variante="primario"
               tamano="lg"
               cargando={enviando}
-              aria-label={enviando ? "Ingresando…" : "Ingresar"}
+              aria-label={enviando ? t("ingresar.ingresando") : t("ingresar.ingresar")}
               className="subir destello mt-espacio-6 w-full overflow-hidden"
               style={{ "--retraso": "180ms" } as React.CSSProperties}
             >
-              Ingresar
+              {t("ingresar.ingresar")}
             </Boton>
             {canjeando ? (
               <div
@@ -340,7 +342,7 @@ export function Ingresar() {
                 className="aparecer mt-espacio-6 flex items-center justify-center gap-espacio-3 text-pequeno text-tinta-suave"
               >
                 <IconoRecargar tamano={16} className="animate-spin" />
-                Completando el ingreso con tu proveedor…
+                {t("ingresar.completandoProveedor")}
               </div>
             ) : null}
             <div
@@ -350,7 +352,7 @@ export function Ingresar() {
               <div className="flex items-center gap-espacio-3" aria-hidden="true">
                 <span className="h-px flex-1 bg-borde" />
                 <span className="text-micro uppercase tracking-widest text-tinta-suave">
-                  o continuá con
+                  {t("ingresar.oContinuaCon")}
                 </span>
                 <span className="h-px flex-1 bg-borde" />
               </div>
@@ -362,12 +364,12 @@ export function Ingresar() {
                     variante="secundario"
                     tamano="lg"
                     disabled={enviando || canjeando || tenantLimpio.length === 0}
-                    aria-label={`Continuar con ${proveedor.nombre}`}
+                    aria-label={t("ingresar.continuarCon", { proveedor: proveedor.nombre })}
                     className="elevar w-full"
                     onClick={() => iniciarOauth(proveedor.codigo)}
                   >
                     <IconoProveedor codigo={proveedor.codigo} />
-                    Continuar con {proveedor.nombre}
+                    {t("ingresar.continuarCon", { proveedor: proveedor.nombre })}
                   </Boton>
                 ))}
               </div>
@@ -375,13 +377,13 @@ export function Ingresar() {
           </form>
         </div>
         <p role="status" aria-atomic="true" className="sr-only">
-          {enviando ? "Ingresando…" : ""}
+          {enviando ? t("ingresar.ingresando") : ""}
         </p>
         <footer className="w-full max-w-[420px] space-y-espacio-2 text-center text-pequeno text-tinta-suave">
           <p className="lg:hidden">
-            Sesión cifrada · aislamiento por organización
+            {t("ingresar.sesionCifrada")}
           </p>
-          <p>NEXT DOC AI · plataforma documental independiente</p>
+          <p>{t("ingresar.pie")}</p>
         </footer>
       </div>
     </main>

@@ -287,10 +287,10 @@ test("AT-06 decidir invalida KPI ya consultados", async ({ page }) => {
   expect(control.kpi).toBe(2);
 });
 
-for (const accion of ["Publicar version 8", "Nueva version"]) {
+for (const accion of ["Publicar versión 8", "Nueva versión"]) {
   test(`AT-06 ${accion} refresca la biblioteca`, async ({ page }) => {
     const control = await preparar(page);
-    if (accion === "Nueva version")
+    if (accion === "Nueva versión")
       control.proceso.versiones[0].estado = "PUBLICADA";
     await page.goto("/procesos");
     await page.getByRole("button", { name: "Abrir estudio" }).click();
@@ -309,9 +309,9 @@ for (const accion of ["Publicar version 8", "Nueva version"]) {
             .length,
       )
       .toBe(2);
-    if (accion === "Publicar version 8")
+    if (accion === "Publicar versión 8")
       await expect(
-        page.getByText("Version 8 publicada", { exact: true }),
+        page.getByText("Versión 8 publicada", { exact: true }),
       ).toBeVisible();
     else
       await expect(page.getByText("borrador", { exact: true })).toBeVisible();

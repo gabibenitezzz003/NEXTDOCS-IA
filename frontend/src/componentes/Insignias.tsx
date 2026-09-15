@@ -5,6 +5,7 @@ import type {
 } from "../tipos/api";
 import { Pastilla, TONO_BARRA } from "./Interfaz";
 import type { Tono } from "./Interfaz";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
 
 const TONO_SEVERIDAD: Record<SeveridadHallazgo, Tono> = {
@@ -21,10 +22,11 @@ const TONO_PRESENCIA: Record<PresenciaCampo, Tono> = {
 };
 
 export function InsigniaEstado({ estado }: { estado: EstadoDocumento }) {
+  const { t } = useIdioma();
   const presentacion = ESTADOS_DOCUMENTALES[estado];
   return (
     <Pastilla tono={presentacion?.tono ?? "neutro"}>
-      {presentacion?.etiqueta ?? estado}
+      {t(`estadosDocumento.${estado}`)}
     </Pastilla>
   );
 }
@@ -34,9 +36,10 @@ export function InsigniaSeveridad({
 }: {
   severidad: SeveridadHallazgo;
 }) {
+  const { t } = useIdioma();
   return (
     <Pastilla tono={TONO_SEVERIDAD[severidad] ?? "neutro"}>
-      {severidad.replace(/_/g, " ")}
+      {t(`severidad.${severidad}`)}
     </Pastilla>
   );
 }
@@ -46,16 +49,18 @@ export function InsigniaPresencia({
 }: {
   presencia: PresenciaCampo;
 }) {
+  const { t } = useIdioma();
   return (
     <Pastilla tono={TONO_PRESENCIA[presencia] ?? "neutro"}>
-      {presencia.replace(/_/g, " ")}
+      {t(`presencia.${presencia}`)}
     </Pastilla>
   );
 }
 
 export function BarraConfianza({ valor }: { valor?: number }) {
+  const { t } = useIdioma();
   if (valor === undefined || valor === null) {
-    return <span className="text-pequeno text-tinta-suave">sin dato</span>;
+    return <span className="text-pequeno text-tinta-suave">{t("comun.sinDato")}</span>;
   }
   const porcentaje = Math.round(valor * 100);
   const tono: Tono =
@@ -64,7 +69,7 @@ export function BarraConfianza({ valor }: { valor?: number }) {
     <div className="flex items-center gap-espacio-2">
       <div
         role="meter"
-        aria-label="Confianza de lectura"
+        aria-label={t("insignias.confianzaLectura")}
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={porcentaje}

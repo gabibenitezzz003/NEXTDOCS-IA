@@ -98,6 +98,7 @@ public class AutenticacionService {
 		sesion.setTenantId(usuario.getTenant().getId());
 		sesion.setCodigoTenant(usuario.getTenant().getCodigo());
 		sesion.setNombreTenant(usuario.getTenant().getNombre());
+		sesion.setIdioma(usuario.getIdioma());
 		sesion.getPermisos().addAll(permisos);
 		return sesion;
 	}

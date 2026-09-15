@@ -14,7 +14,9 @@ import {
   IconoCerrar,
   IconoFiltro,
 } from "./Iconos";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import { useSesion } from "../contextos/ProveedorSesion";
+import { SelectorIdioma } from "./Idioma";
 import { AlternarTema } from "./Tema";
 
 interface EntradaNavegacion {
@@ -26,56 +28,56 @@ interface EntradaNavegacion {
 
 const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
   {
-    titulo: "Operación",
+    titulo: "disposicion.grupoOperacion",
     entradas: [
       {
         a: "/resumen",
-        texto: "Resumen",
+        texto: "disposicion.navResumen",
         permiso: "documentos.leer",
         icono: IconoResumen,
       },
       {
         a: "/documentos",
-        texto: "Documentos",
+        texto: "disposicion.navDocumentos",
         permiso: "documentos.leer",
         icono: IconoDocumentos,
       },
       {
         a: "/excepciones",
-        texto: "Excepciones",
+        texto: "disposicion.navExcepciones",
         permiso: "excepciones.leer",
         icono: IconoExcepciones,
       },
     ],
   },
   {
-    titulo: "Procesos",
+    titulo: "disposicion.grupoProcesos",
     entradas: [
       {
         a: "/procesos",
-        texto: "Procesos",
+        texto: "disposicion.navProcesos",
         permiso: "tenant.administrar",
         icono: IconoProceso,
       },
     ],
   },
   {
-    titulo: "Análisis",
+    titulo: "disposicion.grupoAnalisis",
     entradas: [
       {
         a: "/panel",
-        texto: "Panel de control",
+        texto: "disposicion.navPanel",
         permiso: "documentos.leer",
         icono: IconoPanel,
       },
     ],
   },
   {
-    titulo: "Configuración",
+    titulo: "disposicion.grupoConfiguracion",
     entradas: [
       {
         a: "/tipos-propuestos",
-        texto: "Tipos nuevos",
+        texto: "disposicion.navTiposNuevos",
         permiso: "tenant.administrar",
         icono: IconoInfo,
       },
@@ -91,12 +93,14 @@ function tituloDeSeccion(ruta: string) {
 
 export function Disposicion() {
   const { sesion, salir, tienePermiso } = useSesion();
+  const { t } = useIdioma();
   const navegar = useNavigate();
   const ubicacion = useLocation();
   const dialogo = useRef<HTMLDialogElement>(null);
   const [navegacionAbierta, setNavegacionAbierta] = useState(false);
   const idNavegacion = useId();
-  const seccion = tituloDeSeccion(ubicacion.pathname);
+  const claveSeccion = tituloDeSeccion(ubicacion.pathname);
+  const seccion = claveSeccion ? t(claveSeccion) : undefined;
 
   useEffect(() => {
     dialogo.current?.close();
@@ -144,10 +148,10 @@ export function Disposicion() {
         href="#contenido-principal"
         className="sr-only z-50 rounded-control bg-superficie p-espacio-3 text-tinta focus:not-sr-only focus:fixed focus:left-espacio-4 focus:top-espacio-4"
       >
-        Ir al contenido
+        {t("disposicion.irAlContenido")}
       </a>
       <aside
-        aria-label="Barra lateral"
+        aria-label={t("disposicion.barraLateral")}
         className="sticky top-0 hidden h-dvh min-h-0 flex-col bg-superficie-navegacion text-blanco md:flex"
       >
         <div className="flex h-(--layout-topbar-height) shrink-0 items-center justify-center border-b border-borde-navegacion xl:justify-start xl:px-espacio-4">
@@ -163,14 +167,14 @@ export function Disposicion() {
       </aside>
       <div className="flex min-w-0 flex-col">
         <header
-          aria-label="Barra superior"
+          aria-label={t("disposicion.barraSuperior")}
           className="sticky top-0 z-30 flex h-(--layout-topbar-height) shrink-0 items-center justify-between gap-espacio-3 border-b border-borde bg-superficie px-espacio-4 md:px-espacio-8"
         >
           <div className="flex min-w-0 items-center gap-espacio-3">
             <BotonIcono
               variante="secundario"
               className="md:hidden"
-              aria-label="Abrir navegación"
+              aria-label={t("disposicion.abrirNavegacion")}
               aria-expanded={navegacionAbierta}
               aria-controls={idNavegacion}
               aria-haspopup="dialog"
@@ -196,6 +200,7 @@ export function Disposicion() {
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-espacio-2">
+            <SelectorIdioma />
             <AlternarTema />
             <MenuUsuario
               {...identidad}
@@ -219,7 +224,7 @@ export function Disposicion() {
       <dialog
         ref={dialogo}
         id={idNavegacion}
-        aria-label="Navegación móvil"
+        aria-label={t("disposicion.navegacionMovil")}
         onClose={() => setNavegacionAbierta(false)}
         onClick={(evento) => {
           if (evento.target === evento.currentTarget) dialogo.current?.close();
@@ -233,7 +238,7 @@ export function Disposicion() {
             </span>
             <BotonIcono
               variante="secundario"
-              aria-label="Cerrar navegación"
+              aria-label={t("disposicion.cerrarNavegacion")}
               onClick={() => dialogo.current?.close()}
             >
               <IconoCerrar />
@@ -259,9 +264,10 @@ function Navegacion({
   compactable?: boolean;
   alNavegar?: () => void;
 }) {
+  const { t } = useIdioma();
   return (
     <nav
-      aria-label="Navegación principal"
+      aria-label={t("disposicion.navegacionPrincipal")}
       className="barra-desplazamiento-fina min-h-0 flex-1 space-y-espacio-6 overflow-y-auto px-espacio-2 py-espacio-6"
     >
       {grupos.map((grupo) => (
@@ -269,16 +275,17 @@ function Navegacion({
           <p
             className={`mb-espacio-2 px-espacio-2 text-micro uppercase tracking-wider text-texto-navegacion-secundario ${compactable ? "sr-only xl:not-sr-only" : ""}`}
           >
-            {grupo.titulo}
+            {t(grupo.titulo)}
           </p>
           <ul className="space-y-espacio-1">
             {grupo.entradas.map((entrada) => {
               const Icono = entrada.icono;
+              const texto = t(entrada.texto);
               return (
                 <li key={entrada.a}>
                   <NavLink
                     to={entrada.a}
-                    title={entrada.texto}
+                    title={texto}
                     onClick={alNavegar}
                     className={({ isActive }) =>
                       `flex min-h-control-mediano items-center gap-espacio-2 rounded-control px-espacio-2 py-espacio-2 text-pequeno transition-colors focus-visible:outline-violeta-claro ${compactable ? "justify-center xl:justify-start" : ""} ${isActive ? "bg-accion-primaria font-semibold text-blanco" : "text-texto-navegacion-secundario hover:bg-superficie-navegacion-activa hover:text-blanco"}`
@@ -290,7 +297,7 @@ function Navegacion({
                     <span
                       className={compactable ? "sr-only xl:not-sr-only" : ""}
                     >
-                      {entrada.texto}
+                      {texto}
                     </span>
                   </NavLink>
                 </li>
@@ -357,6 +364,7 @@ function MenuUsuario({
   const disparador = useRef<HTMLDivElement>(null);
   const id = useId();
   const ubicacion = useLocation();
+  const { t } = useIdioma();
 
   function cerrarConFoco() {
     setAbierto(false);
@@ -403,7 +411,7 @@ function MenuUsuario({
         <Boton
           type="button"
           variante="secundario"
-          aria-label={nombre ? `Menú de usuario: ${nombre}` : "Menú de usuario"}
+          aria-label={nombre ? t("disposicion.menuUsuarioNombre", { nombre }) : t("disposicion.menuUsuario")}
           aria-expanded={abierto}
           aria-controls={id}
           onClick={() => setAbierto((previo) => !previo)}
@@ -423,7 +431,7 @@ function MenuUsuario({
         <div
           id={id}
           role="region"
-          aria-label="Opciones de usuario"
+          aria-label={t("disposicion.opcionesUsuario")}
           className="absolute right-0 top-full mt-espacio-2 w-72 max-w-[calc(100vw-var(--spacing-espacio-8))] rounded-panel border border-borde bg-superficie p-espacio-4 shadow-superficie-elevada"
         >
           <div className="mb-espacio-3 border-b border-borde pb-espacio-3">
@@ -447,10 +455,10 @@ function MenuUsuario({
               onClick={alSalir}
             >
               <IconoSalir tamano={16} />
-              Cerrar sesión
+              {t("comun.cerrarSesion")}
             </Boton>
             <Boton type="button" tamano="sm" onClick={cerrarConFoco}>
-              Cerrar menú
+              {t("comun.cerrarMenu")}
             </Boton>
           </div>
         </div>
@@ -469,7 +477,9 @@ export function Encabezado({
   acciones?: ReactNode;
 }) {
   const ubicacion = useLocation();
-  const seccion = tituloDeSeccion(ubicacion.pathname);
+  const { t } = useIdioma();
+  const claveSeccion = tituloDeSeccion(ubicacion.pathname);
+  const seccion = claveSeccion ? t(claveSeccion) : undefined;
 
   return (
     <header className="min-w-0 px-espacio-4 py-espacio-5 md:px-espacio-8">

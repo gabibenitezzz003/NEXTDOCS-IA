@@ -1,4 +1,5 @@
 import type { GrafoProceso, TipoNodoProceso } from "../api/procesos";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import { disponerGrafo } from "../utilidades/disposicionGrafo";
 import { Vacio } from "./Estados";
 
@@ -7,21 +8,6 @@ const ALTO = 60;
 const SEPARACION_X = 72;
 const SEPARACION_Y = 28;
 const MARGEN = 16;
-
-const ETIQUETA_TIPO: Record<TipoNodoProceso, string> = {
-  INICIO: "Inicio",
-  FIN: "Fin",
-  SOLICITUD_DOCUMENTO: "Documento",
-  FORMULARIO: "Formulario",
-  VALIDACION_IA: "Validación IA",
-  REVISION_HUMANA: "Revisión",
-  DECISION: "Decisión",
-  TAREA_EXTERNA: "Tarea externa",
-  NOTIFICACION: "Notificación",
-  TEMPORIZADOR: "Espera",
-  ACCION_API: "Acción de API",
-  SUBPROCESO: "Subproceso",
-};
 
 function colorDe(tipo: TipoNodoProceso): { relleno: string; borde: string } {
   if (tipo === "INICIO" || tipo === "FIN") {
@@ -38,20 +24,23 @@ function colorDe(tipo: TipoNodoProceso): { relleno: string; borde: string } {
 
 export function DiagramaProceso({
   grafo,
-  titulo = "Diagrama del recorrido",
+  titulo,
 }: {
   grafo: GrafoProceso | undefined;
   titulo?: string;
 }) {
+  const { t } = useIdioma();
   const disposicion = disponerGrafo(grafo);
+  const tituloFinal = titulo ?? t("diagramaProceso.titulo");
 
   if (!disposicion.nodos.length) {
     return (
       <Vacio
-        titulo="Todavía no hay pasos que dibujar"
+        titulo={t("diagramaProceso.sinPasos")}
         detalle={
-          disposicion.problema ??
-          "Agregá pasos al recorrido y el diagrama se arma solo."
+          disposicion.problema
+            ? t(disposicion.problema)
+            : t("diagramaProceso.sinPasosDetalle")
         }
       />
     );
@@ -75,13 +64,13 @@ export function DiagramaProceso({
           role="note"
           className="mb-espacio-3 rounded-control border border-alerta-borde bg-alerta-tenue px-espacio-3 py-espacio-2 text-pequeno text-alerta-texto"
         >
-          {disposicion.problema}
+          {t(disposicion.problema)}
         </p>
       ) : null}
       <div className="overflow-auto rounded-panel border border-borde bg-lienzo p-espacio-2">
         <svg
           role="img"
-          aria-label={`${titulo}: ${disposicion.nodos.length} pasos`}
+          aria-label={t("diagramaProceso.ariaPasos", { titulo: tituloFinal, cantidad: disposicion.nodos.length })}
           viewBox={`0 0 ${ancho} ${alto}`}
           width={ancho}
           height={alto}
@@ -160,7 +149,7 @@ export function DiagramaProceso({
                   className="fill-[var(--color-tinta-suave)] text-[9px] uppercase"
                   style={{ letterSpacing: "0.4px" }}
                 >
-                  {String(indice + 1).padStart(2, "0")} · {ETIQUETA_TIPO[nodo.tipo]}
+                  {String(indice + 1).padStart(2, "0")} · {t(`tipoNodo.${nodo.tipo}`)}
                 </text>
                 <text
                   x={x + 12}
@@ -177,8 +166,8 @@ export function DiagramaProceso({
         </svg>
       </div>
       <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-        {disposicion.nodos.length} pasos
-        {disposicion.hayRamas ? " · el recorrido tiene ramas" : ""}
+        {t("diagramaProceso.pasos", { cantidad: disposicion.nodos.length })}
+        {disposicion.hayRamas ? t("diagramaProceso.conRamas") : ""}
       </p>
     </div>
   );

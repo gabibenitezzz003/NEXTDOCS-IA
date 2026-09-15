@@ -2,7 +2,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
 import type { DetalleDocumento, ValorExtraido } from "../tipos/api";
-import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
 import {
   Boton,
   BotonIcono,
@@ -32,6 +31,7 @@ import {
   urlOriginal,
 } from "../api/documentos";
 import { useSesion } from "../contextos/ProveedorSesion";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 
 type Pestana = "campos" | "hallazgos" | "asociacion" | "actividad";
 
@@ -43,6 +43,7 @@ export function VisorDocumento({
   alCerrar: () => void;
 }) {
   const { tienePermiso } = useSesion();
+  const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const dialogo = useRef<HTMLDialogElement>(null);
   const titulo = useRef<HTMLHeadingElement>(null);
@@ -100,7 +101,11 @@ export function VisorDocumento({
     onSuccess: (revision) => {
       setAviso({
         tono: "ok",
-        texto: `Documento ${revision.estadoNuevo ? ESTADOS_DOCUMENTALES[revision.estadoNuevo].etiqueta : "revisado"}`,
+        texto: t("visor.documentoResultado", {
+          estado: revision.estadoNuevo
+            ? t(`estadosDocumento.${revision.estadoNuevo}`)
+            : t("visor.revisado"),
+        }),
       });
       setCorrecciones({});
       setMotivo("");
@@ -113,7 +118,7 @@ export function VisorDocumento({
   const reproceso = useMutation({
     mutationFn: () => reprocesar(documentoId),
     onSuccess: () => {
-      setAviso({ tono: "ok", texto: "Documento reencolado para reproceso" });
+      setAviso({ tono: "ok", texto: t("visor.reencolado") });
       invalidar(true);
     },
     onError: (error) =>
@@ -123,7 +128,7 @@ export function VisorDocumento({
   const cierre = useMutation({
     mutationFn: () => cerrar(documentoId),
     onSuccess: () => {
-      setAviso({ tono: "ok", texto: "Documento cerrado" });
+      setAviso({ tono: "ok", texto: t("visor.cerrado") });
       invalidar(true);
     },
     onError: (error) =>
@@ -135,10 +140,10 @@ export function VisorDocumento({
       seleccionarCandidato(
         documentoId,
         candidatoId,
-        motivo.trim() || "Seleccion desde el portal",
+        motivo.trim() || t("visor.seleccionPortal"),
       ),
     onSuccess: () => {
-      setAviso({ tono: "ok", texto: "Candidato asociado" });
+      setAviso({ tono: "ok", texto: t("visor.candidatoAsociado") });
       invalidar();
     },
     onError: (error) =>
@@ -164,13 +169,30 @@ export function VisorDocumento({
     eleccion.isPending;
 
   const pestanas: [Pestana, string][] = [
-    ["campos", "Campos (" + (detalle?.extraccion?.valores.length ?? 0) + ")"],
+    [
+      "campos",
+      t("visor.pestanaCampos", {
+        cantidad: detalle?.extraccion?.valores.length ?? 0,
+      }),
+    ],
     [
       "hallazgos",
-      "Hallazgos (" + (detalle?.validacion?.hallazgos.length ?? 0) + ")",
+      t("visor.pestanaHallazgos", {
+        cantidad: detalle?.validacion?.hallazgos.length ?? 0,
+      }),
     ],
-    ["asociacion", "Asociación (" + (detalle?.candidatos.length ?? 0) + ")"],
-    ["actividad", "Actividad (" + (detalle?.revisiones.length ?? 0) + ")"],
+    [
+      "asociacion",
+      t("visor.pestanaAsociacion", {
+        cantidad: detalle?.candidatos.length ?? 0,
+      }),
+    ],
+    [
+      "actividad",
+      t("visor.pestanaActividad", {
+        cantidad: detalle?.revisiones.length ?? 0,
+      }),
+    ],
   ];
 
   return (
@@ -228,20 +250,20 @@ export function VisorDocumento({
                 id={identificador + "-descripcion"}
                 className="mb-espacio-1 text-micro uppercase tracking-wide text-tinta-suave"
               >
-                Revisión documental
+                {t("visor.revisionDocumental")}
               </p>
               <h2
                 ref={titulo}
                 tabIndex={-1}
                 id={identificador + "-titulo"}
-                title={documento?.nombre ?? "Documento"}
+                title={documento?.nombre ?? t("visor.documento")}
                 className="line-clamp-2 font-titulo text-titulo-panel [overflow-wrap:anywhere] focus:outline-none"
               >
-                {documento?.nombre ?? "Documento"}
+                {documento?.nombre ?? t("visor.documento")}
               </h2>
             </div>
             <BotonIcono
-              aria-label="Cerrar visor"
+              aria-label={t("visor.cerrarVisor")}
               variante="fantasma"
               onClick={alCerrar}
             >
@@ -252,14 +274,14 @@ export function VisorDocumento({
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-espacio-2 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
               {documento ? <InsigniaEstado estado={documento.estado} /> : null}
               {documento?.origenTipo === "GENERICO" ? (
-                <Pastilla tono="alerta">Captura genérica</Pastilla>
+                <Pastilla tono="alerta">{t("documentos.capturaGenerica")}</Pastilla>
               ) : null}
             </div>
             <Boton type="button" tamano="sm" onClick={abrirOriginal}>
               <span aria-hidden="true">
                 <IconoDescargar tamano={14} />
               </span>
-              Ver original
+              {t("visor.verOriginal")}
             </Boton>
           </div>
         </header>
@@ -267,7 +289,7 @@ export function VisorDocumento({
         {detalle && !consulta.isError ? (
           <div
             role="tablist"
-            aria-label="Información del documento"
+            aria-label={t("visor.infoDocumento")}
             className="grid shrink-0 grid-cols-2 gap-espacio-1 border-b border-borde bg-superficie p-espacio-2 sm:grid-cols-4 sm:px-espacio-6"
             onKeyDown={(evento) => {
               const indice = pestanas.findIndex(([clave]) => clave === pestana);
@@ -328,35 +350,46 @@ export function VisorDocumento({
             <Cargando filas={5} />
           ) : consulta.isError ? (
             <ErrorPanel
-              contexto="No se pudo cargar el documento"
+              contexto={t("visor.errorCargar")}
               mensaje={mensajeDeError(consulta.error)}
-          error={consulta.error}
+              error={consulta.error}
               reintentar={() => consulta.refetch()}
             />
           ) : !detalle ? (
-            <Vacio titulo="Sin detalle disponible" />
+            <Vacio titulo={t("visor.sinDetalle")} />
           ) : (
             <>
               <details className="mb-espacio-4 min-w-0 rounded-panel border border-borde bg-superficie p-espacio-3">
                 <summary className="cursor-pointer rounded-control text-pequeno font-semibold text-tinta-media focus-visible:outline-foco">
-                  Datos del documento
+                  {t("visor.datosDocumento")}
                 </summary>
                 <dl className="mt-espacio-3 space-y-espacio-3 text-pequeno [overflow-wrap:anywhere]">
                   {[
-                    ["Nombre completo", documento?.nombre ?? "Documento"],
                     [
-                      "Tipo y versión",
+                      t("visor.nombreCompleto"),
+                      documento?.nombre ?? t("visor.documento"),
+                    ],
+                    [
+                      t("visor.tipoYVersion"),
                       documento?.codigoPlantilla
                         ? documento.codigoPlantilla +
                           (documento.numeroVersionPlantilla != null
-                            ? ` · version ${documento.numeroVersionPlantilla}`
+                            ? t("visor.versionLabel", {
+                                numero: documento.numeroVersionPlantilla,
+                              })
                             : "")
-                        : "Sin plantilla",
+                        : t("visor.sinPlantilla"),
                     ],
-                    ["Origen del sujeto", documento?.sujetoOrigen ?? "—"],
-                    ["Tipo de sujeto", documento?.sujetoTipoObjeto ?? "—"],
                     [
-                      "Identificador del sujeto",
+                      t("visor.origenSujeto"),
+                      documento?.sujetoOrigen ?? "—",
+                    ],
+                    [
+                      t("visor.tipoSujeto"),
+                      documento?.sujetoTipoObjeto ?? "—",
+                    ],
+                    [
+                      t("visor.identificadorSujeto"),
                       documento?.sujetoIdObjeto ?? "—",
                     ],
                   ].map(([etiqueta, valor]) => (
@@ -374,10 +407,7 @@ export function VisorDocumento({
                   role="note"
                   className="mb-espacio-4 rounded-control border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-alerta-texto"
                 >
-                  <p className="font-semibold">
-                    Este documento no correspondía a ningún tipo del catálogo y
-                    se capturó con el esquema genérico.
-                  </p>
+                  <p className="font-semibold">{t("visor.genericoAviso")}</p>
                   {documento.motivoTipo ? (
                     <p className="mt-espacio-1 [overflow-wrap:anywhere]">
                       {documento.motivoTipo}
@@ -428,19 +458,25 @@ export function VisorDocumento({
                 ) : null}
               </div>
               <dl
-                aria-label="Contexto de extracción y validación"
+                aria-label={t("visor.contextoExtraccion")}
                 className="mt-espacio-5 grid min-w-0 grid-cols-2 gap-espacio-3 sm:grid-cols-4"
               >
                 {[
-                  ["Proveedor", detalle.extraccion?.proveedor ?? "—"],
-                  ["Modelo", detalle.extraccion?.modelo ?? "—"],
-                  ["Validación", detalle.validacion?.resultado ?? "—"],
                   [
-                    "Autoaprobado",
+                    t("visor.proveedor"),
+                    detalle.extraccion?.proveedor ?? "—",
+                  ],
+                  [t("visor.modelo"), detalle.extraccion?.modelo ?? "—"],
+                  [
+                    t("visor.validacion"),
+                    detalle.validacion?.resultado ?? "—",
+                  ],
+                  [
+                    t("visor.autoaprobado"),
                     detalle.validacion
                       ? detalle.validacion.autoaprobado
-                        ? "Sí"
-                        : "No"
+                        ? t("visor.si")
+                        : t("visor.no")
                       : "—",
                   ],
                 ].map(([etiqueta, valor]) => (
@@ -463,7 +499,7 @@ export function VisorDocumento({
 
         {(puedeRevisar || puedeEscribir) && documento && !consulta.isError ? (
           <footer
-            aria-label="Decisiones documentales"
+            aria-label={t("visor.decisionesDocumentales")}
             className="shrink-0 border-t border-borde bg-superficie p-espacio-4 sm:px-espacio-6"
           >
             {puedeRevisar && Object.keys(correcciones).length ? (
@@ -472,17 +508,18 @@ export function VisorDocumento({
                 aria-atomic="true"
                 className="mb-espacio-2 text-pequeno font-semibold text-accion-tonal-texto"
               >
-                {Object.keys(correcciones).length} campo(s) corregido(s) sin
-                enviar. Se envían con la decisión.
+                {t("visor.camposCorregidos", {
+                  cantidad: Object.keys(correcciones).length,
+                })}
               </p>
             ) : null}
             {puedeRevisar ? (
               <Campo
-                etiqueta="Motivo de la decisión"
+                etiqueta={t("visor.motivoDecision")}
                 value={motivo}
                 disabled={trabajando}
                 onChange={(evento) => setMotivo(evento.target.value)}
-                placeholder="Motivo de la decisión (obligatorio para rechazar, observar o corregir)"
+                placeholder={t("visor.motivoPlaceholder")}
               />
             ) : null}
             <div className="mt-espacio-3 grid grid-cols-2 gap-espacio-2 sm:flex sm:flex-wrap">
@@ -500,7 +537,7 @@ export function VisorDocumento({
                     }
                     onClick={() => decidir.mutate("APROBAR")}
                   >
-                    Aprobar
+                    {t("visor.aprobar")}
                   </Boton>
                   <Boton
                     type="button"
@@ -513,7 +550,7 @@ export function VisorDocumento({
                     }
                     onClick={() => decidir.mutate("OBSERVAR")}
                   >
-                    Observar
+                    {t("visor.observar")}
                   </Boton>
                   <Boton
                     type="button"
@@ -527,7 +564,7 @@ export function VisorDocumento({
                     }
                     onClick={() => decidir.mutate("RECHAZAR")}
                   >
-                    Rechazar
+                    {t("visor.rechazar")}
                   </Boton>
                 </>
               ) : null}
@@ -542,7 +579,7 @@ export function VisorDocumento({
                     <span aria-hidden="true">
                       <IconoRecargar tamano={14} />
                     </span>
-                    Reprocesar
+                    {t("visor.reprocesar")}
                   </Boton>
                   <Boton
                     type="button"
@@ -554,18 +591,17 @@ export function VisorDocumento({
                     onClick={() => cierre.mutate()}
                     className="col-span-2"
                   >
-                    Cerrar documento
+                    {t("visor.cerrarDocumento")}
                   </Boton>
                 </>
               ) : null}
             </div>
             <span role="status" aria-atomic="true" className="sr-only">
-              {trabajando ? "Enviando acción documental" : ""}
+              {trabajando ? t("visor.enviandoAccion") : ""}
             </span>
             {documento.transicionesPosibles.length === 0 ? (
               <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-                Este documento está en un estado final y no admite más
-                transiciones.
+                {t("visor.estadoFinal")}
               </p>
             ) : null}
           </footer>
@@ -588,24 +624,25 @@ function PanelCampos({
   bloqueado: boolean;
   alCorregir: (clave: string, valor: string | null) => void;
 }) {
+  const { t } = useIdioma();
   if (!detalle.extraccion)
     return (
       <Vacio
-        titulo="Sin extracción"
-        detalle="Todavía no se ejecutó ninguna extracción sobre este documento."
+        titulo={t("visor.sinExtraccion")}
+        detalle={t("visor.sinExtraccionDetalle")}
       />
     );
   if (!detalle.extraccion.valores.length)
     return (
       <Vacio
-        titulo="Sin campos extraídos"
-        detalle="La extracción no devolvió campos para mostrar."
+        titulo={t("visor.sinCampos")}
+        detalle={t("visor.sinCamposDetalle")}
       />
     );
   return (
     <div>
       <h3 className="mb-espacio-3 font-titulo text-titulo-panel">
-        Campos extraídos
+        {t("visor.camposExtraidos")}
       </h3>
       <ul className="space-y-espacio-3">
         {detalle.extraccion.valores.map((valor) => (
@@ -639,6 +676,7 @@ function CampoExtraido({
   bloqueado: boolean;
   alCorregir: (clave: string, valor: string | null) => void;
 }) {
+  const { t } = useIdioma();
   const id = useId();
   return (
     <div className="grid min-w-0 gap-espacio-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_minmax(0,1fr)]">
@@ -680,14 +718,14 @@ function CampoExtraido({
         )}
         {valor.corregidoManualmente ? (
           <p className="mt-espacio-1 text-micro text-accion-tonal-texto">
-            corregido manualmente
+            {t("visor.corregidoManualmente")}
           </p>
         ) : null}
       </div>
       <dl className="flex flex-wrap gap-espacio-3 sm:col-span-2 lg:col-span-1">
         <div>
           <dt className="mb-espacio-1 text-micro text-tinta-suave">
-            Presencia
+            {t("visor.presencia")}
           </dt>
           <dd>
             <InsigniaPresencia presencia={valor.presencia} />
@@ -695,7 +733,7 @@ function CampoExtraido({
         </div>
         <div>
           <dt className="mb-espacio-1 text-micro text-tinta-suave">
-            Confianza
+            {t("visor.confianza")}
           </dt>
           <dd>
             <BarraConfianza valor={valor.confianza} />
@@ -707,12 +745,13 @@ function CampoExtraido({
 }
 
 function PanelHallazgos({ detalle }: { detalle: DetalleDocumento }) {
+  const { t } = useIdioma();
   const hallazgos = detalle.validacion?.hallazgos ?? [];
   if (!detalle.validacion)
     return (
       <Vacio
-        titulo="Sin validación"
-        detalle="Todavía no hay una validación disponible para consultar hallazgos."
+        titulo={t("visor.sinValidacion")}
+        detalle={t("visor.sinValidacionDetalle")}
       />
     );
   if (!hallazgos.length)
@@ -721,12 +760,14 @@ function PanelHallazgos({ detalle }: { detalle: DetalleDocumento }) {
         role="status"
         className="rounded-panel border border-exito-borde bg-exito-tenue p-espacio-6 text-center text-pequeno text-exito-texto"
       >
-        La validación no encontró hallazgos.
+        {t("visor.sinHallazgos")}
       </p>
     );
   return (
     <div>
-      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">Hallazgos</h3>
+      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">
+        {t("visor.hallazgos")}
+      </h3>
       <ul className="space-y-espacio-3">
         {hallazgos.map((hallazgo) => (
           <li key={hallazgo.id}>
@@ -741,13 +782,16 @@ function PanelHallazgos({ detalle }: { detalle: DetalleDocumento }) {
                 ) : null}
               </div>
               <p className="mt-espacio-3 text-pequeno [overflow-wrap:anywhere]">
-                {hallazgo.mensaje ?? "Sin mensaje disponible"}
+                {hallazgo.mensaje ?? t("visor.sinMensaje")}
               </p>
               {hallazgo.sobreescrito ? (
                 <p className="mt-espacio-2 text-pequeno text-accion-tonal-texto [overflow-wrap:anywhere]">
-                  Sobreescrito
+                  {t("visor.sobreescrito")}
                   {hallazgo.sobreescritoPor
-                    ? " por " + hallazgo.sobreescritoPor
+                    ? " " +
+                      t("visor.sobreescritoPor", {
+                        nombre: hallazgo.sobreescritoPor,
+                      })
                     : ""}
                   {hallazgo.motivoSobreescritura
                     ? ": " + hallazgo.motivoSobreescritura
@@ -775,16 +819,19 @@ function PanelAsociacion({
   bloqueado: boolean;
   alElegir: (candidatoId: string) => void;
 }) {
+  const { t } = useIdioma();
   if (!detalle.candidatos.length)
     return (
       <Vacio
-        titulo="Sin candidatos"
-        detalle="Ningún conector devolvió candidatos para este documento."
+        titulo={t("visor.sinCandidatos")}
+        detalle={t("visor.sinCandidatosDetalle")}
       />
     );
   return (
     <div>
-      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">Asociación</h3>
+      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">
+        {t("visor.asociacion")}
+      </h3>
       <ul className="space-y-espacio-3">
         {detalle.candidatos.map((candidato) => (
           <li key={candidato.id}>
@@ -803,7 +850,7 @@ function PanelAsociacion({
                   <p className="text-pequeno font-semibold">
                     {candidato.descripcion ??
                       candidato.idObjeto ??
-                      "Sin descripción disponible"}
+                      t("visor.sinDescripcion")}
                   </p>
                   <p className="mt-espacio-1 text-pequeno text-tinta-suave">
                     {[
@@ -814,12 +861,12 @@ function PanelAsociacion({
                       .filter(Boolean)
                       .join(" · ")}
                     {candidato.puntaje != null
-                      ? " · puntaje " + candidato.puntaje
+                      ? t("visor.puntaje", { puntaje: candidato.puntaje })
                       : ""}
                   </p>
                 </div>
                 {candidato.seleccionado ? (
-                  <Pastilla tono="exito">Seleccionado</Pastilla>
+                  <Pastilla tono="exito">{t("visor.seleccionado")}</Pastilla>
                 ) : puedeElegir && !candidato.descartado ? (
                   <Boton
                     type="button"
@@ -827,7 +874,7 @@ function PanelAsociacion({
                     disabled={bloqueado}
                     onClick={() => alElegir(candidato.id)}
                   >
-                    Elegir
+                    {t("visor.elegir")}
                   </Boton>
                 ) : null}
               </div>
@@ -836,23 +883,26 @@ function PanelAsociacion({
         ))}
       </ul>
       <span role="status" aria-atomic="true" className="sr-only">
-        {eligiendo ? "Seleccionando candidato" : ""}
+        {eligiendo ? t("visor.seleccionandoCandidato") : ""}
       </span>
     </div>
   );
 }
 
 function PanelActividad({ detalle }: { detalle: DetalleDocumento }) {
+  const { t } = useIdioma();
   if (!detalle.revisiones.length)
     return (
       <Vacio
-        titulo="Sin actividad"
-        detalle="Todavía no hubo revisiones humanas sobre este documento."
+        titulo={t("visor.sinActividad")}
+        detalle={t("visor.sinActividadDetalle")}
       />
     );
   return (
     <div>
-      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">Actividad</h3>
+      <h3 className="mb-espacio-3 font-titulo text-titulo-panel">
+        {t("visor.actividad")}
+      </h3>
       <ol className="space-y-espacio-4 border-l border-borde pl-espacio-4">
         {detalle.revisiones.map((revision) => (
           <li key={revision.id} className="relative">
@@ -862,14 +912,16 @@ function PanelActividad({ detalle }: { detalle: DetalleDocumento }) {
             />
             <Tarjeta padding="p-espacio-4" className="rounded-panel!">
               <div className="flex flex-wrap items-center gap-espacio-2 text-pequeno">
-                <span className="font-semibold">{revision.decision}</span>
+                <span className="font-semibold">
+                  {t(`decision.${revision.decision}`)}
+                </span>
                 <span className="flex flex-wrap items-center gap-espacio-1">
                   {revision.estadoAnterior ? (
                     <InsigniaEstado estado={revision.estadoAnterior} />
                   ) : (
                     "—"
                   )}
-                  <span aria-label="hacia">→</span>
+                  <span aria-label={t("visor.hacia")}>→</span>
                   {revision.estadoNuevo ? (
                     <InsigniaEstado estado={revision.estadoNuevo} />
                   ) : (
@@ -881,7 +933,7 @@ function PanelActividad({ detalle }: { detalle: DetalleDocumento }) {
                 </span>
               </div>
               <p className="mt-espacio-2 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
-                {revision.actor ?? "Actor no informado"}
+                {revision.actor ?? t("visor.actorNoInformado")}
               </p>
               {revision.motivo ? (
                 <p className="mt-espacio-2 text-pequeno [overflow-wrap:anywhere]">
@@ -897,11 +949,11 @@ function PanelActividad({ detalle }: { detalle: DetalleDocumento }) {
                     >
                       <span className="font-semibold">{cambio.claveCampo}</span>{" "}
                       <span className="line-through text-tinta-suave">
-                        {cambio.valorAnterior ?? "vacío"}
+                        {cambio.valorAnterior ?? t("visor.vacio")}
                       </span>
                       {" → "}
                       <span className="text-accion-tonal-texto">
-                        {cambio.valorNuevo ?? "vacío"}
+                        {cambio.valorNuevo ?? t("visor.vacio")}
                       </span>
                     </li>
                   ))}

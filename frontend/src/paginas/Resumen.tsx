@@ -14,16 +14,18 @@ import { InsigniaEstado, InsigniaSeveridad } from "../componentes/Insignias";
 import { obtenerResumen } from "../api/documentos";
 import { listarExcepciones } from "../api/excepciones";
 import { mensajeDeError } from "../api/cliente";
+import { useIdioma } from "../contextos/ProveedorIdioma";
+import { formatearNumero } from "../i18n";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
 import type { EstadoDocumento } from "../tipos/api";
 
 const TECNICAS = ["profundidadCola", "profundidadReintento"];
 const DESTACADOS: { clave: EstadoDocumento; etiqueta: string }[] = [
-  { clave: "OBSERVADO", etiqueta: "Requieren revisión" },
-  { clave: "APROBADO", etiqueta: "Aprobados" },
-  { clave: "RECIBIDO", etiqueta: "Recibidos" },
-  { clave: "RECHAZADO", etiqueta: "Rechazados" },
+  { clave: "OBSERVADO", etiqueta: "resumen.requierenRevision" },
+  { clave: "APROBADO", etiqueta: "resumen.aprobados" },
+  { clave: "RECIBIDO", etiqueta: "resumen.recibidos" },
+  { clave: "RECHAZADO", etiqueta: "resumen.rechazados" },
 ];
 const GRILLA_METRICAS =
   "grid min-w-0 gap-espacio-4 sm:grid-cols-2 xl:grid-cols-5";
@@ -32,6 +34,7 @@ const GRILLA_OPERACION =
 
 export function Resumen() {
   const { tienePermiso } = useSesion();
+  const { t } = useIdioma();
 
   const resumen = useQuery({ queryKey: ["resumen"], queryFn: obtenerResumen });
   const excepciones = useQuery({
@@ -53,14 +56,14 @@ export function Resumen() {
   return (
     <>
       <Encabezado
-        titulo="Resumen operativo"
-        descripcion="Estado documental actual, sin recorte de fechas."
+        titulo={t("resumen.titulo")}
+        descripcion={t("resumen.descripcion")}
         acciones={
           <Link
             to="/panel"
             className="inline-flex min-h-control-mediano items-center gap-espacio-2 rounded-control border border-borde bg-superficie px-espacio-4 text-pequeno font-semibold text-tinta transition-colors hover:bg-lienzo focus-visible:outline-foco"
           >
-            Ver panel de control
+            {t("resumen.verPanel")}
             <span aria-hidden="true">
               <IconoDerecha tamano={14} />
             </span>
@@ -71,7 +74,7 @@ export function Resumen() {
       <Contenido>
         {resumen.isPending ? (
           <div role="status" aria-busy="true" aria-atomic="true">
-            <span className="sr-only">Cargando resumen operativo</span>
+            <span className="sr-only">{t("resumen.cargando")}</span>
             <div aria-hidden="true">
               <div className={GRILLA_METRICAS}>
                 {Array.from({ length: 5 }).map((_, indice) => (
@@ -93,7 +96,7 @@ export function Resumen() {
           </div>
         ) : resumen.isError ? (
           <ErrorPanel
-            contexto="No se pudo cargar el resumen"
+            contexto={t("resumen.errorContexto")}
             mensaje={mensajeDeError(resumen.error)}
           error={resumen.error}
             reintentar={() => resumen.refetch()}
@@ -101,7 +104,7 @@ export function Resumen() {
         ) : (
           <>
             <section
-              aria-label="Indicadores documentales"
+              aria-label={t("resumen.indicadores")}
               className={GRILLA_METRICAS}
             >
               <Tarjeta
@@ -109,8 +112,8 @@ export function Resumen() {
                 className="min-h-36 rounded-metrica! sm:col-span-2 xl:col-span-1"
               >
                 <Metrica
-                  etiqueta="Documentos totales"
-                  valor={totalDocumentos.toLocaleString("es-AR")}
+                  etiqueta={t("resumen.documentosTotales")}
+                  valor={formatearNumero(totalDocumentos)}
                   detalle={
                     <span className="flex items-start gap-espacio-2">
                       <span aria-hidden="true" className="shrink-0">
@@ -118,9 +121,9 @@ export function Resumen() {
                       </span>
                       <span>
                         <span className="tabular-nums">
-                          {enCola.toLocaleString("es-AR")}
+                          {formatearNumero(enCola)}
                         </span>{" "}
-                        en cola de extracción del servicio
+                        {t("resumen.enCola")}
                       </span>
                     </span>
                   }
@@ -135,13 +138,13 @@ export function Resumen() {
                     className={`min-h-36 rounded-metrica! ${destacado.clave === "OBSERVADO" ? "border-alerta-borde! bg-alerta-tenue!" : ""}`}
                   >
                     <Metrica
-                      etiqueta={destacado.etiqueta}
-                      valor={cantidad.toLocaleString("es-AR")}
+                      etiqueta={t(destacado.etiqueta)}
+                      valor={formatearNumero(cantidad)}
                       detalle={
                         <span className="flex flex-wrap items-center gap-espacio-2">
                           <InsigniaEstado estado={destacado.clave} />
                           <span className="tabular-nums">
-                            {porcentaje(cantidad, totalDocumentos)}
+                            {porcentaje(cantidad, totalDocumentos, t)}
                           </span>
                         </span>
                       }
@@ -152,19 +155,19 @@ export function Resumen() {
             </section>
 
             <section
-              aria-label="Operación y atención"
+              aria-label={t("resumen.operacionYAtencion")}
               className={GRILLA_OPERACION}
             >
               <Tarjeta className="rounded-panel!">
                 <CabeceraTarjeta
-                  titulo="Distribución por estado"
-                  descripcion="Documentos actuales de la organización, sin recorte de fechas."
+                  titulo={t("resumen.distribucion")}
+                  descripcion={t("resumen.distribucionDesc")}
                 />
                 {totalDocumentos === 0 ? (
                   <div className="mt-espacio-6">
                     <Vacio
-                      titulo="Todavía no hay documentos"
-                      detalle="Cuando ingrese el primer documento, su estado aparecerá aquí."
+                      titulo={t("resumen.sinDocumentos")}
+                      detalle={t("resumen.sinDocumentosDetalle")}
                     />
                   </div>
                 ) : (
@@ -174,9 +177,7 @@ export function Resumen() {
                         barras={estados
                           .sort((uno, otro) => Number(otro[1]) - Number(uno[1]))
                           .map(([estado, cantidad]) => ({
-                            etiqueta:
-                              ESTADOS_DOCUMENTALES[estado as EstadoDocumento]
-                                ?.etiqueta ?? estado,
+                            etiqueta: t(`estadosDocumento.${estado}`),
                             valor: Number(cantidad),
                             color:
                               ESTADOS_DOCUMENTALES[estado as EstadoDocumento]
@@ -186,10 +187,10 @@ export function Resumen() {
                       />
                     </div>
                     <figcaption className="sr-only">
-                      Cantidad de documentos por estado, de mayor a menor.
+                      {t("resumen.figcaption")}
                     </figcaption>
                     <dl
-                      aria-label="Cantidad por estado"
+                      aria-label={t("resumen.cantidadPorEstado")}
                       className="grid min-w-0 gap-x-espacio-6 divide-y divide-borde sm:mt-espacio-6 sm:grid-cols-2"
                     >
                       {estados.map(([estado, cantidad]) => (
@@ -203,7 +204,7 @@ export function Resumen() {
                             />
                           </dt>
                           <dd className="text-pequeno font-semibold text-tinta tabular-nums">
-                            {Number(cantidad).toLocaleString("es-AR")}
+                            {formatearNumero(Number(cantidad))}
                           </dd>
                         </div>
                       ))}
@@ -214,15 +215,15 @@ export function Resumen() {
 
               <Tarjeta className="rounded-panel!">
                 <CabeceraTarjeta
-                  titulo="Excepciones abiertas"
-                  descripcion="Pendientes de una decisión humana."
+                  titulo={t("resumen.excepcionesAbiertas")}
+                  descripcion={t("resumen.excepcionesDesc")}
                   acciones={
                     tienePermiso("excepciones.leer") ? (
                       <Link
                         to="/excepciones"
                         className="inline-flex min-h-control-pequeno items-center gap-espacio-1 rounded-control text-pequeno font-semibold text-accion-tonal-texto hover:underline focus-visible:outline-foco"
                       >
-                        Ver todas
+                        {t("comun.verTodas")}
                         <span aria-hidden="true">
                           <IconoDerecha tamano={13} />
                         </span>
@@ -233,13 +234,13 @@ export function Resumen() {
                 <div className="mt-espacio-5">
                   {!tienePermiso("excepciones.leer") ? (
                     <AvisoLinea>
-                      No tenés permiso para ver excepciones.
+                      {t("resumen.sinPermisoExcepciones")}
                     </AvisoLinea>
                   ) : excepciones.isPending ? (
                     <Cargando filas={3} alto="h-20" />
                   ) : excepciones.isError ? (
                     <ErrorPanel
-                      contexto="No se pudo cargar las excepciones"
+                      contexto={t("resumen.errorExcepciones")}
                       mensaje={mensajeDeError(excepciones.error)}
           error={excepciones.error}
                       reintentar={() => excepciones.refetch()}
@@ -250,7 +251,7 @@ export function Resumen() {
                       aria-atomic="true"
                       className="rounded-control border border-exito-borde bg-exito-tenue p-espacio-4 text-pequeno text-exito-texto"
                     >
-                      No hay excepciones abiertas.
+                      {t("resumen.sinExcepcionesAbiertas")}
                     </p>
                   ) : (
                     <ul className="divide-y divide-borde">
@@ -284,9 +285,13 @@ export function Resumen() {
   );
 }
 
-function porcentaje(parte: number, total: number) {
+function porcentaje(
+  parte: number,
+  total: number,
+  t: (ruta: string, params?: Record<string, string | number>) => string,
+) {
   if (!total) {
-    return "0% del total";
+    return t("resumen.ceroDelTotal");
   }
-  return `${Math.round((parte / total) * 100)}% del total`;
+  return t("resumen.delTotal", { porcentaje: Math.round((parte / total) * 100) });
 }

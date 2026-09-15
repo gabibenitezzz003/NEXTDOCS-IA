@@ -82,7 +82,7 @@ test("un ciclo no cuelga el dibujo y queda avisado", () => {
   const d = disponerGrafo(grafo);
 
   expect(d.hayCiclos).toBe(true);
-  expect(d.problema).toContain("ciclo");
+  expect(d.problema).toBe("diagramaProceso.problemaCiclo");
   expect(d.nodos.length).toBe(4);
   expect(d.aristas.some((a) => a.haciaAtras)).toBe(true);
 });
@@ -107,7 +107,7 @@ test("un grafo vacio no rompe ni inventa problemas", () => {
 test("un grafo con formato invalido lo dice en vez de romper", () => {
   const d = disponerGrafo(undefined);
 
-  expect(d.problema).toContain("no tiene un formato");
+  expect(d.problema).toBe("diagramaProceso.problemaFormato");
 });
 
 test("pasos repetidos se reportan en vez de dibujarse mal", () => {
@@ -116,6 +116,6 @@ test("pasos repetidos se reportan en vez de dibujarse mal", () => {
 
   const d = disponerGrafo(grafo);
 
-  expect(d.problema).toContain("repetidos");
+  expect(d.problema).toBe("diagramaProceso.problemaRepetidos");
   expect(d.nodos).toHaveLength(0);
 });

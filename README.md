@@ -43,6 +43,7 @@ El motor de procesos vive en el repositorio hermano `gabibenitezzz003/nextdocs-w
 | **P0-09 Biblioteca COMEX** | ✅ Cerrado | Fixture con 14 plantillas base + multimodales (`EX-MAR-FCL`, `IM-AIR`, `EX-MM-ROAD-SEA`, etc.) |
 | **P0-11 E2E y seguridad** | ✅ Cerrado | Playwright con JWT real: smoke e2e, suite de procesos y suite transversal; CI `.github/workflows/e2e.yml` |
 | **Login social (Google/Microsoft)** | ✅ Implementado | OAuth2/OIDC con `state` firmado y `nonce`, aprovisionamiento JIT y vínculo por email sobre la federación por tenant; setup en `docs/LOGIN_SOCIAL_OAUTH.md` |
+| **Multi-idioma (es/en/pt)** | ✅ Implementado | Portal y errores del backend traducidos; selector con persistencia en el perfil y `Accept-Language` en cada request; detalle en `docs/I18N.md` |
 | **P0-12 Dataset real** | ✅ Cerrado | `PilotoComexTest` con 8 escenarios + generador de dataset con respuesta conocida y cargador masivo |
 | **Frontend (portal)** | ✅ Rediseñado | Alineado al Design System NEXT DOC AI v0.2 con tema claro/oscuro; bandejas, detalle de instancia, hallazgos, KPIs y reglas de la supervisora |
 | **Despliegue continuo** | ✅ Activo | Merge a `main` → verificación → deploy automático a EC2; el repo workflow dispara el deploy del core por `repository_dispatch` |

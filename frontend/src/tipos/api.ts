@@ -28,6 +28,7 @@ export interface Sesion {
   tenantId: string;
   codigoTenant: string;
   nombreTenant: string;
+  idioma?: string;
   permisos: string[];
 }
 

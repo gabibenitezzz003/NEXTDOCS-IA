@@ -20,6 +20,7 @@ import { listarExcepciones, resolverExcepcion } from "../api/excepciones";
 import { mensajeDeError } from "../api/cliente";
 import { formatearFecha } from "./Documentos";
 import { VisorDocumento } from "./VisorDocumento";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import { useSesion } from "../contextos/ProveedorSesion";
 import type { EstadoExcepcion, PrioridadExcepcion } from "../tipos/api";
 import type { Tono } from "../componentes/Interfaz";
@@ -40,6 +41,7 @@ const TONO_PRIORIDAD: Record<PrioridadExcepcion, Tono> = {
 
 export function Excepciones() {
   const { tienePermiso } = useSesion();
+  const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [estado, setEstado] = useState<EstadoExcepcion>("ABIERTA");
   const [pagina, setPagina] = useState(0);
@@ -73,16 +75,16 @@ export function Excepciones() {
   return (
     <>
       <Encabezado
-        titulo="Centro de excepciones"
-        descripcion="Consultá y resolvé las excepciones del flujo documental, con su prioridad y vencimiento."
+        titulo={t("excepciones.titulo")}
+        descripcion={t("excepciones.descripcion")}
       />
       <Contenido>
         <div className="mb-espacio-5 flex min-w-0 flex-wrap items-center justify-between gap-espacio-3">
           <GrupoSegmentado
-            etiqueta="Estado de las excepciones"
+            etiqueta={t("excepciones.grupoEstado")}
             opciones={ESTADOS.map((candidato) => ({
               valor: candidato,
-              texto: candidato.replace(/_/g, " "),
+              texto: t(`estadoExcepcion.${candidato}`),
             }))}
             valor={estado}
             alCambiar={(nuevo) => {
@@ -99,8 +101,10 @@ export function Excepciones() {
               <span className="font-semibold tabular-nums text-tinta">
                 {total}
               </span>{" "}
-              {total === 1 ? "excepción" : "excepciones"} ·{" "}
-              {estado.replace(/_/g, " ")}
+              {total === 1
+                ? t("excepciones.unaExcepcion")
+                : t("excepciones.muchasExcepciones")}{" "}
+              · {t(`estadoExcepcion.${estado}`)}
             </p>
           ) : null}
         </div>
@@ -108,7 +112,7 @@ export function Excepciones() {
         {error ? (
           <div className="mb-espacio-4">
             <ErrorPanel
-              titulo="No se pudo resolver la excepción"
+              titulo={t("excepciones.errorResolver")}
               mensaje={error}
             />
           </div>
@@ -118,7 +122,7 @@ export function Excepciones() {
           <Cargando filas={5} alto="h-48" />
         ) : consulta.isError ? (
           <ErrorPanel
-            contexto="No se pudo cargar las excepciones"
+            contexto={t("excepciones.errorContexto")}
             mensaje={mensajeDeError(consulta.error)}
           error={consulta.error}
             reintentar={() => consulta.refetch()}
@@ -127,23 +131,25 @@ export function Excepciones() {
           <Vacio
             titulo={
               total > 0
-                ? "Sin resultados en esta página"
+                ? t("excepciones.sinResultadosPagina")
                 : estado === "ABIERTA"
-                  ? "No hay excepciones abiertas"
-                  : "Sin coincidencias en este estado"
+                  ? t("excepciones.sinAbiertas")
+                  : t("excepciones.sinCoincidencias")
             }
             detalle={
               total > 0
-                ? "Todavía hay excepciones en este estado. Seleccioná nuevamente el estado para volver a la primera página."
+                ? t("excepciones.sinResultadosPaginaDetalle")
                 : estado === "ABIERTA"
-                  ? "La consulta de excepciones abiertas no devolvió resultados. Podés consultar los demás estados con el filtro."
-                  : `No hay resultados en estado ${estado.replace(/_/g, " ").toLowerCase()} para esta página. Podés consultar otro estado con el filtro.`
+                  ? t("excepciones.sinAbiertasDetalle")
+                  : t("excepciones.sinCoincidenciasDetalle", {
+                      estado: t(`estadoExcepcion.${estado}`).toLowerCase(),
+                    })
             }
           />
         ) : (
           <>
             <ul
-              aria-label="Excepciones documentales"
+              aria-label={t("excepciones.lista")}
               className="space-y-espacio-4"
             >
               {excepciones.map((excepcion) => (
@@ -162,7 +168,7 @@ export function Excepciones() {
                                 : "neutro"
                             }
                           >
-                            {excepcion.estado.replace(/_/g, " ")}
+                            {t(`estadoExcepcion.${excepcion.estado}`)}
                           </Pastilla>
                           <InsigniaSeveridad severidad={excepcion.severidad} />
                           <Pastilla
@@ -170,11 +176,13 @@ export function Excepciones() {
                               TONO_PRIORIDAD[excepcion.prioridad] ?? "neutro"
                             }
                           >
-                            Prioridad {excepcion.prioridad}
+                            {t("excepciones.prioridad", {
+                              prioridad: t(`prioridad.${excepcion.prioridad}`),
+                            })}
                           </Pastilla>
                           {excepcion.vencida ? (
                             <Pastilla tono="rojo" solido>
-                              SLA vencido
+                              {t("excepciones.slaVencido")}
                             </Pastilla>
                           ) : null}
                         </div>
@@ -185,26 +193,26 @@ export function Excepciones() {
                       <p className="mt-espacio-2 text-micro text-tinta-suave [overflow-wrap:anywhere]">
                         ID: {excepcion.id}
                         {excepcion.codigo
-                          ? " · Código: " + excepcion.codigo
+                          ? ` · ${t("excepciones.codigo")}: ${excepcion.codigo}`
                           : ""}
                       </p>
                       <p className="mt-espacio-4 text-cuerpo font-medium [overflow-wrap:anywhere]">
-                        {excepcion.detalle ?? "Sin detalle disponible"}
+                        {excepcion.detalle ?? t("excepciones.sinDetalle")}
                       </p>
                       <dl className="mt-espacio-4 grid min-w-0 gap-espacio-3 text-pequeno sm:grid-cols-2">
                         <div className="min-w-0">
                           <dt className="text-micro text-tinta-suave">
-                            Documento
+                            {t("excepciones.documento")}
                           </dt>
                           <dd className="mt-espacio-1 font-medium [overflow-wrap:anywhere]">
                             {excepcion.nombreDocumento ??
                               excepcion.documentoId ??
-                              "Sin documento relacionado"}
+                              t("excepciones.sinDocumento")}
                           </dd>
                         </div>
                         <div className="min-w-0 sm:text-right">
                           <dt className="text-micro text-tinta-suave">
-                            Vencimiento
+                            {t("excepciones.vencimiento")}
                           </dt>
                           <dd
                             className={
@@ -226,7 +234,7 @@ export function Excepciones() {
                         {excepcion.alta ? (
                           <div>
                             <dt className="text-micro text-tinta-suave">
-                              Creada
+                              {t("excepciones.creada")}
                             </dt>
                             <dd className="mt-espacio-1">
                               {formatearFecha(excepcion.alta)}
@@ -236,7 +244,7 @@ export function Excepciones() {
                         {excepcion.responsable ? (
                           <div className="min-w-0 sm:text-right">
                             <dt className="text-micro text-tinta-suave">
-                              Responsable
+                              {t("excepciones.responsable")}
                             </dt>
                             <dd className="mt-espacio-1 [overflow-wrap:anywhere]">
                               {excepcion.responsable}
@@ -247,7 +255,7 @@ export function Excepciones() {
                       {excepcion.resolucion || excepcion.resueltaPor ? (
                         <div className="mt-espacio-4 rounded-control border border-borde bg-lienzo p-espacio-3">
                           <p className="text-micro font-semibold text-tinta-suave">
-                            Resolución registrada
+                            {t("excepciones.resolucionRegistrada")}
                           </p>
                           {excepcion.resolucion ? (
                             <p className="mt-espacio-1 whitespace-pre-wrap text-pequeno [overflow-wrap:anywhere]">
@@ -256,7 +264,7 @@ export function Excepciones() {
                           ) : null}
                           {excepcion.resueltaPor ? (
                             <p className="mt-espacio-2 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
-                              Resuelta por {excepcion.resueltaPor}
+                              {t("excepciones.resueltaPor", { nombre: excepcion.resueltaPor })}
                             </p>
                           ) : null}
                         </div>
@@ -275,7 +283,7 @@ export function Excepciones() {
                               }
                               className="flex-1 sm:flex-none"
                             >
-                              Ver documento
+                              {t("comun.verDocumento")}
                             </Boton>
                           ) : null}
                           {tienePermiso("excepciones.gestionar") &&
@@ -306,7 +314,7 @@ export function Excepciones() {
                               <span aria-hidden="true">
                                 <IconoCheck tamano={14} />
                               </span>
-                              Resolver
+                              {t("excepciones.resolver")}
                             </Boton>
                           ) : null}
                         </div>
@@ -315,7 +323,7 @@ export function Excepciones() {
                     {resolviendo === excepcion.id ? (
                       <form
                         id={"resolucion-" + excepcion.id}
-                        aria-label="Resolución de la excepción"
+                        aria-label={t("excepciones.resolucionFormulario")}
                         aria-busy={resolver.isPending}
                         onSubmit={(evento) => {
                           evento.preventDefault();
@@ -328,14 +336,14 @@ export function Excepciones() {
                       >
                         <div className="min-w-0 flex-1">
                           <Campo
-                            etiqueta="Cómo se resolvió"
+                            etiqueta={t("excepciones.comoSeResolvio")}
                             value={resolucion}
                             onChange={(evento) =>
                               setResolucion(evento.target.value)
                             }
                             required
                             autoFocus
-                            placeholder="Describí la resolución"
+                            placeholder={t("excepciones.describiResolucion")}
                           />
                         </div>
                         <Boton
@@ -344,14 +352,14 @@ export function Excepciones() {
                           disabled={resolver.isPending}
                           cargando={resolver.isPending}
                         >
-                          Confirmar
+                          {t("comun.confirmar")}
                         </Boton>
                         <span
                           role="status"
                           aria-atomic="true"
                           className="sr-only"
                         >
-                          {resolver.isPending ? "Guardando resolución" : ""}
+                          {resolver.isPending ? t("excepciones.guardandoResolucion") : ""}
                         </span>
                       </form>
                     ) : null}
@@ -361,11 +369,11 @@ export function Excepciones() {
             </ul>
             <div className="mt-espacio-5 flex flex-wrap items-center justify-between gap-espacio-3 text-pequeno">
               <span className="text-tinta-suave">
-                Hasta 25 excepciones por página
+                {t("excepciones.hastaPorPagina")}
               </span>
               {totalPaginas > 1 ? (
                 <nav
-                  aria-label="Paginación de excepciones"
+                  aria-label={t("excepciones.paginacion")}
                   className="flex flex-wrap items-center gap-espacio-2"
                 >
                   <Boton
@@ -377,10 +385,10 @@ export function Excepciones() {
                     <span aria-hidden="true">
                       <IconoIzquierda tamano={14} />
                     </span>
-                    Anterior
+                    {t("comun.anterior")}
                   </Boton>
                   <span className="text-pequeno tabular-nums text-tinta-suave">
-                    {pagina + 1} de {totalPaginas}
+                    {t("comun.paginaDe", { actual: pagina + 1, total: totalPaginas })}
                   </span>
                   <Boton
                     type="button"
@@ -388,7 +396,7 @@ export function Excepciones() {
                     disabled={pagina + 1 >= totalPaginas}
                     onClick={() => setPagina((actual) => actual + 1)}
                   >
-                    Siguiente
+                    {t("comun.siguiente")}
                     <span aria-hidden="true">
                       <IconoDerecha tamano={14} />
                     </span>

@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { useIdioma } from "../contextos/ProveedorIdioma";
+import { formatearNumero } from "../i18n";
 
 export function useContador(objetivo: number, duracion = 900) {
   const [valor, setValor] = useState(0);
@@ -276,7 +278,7 @@ export function Columnas({
             className="group flex h-full min-w-0 flex-1 flex-col justify-end gap-1.5"
           >
             <span className="cifra text-center text-[11px] text-tinta-suave tabular-nums">
-              {barra.valor.toLocaleString("es-AR")}
+              {formatearNumero(barra.valor)}
             </span>
             <div
               className="w-full rounded-t-lg rounded-b-sm transition-transform duration-300 group-hover:scale-y-[1.03]"
@@ -319,7 +321,7 @@ export function Embudo({
               {etapa.etiqueta}
             </span>
             <span className="cifra text-sm text-tinta">
-              {etapa.valor.toLocaleString("es-AR")}
+              {formatearNumero(etapa.valor)}
             </span>
           </div>
           <BarraAnimada
@@ -339,7 +341,7 @@ export function AnilloApilado({
   tamano = 184,
   grosor = 20,
   total,
-  etiquetaTotal = "documentos",
+  etiquetaTotal,
   plano = false,
 }: {
   segmentos: { etiqueta: string; valor: number; color: string }[];
@@ -349,6 +351,7 @@ export function AnilloApilado({
   etiquetaTotal?: string;
   plano?: boolean;
 }) {
+  const { t } = useIdioma();
   const id = useId().replace(/:/g, "");
   const { referencia, visible } = useVisible<HTMLDivElement>();
   const animado = useContador(visible ? total : 0, 1100);
@@ -444,10 +447,10 @@ export function AnilloApilado({
               : "cifra cifra-degradada text-[32px] leading-none"
           }
         >
-          {Math.round(animado).toLocaleString("es-AR")}
+          {formatearNumero(Math.round(animado))}
         </span>
         <span className="mt-1.5 text-[10px] font-semibold uppercase tracking-wider text-neutro-texto">
-          {etiquetaTotal}
+          {etiquetaTotal ?? t("comun.documentos")}
         </span>
       </div>
     </div>

@@ -11,6 +11,7 @@ import com.nextdocs.ai.exceptions.ProveedorNoDisponibleException;
 import com.nextdocs.ai.exceptions.RegistroExistenteException;
 import com.nextdocs.ai.exceptions.TransicionInvalidaException;
 import com.nextdocs.ai.exceptions.ValidacionException;
+import com.nextdocs.ai.servicios.MensajesService;
 import com.nextdocs.ai.utiles.ContextoCorrelacion;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +35,12 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 public class ErrorHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(ErrorHandler.class);
+
+	private final MensajesService mensajes;
+
+	public ErrorHandler(MensajesService mensajes) {
+		this.mensajes = mensajes;
+	}
 
 	@ExceptionHandler(EntidadNoEncontradaException.class)
 	public ResponseEntity<WebErrorModel> entidadNoEncontrada(HttpServletRequest peticion,
@@ -94,7 +101,8 @@ public class ErrorHandler {
 		for (FieldError error : e.getBindingResult().getFieldErrors()) {
 			campos.put(error.getField(), error.getDefaultMessage());
 		}
-		cuerpo.put("mensaje", "Los datos enviados no son validos");
+		cuerpo.put("mensaje",
+				mensajes.resolver("Los datos enviados no son validos", peticion.getHeader("Accept-Language")));
 		cuerpo.put("campos", campos);
 		cuerpo.put("ruta", peticion.getRequestURI());
 		cuerpo.put("codigo", HttpStatus.BAD_REQUEST.value());
@@ -136,7 +144,8 @@ public class ErrorHandler {
 	}
 
 	private ResponseEntity<WebErrorModel> respuesta(HttpServletRequest peticion, String mensaje, HttpStatus estado) {
-		WebErrorModel error = new WebErrorModel(mensaje, peticion.getRequestURI(), estado,
+		String resuelto = mensajes.resolver(mensaje, peticion.getHeader("Accept-Language"));
+		WebErrorModel error = new WebErrorModel(resuelto, peticion.getRequestURI(), estado,
 				ContextoCorrelacion.obtener());
 		return new ResponseEntity<>(error, estado);
 	}

@@ -10,8 +10,7 @@ export interface Paso {
   slaHoras?: number;
 }
 
-const mensajeBloqueo =
-  "El editor secuencial no puede representar fielmente este grafo. La edición, el guardado y la publicación están bloqueados para conservar su información.";
+const mensajeBloqueo = "procesos.bloqueoSecuencial";
 const propiedades = ["tipoDocumento", "subprocesoCodigo", "asignadoA", "slaHoras"] as const;
 
 function comoPaso(nodo: NodoProceso): Paso {

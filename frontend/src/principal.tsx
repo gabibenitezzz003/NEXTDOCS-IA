@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import { Aplicacion } from "./Aplicacion";
+import { ProveedorIdioma } from "./contextos/ProveedorIdioma";
 import { ProveedorSesion } from "./contextos/ProveedorSesion";
 import { ProveedorTema } from "./contextos/ProveedorTema";
 import "./estilos.css";
@@ -23,7 +24,9 @@ createRoot(document.getElementById("raiz")!).render(
       <QueryClientProvider client={clienteConsultas}>
         <BrowserRouter>
           <ProveedorSesion>
-            <Aplicacion />
+            <ProveedorIdioma>
+              <Aplicacion />
+            </ProveedorIdioma>
           </ProveedorSesion>
         </BrowserRouter>
       </QueryClientProvider>

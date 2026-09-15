@@ -1,4 +1,5 @@
 import axios, { AxiosError, type AxiosInstance } from "axios";
+import { idiomaVigente, traducir } from "../i18n";
 import type { ErrorApi, Sesion } from "../tipos/api";
 
 const CLAVE_REFRESCO = "nextdocs.tokenRefresco";
@@ -42,6 +43,7 @@ export function registrarExpiracion(manejador: () => void) {
 cliente.interceptors.request.use((configuracion) => {
   const contexto = configuracion as typeof configuracion & { _versionSesion?: number };
   contexto._versionSesion = versionSesion;
+  configuracion.headers["Accept-Language"] = idiomaVigente();
   if (tokenAcceso) {
     configuracion.headers.Authorization = `Bearer ${tokenAcceso}`;
   }
@@ -106,8 +108,8 @@ export function mensajeDeError(error: unknown): string {
     if (error.response?.status === 429) {
       const espera = error.response.headers["retry-after"];
       return espera
-        ? `Se supero el limite de peticiones. Reintenta en ${espera} segundos`
-        : "Se supero el limite de peticiones";
+        ? traducir("errores.limitePeticionesReintenta", { espera })
+        : traducir("errores.limitePeticiones");
     }
     const cuerpo = error.response?.data;
     if (cuerpo?.campos) {
@@ -119,43 +121,46 @@ export function mensajeDeError(error: unknown): string {
       return cuerpo.mensaje;
     }
     if (!error.response) {
-      return "No se pudo contactar al servidor. Verifica que el backend este levantado";
+      return traducir("errores.sinConexionServidor");
     }
     return porEstado(error.response.status);
   }
-  return "Ocurrio un error inesperado";
+  if (error instanceof Error && error.message) {
+    return traducir(error.message);
+  }
+  return traducir("errores.inesperado");
 }
 
 export function tituloDeError(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    if (!error.response) return "Sin conexión";
+    if (!error.response) return traducir("errores.tituloSinConexion");
     const estado = error.response.status;
-    if (estado === 401) return "Sesión expirada";
-    if (estado === 403) return "Sin permiso";
-    if (estado === 404) return "No encontrado";
-    if (estado === 409) return "Conflicto";
-    if (estado === 429) return "Demasiadas peticiones";
-    if (estado >= 500) return "Error del servidor";
-    if (estado >= 400) return "Petición rechazada";
+    if (estado === 401) return traducir("errores.tituloSesionExpirada");
+    if (estado === 403) return traducir("errores.tituloSinPermiso");
+    if (estado === 404) return traducir("errores.tituloNoEncontrado");
+    if (estado === 409) return traducir("errores.tituloConflicto");
+    if (estado === 429) return traducir("errores.tituloDemasiadasPeticiones");
+    if (estado >= 500) return traducir("errores.tituloErrorServidor");
+    if (estado >= 400) return traducir("errores.tituloPeticionRechazada");
   }
-  return "Error inesperado";
+  return traducir("errores.tituloInesperado");
 }
 
 function porEstado(estado: number): string {
   if (estado === 401) {
-    return "La sesion no es valida para este servicio. Volve a entrar";
+    return traducir("errores.sesionInvalida");
   }
   if (estado === 403) {
-    return "Tu usuario no tiene permiso para esta operacion";
+    return traducir("errores.sinPermiso");
   }
   if (estado === 404) {
-    return "El servicio no reconoce esta direccion (404). Puede estar desactualizado";
+    return traducir("errores.direccionDesconocida");
   }
   if (estado === 502 || estado === 503 || estado === 504) {
-    return `El servicio no esta respondiendo (${estado}). Reintenta en unos segundos`;
+    return traducir("errores.servicioNoResponde", { estado });
   }
   if (estado >= 500) {
-    return `El servicio respondio con un error (${estado})`;
+    return traducir("errores.errorServicio", { estado });
   }
-  return `La peticion fue rechazada (${estado})`;
+  return traducir("errores.peticionRechazada", { estado });
 }
