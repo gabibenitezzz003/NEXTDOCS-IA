@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
 import {
   Boton,
@@ -56,7 +57,22 @@ const TONO_SEVERIDAD: Record<SeveridadRegla, Tono> = {
 
 const UMBRAL_MAXIMO = 999.99;
 
-export function ReglasSupervisora() {
+export function Supervisora() {
+  const { t } = useIdioma();
+  return (
+    <>
+      <Encabezado
+        titulo={t("reglasSupervisora.titulo")}
+        descripcion={t("reglasSupervisora.descripcion")}
+      />
+      <Contenido>
+        <ReglasSupervisora />
+      </Contenido>
+    </>
+  );
+}
+
+function ReglasSupervisora() {
   const { t } = useIdioma();
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);

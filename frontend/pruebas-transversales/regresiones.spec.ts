@@ -292,7 +292,7 @@ for (const accion of ["Publicar versión 8", "Nueva versión"]) {
     const control = await preparar(page);
     if (accion === "Nueva versión")
       control.proceso.versiones[0].estado = "PUBLICADA";
-    await page.goto("/procesos");
+    await page.goto("/studio");
     await page.getByRole("button", { name: "Abrir estudio" }).click();
     await page.getByRole("button", { name: accion, exact: true }).click();
     await expect

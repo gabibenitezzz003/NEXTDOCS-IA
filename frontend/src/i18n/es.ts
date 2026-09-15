@@ -70,7 +70,10 @@ export const es = {
     navResumen: "Resumen",
     navDocumentos: "Documentos",
     navExcepciones: "Excepciones",
-    navProcesos: "Procesos",
+    navTareas: "Tareas",
+    navOperacion: "Operación",
+    navStudio: "Studio",
+    navSupervisora: "Supervisora",
     navPanel: "Panel de control",
     navTiposNuevos: "Tipos detectados",
   },
@@ -458,7 +461,15 @@ export const es = {
     TEMPORIZADOR: "Espera (temporizador)",
     SUBPROCESO: "Subproceso",
   },
+  tareas: {
+    titulo: "Tareas",
+    descripcion:
+      "Todo lo que los procesos te piden hacer, en una sola bandeja.",
+  },
   operacion: {
+    titulo: "Operación de procesos",
+    descripcion:
+      "Procesos en ejecución: instancias activas, indicadores y detalle de cada una.",
     indicadores: "Indicadores",
     indicadoresDesc: "Cómo viene el motor de procesos en la ventana elegida.",
     ventanaIndicadores: "Ventana de los indicadores",
@@ -494,7 +505,7 @@ export const es = {
     todosLosProcesos: "Todos los procesos",
     sinInstancias: "Todavía no hay procesos en ejecución",
     sinInstanciasDetalle:
-      "Iniciá uno desde la pestaña Definiciones con el botón Probar proceso de una versión publicada, o desde donde el producto lo dispare.",
+      "Iniciá uno desde el Studio con el botón Probar proceso de una versión publicada, o desde donde el producto lo dispare.",
     listaInstancias: "Instancias de proceso",
     version: "Versión {version}",
     iniciada: "iniciada {fecha}",
@@ -576,15 +587,12 @@ export const es = {
     ACCION_API: "Acción de API",
     SUBPROCESO: "Subproceso",
   },
-  procesos: {
-    titulo: "Procesos",
+  studio: {
+    titulo: "Studio",
     descripcion:
-      "Diseñá procesos en el Studio, ejecutalos y resolvé las tareas pendientes desde las bandejas.",
-    vistas: "Vistas de procesos",
-    definiciones: "Definiciones",
-    instancias: "Instancias",
-    tareas: "Tareas",
-    reglas: "Reglas",
+      "Biblioteca de procesos: diseñá los pasos, publicá versiones y probalos en ejecución.",
+  },
+  procesos: {
     bibliotecaDesc:
       "Biblioteca de definiciones del espacio de trabajo. Abrí el Studio para configurar los pasos de cada proceso y publicar una versión.",
     nuevoProceso: "Nuevo proceso",

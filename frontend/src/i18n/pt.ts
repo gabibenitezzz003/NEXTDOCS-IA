@@ -72,7 +72,10 @@ export const pt: Diccionario = {
     navResumen: "Resumo",
     navDocumentos: "Documentos",
     navExcepciones: "Exceções",
-    navProcesos: "Processos",
+    navTareas: "Tarefas",
+    navOperacion: "Operação",
+    navStudio: "Studio",
+    navSupervisora: "Supervisora",
     navPanel: "Painel de controle",
     navTiposNuevos: "Tipos detectados",
   },
@@ -460,7 +463,15 @@ export const pt: Diccionario = {
     TEMPORIZADOR: "Espera (temporizador)",
     SUBPROCESO: "Subprocesso",
   },
+  tareas: {
+    titulo: "Tarefas",
+    descripcion:
+      "Tudo o que os processos pedem para você fazer, em uma única caixa de entrada.",
+  },
   operacion: {
+    titulo: "Operação de processos",
+    descripcion:
+      "Processos em execução: instâncias ativas, indicadores e o detalhe de cada uma.",
     indicadores: "Indicadores",
     indicadoresDesc: "Como está o motor de processos na janela escolhida.",
     ventanaIndicadores: "Janela dos indicadores",
@@ -496,7 +507,7 @@ export const pt: Diccionario = {
     todosLosProcesos: "Todos os processos",
     sinInstancias: "Ainda não há processos em execução",
     sinInstanciasDetalle:
-      "Inicie um pela aba Definições com o botão Testar processo de uma versão publicada, ou de onde o produto o disparar.",
+      "Inicie um pelo Studio com o botão Testar processo de uma versão publicada, ou de onde o produto o disparar.",
     listaInstancias: "Instâncias de processo",
     version: "Versão {version}",
     iniciada: "iniciada {fecha}",
@@ -578,15 +589,12 @@ export const pt: Diccionario = {
     ACCION_API: "Ação de API",
     SUBPROCESO: "Subprocesso",
   },
-  procesos: {
-    titulo: "Processos",
+  studio: {
+    titulo: "Studio",
     descripcion:
-      "Desenhe processos no Studio, execute-os e resolva as tarefas pendentes nas caixas de entrada.",
-    vistas: "Visões de processos",
-    definiciones: "Definições",
-    instancias: "Instâncias",
-    tareas: "Tarefas",
-    reglas: "Regras",
+      "Biblioteca de processos: desenhe os passos, publique versões e teste-os em execução.",
+  },
+  procesos: {
     bibliotecaDesc:
       "Biblioteca de definições do espaço de trabalho. Abra o Studio para configurar os passos de cada processo e publicar uma versão.",
     nuevoProceso: "Novo processo",
