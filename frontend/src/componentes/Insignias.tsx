@@ -21,11 +21,25 @@ const TONO_PRESENCIA: Record<PresenciaCampo, Tono> = {
   ILEGIBLE: "rojo",
 };
 
+const ESTADOS_EN_CURSO: EstadoDocumento[] = [
+  "RECIBIDO",
+  "PROCESANDO",
+  "EXTRAIDO",
+  "VALIDADO",
+];
+
 export function InsigniaEstado({ estado }: { estado: EstadoDocumento }) {
   const { t } = useIdioma();
   const presentacion = ESTADOS_DOCUMENTALES[estado];
+  const enCurso = ESTADOS_EN_CURSO.includes(estado);
   return (
     <Pastilla tono={presentacion?.tono ?? "neutro"}>
+      {enCurso ? (
+        <span
+          aria-hidden="true"
+          className="mr-espacio-2 inline-block size-espacio-3 animate-spin rounded-insignia border-2 border-current border-t-transparent align-middle motion-reduce:animate-none"
+        />
+      ) : null}
       {t(`estadosDocumento.${estado}`)}
     </Pastilla>
   );

@@ -199,14 +199,37 @@ public class ExtractorDocumentalService {
 					"El clasificador propuso " + veredicto.plantilla().getCodigo() + " con confianza "
 							+ veredicto.resultado().getConfianza() + ", por debajo del umbral, asi que el "
 							+ "documento se capturo con el esquema generico. " + nota(veredicto.resultado()));
-			case NO_RECONOCIDO -> capturarGenerico(documento, veredicto,
+			case NO_RECONOCIDO -> capturarTipoNuevo(documento, veredicto);
+			default -> observarSinTipo(documento, ClasificadorDocumentalService.CODIGO_SIN_CATALOGO,
+					"El tenant no tiene ninguna plantilla publicada contra la cual clasificar");
+		};
+	}
+
+	private boolean capturarTipoNuevo(Documento documento,
+			ClasificadorDocumentalService.Veredicto veredicto) {
+		PlantillaDocumental creada;
+		try {
+			creada = tipoPropuestoService.crearAutomatico(documento, veredicto.resultado());
+		} catch (Exception e) {
+			log.error("No se pudo crear el tipo automatico para el documento {}", documento.getId(), e);
+			creada = null;
+		}
+		if (creada == null) {
+			return capturarGenerico(documento, veredicto,
 					ClasificadorDocumentalService.CODIGO_TIPO_NO_RECONOCIDO,
 					"El documento no corresponde a ningun tipo del catalogo, asi que se capturo con el "
 							+ "esquema generico para que igual sea util y buscable. "
 							+ nota(veredicto.resultado()));
-			default -> observarSinTipo(documento, ClasificadorDocumentalService.CODIGO_SIN_CATALOGO,
-					"El tenant no tiene ninguna plantilla publicada contra la cual clasificar");
-		};
+		}
+		documento.setPlantilla(creada);
+		documento.setVersionPlantilla(creada.getVersionPublicada());
+		documento.setOrigenTipo(OrigenTipoDocumento.DETECTADO);
+		documento.setConfianzaTipo(veredicto.resultado().getConfianza());
+		documento.setMotivoTipo(veredicto.resultado().getMotivo());
+		documentoRepository.save(documento);
+		log.info("El documento {} se clasifico con el tipo nuevo {}", documento.getId(),
+				creada.getCodigo());
+		return true;
 	}
 
 	private boolean capturarGenerico(Documento documento, ClasificadorDocumentalService.Veredicto veredicto,
@@ -216,10 +239,6 @@ public class ExtractorDocumentalService {
 		if (generico == null) {
 			return observarSinTipo(documento, codigo, detalle
 					+ " El tenant no tiene publicado el tipo GENERICO, asi que no se pudo capturar nada.");
-		}
-
-		if (veredicto.estado() == ClasificadorDocumentalService.Veredicto.Estado.NO_RECONOCIDO) {
-			tipoPropuestoService.registrar(documento, veredicto.resultado());
 		}
 
 		documento.setPlantilla(generico);

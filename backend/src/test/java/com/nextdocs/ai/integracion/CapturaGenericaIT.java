@@ -88,27 +88,31 @@ class CapturaGenericaIT extends PruebaIntegracion {
 	}
 
 	@Test
-	@DisplayName("un tipo que no esta en el catalogo se captura igual con el esquema generico")
-	void elTipoDesconocidoSeCapturaIgual() {
+	@DisplayName("un tipo que no esta en el catalogo se crea solo y el documento se procesa con el")
+	void elTipoDesconocidoSeCreaSolo() {
 		proveedor.programarClasificacionDesconocida("Contrato de alquiler",
 				List.of(campoSugerido("locador", "Locador", TipoDatoCampo.TEXTO),
 						campoSugerido("canonMensual", "Canon mensual", TipoDatoCampo.MONEDA)));
 
 		Documento documento = procesar();
 
-		assertThat(documento.getOrigenTipo()).isEqualTo(OrigenTipoDocumento.GENERICO);
+		assertThat(documento.getOrigenTipo()).isEqualTo(OrigenTipoDocumento.DETECTADO);
 		assertThat(documentoService.obtener(tenant.getId(), documento.getId()).getCodigoPlantilla())
-				.isEqualTo(CatalogoDocumentalBase.CODIGO_GENERICO);
+				.isEqualTo("CONTRATO_DE_ALQUILER");
 		assertThat(valorExtraidoRepository.listarPorDocumento(documento.getId()))
-				.as("el documento tiene que quedar con datos, no vacio")
-				.isNotEmpty();
-		assertThat(excepcionDocumentalRepository.listarPorDocumento(documento.getId()))
-				.anyMatch(excepcion -> excepcion.getCodigo()
-						.equals(ClasificadorDocumentalService.CODIGO_TIPO_NO_RECONOCIDO));
+				.as("el documento se extrae con los campos del tipo nuevo")
+				.extracting("claveCampo")
+				.contains("locador", "canonMensual");
+		var creada = plantillaDocumentalRepository
+				.buscarPorCodigo(tenant.getId(), "CONTRATO_DE_ALQUILER").orElseThrow();
+		assertThat(creada.getVersionPublicada()).isNotNull();
+		assertThat(creada.isClasificable()).isTrue();
+		assertThat(campoPlantillaRepository.listarPorVersion(creada.getVersionPublicada().getId()))
+				.extracting("clave").contains("locador", "canonMensual");
 	}
 
 	@Test
-	@DisplayName("el tipo desconocido queda propuesto con sus campos y se cuenta cada vez que vuelve")
+	@DisplayName("el tipo desconocido queda aprobado solo y se cuenta cada vez que vuelve")
 	void elTipoDesconocidoQuedaPropuesto() {
 		proveedor.programarClasificacionDesconocida("Contrato de alquiler",
 				List.of(campoSugerido("locador", "Locador", TipoDatoCampo.TEXTO)));
@@ -117,47 +121,30 @@ class CapturaGenericaIT extends PruebaIntegracion {
 		procesar();
 
 		List<TipoPropuesto> propuestos = tipoPropuestoService.listar(tenant.getId(),
-				EstadoTipoPropuesto.PENDIENTE);
+				EstadoTipoPropuesto.APROBADO);
 		assertThat(propuestos).hasSize(1);
 		TipoPropuesto propuesto = propuestos.get(0);
 		assertThat(propuesto.getCodigoSugerido()).isEqualTo("CONTRATO_DE_ALQUILER");
+		assertThat(propuesto.getCodigoAprobado()).isEqualTo("CONTRATO_DE_ALQUILER");
 		assertThat(propuesto.getVeces()).isEqualTo(2);
 		assertThat(tipoPropuestoService.camposDe(propuesto)).extracting("clave").contains("locador");
 	}
 
 	@Test
-	@DisplayName("aprobar una propuesta crea la plantilla publicada y el clasificador ya la ve")
-	void aprobarCreaLaPlantilla() {
-		proveedor.programarClasificacionDesconocida("Contrato de alquiler",
-				List.of(campoSugerido("locador", "Locador", TipoDatoCampo.TEXTO),
-						campoSugerido("canonMensual", "Canon mensual", TipoDatoCampo.MONEDA)));
-		procesar();
-
-		TipoPropuesto propuesto = tipoPropuestoService.listar(tenant.getId(), EstadoTipoPropuesto.PENDIENTE)
-				.get(0);
-		tipoPropuestoService.aprobar(tenant, propuesto.getId());
-
-		var creada = plantillaDocumentalRepository
-				.buscarPorCodigo(tenant.getId(), "CONTRATO_DE_ALQUILER").orElseThrow();
-		assertThat(creada.getVersionPublicada()).isNotNull();
-		assertThat(creada.isClasificable()).isTrue();
-		assertThat(campoPlantillaRepository.listarPorVersion(creada.getVersionPublicada().getId()))
-				.extracting("clave").contains("locador", "canonMensual");
-		assertThat(tipoPropuestoService.buscar(tenant.getId(), propuesto.getId()).getEstado())
-				.isEqualTo(EstadoTipoPropuesto.APROBADO);
-	}
-
-	@Test
-	@DisplayName("una propuesta sin campos no se aprueba: dejaria una plantilla que no extrae nada")
-	void laPropuestaSinCamposNoSeAprueba() {
+	@DisplayName("una propuesta sin campos cae al generico y queda pendiente para completar a mano")
+	void laPropuestaSinCamposQuedaPendiente() {
 		proveedor.programarClasificacionDesconocida("Papel misterioso", List.of());
-		procesar();
 
+		Documento documento = procesar();
+
+		assertThat(documento.getOrigenTipo()).isEqualTo(OrigenTipoDocumento.GENERICO);
+		assertThat(excepcionDocumentalRepository.listarPorDocumento(documento.getId()))
+				.anyMatch(excepcion -> excepcion.getCodigo()
+						.equals(ClasificadorDocumentalService.CODIGO_TIPO_NO_RECONOCIDO));
 		TipoPropuesto propuesto = tipoPropuestoService.listar(tenant.getId(), EstadoTipoPropuesto.PENDIENTE)
 				.get(0);
 		assertThatThrownBy(() -> tipoPropuestoService.aprobar(tenant, propuesto.getId()))
-				.isInstanceOf(ValidacionException.class)
-				.hasMessageContaining("no extrae nada");
+				.isInstanceOf(ValidacionException.class);
 	}
 
 	@Test

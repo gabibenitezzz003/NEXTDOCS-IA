@@ -25,6 +25,8 @@ const ESTADOS = Object.keys(ESTADOS_DOCUMENTALES) as EstadoDocumento[];
 
 const TAMANO = 25;
 
+const ESTADOS_EN_CURSO: EstadoDocumento[] = ["RECIBIDO", "PROCESANDO", "EXTRAIDO", "VALIDADO"];
+
 export function Documentos() {
   const { tienePermiso } = useSesion();
   const { t } = useIdioma();
@@ -56,6 +58,12 @@ export function Documentos() {
   const consulta = useQuery({
     queryKey: ["documentos", filtro],
     queryFn: () => listarDocumentos(filtro),
+    refetchInterval: (consultaActiva) =>
+      consultaActiva.state.data?.content?.some((documento) =>
+        ESTADOS_EN_CURSO.includes(documento.estado),
+      )
+        ? 3000
+        : false,
   });
 
   const subida = useMutation({
@@ -86,6 +94,9 @@ export function Documentos() {
   }
 
   const documentos = consulta.data?.content ?? [];
+  const enCurso = documentos.filter((documento) =>
+    ESTADOS_EN_CURSO.includes(documento.estado),
+  ).length;
   const total = consulta.data?.totalElements ?? 0;
   const totalPaginas = consulta.data?.totalPages ?? 0;
   const hayFiltro = Boolean(seleccionados.length || busqueda);
@@ -161,6 +172,26 @@ export function Documentos() {
         <p role="status" aria-atomic="true" className="sr-only">
           {subida.isPending ? t("documentos.subiendo") : ""}
         </p>
+
+        {enCurso > 0 ? (
+          <div
+            role="status"
+            aria-atomic="true"
+            className="mb-espacio-4 flex items-center gap-espacio-3 rounded-control border border-violeta-borde bg-violeta-tenue px-espacio-4 py-espacio-3 text-pequeno text-accion-tonal-texto"
+          >
+            <span
+              aria-hidden="true"
+              className="size-espacio-4 animate-spin rounded-insignia border-2 border-current border-t-transparent motion-reduce:animate-none"
+            />
+            {t("documentos.procesando", {
+              cantidad: enCurso,
+              etiqueta:
+                enCurso === 1
+                  ? t("documentos.unDocumento")
+                  : t("documentos.muchosDocumentos"),
+            })}
+          </div>
+        ) : null}
 
         <Tarjeta padding="p-espacio-4" className="mb-espacio-5">
           <form

@@ -74,7 +74,7 @@ export const pt: Diccionario = {
     navExcepciones: "Exceções",
     navProcesos: "Processos",
     navPanel: "Painel de controle",
-    navTiposNuevos: "Novos tipos",
+    navTiposNuevos: "Tipos detectados",
   },
   ingresar: {
     titulo: "Entrar no portal",
@@ -217,11 +217,16 @@ export const pt: Diccionario = {
   },
   documentos: {
     titulo: "Bandeja documental",
-    descripcion: "Consulte os documentos, seu estado e sua rastreabilidade.",
+    descripcion:
+      "Envie um documento e o sistema o lê com IA, classifica, valida contra as regras e avisa se precisar da sua atenção. Acompanhe cada etapa aqui.",
     seleccionarArchivo: "Selecionar um documento para carregar",
     cargarDocumento: "Carregar documento",
     subiendo: "Enviando documento",
-    ingresadoEnEstado: "{nombre} registrado em estado {estado}",
+    ingresadoEnEstado:
+      "{nombre} recebido. O sistema está lendo e classificando; o estado se atualiza sozinho.",
+    procesando: "Lendo {cantidad} {etiqueta}…",
+    unDocumento: "documento",
+    muchosDocumentos: "documentos",
     buscarDocumentos: "Buscar documentos",
     buscarDocumento: "Buscar documento",
     buscarPlaceholder: "Buscar por nome, remetente ou referência externa",
@@ -279,8 +284,9 @@ export const pt: Diccionario = {
     paginacion: "Paginação de exceções",
   },
   tiposPropuestos: {
-    titulo: "Tipos propostos",
-    descripcion: "Propostas detectadas pelo sistema para ampliar o catálogo documental. Revise o motivo e os campos sugeridos antes de decidir.",
+    titulo: "Tipos detectados",
+    descripcion:
+      "Quando um documento não corresponde a nenhum tipo conhecido, o sistema cria o novo tipo com os campos sugeridos pela IA, e os próximos documentos assim se classificam sozinhos. Aqui você pode revisá-los ou descartá-los.",
     grupoEstado: "Estado dos tipos propostos",
     pendientes: "Pendentes",
     aprobados: "Aprovados",
@@ -290,10 +296,11 @@ export const pt: Diccionario = {
     muchasPropuestas: "propostas",
     aprobadoAviso: "{codigo} agora é um tipo do catálogo. Os próximos documentos se classificam sozinhos.",
     errorAccion: "Não foi possível concluir a ação",
-    sinPendientes: "Não há propostas pendentes",
-    sinAprobadas: "Não há propostas aprovadas",
-    sinDescartadas: "Não há propostas descartadas",
-    vacioDetalle: "Nenhuma proposta encontrada para o estado selecionado. As novas propostas do sistema aparecem em Pendentes.",
+    sinPendientes: "Não há tipos pendentes",
+    sinAprobadas: "Nenhum tipo novo detectado ainda",
+    sinDescartadas: "Não há tipos descartados",
+    vacioDetalle:
+      "Quando chega um documento de tipo desconhecido, o sistema o detecta e cria o tipo automaticamente. Se não conseguir sugerir campos, fica pendente para você completar.",
     lista: "Propostas de tipos documentais",
     unDocumento: "documento",
     muchosDocumentos: "documentos",
