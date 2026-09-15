@@ -225,11 +225,19 @@ Los nodos `SOLICITUD_DOCUMENTO` resuelven sus documentos contra el core. La aute
 cuenta de servicio, que en el core pertenece a un tenant, así que la clave se configura **por
 tenant**: `NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES` es una lista `tenantId=clave` separada por comas.
 
-Para dar de alta la cuenta y dejar la clave en el `.env`:
+Para dar de alta la cuenta y dejar la clave en el entorno, **parado en la instancia**:
 
 ```bash
-CORE=https://<host> TENANT=<codigo> EMAIL=<admin> CLAVE=<clave> scripts/alta-cuenta-motor.sh
+ENV=/etc/nextdocs-ia/nextdocs.env TENANT=<codigo> EMAIL=<admin> CLAVE=<clave> \
+  /opt/nextdocs-ia/app/scripts/alta-cuenta-motor.sh
 ```
+
+`ENV` es obligatorio acá: por defecto el script escribe en el `.env` de la raíz del repo, que en
+producción **no** es el archivo que lee compose (`--env-file /etc/nextdocs-ia/nextdocs.env`). Si se
+omite, la clave queda en un archivo que nadie lee, y como se muestra una sola vez hay que dar de
+alta otra cuenta.
+
+`CORE` no hace falta: el default `http://localhost:8090` es donde escucha el core en la instancia.
 
 La clave en claro se muestra una sola vez, por eso el script la guarda en lugar de imprimirla.
 
