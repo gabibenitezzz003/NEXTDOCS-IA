@@ -12,13 +12,27 @@ No es un módulo de Follow: Follow, CIMA y Valid360.ai son **consumidores opcion
 
 ---
 
+## Producción
+
+Disponible en **https://nextdocsia.fenixgroup.tech** (AWS EC2, HTTPS con Let's Encrypt).
+
+- Merge a `main` corre la suite de verificación y deploya automáticamente al server; el repo workflow dispara el deploy del core por `repository_dispatch`.
+- nginx sirve el portal, rutea `/api/` al core y los prefijos de procesos al workflow, y redirige HTTP a HTTPS.
+- Ingreso con usuario y clave por organización, o con **Google y Microsoft** (OAuth2/OIDC con `state` firmado, `nonce`, aprovisionamiento automático y vínculo por email). Configuración por tenant en `docs/LOGIN_SOCIAL_OAUTH.md`.
+
+Swagger: `https://nextdocsia.fenixgroup.tech/swagger-ui.html` (core) y
+`https://nextdocsia.fenixgroup.tech/workflow-swagger` (workflow).
+Detalle en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+
+---
+
 ## Qué hay en este monorepo
 
 ```text
 nextdocs-ai/
 ├── backend/           Spring Boot 3.4 · Java 21 — núcleo documental
 ├── frontend/          React 19 · TypeScript · Vite · Tailwind 4 — portal
-├── infra/             Keycloak realm, identidad y nginx de producción
+├── infra/             Keycloak realm, identidad, nginx y compose de producción
 ├── docs/              Arquitectura, API, despliegue, TODOs, verificaciones
 ├── compose.yml        Infra + perfiles app/workflow/antivirus
 └── README.md          Este archivo
@@ -28,29 +42,19 @@ El motor de procesos vive en el repositorio hermano `gabibenitezzz003/nextdocs-w
 
 ---
 
-## Estado actual (MVP0 Comercial)
+## Funcionalidades
 
-| Componente | Estado | Notas |
-|---|---|---|
-| **Core documental** | ✅ Cerrado y verificado | Ingesta, clasificación, extracción (Gemini/DeepSeek/SIMULADO), validación, revisión humana, excepciones, auditoría, gobernanza, exportación, retención, costo por tenant |
-| **Workflow runtime** | ✅ En producción | Semántica real por tipo de nodo (R1): temporizadores que avanzan solos, tareas externas con enlace de un solo uso, solicitud de documento validada, validación IA que bloquea, acciones API, notificaciones, decisiones y subprocesos |
-| **Operación de procesos (R2)** | ✅ En producción | Bandejas de instancias y tareas con filtros por estado/proceso/responsable, detalle con datos del proceso y timeline |
-| **IA Supervisora (R3/R6)** | ✅ En producción | Motor de condiciones real (umbral + operador), evaluación automática al completar tareas, hallazgos resolubles y pantalla de reglas |
-| **SLA y KPIs (R4/R5)** | ✅ En producción | SLA por plantilla heredable a tareas, editable desde el portal; KPIs de procesos visibles en la bandeja |
-| **P0-05 Colaboración externa** | ✅ Cerrado | Cuentas externas + Secure Action Link con TTL, scope y usos máximos |
-| **P0-07 Partner Foundation** | ✅ Cerrado | Organizaciones partner y delegación de scopes con expiración |
-| **P0-08 Marketplace-ready** | ✅ Cerrado | Modelo de instalación, overlay, provenance y términos comerciales |
-| **P0-09 Biblioteca COMEX** | ✅ Cerrado | Fixture con 14 plantillas base + multimodales (`EX-MAR-FCL`, `IM-AIR`, `EX-MM-ROAD-SEA`, etc.) |
-| **P0-11 E2E y seguridad** | ✅ Cerrado | Playwright con JWT real: smoke e2e, suite de procesos y suite transversal; CI `.github/workflows/e2e.yml` |
-| **Login social (Google/Microsoft)** | ✅ Implementado | OAuth2/OIDC con `state` firmado y `nonce`, aprovisionamiento JIT y vínculo por email sobre la federación por tenant; setup en `docs/LOGIN_SOCIAL_OAUTH.md` |
-| **P0-12 Dataset real** | ✅ Cerrado | `PilotoComexTest` con 8 escenarios + generador de dataset con respuesta conocida y cargador masivo |
-| **Frontend (portal)** | ✅ Rediseñado | Alineado al Design System NEXT DOC AI v0.2 con tema claro/oscuro; bandejas, detalle de instancia, hallazgos, KPIs y reglas de la supervisora |
-| **Despliegue continuo** | ✅ Activo | Merge a `main` → verificación → deploy automático a EC2; el repo workflow dispara el deploy del core por `repository_dispatch` |
-| **P0-10 Follow Context/Template Recommender** | ❌ Pendiente | Contrato canónico de contexto y recomendador de plantillas |
-| **P0-13 Load y operaciones** | ❌ Pendiente | Baseline de rendimiento, backup/restore, observabilidad y rotación de secretos |
-| **P0-15 Release comercial** | ❌ Pendiente | Demo punta a punta, runbook y acta de salida |
-
-Evidencias de cada gate en [`docs/verificaciones/`](docs/verificaciones/).
+- **Core documental**: ingesta, clasificación, extracción (Gemini/DeepSeek), validación por reglas versionadas, revisión humana, excepciones, auditoría completa, gobernanza, exportación, retención y costo por tenant.
+- **Login social**: Google y Microsoft sobre la federación por tenant, con aprovisionamiento automático del usuario y vínculo por email a cuentas existentes.
+- **Workflow runtime**: semántica real por tipo de nodo — temporizadores que avanzan solos, tareas externas con enlace de un solo uso, solicitud de documento validada, validación IA que bloquea, acciones API, notificaciones, decisiones y subprocesos.
+- **Operación de procesos**: bandejas de instancias y tareas con filtros por estado, proceso y responsable; detalle con datos del proceso y timeline.
+- **IA Supervisora**: motor de condiciones (umbral + operador), evaluación automática al completar tareas, hallazgos resolubles y pantalla de reglas.
+- **SLA y KPIs**: SLA por plantilla heredable a tareas, editable desde el portal; KPIs de procesos visibles en la bandeja.
+- **Colaboración externa**: cuentas externas y Secure Action Link con TTL, scope y usos máximos.
+- **Partner Foundation**: organizaciones partner y delegación de scopes con expiración.
+- **Marketplace**: modelo de instalación, overlay, provenance y términos comerciales.
+- **Biblioteca COMEX**: 14 plantillas base multimodales (`EX-MAR-FCL`, `IM-AIR`, `EX-MM-ROAD-SEA`, etc.).
+- **Portal**: alineado al Design System NEXT DOC AI v0.2 con tema claro/oscuro; bandejas, detalle de instancia, hallazgos, KPIs y reglas de la supervisora.
 
 ---
 
@@ -73,7 +77,7 @@ Evidencias de cada gate en [`docs/verificaciones/`](docs/verificaciones/).
 - **Workflow (microservicio):** Java 21, Spring Boot 3.4, Maven 3.9, PostgreSQL, Flyway, REST.
 - **Frontend:** React 19, TypeScript 5.7, Vite, Tailwind CSS 4, React Router 7, TanStack Query, Axios.
 - **QA:** JUnit 5, Mockito, AssertJ, Playwright, Docker Compose, GitHub Actions.
-- **IA:** Gemini (`gemini-2.5-flash`), DeepSeek, proveedor `SIMULADO` para desarrollo sin clave.
+- **IA:** Gemini (`gemini-2.5-flash`), DeepSeek, proveedor `SIMULADO` para pruebas sin clave.
 
 ---
 
@@ -197,7 +201,7 @@ RECIBIDO → PROCESANDO → EXTRAIDO → VALIDADO → APROBADO → CERRADO
 
 | Dominio | Entidades clave |
 |---|---|
-| Identidad | `Tenant`, `Usuario`, `Rol`, `CuentaServicio` |
+| Identidad | `Tenant`, `Usuario`, `Rol`, `CuentaServicio`, `ProveedorIdentidad` |
 | Plantillas documentales | `PlantillaDocumental`, `VersionPlantilla`, `CampoPlantilla`, `ReglaPlantilla` |
 | Documental | `Documento`, `ArchivoDocumento`, `SegmentoDocumento`, `SeguimientoOriginalFisico` |
 | Extracción | `EjecucionExtraccion`, `ValorExtraido` |
@@ -234,33 +238,12 @@ NEXTDOCS_WORKFLOW_COMEX_HABILITADO=true docker compose --profile workflow up -d 
 
 ---
 
-## Producción
-
-Desplegado en AWS EC2 (`3.213.58.243`): merge a `main` corre verificación y deploya solo;
-nginx sirve el portal y rutea `/api/` al core y los prefijos de procesos al workflow.
-Swagger: `http://3.213.58.243/swagger-ui.html` (core) y
-`http://3.213.58.243/workflow-swagger` (workflow). HTTPS pendiente de un dominio propio;
-detalle en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
-
-## Próximos pasos
-
-En orden de dependencia:
-
-1. **P0-10 Follow Context/Template Recommender** — contrato canónico de contexto y recomendación de plantillas.
-2. **P0-13 Load y operaciones** — baseline de rendimiento, backup/restore, observabilidad, alertas y runbooks.
-3. **P0-15 Release comercial** — demo end-to-end, acta de salida y rotación de la API key de Gemini.
-4. **Evolución de procesos** — canvas visual con branching (UX-21), marketplace/partners en el portal.
-
-Plan completo en [`docs/TODO_MVP0_COMERCIAL.md`](docs/TODO_MVP0_COMERCIAL.md).
-
----
-
 ## Documentación
 
 - [`docs/EMPEZAR_ACA.md`](docs/EMPEZAR_ACA.md) — traspaso oficial y reglas del proyecto.
 - [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) — bounded contexts, flujos e invariantes.
 - [`docs/API.md`](docs/API.md) — endpoints, permisos, errores, webhooks.
 - [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md) — compose, imágenes, CI y recuperación.
-- [`docs/TODO_MVP0_COMERCIAL.md`](docs/TODO_MVP0_COMERCIAL.md) — plan de trabajo MVP0.
 - [`docs/LOGIN_SOCIAL_OAUTH.md`](docs/LOGIN_SOCIAL_OAUTH.md) — registro de apps Google/Microsoft, configuración del proveedor por tenant y troubleshooting.
+- [`docs/TODO_MVP0_COMERCIAL.md`](docs/TODO_MVP0_COMERCIAL.md) — plan de trabajo MVP0.
 - [`docs/verificaciones/`](docs/verificaciones/) — evidencias de QA por P0.
