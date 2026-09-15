@@ -34,6 +34,8 @@ public class ProveedorIdentidadModel implements Serializable {
 
 	private boolean permitirVinculoPorEmail;
 
+	private boolean verificaEmail;
+
 	private String codigoRolPorDefecto;
 
 	private String dominiosPermitidos;

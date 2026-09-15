@@ -102,6 +102,26 @@ export const pt: Diccionario = {
     sesionCifrada: "Sessão criptografada · isolamento por organização",
     portalSeguro: "Portal seguro · acesso empresarial",
     pie: "NEXT DOC AI · plataforma documental independente",
+    sinOrganizacion: "Sua empresa ainda não tem portal?",
+    crearOrganizacion: "Registre sua organização",
+    volverAIngresar: "Já tenho conta — voltar para entrar",
+  },
+  registro: {
+    titulo: "Registre sua organização",
+    descripcion:
+      "Crie o espaço da sua empresa: você será o administrador e sua equipe entra com o código escolhido.",
+    nombreOrganizacion: "Nome da organização",
+    codigoOrganizacion: "Código da organização",
+    ayudaCodigo:
+      "O identificador curto que sua equipe digita para entrar. Letras, números e hífens.",
+    nombreAdministrador: "Seu nome",
+    email: "E-mail",
+    clave: "Senha",
+    ayudaClave: "Mínimo de 12 caracteres.",
+    registrar: "Criar organização",
+    registrando: "Criando organização…",
+    errorTitulo: "Não foi possível registrar a organização",
+    placeholderCodigo: "minha-empresa",
   },
   estadosDocumento: {
     RECIBIDO: "Recebido",

@@ -94,13 +94,17 @@ function TarjetaDocumento() {
 }
 
 export function Ingresar() {
-  const { ingresar, ingresarConCodigo } = useSesion();
+  const { ingresar, ingresarConCodigo, registrar } = useSesion();
   const { t } = useIdioma();
   const navegar = useNavigate();
   const [parametros, fijarParametros] = useSearchParams();
+  const [modo, setModo] = useState<"ingresar" | "registro">("ingresar");
   const [codigoTenant, setCodigoTenant] = useState("demo");
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
+  const [nombreOrganizacion, setNombreOrganizacion] = useState("");
+  const [codigoOrganizacion, setCodigoOrganizacion] = useState("");
+  const [nombreAdministrador, setNombreAdministrador] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [canjeando, setCanjeando] = useState(false);
@@ -164,7 +168,17 @@ export function Ingresar() {
     setError(null);
     setEnviando(true);
     try {
-      await ingresar(codigoTenant.trim(), email.trim(), clave);
+      if (modo === "registro") {
+        await registrar({
+          nombreOrganizacion: nombreOrganizacion.trim(),
+          codigoOrganizacion: codigoOrganizacion.trim(),
+          nombreAdministrador: nombreAdministrador.trim(),
+          emailAdministrador: email.trim(),
+          claveAdministrador: clave,
+        });
+      } else {
+        await ingresar(codigoTenant.trim(), email.trim(), clave);
+      }
       navegar("/resumen");
     } catch (fallo) {
       setError(mensajeDeError(fallo));
@@ -272,14 +286,14 @@ export function Ingresar() {
               id={`${id}-titulo`}
               className="subir font-titulo text-titulo-pagina text-tinta lg:text-titulo-destacado"
             >
-              {t("ingresar.titulo")}
+              {modo === "registro" ? t("registro.titulo") : t("ingresar.titulo")}
             </h1>
             <p
               id={`${id}-descripcion`}
               className="subir mt-espacio-2 text-cuerpo text-tinta-suave"
               style={{ "--retraso": "60ms" } as React.CSSProperties}
             >
-              {t("ingresar.descripcion")}
+              {modo === "registro" ? t("registro.descripcion") : t("ingresar.descripcion")}
             </p>
             <div
               id={`${id}-error`}
@@ -287,7 +301,7 @@ export function Ingresar() {
             >
               {error ? (
                 <ErrorPanel
-                  titulo={t("ingresar.errorTitulo")}
+                  titulo={modo === "registro" ? t("registro.errorTitulo") : t("ingresar.errorTitulo")}
                   mensaje={error}
                 />
               ) : null}
@@ -296,17 +310,49 @@ export function Ingresar() {
               className="subir space-y-espacio-4"
               style={{ "--retraso": "120ms" } as React.CSSProperties}
             >
+              {modo === "registro" ? (
+                <>
+                  <Campo
+                    etiqueta={t("registro.nombreOrganizacion")}
+                    value={nombreOrganizacion}
+                    onChange={(evento) => setNombreOrganizacion(evento.target.value)}
+                    required
+                    disabled={enviando}
+                    autoComplete="organization"
+                    placeholder="Fenix Logistics S.A."
+                  />
+                  <Campo
+                    etiqueta={t("registro.codigoOrganizacion")}
+                    ayuda={t("registro.ayudaCodigo")}
+                    value={codigoOrganizacion}
+                    onChange={(evento) => setCodigoOrganizacion(evento.target.value)}
+                    required
+                    disabled={enviando}
+                    autoComplete="off"
+                    placeholder={t("registro.placeholderCodigo")}
+                  />
+                  <Campo
+                    etiqueta={t("registro.nombreAdministrador")}
+                    value={nombreAdministrador}
+                    onChange={(evento) => setNombreAdministrador(evento.target.value)}
+                    required
+                    disabled={enviando}
+                    autoComplete="name"
+                  />
+                </>
+              ) : (
+                <Campo
+                  etiqueta={t("ingresar.organizacion")}
+                  value={codigoTenant}
+                  onChange={(evento) => setCodigoTenant(evento.target.value)}
+                  required
+                  disabled={enviando}
+                  autoComplete="off"
+                  placeholder="demo"
+                />
+              )}
               <Campo
-                etiqueta={t("ingresar.organizacion")}
-                value={codigoTenant}
-                onChange={(evento) => setCodigoTenant(evento.target.value)}
-                required
-                disabled={enviando}
-                autoComplete="off"
-                placeholder="demo"
-              />
-              <Campo
-                etiqueta={t("ingresar.email")}
+                etiqueta={modo === "registro" ? t("registro.email") : t("ingresar.email")}
                 type="email"
                 value={email}
                 onChange={(evento) => setEmail(evento.target.value)}
@@ -316,13 +362,14 @@ export function Ingresar() {
                 placeholder="nombre@empresa.com"
               />
               <Campo
-                etiqueta={t("ingresar.clave")}
+                etiqueta={modo === "registro" ? t("registro.clave") : t("ingresar.clave")}
+                ayuda={modo === "registro" ? t("registro.ayudaClave") : undefined}
                 type="password"
                 value={clave}
                 onChange={(evento) => setClave(evento.target.value)}
                 required
                 disabled={enviando}
-                autoComplete="current-password"
+                autoComplete={modo === "registro" ? "new-password" : "current-password"}
                 placeholder="••••••••"
               />
             </div>
@@ -331,12 +378,31 @@ export function Ingresar() {
               variante="primario"
               tamano="lg"
               cargando={enviando}
-              aria-label={enviando ? t("ingresar.ingresando") : t("ingresar.ingresar")}
+              aria-label={enviando
+                ? modo === "registro" ? t("registro.registrando") : t("ingresar.ingresando")
+                : modo === "registro" ? t("registro.registrar") : t("ingresar.ingresar")}
               className="subir destello mt-espacio-6 w-full overflow-hidden"
               style={{ "--retraso": "180ms" } as React.CSSProperties}
             >
-              {t("ingresar.ingresar")}
+              {modo === "registro" ? t("registro.registrar") : t("ingresar.ingresar")}
             </Boton>
+            <p
+              className="subir mt-espacio-4 text-center text-pequeno"
+              style={{ "--retraso": "200ms" } as React.CSSProperties}
+            >
+              <button
+                type="button"
+                className="font-semibold text-violeta transition-colors hover:text-violeta-claro"
+                onClick={() => {
+                  setModo(modo === "registro" ? "ingresar" : "registro");
+                  setError(null);
+                }}
+              >
+                {modo === "registro"
+                  ? t("ingresar.volverAIngresar")
+                  : `${t("ingresar.sinOrganizacion")} ${t("ingresar.crearOrganizacion")}`}
+              </button>
+            </p>
             {canjeando ? (
               <div
                 role="status"

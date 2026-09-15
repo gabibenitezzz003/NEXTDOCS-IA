@@ -29,6 +29,11 @@ public interface UsuarioRepository extends JpaRepository<Usuario, String> {
 	Optional<Usuario> buscarPorIdentidadExterna(@Param("tenantId") String tenantId,
 			@Param("origen") OrigenIdentidad origen, @Param("idExterno") String idExterno);
 
+	@Query("SELECT u FROM Usuario u WHERE u.baja IS NULL "
+			+ "AND u.origenIdentidad = :origen AND u.idUsuarioExterno = :idExterno")
+	Optional<Usuario> buscarPorIdentidadExternaGlobal(@Param("origen") OrigenIdentidad origen,
+			@Param("idExterno") String idExterno);
+
 	@Query("SELECT u FROM Usuario u WHERE u.baja IS NULL AND u.tenant.id = :tenantId")
 	Page<Usuario> listarPorTenant(@Param("tenantId") String tenantId, Pageable paginado);
 

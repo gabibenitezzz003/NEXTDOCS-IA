@@ -76,6 +76,7 @@ public class ProveedorIdentidadService {
 		proveedor.setClaimNombre(porDefecto(datos.getClaimNombre(), "name"));
 		proveedor.setPermitirJit(datos.isPermitirJit());
 		proveedor.setPermitirVinculoPorEmail(datos.isPermitirVinculoPorEmail());
+		proveedor.setVerificaEmail(datos.isVerificaEmail());
 		proveedor.setCodigoRolPorDefecto(datos.getCodigoRolPorDefecto());
 		proveedor.setDominiosPermitidos(normalizarDominios(datos.getDominiosPermitidos()));
 		proveedor.setOrigenesEmbedPermitidos(datos.getOrigenesEmbedPermitidos());
@@ -134,6 +135,7 @@ public class ProveedorIdentidadService {
 		modelo.setClaimNombre(proveedor.getClaimNombre());
 		modelo.setPermitirJit(proveedor.isPermitirJit());
 		modelo.setPermitirVinculoPorEmail(proveedor.isPermitirVinculoPorEmail());
+		modelo.setVerificaEmail(proveedor.isVerificaEmail());
 		modelo.setCodigoRolPorDefecto(proveedor.getCodigoRolPorDefecto());
 		modelo.setDominiosPermitidos(proveedor.getDominiosPermitidos());
 		modelo.setOrigenesEmbedPermitidos(proveedor.getOrigenesEmbedPermitidos());

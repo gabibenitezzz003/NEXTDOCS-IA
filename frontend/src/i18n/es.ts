@@ -100,6 +100,26 @@ export const es = {
     sesionCifrada: "Sesión cifrada · aislamiento por organización",
     portalSeguro: "Portal seguro · acceso empresarial",
     pie: "NEXT DOC AI · plataforma documental independiente",
+    sinOrganizacion: "¿Tu empresa todavía no tiene portal?",
+    crearOrganizacion: "Registrá tu organización",
+    volverAIngresar: "Ya tengo cuenta — volver a ingresar",
+  },
+  registro: {
+    titulo: "Registrá tu organización",
+    descripcion:
+      "Creá el espacio de tu empresa: vas a ser el administrador y tu equipo entra con el código que elijas.",
+    nombreOrganizacion: "Nombre de la organización",
+    codigoOrganizacion: "Código de organización",
+    ayudaCodigo:
+      "El identificador corto que tu equipo escribe para entrar. Letras, números y guiones.",
+    nombreAdministrador: "Tu nombre",
+    email: "Email",
+    clave: "Clave",
+    ayudaClave: "Mínimo 12 caracteres.",
+    registrar: "Crear organización",
+    registrando: "Creando organización…",
+    errorTitulo: "No pudimos registrar la organización",
+    placeholderCodigo: "mi-empresa",
   },
   estadosDocumento: {
     RECIBIDO: "Recibido",

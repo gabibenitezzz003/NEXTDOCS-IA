@@ -10,13 +10,14 @@ import {
   registrarExpiracion,
 } from "../api/cliente";
 import { fijarTenantProcesos } from "../api/procesos";
-import type { Sesion } from "../tipos/api";
+import type { RegistroOrganizacion, Sesion } from "../tipos/api";
 
 interface ContextoSesion {
   sesion: Sesion | null;
   cargando: boolean;
   ingresar: (codigoTenant: string, email: string, clave: string) => Promise<void>;
   ingresarConCodigo: (codigo: string) => Promise<void>;
+  registrar: (datos: RegistroOrganizacion) => Promise<void>;
   salir: () => void;
   tienePermiso: (permiso: string) => boolean;
 }
@@ -93,16 +94,22 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     aplicarSesion(data);
   }, [aplicarSesion]);
 
+  const registrar = useCallback(async (datos: RegistroOrganizacion) => {
+    const { data } = await cliente.post<Sesion>("/registro", datos);
+    aplicarSesion(data);
+  }, [aplicarSesion]);
+
   const valor = useMemo<ContextoSesion>(
     () => ({
       sesion,
       cargando,
       ingresar,
       ingresarConCodigo,
+      registrar,
       salir,
       tienePermiso: (permiso: string) => sesion?.permisos.includes(permiso) ?? false,
     }),
-    [sesion, cargando, ingresar, ingresarConCodigo, salir],
+    [sesion, cargando, ingresar, ingresarConCodigo, registrar, salir],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;

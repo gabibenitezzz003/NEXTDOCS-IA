@@ -55,6 +55,7 @@ POST /api/v1/federacion/proveedores
   "claimNombre": "name",
   "permitirJit": true,
   "permitirVinculoPorEmail": true,
+  "verificaEmail": true,
   "codigoRolPorDefecto": "ADMINISTRADOR",
   "dominiosPermitidos": "@empresa.com,@gmail.com",
   "origenesEmbedPermitidos": "http://localhost:5175,https://<dominio>",
@@ -72,7 +73,9 @@ Notas:
 - `clienteId`, `clienteSecreto`, `urlAutorizacion` y `urlToken` habilitan el login social solo si van los cuatro juntos; `audiencia` debe coincidir con el `clienteId` (el `aud` del `id_token`).
 - `dominiosPermitidos` acepta entradas con o sin `@` (se normalizan a `@dominio`); vacío permite cualquier dominio.
 - `origenesEmbedPermitidos` debe incluir el origen del portal si el frontend envía `retorno`.
+- `verificaEmail` declara que el IdP garantiza el email verificado (Google, Microsoft). Solo esos proveedores resuelven la identidad y el email **entre todos los tenants**: quien ya tiene cuenta entra a su propio tenant, sin importar desde qué organización vino el intento.
 - En el MVP el `codigoRolPorDefecto` es `ADMINISTRADOR`: cualquier persona que entre por Google o Microsoft ve y ejecuta todo. Cuando se divida por roles, bajarlo a `REVISOR` y promover usuarios a mano.
+- **Login social sin código de organización**: `GET /api/v1/federacion/oauth/{proveedor}/iniciar` resuelve el proveedor único activo y firma el `state` con la marca "sin tenant". En el callback, un email nuevo se aprovisiona en un **tenant personal propio** (código `u-<usuario>-<hash>`, rol ADMINISTRADOR, catálogo base sembrado) — cada cuenta social tiene su portal aislado. Con código de organización (`/oauth/{tenant}/{proveedor}/iniciar`), el usuario nuevo cae en ese tenant con el rol por defecto del proveedor.
 - El secreto se guarda en la base y **nunca** sale en las respuestas de la API (`ProveedorIdentidadModel` no lo serializa).
 - Rotar un secreto hoy requiere actualizar la fila (`eliminar` es baja lógica y el código queda reservado); un endpoint de actualización queda como pendiente.
 - El `client_secret` también puede venir de un gestor de secretos: cargarlo en la fila del proveedor al momento del alta, no en el repositorio ni en el frontend.

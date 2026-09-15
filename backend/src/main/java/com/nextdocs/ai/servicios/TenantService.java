@@ -73,6 +73,19 @@ public class TenantService {
 	@Transactional
 	public Tenant crear(String codigo, String nombre, String emailAdministrador, String claveAdministrador,
 			String idTenant) {
+		Tenant tenant = crearSinAdministrador(codigo, nombre, idTenant);
+		crearAdministrador(tenant, rolRepository.buscarPorCodigo(tenant.getId(),
+				Permiso.CODIGO_ROL_ADMINISTRADOR).orElseThrow(), emailAdministrador, claveAdministrador);
+		return tenant;
+	}
+
+	@Transactional
+	public Tenant crearSinAdministrador(String codigo, String nombre) {
+		return crearSinAdministrador(codigo, nombre, null);
+	}
+
+	@Transactional
+	public Tenant crearSinAdministrador(String codigo, String nombre, String idTenant) {
 		if (tenantRepository.findByCodigoAndBajaIsNull(codigo).isPresent()) {
 			throw new RegistroExistenteException("Ya existe un tenant con el codigo " + codigo);
 		}
@@ -86,8 +99,7 @@ public class TenantService {
 		tenant.setAlta(Instant.now());
 		tenantRepository.save(tenant);
 
-		List<Rol> roles = crearRolesPredefinidos(tenant);
-		crearAdministrador(tenant, roles.get(0), emailAdministrador, claveAdministrador);
+		crearRolesPredefinidos(tenant);
 		sembradorCatalogoService.sembrarSiCorresponde(tenant);
 		auditoriaService.registrar(tenant.getId(), AccionAuditoria.TENANT_CREADO, ENTIDAD, tenant.getId());
 		return tenant;

@@ -67,6 +67,8 @@ public class ProveedorIdentidad implements Serializable {
 
 	private boolean permitirVinculoPorEmail;
 
+	private boolean verificaEmail;
+
 	@Column(length = 64)
 	private String codigoRolPorDefecto;
 

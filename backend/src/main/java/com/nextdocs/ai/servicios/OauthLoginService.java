@@ -106,7 +106,7 @@ public class OauthLoginService {
 	@Transactional(readOnly = true)
 	public String iniciar(String codigoTenant, String codigoProveedor, String retorno) {
 		ProveedorIdentidad proveedor = proveedorOauth(codigoTenant, codigoProveedor);
-		return construirUrlAutorizacion(proveedor, codigoTenant, retorno);
+		return construirUrlAutorizacion(proveedor, codigoTenant, retorno, false);
 	}
 
 	@Transactional(readOnly = true)
@@ -126,14 +126,14 @@ public class OauthLoginService {
 					"Hay varias organizaciones con ese acceso. Escribi el nombre de tu organizacion para continuar");
 		}
 		ProveedorIdentidad proveedor = candidatos.get(0);
-		return construirUrlAutorizacion(proveedor, proveedor.getTenant().getCodigo(), retorno);
+		return construirUrlAutorizacion(proveedor, proveedor.getTenant().getCodigo(), retorno, true);
 	}
 
 	private String construirUrlAutorizacion(ProveedorIdentidad proveedor, String codigoTenant,
-			String retorno) {
+			String retorno, boolean sinTenant) {
 		String destino = validarRetorno(proveedor, retorno);
 		String nonce = aleatorio();
-		String estado = firmarEstado(codigoTenant, proveedor.getCodigo(), nonce, destino);
+		String estado = firmarEstado(codigoTenant, proveedor.getCodigo(), nonce, destino, sinTenant);
 		String alcances = proveedor.getAlcances() == null || proveedor.getAlcances().isBlank()
 				? "openid email profile"
 				: proveedor.getAlcances().trim();
@@ -174,6 +174,7 @@ public class OauthLoginService {
 			intercambio.setCodigoTenant(datos.tenant);
 			intercambio.setProveedor(datos.proveedor);
 			intercambio.setToken(idToken);
+			intercambio.setTenantPropio(datos.sinTenant);
 			CodigoEmbedModel resultado = federacionIdentidadService.intercambiar(intercambio);
 			return portal + "/ingresar?codigo=" + codificar(resultado.getCodigo());
 		}
@@ -229,10 +230,14 @@ public class OauthLoginService {
 		}
 	}
 
-	private String firmarEstado(String codigoTenant, String proveedor, String nonce, String retorno) {
+	private String firmarEstado(String codigoTenant, String proveedor, String nonce, String retorno,
+			boolean sinTenant) {
 		StringBuilder json = new StringBuilder("{\"t\":\"").append(escapar(codigoTenant))
 				.append("\",\"p\":\"").append(escapar(proveedor)).append("\",\"n\":\"").append(nonce)
 				.append("\",\"e\":").append(Instant.now().getEpochSecond() + VIGENCIA_ESTADO_SEGUNDOS);
+		if (sinTenant) {
+			json.append(",\"s\":1");
+		}
 		if (retorno != null) {
 			json.append(",\"r\":\"").append(escapar(retorno)).append("\"");
 		}
@@ -263,6 +268,7 @@ public class OauthLoginService {
 			datos.proveedor = json.get("p").asText();
 			datos.nonce = json.get("n").asText();
 			datos.retorno = json.hasNonNull("r") ? json.get("r").asText() : null;
+			datos.sinTenant = json.has("s") && json.get("s").asInt() == 1;
 			return datos;
 		}
 		catch (NoAutorizadoException e) {
@@ -351,5 +357,6 @@ public class OauthLoginService {
 		String proveedor;
 		String nonce;
 		String retorno;
+		boolean sinTenant;
 	}
 }

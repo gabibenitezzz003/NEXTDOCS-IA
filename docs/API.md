@@ -24,6 +24,12 @@ los eventos y la auditoría.
 ### Autenticación
 
 ```
+POST /api/v1/registro                                     publico
+{ "nombreOrganizacion": "Mi Empresa S.A.", "codigoOrganizacion": "mi-empresa",
+  "nombreAdministrador": "Maria Perez", "emailAdministrador": "maria@mi-empresa.com",
+  "claveAdministrador": "minimo-12-caracteres" }
+→ 201 { tokenAcceso, ... } (sesion del administrador ya autenticada)
+
 POST /api/v1/autenticacion/ingresar
 { "codigoTenant": "demo", "email": "admin@nextdocs.ai", "clave": "..." }
 → 200 { tokenAcceso, tokenRefresco, usuarioId, email, nombre, tenantId, codigoTenant, nombreTenant, permisos[] }
@@ -32,6 +38,10 @@ POST /api/v1/autenticacion/refrescar
 { "tokenRefresco": "..." }
 → 200 (misma forma)
 ```
+
+El registro crea el tenant con sus roles predefinidos y el catalogo base sembrado; el
+`codigoOrganizacion` (letras, numeros y guiones) es el identificador que el equipo escribe
+en el login. Un email ya registrado en cualquier tenant se rechaza.
 
 ### Documentos
 

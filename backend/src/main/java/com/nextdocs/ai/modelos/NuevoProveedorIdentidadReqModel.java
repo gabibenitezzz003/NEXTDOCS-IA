@@ -50,6 +50,8 @@ public class NuevoProveedorIdentidadReqModel implements Serializable {
 
 	private boolean permitirVinculoPorEmail;
 
+	private boolean verificaEmail;
+
 	@Size(max = 64)
 	private String codigoRolPorDefecto;
 

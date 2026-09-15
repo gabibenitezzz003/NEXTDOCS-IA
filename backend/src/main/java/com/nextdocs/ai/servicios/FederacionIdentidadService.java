@@ -5,6 +5,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +33,7 @@ import com.nextdocs.ai.repositorios.RolRepository;
 import com.nextdocs.ai.repositorios.UsuarioRepository;
 import com.nextdocs.ai.utiles.ContextoCorrelacion;
 import com.nextdocs.ai.utiles.Hash;
+import com.nextdocs.ai.utiles.Permiso;
 
 import io.jsonwebtoken.Claims;
 
@@ -66,13 +68,15 @@ public class FederacionIdentidadService {
 
 	private final AuditoriaService auditoriaService;
 
+	private final TenantService tenantService;
+
 	private final PropiedadesFederacion propiedades;
 
 	public FederacionIdentidadService(ProveedorIdentidadRepository proveedorIdentidadRepository,
 			CodigoEmbedRepository codigoEmbedRepository, UsuarioRepository usuarioRepository,
 			RolRepository rolRepository, VerificadorTokenIdpService verificadorTokenIdpService,
 			AutenticacionService autenticacionService, AuditoriaService auditoriaService,
-			PropiedadesFederacion propiedades) {
+			TenantService tenantService, PropiedadesFederacion propiedades) {
 		this.proveedorIdentidadRepository = proveedorIdentidadRepository;
 		this.codigoEmbedRepository = codigoEmbedRepository;
 		this.usuarioRepository = usuarioRepository;
@@ -80,6 +84,7 @@ public class FederacionIdentidadService {
 		this.verificadorTokenIdpService = verificadorTokenIdpService;
 		this.autenticacionService = autenticacionService;
 		this.auditoriaService = auditoriaService;
+		this.tenantService = tenantService;
 		this.propiedades = propiedades;
 	}
 
@@ -106,20 +111,26 @@ public class FederacionIdentidadService {
 		String urlRetorno = validarRetorno(proveedor, datos.getUrlRetorno());
 
 		boolean aprovisionado = false;
-		Usuario usuario = usuarioRepository
-				.buscarPorIdentidadExterna(tenant.getId(), proveedor.getOrigen(), sujetoExterno).orElse(null);
+		boolean global = proveedor.isVerificaEmail();
+		Usuario usuario = global
+				? usuarioRepository
+						.buscarPorIdentidadExternaGlobal(proveedor.getOrigen(), sujetoExterno).orElse(null)
+				: usuarioRepository
+						.buscarPorIdentidadExterna(tenant.getId(), proveedor.getOrigen(), sujetoExterno)
+						.orElse(null);
 		if (usuario == null) {
-			usuario = resolverSinIdentidad(proveedor, tenant, sujetoExterno, email, nombre);
+			usuario = resolverSinIdentidad(proveedor, tenant, sujetoExterno, email, nombre,
+					datos.isTenantPropio(), global);
 			aprovisionado = true;
 		}
-		exigirUsuarioHabilitado(tenant, proveedor, usuario, sujetoExterno);
+		exigirUsuarioHabilitado(usuario.getTenant(), proveedor, usuario, sujetoExterno);
 
 		usuario.setUltimoAcceso(Instant.now());
 		usuarioRepository.save(usuario);
 
 		String codigo = generarCodigo();
 		CodigoEmbed registro = new CodigoEmbed();
-		registro.setTenant(tenant);
+		registro.setTenant(usuario.getTenant());
 		registro.setUsuario(usuario);
 		registro.setProveedor(proveedor);
 		registro.setCodigoHash(Hash.sha256(codigo));
@@ -133,7 +144,8 @@ public class FederacionIdentidadService {
 		registro.setAlta(Instant.now());
 		codigoEmbedRepository.save(registro);
 
-		auditar(tenant, usuario, AccionAuditoria.FEDERACION_INTERCAMBIADA, proveedor, sujetoExterno,
+		auditar(usuario.getTenant(), usuario, AccionAuditoria.FEDERACION_INTERCAMBIADA, proveedor,
+				sujetoExterno,
 				Map.of("aprovisionado", aprovisionado, "tipoObjeto", String.valueOf(datos.getTipoObjeto()),
 						"idObjeto", String.valueOf(datos.getIdObjeto())));
 
@@ -143,7 +155,7 @@ public class FederacionIdentidadService {
 		modelo.setSegundosVigencia(vigenciaDe(proveedor));
 		modelo.setUsuarioId(usuario.getId());
 		modelo.setEmail(usuario.getEmail());
-		modelo.setCodigoTenant(tenant.getCodigo());
+		modelo.setCodigoTenant(usuario.getTenant().getCodigo());
 		modelo.setAprovisionado(aprovisionado);
 		modelo.setAplicacionOrigen(proveedor.getOrigen().name());
 		modelo.setTipoObjeto(datos.getTipoObjeto());
@@ -200,13 +212,18 @@ public class FederacionIdentidadService {
 	}
 
 	private Usuario resolverSinIdentidad(ProveedorIdentidad proveedor, Tenant tenant, String sujetoExterno,
-			String email, String nombre) {
+			String email, String nombre, boolean tenantPropio, boolean global) {
 		if (email == null) {
 			throw new ProhibidoException("El token no trae email y no se puede aprovisionar al usuario");
 		}
 		exigirDominioPermitido(proveedor, email);
 
-		Optional<Usuario> porEmail = usuarioRepository.buscarPorEmail(tenant.getId(), email);
+		Optional<Usuario> porEmail = global
+				? usuarioRepository.buscarPorEmailEnCualquierTenant(email).stream()
+						.filter(u -> u.getBaja() == null)
+						.min(Comparator.comparing(
+								u -> u.getTenant().getId().equals(tenant.getId()) ? 0 : 1))
+				: usuarioRepository.buscarPorEmail(tenant.getId(), email);
 		if (porEmail.isPresent()) {
 			Usuario existente = porEmail.get();
 			if (!proveedor.isPermitirVinculoPorEmail()) {
@@ -225,21 +242,43 @@ public class FederacionIdentidadService {
 					+ " no permite crear usuarios automaticamente. Dalo de alta antes de federarlo");
 		}
 
+		Tenant destino = tenantPropio ? crearTenantPersonal(email, nombre) : tenant;
+		Rol rol = tenantPropio
+				? rolRepository
+						.buscarPorCodigo(destino.getId(), Permiso.CODIGO_ROL_ADMINISTRADOR).orElseThrow()
+				: rolPorDefecto(proveedor, destino);
+
 		Usuario nuevo = new Usuario();
-		nuevo.setTenant(tenant);
+		nuevo.setTenant(destino);
 		nuevo.setEmail(email);
 		nuevo.setNombre(nombre == null || nombre.isBlank() ? email : nombre);
 		nuevo.setEstado(EstadoUsuario.ACTIVO);
 		nuevo.setOrigenIdentidad(proveedor.getOrigen());
 		nuevo.setIdUsuarioExterno(sujetoExterno);
 		nuevo.setAlta(Instant.now());
-		nuevo.getRoles().add(rolPorDefecto(proveedor, tenant));
+		nuevo.getRoles().add(rol);
 		usuarioRepository.save(nuevo);
-		auditoriaService.registrarConDetalle(tenant.getId(), AccionAuditoria.USUARIO_CREADO, "Usuario",
-				nuevo.getId(), Map.of("origen", proveedor.getOrigen().name(), "proveedor", proveedor.getCodigo(),
-						"aprovisionamiento", "JIT", "rol", rolPorDefecto(proveedor, tenant).getCodigo()));
-		log.info("Usuario {} aprovisionado por JIT desde {}", nuevo.getEmail(), proveedor.getCodigo());
+		auditoriaService.registrarConDetalle(destino.getId(), AccionAuditoria.USUARIO_CREADO, "Usuario",
+				nuevo.getId(), Map.of("origen", proveedor.getOrigen().name(), "proveedor",
+						proveedor.getCodigo(), "aprovisionamiento", "JIT", "rol", rol.getCodigo(),
+						"tenantPropio", tenantPropio));
+		log.info("Usuario {} aprovisionado por JIT desde {} en el tenant {}", nuevo.getEmail(),
+				proveedor.getCodigo(), destino.getCodigo());
 		return nuevo;
+	}
+
+	private Tenant crearTenantPersonal(String email, String nombre) {
+		String base = email.substring(0, email.indexOf('@')).toLowerCase(Locale.ROOT)
+				.replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+		if (base.isBlank()) {
+			base = "usuario";
+		}
+		if (base.length() > 20) {
+			base = base.substring(0, 20);
+		}
+		String codigo = "u-" + base + "-" + Hash.sha256(email).substring(0, 6);
+		String nombreTenant = nombre == null || nombre.isBlank() ? email : nombre;
+		return tenantService.crearSinAdministrador(codigo, nombreTenant);
 	}
 
 	private Rol rolPorDefecto(ProveedorIdentidad proveedor, Tenant tenant) {

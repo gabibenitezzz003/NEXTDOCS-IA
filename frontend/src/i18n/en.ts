@@ -102,6 +102,26 @@ export const en: Diccionario = {
     sesionCifrada: "Encrypted session · organization isolation",
     portalSeguro: "Secure portal · enterprise access",
     pie: "NEXT DOC AI · independent document platform",
+    sinOrganizacion: "Does your company not have a portal yet?",
+    crearOrganizacion: "Register your organization",
+    volverAIngresar: "I already have an account — back to sign in",
+  },
+  registro: {
+    titulo: "Register your organization",
+    descripcion:
+      "Create your company's space: you become the administrator and your team signs in with the code you choose.",
+    nombreOrganizacion: "Organization name",
+    codigoOrganizacion: "Organization code",
+    ayudaCodigo:
+      "The short identifier your team types to sign in. Letters, numbers and dashes.",
+    nombreAdministrador: "Your name",
+    email: "Email",
+    clave: "Password",
+    ayudaClave: "At least 12 characters.",
+    registrar: "Create organization",
+    registrando: "Creating organization…",
+    errorTitulo: "We could not register the organization",
+    placeholderCodigo: "my-company",
   },
   estadosDocumento: {
     RECIBIDO: "Received",
