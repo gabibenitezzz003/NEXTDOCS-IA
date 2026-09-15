@@ -17,4 +17,8 @@ public class PropiedadesFederacion {
 	private int segundosVigenciaCodigo;
 
 	private boolean exigirEmisorSeguro;
+
+	private String urlBaseApi;
+
+	private String urlBasePortal;
 }

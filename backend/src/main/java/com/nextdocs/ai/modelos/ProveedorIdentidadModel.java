@@ -42,6 +42,16 @@ public class ProveedorIdentidadModel implements Serializable {
 
 	private int segundosVigenciaCodigo;
 
+	private String clienteId;
+
+	private String urlAutorizacion;
+
+	private String urlToken;
+
+	private String alcances;
+
+	private boolean oauthListo;
+
 	private boolean activo;
 
 	private Instant alta;

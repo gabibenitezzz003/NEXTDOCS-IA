@@ -1,13 +1,15 @@
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Logotipo } from "../componentes/Marca";
 import { Boton, Campo } from "../componentes/Interfaz";
 import { ErrorPanel } from "../componentes/Estados";
-import { IconoCandado, IconoCheck } from "../componentes/Iconos";
+import { IconoCandado, IconoCheck, IconoRecargar } from "../componentes/Iconos";
 import { AlternarTema } from "../componentes/Tema";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { mensajeDeError } from "../api/cliente";
+import { listarProveedoresOauth, urlInicioOauth } from "../api/federacion";
 
 const PILARES = [
   "Extracción con evidencia por campo y confianza trazable",
@@ -16,15 +18,54 @@ const PILARES = [
 ];
 
 export function Ingresar() {
-  const { ingresar } = useSesion();
+  const { ingresar, ingresarConCodigo } = useSesion();
   const navegar = useNavigate();
+  const [parametros, fijarParametros] = useSearchParams();
   const [codigoTenant, setCodigoTenant] = useState("demo");
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [canjeando, setCanjeando] = useState(false);
   const solicitudActiva = useRef(false);
+  const canjeActivo = useRef(false);
   const id = useId();
+
+  const tenantLimpio = codigoTenant.trim();
+
+  const { data: proveedoresOauth } = useQuery({
+    queryKey: ["proveedores-oauth", tenantLimpio.toLowerCase()],
+    queryFn: () => listarProveedoresOauth(tenantLimpio),
+    enabled: tenantLimpio.length > 0,
+    staleTime: 60_000,
+    retry: false,
+  });
+
+  useEffect(() => {
+    const codigo = parametros.get("codigo");
+    const errorFederado = parametros.get("errorFederado");
+    if (!codigo && !errorFederado) return;
+    fijarParametros({}, { replace: true });
+    if (errorFederado) {
+      setError(errorFederado);
+      return;
+    }
+    if (!codigo || canjeActivo.current) return;
+    canjeActivo.current = true;
+    setCanjeando(true);
+    ingresarConCodigo(codigo)
+      .then(() => navegar("/resumen"))
+      .catch((fallo) => setError(mensajeDeError(fallo)))
+      .finally(() => {
+        canjeActivo.current = false;
+        setCanjeando(false);
+      });
+  }, [parametros, fijarParametros, ingresarConCodigo, navegar]);
+
+  function iniciarOauth(codigoProveedor: string) {
+    setError(null);
+    window.location.assign(urlInicioOauth(tenantLimpio, codigoProveedor));
+  }
 
   async function enviar(evento: FormEvent) {
     evento.preventDefault();
@@ -168,6 +209,42 @@ export function Ingresar() {
             >
               Ingresar
             </Boton>
+            {canjeando ? (
+              <div
+                role="status"
+                className="mt-espacio-6 flex items-center justify-center gap-espacio-3 text-pequeno text-tinta-suave"
+              >
+                <IconoRecargar tamano={16} className="animate-spin" />
+                Completando el ingreso con tu proveedor…
+              </div>
+            ) : null}
+            {proveedoresOauth && proveedoresOauth.length > 0 ? (
+              <div className="mt-espacio-8">
+                <div className="flex items-center gap-espacio-3" aria-hidden="true">
+                  <span className="h-px flex-1 bg-borde" />
+                  <span className="text-micro uppercase tracking-widest text-tinta-suave">
+                    o continuá con
+                  </span>
+                  <span className="h-px flex-1 bg-borde" />
+                </div>
+                <div className="mt-espacio-4 space-y-espacio-3">
+                  {proveedoresOauth.map((proveedor) => (
+                    <Boton
+                      key={proveedor.codigo}
+                      type="button"
+                      variante="secundario"
+                      tamano="lg"
+                      disabled={enviando || canjeando || tenantLimpio.length === 0}
+                      aria-label={`Continuar con ${proveedor.nombre}`}
+                      className="w-full"
+                      onClick={() => iniciarOauth(proveedor.codigo)}
+                    >
+                      Continuar con {proveedor.nombre}
+                    </Boton>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </form>
         </div>
         <p role="status" aria-atomic="true" className="sr-only">

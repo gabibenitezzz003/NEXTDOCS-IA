@@ -16,6 +16,7 @@ interface ContextoSesion {
   sesion: Sesion | null;
   cargando: boolean;
   ingresar: (codigoTenant: string, email: string, clave: string) => Promise<void>;
+  ingresarConCodigo: (codigo: string) => Promise<void>;
   salir: () => void;
   tienePermiso: (permiso: string) => boolean;
 }
@@ -70,12 +71,7 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     return () => { vigente = false; };
   }, [limpiarConsultas]);
 
-  const ingresar = useCallback(async (codigoTenant: string, email: string, clave: string) => {
-    const { data } = await cliente.post<Sesion>("/autenticacion/ingresar", {
-      codigoTenant,
-      email,
-      clave,
-    });
+  const aplicarSesion = useCallback((data: Sesion) => {
     limpiarConsultas();
     fijarTokenAcceso(data.tokenAcceso);
     fijarTenantProcesos(data.tenantId);
@@ -83,15 +79,30 @@ export function ProveedorSesion({ children }: { children: ReactNode }) {
     setSesion(data);
   }, [limpiarConsultas]);
 
+  const ingresar = useCallback(async (codigoTenant: string, email: string, clave: string) => {
+    const { data } = await cliente.post<Sesion>("/autenticacion/ingresar", {
+      codigoTenant,
+      email,
+      clave,
+    });
+    aplicarSesion(data);
+  }, [aplicarSesion]);
+
+  const ingresarConCodigo = useCallback(async (codigo: string) => {
+    const { data } = await cliente.post<Sesion>("/federacion/canje", { codigo });
+    aplicarSesion(data);
+  }, [aplicarSesion]);
+
   const valor = useMemo<ContextoSesion>(
     () => ({
       sesion,
       cargando,
       ingresar,
+      ingresarConCodigo,
       salir,
       tienePermiso: (permiso: string) => sesion?.permisos.includes(permiso) ?? false,
     }),
-    [sesion, cargando, ingresar, salir],
+    [sesion, cargando, ingresar, ingresarConCodigo, salir],
   );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
