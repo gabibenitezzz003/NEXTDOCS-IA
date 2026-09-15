@@ -22,12 +22,53 @@ function colorDe(tipo: TipoNodoProceso): { relleno: string; borde: string } {
   return { relleno: "var(--color-superficie)", borde: "var(--color-borde)" };
 }
 
+export type EstadoNodoEjecucion =
+  | "COMPLETADO"
+  | "ACTUAL"
+  | "VENCIDO"
+  | "CANCELADO";
+
+const ESTILO_ESTADO: Record<
+  EstadoNodoEjecucion,
+  { relleno: string; borde: string; clave: string }
+> = {
+  COMPLETADO: {
+    relleno: "var(--color-exito-tenue)",
+    borde: "var(--color-exito-borde)",
+    clave: "diagramaProceso.nodoCompletado",
+  },
+  ACTUAL: {
+    relleno: "var(--color-violeta-tenue)",
+    borde: "var(--color-violeta)",
+    clave: "diagramaProceso.nodoActual",
+  },
+  VENCIDO: {
+    relleno: "var(--color-rojo-tenue)",
+    borde: "var(--color-rojo-borde)",
+    clave: "diagramaProceso.nodoVencido",
+  },
+  CANCELADO: {
+    relleno: "var(--color-neutro-tenue)",
+    borde: "var(--color-borde)",
+    clave: "diagramaProceso.nodoCancelado",
+  },
+};
+
+const ORDEN_LEYENDA: EstadoNodoEjecucion[] = [
+  "COMPLETADO",
+  "ACTUAL",
+  "VENCIDO",
+  "CANCELADO",
+];
+
 export function DiagramaProceso({
   grafo,
   titulo,
+  estadoPorNodo,
 }: {
   grafo: GrafoProceso | undefined;
   titulo?: string;
+  estadoPorNodo?: Map<string, EstadoNodoEjecucion>;
 }) {
   const { t } = useIdioma();
   const disposicion = disponerGrafo(grafo);
@@ -130,9 +171,11 @@ export function DiagramaProceso({
 
           {disposicion.nodos.map((nodo, indice) => {
             const { x, y } = posicion(nodo.columna, nodo.fila);
-            const color = colorDe(nodo.tipo);
+            const estado = estadoPorNodo?.get(nodo.id);
+            const color = estado ? ESTILO_ESTADO[estado] : colorDe(nodo.tipo);
+            const sinLlegar = Boolean(estadoPorNodo) && !estado;
             return (
-              <g key={nodo.id}>
+              <g key={nodo.id} opacity={sinLlegar ? 0.45 : 1}>
                 <rect
                   x={x}
                   y={y}
@@ -141,7 +184,7 @@ export function DiagramaProceso({
                   rx={10}
                   fill={color.relleno}
                   stroke={color.borde}
-                  strokeWidth={1.5}
+                  strokeWidth={estado === "ACTUAL" ? 2.5 : 1.5}
                 />
                 <text
                   x={x + 12}
@@ -169,6 +212,30 @@ export function DiagramaProceso({
         {t("diagramaProceso.pasos", { cantidad: disposicion.nodos.length })}
         {disposicion.hayRamas ? t("diagramaProceso.conRamas") : ""}
       </p>
+      {estadoPorNodo ? (
+        <ul className="mt-espacio-2 flex flex-wrap gap-x-espacio-4 gap-y-espacio-2 text-pequeno text-tinta-suave">
+          {ORDEN_LEYENDA.map((estado) => (
+            <li key={estado} className="flex items-center gap-espacio-2">
+              <span
+                aria-hidden="true"
+                className="inline-block h-3 w-3 rounded-full border"
+                style={{
+                  backgroundColor: ESTILO_ESTADO[estado].relleno,
+                  borderColor: ESTILO_ESTADO[estado].borde,
+                }}
+              />
+              {t(ESTILO_ESTADO[estado].clave)}
+            </li>
+          ))}
+          <li className="flex items-center gap-espacio-2">
+            <span
+              aria-hidden="true"
+              className="inline-block h-3 w-3 rounded-full border border-borde bg-superficie opacity-45"
+            />
+            {t("diagramaProceso.nodoPendiente")}
+          </li>
+        </ul>
+      ) : null}
     </div>
   );
 }

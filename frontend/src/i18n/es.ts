@@ -187,6 +187,11 @@ export const es = {
     problemaRepetidos: "El recorrido tiene pasos repetidos.",
     problemaCiclo:
       "El recorrido tiene un ciclo. El diagrama lo dibuja igual, pero el orden de los pasos es aproximado.",
+    nodoCompletado: "Completado",
+    nodoActual: "En curso",
+    nodoVencido: "Vencido",
+    nodoCancelado: "Cancelado",
+    nodoPendiente: "Sin llegar",
   },
   resumen: {
     titulo: "Resumen operativo",
@@ -512,6 +517,13 @@ export const es = {
     finalizada: "finalizada {fecha}",
     sujetoTipo: "sujeto",
     tareasPendientes: "{pendientes} de {total} tareas pendientes",
+    progresoTareas: "{completadas} de {total} tareas",
+    responsableDe: "Responsable: {actor}",
+    vencio: "venció {fecha}",
+    recorrido: "Recorrido del proceso",
+    recorridoDesc:
+      "El grafo de la versión con el estado de cada paso en esta instancia.",
+    errorRecorrido: "No se pudo cargar el recorrido del proceso.",
     verDetalle: "Ver detalle",
     volver: "← Volver a las instancias",
     instanciaNoExiste: "La instancia no existe",

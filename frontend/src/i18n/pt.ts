@@ -189,6 +189,11 @@ export const pt: Diccionario = {
     problemaRepetidos: "O percurso tem etapas repetidas.",
     problemaCiclo:
       "O percurso tem um ciclo. O diagrama o desenha mesmo assim, mas a ordem das etapas é aproximada.",
+    nodoCompletado: "Concluído",
+    nodoActual: "Em curso",
+    nodoVencido: "Vencido",
+    nodoCancelado: "Cancelado",
+    nodoPendiente: "Não alcançado",
   },
   resumen: {
     titulo: "Resumo operacional",
@@ -514,6 +519,13 @@ export const pt: Diccionario = {
     finalizada: "finalizada {fecha}",
     sujetoTipo: "sujeito",
     tareasPendientes: "{pendientes} de {total} tarefas pendentes",
+    progresoTareas: "{completadas} de {total} tarefas",
+    responsableDe: "Responsável: {actor}",
+    vencio: "venceu em {fecha}",
+    recorrido: "Percurso do processo",
+    recorridoDesc:
+      "O grafo da versão com o estado de cada etapa nesta instância.",
+    errorRecorrido: "Não foi possível carregar o percurso do processo.",
     verDetalle: "Ver detalhes",
     volver: "← Voltar às instâncias",
     instanciaNoExiste: "A instância não existe",

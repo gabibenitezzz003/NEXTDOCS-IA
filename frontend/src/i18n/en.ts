@@ -188,6 +188,11 @@ export const en: Diccionario = {
     problemaRepetidos: "The route has repeated steps.",
     problemaCiclo:
       "The route has a cycle. The diagram draws it anyway, but the step order is approximate.",
+    nodoCompletado: "Completed",
+    nodoActual: "In progress",
+    nodoVencido: "Overdue",
+    nodoCancelado: "Cancelled",
+    nodoPendiente: "Not reached",
   },
   resumen: {
     titulo: "Operational overview",
@@ -512,6 +517,13 @@ export const en: Diccionario = {
     finalizada: "finished {fecha}",
     sujetoTipo: "subject",
     tareasPendientes: "{pendientes} of {total} pending tasks",
+    progresoTareas: "{completadas} of {total} tasks",
+    responsableDe: "Assignee: {actor}",
+    vencio: "overdue since {fecha}",
+    recorrido: "Process path",
+    recorridoDesc:
+      "The version graph with the status of each step in this instance.",
+    errorRecorrido: "The process path could not be loaded.",
     verDetalle: "View details",
     volver: "← Back to instances",
     instanciaNoExiste: "The instance does not exist",
