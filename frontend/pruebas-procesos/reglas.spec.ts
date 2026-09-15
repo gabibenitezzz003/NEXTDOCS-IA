@@ -77,8 +77,7 @@ async function preparar(pagina: Page, reglas: ReglaSupervisora[] = []) {
     }
     return responder({ mensaje: "Endpoint inesperado" }, 404);
   });
-  await pagina.goto("/procesos");
-  await pagina.getByRole("button", { name: "Reglas" }).click();
+  await pagina.goto("/supervisora");
   return control;
 }
 

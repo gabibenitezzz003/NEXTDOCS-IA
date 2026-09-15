@@ -72,7 +72,10 @@ export const en: Diccionario = {
     navResumen: "Overview",
     navDocumentos: "Documents",
     navExcepciones: "Exceptions",
-    navProcesos: "Processes",
+    navTareas: "Tasks",
+    navOperacion: "Operations",
+    navStudio: "Studio",
+    navSupervisora: "Supervisor",
     navPanel: "Dashboard",
     navTiposNuevos: "Detected types",
   },
@@ -459,7 +462,15 @@ export const en: Diccionario = {
     TEMPORIZADOR: "Wait (timer)",
     SUBPROCESO: "Subprocess",
   },
+  tareas: {
+    titulo: "Tasks",
+    descripcion:
+      "Everything your processes ask you to do, in a single inbox.",
+  },
   operacion: {
+    titulo: "Process operations",
+    descripcion:
+      "Running processes: active instances, indicators and the detail of each one.",
     indicadores: "Indicators",
     indicadoresDesc: "How the process engine is doing in the chosen window.",
     ventanaIndicadores: "Indicator window",
@@ -494,7 +505,7 @@ export const en: Diccionario = {
     todosLosProcesos: "All processes",
     sinInstancias: "No processes running yet",
     sinInstanciasDetalle:
-      "Start one from the Definitions tab with the Test process button on a published version, or from wherever the product triggers it.",
+      "Start one from the Studio with the Test process button on a published version, or from wherever the product triggers it.",
     listaInstancias: "Process instances",
     version: "Version {version}",
     iniciada: "started {fecha}",
@@ -575,15 +586,12 @@ export const en: Diccionario = {
     ACCION_API: "API action",
     SUBPROCESO: "Subprocess",
   },
-  procesos: {
-    titulo: "Processes",
+  studio: {
+    titulo: "Studio",
     descripcion:
-      "Design processes in the Studio, run them and resolve pending tasks from the inboxes.",
-    vistas: "Process views",
-    definiciones: "Definitions",
-    instancias: "Instances",
-    tareas: "Tasks",
-    reglas: "Rules",
+      "Process library: design the steps, publish versions and test them in execution.",
+  },
+  procesos: {
     bibliotecaDesc:
       "Workspace definition library. Open the Studio to configure each process's steps and publish a version.",
     nuevoProceso: "New process",

@@ -178,6 +178,37 @@ export function IconoProceso(props: PropsIcono) {
   );
 }
 
+export function IconoTareas(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="m4 6 1.5 1.5L8 5" />
+      <path d="M11 6.5h9" />
+      <path d="m4 12.5 1.5 1.5L8 11.5" />
+      <path d="M11 13h9" />
+      <path d="m4 19 1.5 1.5L8 18" />
+      <path d="M11 19.5h9" />
+    </Base>
+  );
+}
+
+export function IconoOperacion(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="m10 8.5 5.5 3.5-5.5 3.5z" />
+    </Base>
+  );
+}
+
+export function IconoSupervisora(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </Base>
+  );
+}
+
 export function IconoFiltro(props: PropsIcono) {
   return (
     <Base {...props}>

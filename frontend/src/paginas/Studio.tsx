@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
@@ -46,12 +47,6 @@ import {
 } from "../utilidades/grafoProceso";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
-import {
-  BandejaInstancias,
-  BandejaTareas,
-  DetalleInstancia,
-} from "./ProcesosOperacion";
-import { ReglasSupervisora } from "./ReglasSupervisora";
 import { DiagramaProceso } from "../componentes/DiagramaProceso";
 
 const TIPOS_PASO: TipoNodoProceso[] = [
@@ -66,23 +61,19 @@ const TIPOS_PASO: TipoNodoProceso[] = [
   "SUBPROCESO",
 ];
 
-type VistaProcesos = "definiciones" | "instancias" | "tareas" | "reglas";
-
-export function Procesos() {
+export function Studio() {
   const { t } = useIdioma();
-  const [vista, setVista] = useState<VistaProcesos>("definiciones");
-  const [procesoAbierto, setProcesoAbierto] = useState<string | null>(null);
-  const [instanciaAbierta, setInstanciaAbierta] = useState<string | null>(null);
+  const { procesoId } = useParams();
+  const navegar = useNavigate();
 
-  if (procesoAbierto) {
+  if (procesoId) {
     return (
       <EstudioProceso
-        procesoId={procesoAbierto}
-        alVolver={() => setProcesoAbierto(null)}
-        alAbrirInstancia={(instanciaId) => {
-          setVista("instancias");
-          setInstanciaAbierta(instanciaId);
-        }}
+        procesoId={procesoId}
+        alVolver={() => navegar("/studio")}
+        alAbrirInstancia={(instanciaId) =>
+          navegar(`/operacion/instancias/${instanciaId}`)
+        }
       />
     );
   }
@@ -90,39 +81,11 @@ export function Procesos() {
   return (
     <>
       <Encabezado
-        titulo={t("procesos.titulo")}
-        descripcion={t("procesos.descripcion")}
-        acciones={
-          <GrupoSegmentado
-            etiqueta={t("procesos.vistas")}
-            valor={vista}
-            alCambiar={setVista}
-            opciones={[
-              { valor: "definiciones", texto: t("procesos.definiciones") },
-              { valor: "instancias", texto: t("procesos.instancias") },
-              { valor: "tareas", texto: t("procesos.tareas") },
-              { valor: "reglas", texto: t("procesos.reglas") },
-            ]}
-          />
-        }
+        titulo={t("studio.titulo")}
+        descripcion={t("studio.descripcion")}
       />
       <Contenido>
-        {vista === "definiciones" ? (
-          <ListaProcesos alAbrir={setProcesoAbierto} />
-        ) : vista === "instancias" ? (
-          instanciaAbierta ? (
-            <DetalleInstancia
-              instanciaId={instanciaAbierta}
-              alVolver={() => setInstanciaAbierta(null)}
-            />
-          ) : (
-            <BandejaInstancias alAbrir={setInstanciaAbierta} />
-          )
-        ) : vista === "reglas" ? (
-          <ReglasSupervisora />
-        ) : (
-          <BandejaTareas />
-        )}
+        <ListaProcesos alAbrir={(id) => navegar(`/studio/${id}`)} />
       </Contenido>
     </>
   );

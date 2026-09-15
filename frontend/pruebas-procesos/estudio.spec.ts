@@ -119,7 +119,7 @@ async function preparar(pagina: Page, grafo = grafoLineal()) {
     }
     return responder({ mensaje: "Endpoint inesperado" }, 404);
   });
-  await pagina.goto("/procesos");
+  await pagina.goto("/studio");
   return control;
 }
 

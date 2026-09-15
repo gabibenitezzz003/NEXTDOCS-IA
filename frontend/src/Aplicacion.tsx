@@ -6,7 +6,10 @@ import { Panel } from "./paginas/Panel";
 import { Documentos } from "./paginas/Documentos";
 import { Excepciones } from "./paginas/Excepciones";
 import { TiposPropuestos } from "./paginas/TiposPropuestos";
-import { Procesos } from "./paginas/Procesos";
+import { Tareas } from "./paginas/Tareas";
+import { Operacion } from "./paginas/Operacion";
+import { Studio } from "./paginas/Studio";
+import { Supervisora } from "./paginas/Supervisora";
 import { useSesion } from "./contextos/ProveedorSesion";
 import { Logotipo } from "./componentes/Marca";
 import { Tarjeta } from "./componentes/Interfaz";
@@ -58,7 +61,13 @@ export function Aplicacion() {
         <Route path="/documentos" element={<Documentos />} />
         <Route path="/excepciones" element={<Excepciones />} />
         <Route path="/tipos-propuestos" element={<TiposPropuestos />} />
-        <Route path="/procesos" element={<Procesos />} />
+        <Route path="/tareas" element={<Tareas />} />
+        <Route path="/operacion" element={<Operacion />} />
+        <Route path="/operacion/instancias/:instanciaId" element={<Operacion />} />
+        <Route path="/studio" element={<Studio />} />
+        <Route path="/studio/:procesoId" element={<Studio />} />
+        <Route path="/supervisora" element={<Supervisora />} />
+        <Route path="/procesos" element={<Navigate to="/studio" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/resumen" replace />} />
     </Routes>
