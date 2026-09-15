@@ -49,6 +49,17 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
     ],
   },
   {
+    titulo: "Procesos",
+    entradas: [
+      {
+        a: "/procesos",
+        texto: "Procesos",
+        permiso: "tenant.administrar",
+        icono: IconoProceso,
+      },
+    ],
+  },
+  {
     titulo: "Análisis",
     entradas: [
       {
@@ -67,12 +78,6 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         texto: "Tipos nuevos",
         permiso: "tenant.administrar",
         icono: IconoInfo,
-      },
-      {
-        a: "/procesos",
-        texto: "Plantillas de proceso",
-        permiso: "tenant.administrar",
-        icono: IconoProceso,
       },
     ],
   },

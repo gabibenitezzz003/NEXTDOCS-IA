@@ -51,6 +51,7 @@ import {
   DetalleInstancia,
 } from "./ProcesosOperacion";
 import { ReglasSupervisora } from "./ReglasSupervisora";
+import { DiagramaProceso } from "../componentes/DiagramaProceso";
 
 const TIPOS_PASO: { valor: TipoNodoProceso; texto: string }[] = [
   { valor: "SOLICITUD_DOCUMENTO", texto: "Solicitar documento" },
@@ -454,6 +455,7 @@ function EstudioProceso({
   const [aviso, setAviso] = useState<string | null>(null);
   const [pasoAgregado, setPasoAgregado] = useState<string | null>(null);
   const [tipoNuevoPaso, setTipoNuevoPaso] = useState("");
+  const [vistaRecorrido, setVistaRecorrido] = useState<"lista" | "diagrama">("lista");
 
   const consulta = useQuery({
     queryKey: ["proceso", procesoId],
@@ -844,17 +846,33 @@ function EstudioProceso({
               titulo={`Borrador · version ${borrador.numero}`}
               descripcion="Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados."
               acciones={
-                <Pastilla tono={hayCambios ? "alerta" : "neutro"}>
-                  {hayCambios ? "Sin guardar" : "Borrador"}
-                </Pastilla>
+                <div className="flex flex-wrap items-center gap-espacio-2">
+                  <GrupoSegmentado
+                    etiqueta="Forma de ver el recorrido"
+                    valor={vistaRecorrido}
+                    alCambiar={setVistaRecorrido}
+                    opciones={[
+                      { valor: "lista", texto: "Lista" },
+                      { valor: "diagrama", texto: "Diagrama" },
+                    ]}
+                  />
+                  <Pastilla tono={hayCambios ? "alerta" : "neutro"}>
+                    {hayCambios ? "Sin guardar" : "Borrador"}
+                  </Pastilla>
+                </div>
               }
             />
             {bloqueo ? (
               <div className="mt-espacio-4">
                 <ErrorPanel
                   titulo="Esta versión no se puede editar de forma segura"
-                  mensaje={bloqueo}
+                  mensaje={`${bloqueo} Podés verlo en el diagrama.`}
                 />
+              </div>
+            ) : null}
+            {vistaRecorrido === "diagrama" ? (
+              <div className="mt-espacio-5">
+                <DiagramaProceso grafo={base?.grafo ?? borrador.grafo} />
               </div>
             ) : null}
             {hayCambios ? (
@@ -874,7 +892,10 @@ function EstudioProceso({
               selector pueden guardarse en borrador, pero Workflow impide
               publicarlos.
             </p>
-            <fieldset disabled={editandoBloqueado} className="min-w-0">
+            <fieldset
+              disabled={editandoBloqueado}
+              className={`min-w-0 ${vistaRecorrido === "diagrama" ? "hidden" : ""}`}
+            >
               <legend className="sr-only">Edición del borrador</legend>
               {!bloqueo ? (
                 <ol
