@@ -9,6 +9,7 @@ import {
   Selector,
   Tarjeta,
 } from "../componentes/Interfaz";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import {
   actualizarRegla,
   crearRegla,
@@ -28,22 +29,22 @@ import type {
 import type { Tono } from "../componentes/Interfaz";
 
 const OPERADORES: { valor: OperadorRegla; texto: string }[] = [
-  { valor: "MENOR", texto: "es menor que" },
-  { valor: "MAYOR", texto: "es mayor que" },
+  { valor: "MENOR", texto: "reglasSupervisora.esMenorQue" },
+  { valor: "MAYOR", texto: "reglasSupervisora.esMayorQue" },
 ];
 
 const ACCIONES: { valor: AccionRegla; texto: string }[] = [
-  { valor: "ADVERTIR", texto: "Advertir" },
-  { valor: "SOLICITAR", texto: "Solicitar informacion" },
-  { valor: "REVIEW", texto: "Marcar para revision" },
-  { valor: "BLOQUEAR", texto: "Bloquear la instancia" },
+  { valor: "ADVERTIR", texto: "reglasSupervisora.accionAdvertir" },
+  { valor: "SOLICITAR", texto: "reglasSupervisora.accionSolicitar" },
+  { valor: "REVIEW", texto: "reglasSupervisora.accionReview" },
+  { valor: "BLOQUEAR", texto: "reglasSupervisora.accionBloquear" },
 ];
 
 const SEVERIDADES: { valor: SeveridadRegla; texto: string }[] = [
-  { valor: "BAJA", texto: "Baja" },
-  { valor: "MEDIA", texto: "Media" },
-  { valor: "ALTA", texto: "Alta" },
-  { valor: "CRITICA", texto: "Critica" },
+  { valor: "BAJA", texto: "reglasSupervisora.severidadBaja" },
+  { valor: "MEDIA", texto: "reglasSupervisora.severidadMedia" },
+  { valor: "ALTA", texto: "reglasSupervisora.severidadAlta" },
+  { valor: "CRITICA", texto: "reglasSupervisora.severidadCritica" },
 ];
 
 const TONO_SEVERIDAD: Record<SeveridadRegla, Tono> = {
@@ -56,6 +57,7 @@ const TONO_SEVERIDAD: Record<SeveridadRegla, Tono> = {
 const UMBRAL_MAXIMO = 999.99;
 
 export function ReglasSupervisora() {
+  const { t } = useIdioma();
   const [creando, setCreando] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
 
@@ -89,8 +91,8 @@ export function ReglasSupervisora() {
     <div className="grid gap-espacio-4">
       <Tarjeta>
         <CabeceraTarjeta
-          titulo="Reglas de la IA Supervisora"
-          descripcion="Cada regla compara un dato de la instancia contra un umbral. Se evaluan al completar cada tarea."
+          titulo={t("reglasSupervisora.titulo")}
+          descripcion={t("reglasSupervisora.descripcion")}
           acciones={
             <Boton
               variante={creando ? "secundario" : "primario"}
@@ -99,7 +101,7 @@ export function ReglasSupervisora() {
                 setEditando(null);
               }}
             >
-              {creando ? "Cancelar" : "Nueva regla"}
+              {creando ? t("comun.cancelar") : t("reglasSupervisora.nuevaRegla")}
             </Boton>
           }
         />
@@ -113,8 +115,8 @@ export function ReglasSupervisora() {
 
       {reglas.length === 0 ? (
         <Vacio
-          titulo="Todavia no hay reglas"
-          detalle="Sin reglas la supervisora no genera hallazgos. Crea una para empezar a vigilar los datos de tus procesos."
+          titulo={t("reglasSupervisora.sinReglas")}
+          detalle={t("reglasSupervisora.sinReglasDetalle")}
         />
       ) : (
         reglas.map((regla, indice) => (
@@ -152,6 +154,7 @@ function TarjetaRegla({
   alCerrarEdicion: () => void;
 }) {
   const clienteConsultas = useQueryClient();
+  const { t } = useIdioma();
   const [confirmando, setConfirmando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -172,19 +175,21 @@ function TarjetaRegla({
     <Tarjeta indice={indice}>
       <CabeceraTarjeta
         titulo={regla.nombre}
-        descripcion={textoCondicion(regla)}
+        descripcion={textoCondicion(regla, t)}
         acciones={
           <div className="flex flex-wrap items-center gap-espacio-2">
-            <Pastilla tono={TONO_SEVERIDAD[severidad]}>{severidad}</Pastilla>
+            <Pastilla tono={TONO_SEVERIDAD[severidad]}>
+              {t(`prioridad.${severidad}`)}
+            </Pastilla>
             {regla.accion === "BLOQUEAR" ? (
               <Pastilla tono="rojo" solido>
-                Bloquea
+                {t("reglasSupervisora.bloquea")}
               </Pastilla>
             ) : (
-              <Pastilla tono="neutro">{textoAccion(regla.accion)}</Pastilla>
+              <Pastilla tono="neutro">{textoAccion(regla.accion, t)}</Pastilla>
             )}
             <Boton variante="secundario" onClick={alEditar}>
-              {editando ? "Cerrar" : "Editar"}
+              {editando ? t("reglasSupervisora.cerrar") : t("reglasSupervisora.editar")}
             </Boton>
             {confirmando ? (
               <Boton
@@ -192,7 +197,7 @@ function TarjetaRegla({
                 disabled={baja.isPending}
                 onClick={() => setConfirmando(false)}
               >
-                Conservar
+                {t("reglasSupervisora.conservar")}
               </Boton>
             ) : null}
             <Boton
@@ -201,7 +206,9 @@ function TarjetaRegla({
               disabled={baja.isPending}
               onClick={() => (confirmando ? baja.mutate() : setConfirmando(true))}
             >
-              {confirmando ? "Confirmar baja" : "Dar de baja"}
+              {confirmando
+                ? t("reglasSupervisora.confirmarBaja")
+                : t("reglasSupervisora.darDeBaja")}
             </Boton>
           </div>
         }
@@ -209,10 +216,11 @@ function TarjetaRegla({
 
       <div className="mt-espacio-3 flex flex-wrap items-center gap-espacio-2">
         <Pastilla tono="violeta">
-          {alcance ? alcance.nombre : "Todas las plantillas"}
+          {alcance ? alcance.nombre : t("reglasSupervisora.todasLasPlantillas")}
         </Pastilla>
         <span className="text-pequeno text-tinta-suave">
-          Dato observado: <code className="font-semibold text-tinta">{regla.tipo}</code>
+          {t("reglasSupervisora.datoObservado")}
+          <code className="font-semibold text-tinta">{regla.tipo}</code>
         </span>
       </div>
 
@@ -225,8 +233,7 @@ function TarjetaRegla({
           role="alert"
           className="mt-espacio-3 rounded-panel border border-alerta-borde bg-alerta-tenue px-espacio-3 py-espacio-2 text-pequeno text-alerta-texto"
         >
-          La regla deja de evaluarse. Los hallazgos que ya genero se conservan. Volve a tocar
-          el boton para confirmar.
+          {t("reglasSupervisora.confirmarBajaDetalle")}
         </div>
       ) : null}
 
@@ -256,6 +263,7 @@ function FormularioRegla({
   alCerrar: () => void;
 }) {
   const clienteConsultas = useQueryClient();
+  const { t } = useIdioma();
   const [plantillaId, setPlantillaId] = useState(regla?.plantillaId ?? "");
   const [nombre, setNombre] = useState(regla?.nombre ?? "");
   const [tipo, setTipo] = useState(regla?.tipo ?? "");
@@ -271,7 +279,7 @@ function FormularioRegla({
     umbral.trim() !== "" && Number.isFinite(valorUmbral) && valorUmbral <= UMBRAL_MAXIMO;
   const errorUmbral =
     umbral.trim() !== "" && !umbralValido
-      ? `Tiene que ser un numero de hasta ${UMBRAL_MAXIMO}`
+      ? t("reglasSupervisora.umbralError", { maximo: UMBRAL_MAXIMO })
       : undefined;
 
   const guardar = useMutation({
@@ -311,18 +319,18 @@ function FormularioRegla({
 
       <div className="grid gap-espacio-4 md:grid-cols-2">
         <Campo
-          etiqueta="Nombre de la regla"
+          etiqueta={t("reglasSupervisora.nombreRegla")}
           value={nombre}
           onChange={(evento) => setNombre(evento.target.value)}
           maxLength={128}
         />
         <Selector
-          etiqueta="Alcance"
+          etiqueta={t("reglasSupervisora.alcance")}
           value={plantillaId}
           onChange={(evento) => setPlantillaId(evento.target.value)}
-          ayuda="Sin plantilla la regla vigila todos los procesos del tenant."
+          ayuda={t("reglasSupervisora.alcanceAyuda")}
         >
-          <option value="">Todas las plantillas</option>
+          <option value="">{t("reglasSupervisora.todasLasPlantillas")}</option>
           {procesos.map((proceso) => (
             <option key={proceso.id} value={proceso.id}>
               {proceso.nombre}
@@ -333,25 +341,25 @@ function FormularioRegla({
 
       <div className="mt-espacio-4 grid gap-espacio-4 md:grid-cols-3">
         <Campo
-          etiqueta="Dato a observar"
+          etiqueta={t("reglasSupervisora.datoAObservar")}
           value={tipo}
           onChange={(evento) => setTipo(evento.target.value)}
           maxLength={64}
-          ayuda="La clave exacta del dato en la instancia, por ejemplo confidence."
+          ayuda={t("reglasSupervisora.datoAObservarAyuda")}
         />
         <Selector
-          etiqueta="Condicion"
+          etiqueta={t("reglasSupervisora.condicion")}
           value={operador}
           onChange={(evento) => setOperador(evento.target.value as OperadorRegla)}
         >
           {OPERADORES.map((opcion) => (
             <option key={opcion.valor} value={opcion.valor}>
-              {opcion.texto}
+              {t(opcion.texto)}
             </option>
           ))}
         </Selector>
         <Campo
-          etiqueta="Umbral"
+          etiqueta={t("reglasSupervisora.umbral")}
           type="number"
           step="0.01"
           max={UMBRAL_MAXIMO}
@@ -363,29 +371,29 @@ function FormularioRegla({
 
       <div className="mt-espacio-4 grid gap-espacio-4 md:grid-cols-2">
         <Selector
-          etiqueta="Que hace la supervisora"
+          etiqueta={t("reglasSupervisora.queHace")}
           value={accion}
           onChange={(evento) => setAccion(evento.target.value as AccionRegla)}
           ayuda={
             accion === "BLOQUEAR"
-              ? "Bloquear detiene la instancia activa apenas se dispara la regla."
+              ? t("reglasSupervisora.bloquearAyuda")
               : undefined
           }
         >
           {ACCIONES.map((opcion) => (
             <option key={opcion.valor} value={opcion.valor}>
-              {opcion.texto}
+              {t(opcion.texto)}
             </option>
           ))}
         </Selector>
         <Selector
-          etiqueta="Severidad del hallazgo"
+          etiqueta={t("reglasSupervisora.severidadHallazgo")}
           value={severidad}
           onChange={(evento) => setSeveridad(evento.target.value as SeveridadRegla)}
         >
           {SEVERIDADES.map((opcion) => (
             <option key={opcion.valor} value={opcion.valor}>
-              {opcion.texto}
+              {t(opcion.texto)}
             </option>
           ))}
         </Selector>
@@ -393,17 +401,17 @@ function FormularioRegla({
 
       <div className="mt-espacio-4">
         <Campo
-          etiqueta="Mensaje del hallazgo"
+          etiqueta={t("reglasSupervisora.mensajeHallazgo")}
           value={mensaje}
           onChange={(evento) => setMensaje(evento.target.value)}
           maxLength={2048}
-          placeholder="Opcional"
+          placeholder={t("reglasSupervisora.opcional")}
         />
       </div>
 
       <div className="mt-espacio-4 flex justify-end gap-espacio-2">
         <Boton variante="secundario" onClick={alCerrar} disabled={guardar.isPending}>
-          Cancelar
+          {t("comun.cancelar")}
         </Boton>
         <Boton
           variante="primario"
@@ -411,19 +419,29 @@ function FormularioRegla({
           disabled={guardar.isPending || !completo}
           onClick={() => guardar.mutate()}
         >
-          {regla ? "Guardar cambios" : "Crear regla"}
+          {regla ? t("reglasSupervisora.guardarCambios") : t("reglasSupervisora.crearRegla")}
         </Boton>
       </div>
     </div>
   );
 }
 
-function textoCondicion(regla: ReglaSupervisora): string {
-  const comparacion = regla.operador === "MAYOR" ? "es mayor que" : "es menor que";
-  return `Si ${regla.tipo} ${comparacion} ${regla.umbral}`;
+type Traductor = (ruta: string, params?: Record<string, string | number>) => string;
+
+function textoCondicion(regla: ReglaSupervisora, t: Traductor): string {
+  const comparacion = t(
+    regla.operador === "MAYOR"
+      ? "reglasSupervisora.esMayorQue"
+      : "reglasSupervisora.esMenorQue",
+  );
+  return t("reglasSupervisora.condicionTexto", {
+    tipo: regla.tipo,
+    comparacion,
+    umbral: regla.umbral,
+  });
 }
 
-function textoAccion(accion?: AccionRegla): string {
+function textoAccion(accion: AccionRegla | undefined, t: Traductor): string {
   const encontrada = ACCIONES.find((opcion) => opcion.valor === accion);
-  return encontrada ? encontrada.texto : "Advertir";
+  return t(encontrada ? encontrada.texto : "reglasSupervisora.accionAdvertir");
 }

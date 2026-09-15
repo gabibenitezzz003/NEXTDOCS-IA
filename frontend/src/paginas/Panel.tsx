@@ -43,6 +43,8 @@ import {
   obtenerPoblacionKpi,
 } from "../api/kpi";
 import { mensajeDeError } from "../api/cliente";
+import { useIdioma } from "../contextos/ProveedorIdioma";
+import { formatearNumero } from "../i18n";
 import { formatearFecha } from "./Documentos";
 import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
 import type { Tono } from "../componentes/Interfaz";
@@ -55,11 +57,7 @@ import type {
   SemaforoKpi,
 } from "../tipos/api";
 
-const VENTANAS = [
-  { valor: 7, texto: "7 dias" },
-  { valor: 30, texto: "30 dias" },
-  { valor: 90, texto: "90 dias" },
-];
+const VENTANAS = [7, 30, 90];
 
 const DESTACADOS = ["documentosRecibidos", "automatizacion", "cumplimientoSla"];
 
@@ -87,6 +85,7 @@ const ORDEN_EMBUDO = [
 ];
 
 export function Panel() {
+  const { t } = useIdioma();
   const [dias, setDias] = useState(30);
   const [indicadorAbierto, setIndicadorAbierto] = useState<IndicadorKpi | null>(
     null,
@@ -122,7 +121,7 @@ export function Panel() {
     .filter(([, cantidad]) => cantidad > 0)
     .sort((uno, otro) => otro[1] - uno[1])
     .map(([estado, cantidad]) => ({
-      etiqueta: estado,
+      etiqueta: t(`estadosDocumento.${estado}`),
       valor: cantidad,
       color:
         ESTADOS_DOCUMENTALES[estado as EstadoDocumento]?.color ??
@@ -135,7 +134,7 @@ export function Panel() {
 
   const embudo = ORDEN_EMBUDO.filter((estado) => porEstado[estado] != null).map(
     (estado) => ({
-      etiqueta: estado,
+      etiqueta: t(`estadosDocumento.${estado}`),
       valor: porEstado[estado] ?? 0,
       tono: ESTADOS_DOCUMENTALES[estado as EstadoDocumento].tono as ClaveTono,
     }),
@@ -144,16 +143,16 @@ export function Panel() {
   return (
     <>
       <Encabezado
-        titulo="Panel de control"
-        descripcion="Indicadores documentales con sus fórmulas, poblaciones y contexto de medición."
+        titulo={t("panel.titulo")}
+        descripcion={t("panel.descripcion")}
       />
       <Contenido>
         <div className="mb-espacio-5 flex flex-wrap items-center justify-between gap-espacio-3">
           <GrupoSegmentado
-            etiqueta="Período de los indicadores"
+            etiqueta={t("panel.periodoIndicadores")}
             opciones={VENTANAS.map((ventana) => ({
-              valor: ventana.valor,
-              texto: ventana.texto,
+              valor: ventana,
+              texto: t("panel.dias", { dias: ventana }),
             }))}
             valor={dias}
             alCambiar={setDias}
@@ -173,19 +172,19 @@ export function Panel() {
         ) : resumen.isError ? (
           <ErrorPanel
             mensaje={mensajeDeError(resumen.error)}
-          error={resumen.error}
+            error={resumen.error}
             reintentar={() => resumen.refetch()}
           />
         ) : (
           <>
             {indicadores.length === 0 ? (
               <Vacio
-                titulo="Sin indicadores disponibles"
-                detalle="La respuesta no contiene indicadores. Esto no determina si existen documentos."
+                titulo={t("panel.sinIndicadores")}
+                detalle={t("panel.sinIndicadoresDetalle")}
               />
             ) : null}
             <section
-              aria-label="Indicadores principales"
+              aria-label={t("panel.indicadoresPrincipales")}
               className="grid min-w-0 gap-espacio-4 sm:grid-cols-2 lg:grid-cols-3"
             >
               {recibidos ? (
@@ -201,7 +200,7 @@ export function Panel() {
               {sla ? <TarjetaAnillo indicador={sla} tono="exito" /> : null}
             </section>
             <section
-              aria-label="Detalle de indicadores"
+              aria-label={t("panel.detalleIndicadores")}
               className="mt-espacio-4 grid min-w-0 gap-espacio-4 sm:grid-cols-2 xl:grid-cols-4"
             >
               {secundarios.map((indicador) => (
@@ -213,32 +212,31 @@ export function Panel() {
               ))}
             </section>
             <section
-              aria-label="Distribución documental actual"
+              aria-label={t("panel.distribucionActual")}
               className="mt-espacio-6 grid min-w-0 gap-espacio-4 xl:grid-cols-2"
             >
               <Tarjeta>
                 <CabeceraTarjeta
-                  titulo="Embudo del ciclo documental"
-                  descripcion="Conteo actual por etapa, sin recorte de fechas; incluye raíces y segmentos."
+                  titulo={t("panel.embudoTitulo")}
+                  descripcion={t("panel.embudoDescripcion")}
                 />
                 <p className="mt-espacio-3 text-pequeno text-tinta-suave">
-                  Las barras se comparan con la etapa de mayor volumen; no
-                  representan tasas de conversión.
+                  {t("panel.embudoNota")}
                 </p>
                 <div className="mt-espacio-5">
                   {embudo.length ? (
                     <Embudo etapas={embudo} plano />
                   ) : (
                     <p className="text-pequeno text-tinta-suave">
-                      Sin distribución por etapas disponible.
+                      {t("panel.embudoVacio")}
                     </p>
                   )}
                 </div>
               </Tarjeta>
               <Tarjeta>
                 <CabeceraTarjeta
-                  titulo="Composición del backlog"
-                  descripcion="Todos los documentos sin baja, incluidos segmentos y estados finales. Sin recorte de fechas."
+                  titulo={t("panel.backlogTitulo")}
+                  descripcion={t("panel.backlogDescripcion")}
                 />
                 {totalBacklog ? (
                   <div className="mt-espacio-5 flex min-w-0 flex-wrap items-center justify-center gap-espacio-5">
@@ -246,16 +244,18 @@ export function Panel() {
                       <AnilloApilado
                         segmentos={segmentos}
                         total={totalBacklog}
+                        etiquetaTotal={t("comun.documentos")}
                         plano
                       />
                     </div>
                     <div className="min-w-0 flex-1 basis-56">
                       <p className="mb-espacio-3 text-pequeno font-semibold">
-                        {totalBacklog.toLocaleString("es-AR")} documentos en
-                        total
+                        {t("panel.documentosEnTotal", {
+                          total: formatearNumero(totalBacklog),
+                        })}
                       </p>
                       <ul
-                        aria-label="Documentos por estado"
+                        aria-label={t("panel.documentosPorEstado")}
                         className="space-y-espacio-2"
                       >
                         {segmentos.map((segmento) => (
@@ -272,7 +272,7 @@ export function Panel() {
                               {segmento.etiqueta}
                             </span>
                             <span className="tabular-nums">
-                              {segmento.valor.toLocaleString("es-AR")}
+                              {formatearNumero(segmento.valor)}
                             </span>
                             <span className="w-espacio-10 text-right tabular-nums text-tinta-suave">
                               {Math.round(
@@ -288,20 +288,20 @@ export function Panel() {
                 ) : (
                   <p className="mt-espacio-5 text-pequeno text-tinta-suave">
                     {Object.keys(porEstado).length
-                      ? "0 documentos en la distribución actual."
-                      : "Sin distribución por estados disponible."}
+                      ? t("panel.ceroEnDistribucion")
+                      : t("panel.sinDistribucion")}
                   </p>
                 )}
                 {Object.entries(porEstado).some(
                   ([, cantidad]) => cantidad === 0,
                 ) ? (
                   <p className="mt-espacio-4 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
-                    Con 0 documentos:{" "}
-                    {Object.entries(porEstado)
-                      .filter(([, cantidad]) => cantidad === 0)
-                      .map(([estado]) => estado)
-                      .join(", ")}
-                    .
+                    {t("panel.conCero", {
+                      estados: Object.entries(porEstado)
+                        .filter(([, cantidad]) => cantidad === 0)
+                        .map(([estado]) => t(`estadosDocumento.${estado}`))
+                        .join(", "),
+                    })}
                   </p>
                 ) : null}
               </Tarjeta>
@@ -315,16 +315,13 @@ export function Panel() {
                   id="salud-plantillas"
                   className="font-titulo text-titulo-seccion"
                 >
-                  Salud por plantilla
+                  {t("panel.saludPlantillas")}
                 </h2>
                 <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-                  Documentos con plantilla recibidos en el período, incluidos
-                  segmentos. Salud según la menor razón disponible de las cuatro
-                  barras; no es confianza de IA.
+                  {t("panel.saludDescripcion")}
                 </p>
                 <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-                  OK ≥ 85% · ATENCIÓN ≥ 60% y &lt; 85% · CRÍTICO &lt; 60% · SIN
-                  DATOS cuando todas las razones son nulas.
+                  {t("panel.saludLeyenda")}
                 </p>
               </div>
               {plantillas.isPending ? (
@@ -332,19 +329,19 @@ export function Panel() {
               ) : plantillas.isError ? (
                 <ErrorPanel
                   mensaje={mensajeDeError(plantillas.error)}
-          error={plantillas.error}
+                  error={plantillas.error}
                   reintentar={() => plantillas.refetch()}
                 />
               ) : !plantillas.data.length ? (
                 <Vacio
-                  titulo="Sin datos por plantilla en este período"
-                  detalle="No se devolvieron grupos de documentos con plantilla. Puede haber documentos fuera del período o sin plantilla."
+                  titulo={t("panel.sinDatosPlantilla")}
+                  detalle={t("panel.sinDatosPlantillaDetalle")}
                   accion={
                     <Link
                       to="/documentos"
                       className="rounded-control px-espacio-4 py-espacio-3 text-pequeno font-semibold text-accion-tonal-texto hover:bg-violeta-tenue focus-visible:outline-foco"
                     >
-                      Ir a documentos
+                      {t("panel.irADocumentos")}
                     </Link>
                   }
                 />
@@ -353,8 +350,8 @@ export function Panel() {
                   {plantillas.data.length > 1 ? (
                     <Tarjeta className="mb-espacio-4">
                       <CabeceraTarjeta
-                        titulo="Volumen por plantilla"
-                        descripcion="Cantidad de documentos recibidos en el período para cada plantilla, incluidos segmentos."
+                        titulo={t("panel.volumenPorPlantilla")}
+                        descripcion={t("panel.volumenDescripcion")}
                       />
                       <div
                         aria-hidden="true"
@@ -370,7 +367,7 @@ export function Panel() {
                         />
                       </div>
                       <dl
-                        aria-label="Volumen por plantilla en documentos"
+                        aria-label={t("panel.volumenAria")}
                         className="mt-espacio-5 grid min-w-0 gap-espacio-3 sm:grid-cols-2 xl:grid-cols-3"
                       >
                         {plantillas.data.map((plantilla) => (
@@ -382,7 +379,7 @@ export function Panel() {
                               {plantilla.codigo}
                             </dt>
                             <dd className="shrink-0 font-semibold tabular-nums">
-                              {plantilla.volumen.toLocaleString("es-AR")}
+                              {formatearNumero(plantilla.volumen)}
                             </dd>
                           </div>
                         ))}
@@ -415,38 +412,34 @@ export function Panel() {
   );
 }
 
-const CONTEXTO_KPI: Record<string, string> = {
-  documentosRecibidos: "Raíces recibidas en el período; excluye segmentos.",
-  documentosCerrados: "Por fecha de cierre en el período; incluye segmentos.",
-  automatizacion: "Cerrados sin revisión humana / cerrados del período.",
-  cumplimientoSla:
-    "Excepciones resueltas en el período; sin vencimiento también cumplen SLA.",
-  tiempoCicloP50:
-    "Cerrados en el período con fecha de recepción; incluye segmentos.",
-  tiempoCicloP90:
-    "Cerrados en el período con fecha de recepción; incluye segmentos.",
-  excepcionesAbiertas: "Actual: ABIERTA + EN_CURSO. Sin recorte de fechas.",
-  excepcionesVencidas: "Actual: vencidas no RESUELTAS, incluidas DESCARTADAS.",
-  documentosPorVencer:
-    "Retención en los próximos 30 días, independiente del período.",
-  almacenamientoUtilizado:
-    "Bytes de archivos vigentes / cuota de almacenamiento. Medición actual.",
-  entregaDeEventos:
-    "Registros de entrega creados en el período; no reintentos.",
-};
+const CLAVES_CONTEXTO = new Set([
+  "documentosRecibidos",
+  "documentosCerrados",
+  "automatizacion",
+  "cumplimientoSla",
+  "tiempoCicloP50",
+  "tiempoCicloP90",
+  "excepcionesAbiertas",
+  "excepcionesVencidas",
+  "documentosPorVencer",
+  "almacenamientoUtilizado",
+  "entregaDeEventos",
+]);
 
 function DetalleIndicador({ indicador }: { indicador: IndicadorKpi }) {
+  const { t } = useIdioma();
+  const contexto = CLAVES_CONTEXTO.has(indicador.clave)
+    ? t(`panel.contexto.${indicador.clave}`)
+    : null;
   return (
     <div className="mt-espacio-3 border-t border-borde pt-espacio-3 text-pequeno text-tinta-suave">
-      {CONTEXTO_KPI[indicador.clave] ? (
-        <p>{CONTEXTO_KPI[indicador.clave]}</p>
-      ) : null}
+      {contexto ? <p>{contexto}</p> : null}
       {indicador.detalle ? (
         <p className="mt-espacio-2">{indicador.detalle}</p>
       ) : null}
       <details className="mt-espacio-2">
         <summary className="w-fit cursor-pointer rounded-control text-accion-tonal-texto focus-visible:outline-foco">
-          Fórmula del indicador
+          {t("panel.formulaIndicador")}
         </summary>
         <p className="mt-espacio-2 [overflow-wrap:anywhere]">
           {indicador.formula}
@@ -465,6 +458,7 @@ function TarjetaHeroe({
   rango: { desde: string; hasta: string; dias: number };
   alAbrir: () => void;
 }) {
+  const { t } = useIdioma();
   const { referencia, visible } = useVisible<HTMLDivElement>();
   const animado = useContador(visible ? (indicador.valor ?? 0) : 0);
   const actual = indicador.valor ?? 0;
@@ -477,26 +471,26 @@ function TarjetaHeroe({
           etiqueta={indicador.etiqueta}
           valor={
             indicador.valor == null
-              ? "Sin datos"
-              : Math.round(animado).toLocaleString("es-AR")
+              ? t("panel.sinDatos")
+              : formatearNumero(Math.round(animado))
           }
         />
         <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-          {rango.dias} días
+          {t("panel.dias", { dias: rango.dias })}
         </p>
         <div
           className="mt-espacio-4 space-y-espacio-3"
-          aria-label="Comparación de documentos recibidos"
+          aria-label={t("panel.comparacionRecibidos")}
         >
           {[
             {
-              etiqueta: "Este período",
+              etiqueta: t("panel.estePeriodo"),
               valor: actual,
               disponible: indicador.valor != null,
               fuerte: true,
             },
             {
-              etiqueta: "Período anterior",
+              etiqueta: t("panel.periodoAnterior"),
               valor: anterior,
               disponible: indicador.valorAnterior != null,
               fuerte: false,
@@ -507,8 +501,8 @@ function TarjetaHeroe({
                 <span className="text-tinta-suave">{fila.etiqueta}</span>
                 <span className="font-semibold tabular-nums">
                   {fila.disponible
-                    ? fila.valor.toLocaleString("es-AR")
-                    : "Sin datos"}
+                    ? formatearNumero(fila.valor)
+                    : t("panel.sinDatos")}
                 </span>
               </div>
               <div
@@ -540,7 +534,7 @@ function TarjetaHeroe({
             onClick={alAbrir}
             className="mt-espacio-3"
           >
-            Ver población
+            {t("panel.verPoblacion")}
             <span aria-hidden="true">
               <IconoDerecha tamano={13} />
             </span>
@@ -558,6 +552,7 @@ function TarjetaAnillo({
   indicador: IndicadorKpi;
   tono: ClaveTono;
 }) {
+  const { t } = useIdioma();
   const sinDatos = indicador.valor == null;
   return (
     <Tarjeta>
@@ -572,24 +567,24 @@ function TarjetaAnillo({
             plano
             centro={
               <span className="cifra text-metrica-compacta">
-                {formatearValor(indicador)}
+                {formatearValor(indicador, t)}
               </span>
             }
           />
         </div>
         <div className="min-w-0 flex-1 basis-32 text-pequeno">
           <p className="sr-only">
-            {indicador.etiqueta}: {formatearValor(indicador)}
+            {indicador.etiqueta}: {formatearValor(indicador, t)}
           </p>
           {indicador.denominador ? (
             <p>
-              {indicador.numerador?.toLocaleString("es-AR")} de{" "}
-              {indicador.denominador.toLocaleString("es-AR")}
+              {indicador.numerador != null
+                ? formatearNumero(indicador.numerador)
+                : null}{" "}
+              {t("panel.de")} {formatearNumero(indicador.denominador)}
             </p>
           ) : (
-            <p className="text-tinta-suave">
-              Sin base de cálculo en este período
-            </p>
+            <p className="text-tinta-suave">{t("panel.sinBaseCalculo")}</p>
           )}
           <div className="mt-espacio-2">
             <Tendencia indicador={indicador} />
@@ -608,6 +603,7 @@ function TarjetaIndicador({
   indicador: IndicadorKpi;
   alAbrir: () => void;
 }) {
+  const { t } = useIdioma();
   const { referencia, visible } = useVisible<HTMLDivElement>();
   const esConteo = indicador.unidad === "CONTEO";
   const animado = useContador(visible && esConteo ? (indicador.valor ?? 0) : 0);
@@ -616,10 +612,10 @@ function TarjetaIndicador({
       etiqueta={indicador.etiqueta}
       valor={
         indicador.valor == null
-          ? "Sin datos"
+          ? t("panel.sinDatos")
           : esConteo
-            ? Math.round(animado).toLocaleString("es-AR")
-            : formatearValor(indicador)
+            ? formatearNumero(Math.round(animado))
+            : formatearValor(indicador, t)
       }
       detalle={<Tendencia indicador={indicador} />}
     />
@@ -635,7 +631,7 @@ function TarjetaIndicador({
           >
             {contenido}
             <span className="mt-espacio-2 inline-block text-pequeno font-semibold text-accion-tonal-texto">
-              Ver población
+              {t("panel.verPoblacion")}
             </span>
           </button>
         ) : (
@@ -648,10 +644,11 @@ function TarjetaIndicador({
 }
 
 function Tendencia({ indicador }: { indicador: IndicadorKpi }) {
+  const { t } = useIdioma();
   if (indicador.tendencia === "SIN_COMPARACION" || indicador.variacion == null)
     return (
       <span className="text-pequeno text-tinta-suave">
-        Sin período anterior comparable
+        {t("panel.sinPeriodoComparable")}
       </span>
     );
   const sube = indicador.tendencia === "SUBE";
@@ -666,11 +663,17 @@ function Tendencia({ indicador }: { indicador: IndicadorKpi }) {
       <span aria-hidden="true">
         <Icono tamano={13} />
       </span>
-      <span>{estable ? "Estable" : sube ? "Sube" : "Baja"}</span>
-      <span className="tabular-nums">
-        {Math.abs(indicador.variacion).toLocaleString("es-AR")}%
+      <span>
+        {estable
+          ? t("panel.estable")
+          : sube
+            ? t("panel.sube")
+            : t("panel.baja")}
       </span>
-      <span className="text-tinta-suave">vs anterior</span>
+      <span className="tabular-nums">
+        {formatearNumero(Math.abs(indicador.variacion))}%
+      </span>
+      <span className="text-tinta-suave">{t("panel.vsAnterior")}</span>
     </span>
   );
 }
@@ -682,6 +685,7 @@ function FilaPlantilla({
   plantilla: KpiPlantilla;
   indice: number;
 }) {
+  const { t } = useIdioma();
   const estados = Object.entries(plantilla.porEstado).sort(
     (uno, otro) => otro[1] - uno[1],
   );
@@ -697,18 +701,20 @@ function FilaPlantilla({
           </p>
           <div className="mt-espacio-3 flex flex-wrap items-center gap-espacio-2">
             <Pastilla tono={TONO_SALUD[plantilla.salud] as Tono}>
-              {plantilla.salud.replace(/_/g, " ")}
+              {t(`salud.${plantilla.salud}`)}
             </Pastilla>
             <span className="text-pequeno">
               <span className="font-semibold tabular-nums">
-                {plantilla.volumen.toLocaleString("es-AR")}
+                {formatearNumero(plantilla.volumen)}
               </span>{" "}
-              documentos
+              {t("comun.documentos")}
             </span>
             <Pastilla
               tono={plantilla.documentosConExcepciones ? "rojo" : "neutro"}
             >
-              {plantilla.documentosConExcepciones} con excepción
+              {t("panel.conExcepcion", {
+                cantidad: plantilla.documentosConExcepciones,
+              })}
             </Pastilla>
           </div>
         </div>
@@ -723,7 +729,7 @@ function FilaPlantilla({
         </div>
       </div>
       <ul
-        aria-label={"Estados de " + plantilla.codigo}
+        aria-label={t("panel.estadosDe", { codigo: plantilla.codigo })}
         className="mt-espacio-4 flex flex-wrap items-center gap-espacio-3 border-t border-borde pt-espacio-3"
       >
         {estados.map(([estado, cantidad]) => (
@@ -740,6 +746,7 @@ function FilaPlantilla({
 }
 
 function CeldaBarra({ barra, retraso }: { barra: BarraKpi; retraso: number }) {
+  const { t } = useIdioma();
   return (
     <div className="min-w-0">
       <div className="flex items-baseline justify-between gap-espacio-2 text-pequeno">
@@ -748,8 +755,8 @@ function CeldaBarra({ barra, retraso }: { barra: BarraKpi; retraso: number }) {
         </span>
         <span className="shrink-0 font-semibold tabular-nums">
           {barra.porcentaje == null
-            ? "sin datos"
-            : `${barra.porcentaje.toLocaleString("es-AR")}%`}
+            ? t("panel.sinDatos").toLowerCase()
+            : `${formatearNumero(barra.porcentaje)}%`}
         </span>
       </div>
       <div aria-hidden="true" className="mt-espacio-2">
@@ -777,6 +784,7 @@ function PanelPoblacion({
   rango: { desde?: string };
   alCerrar: () => void;
 }) {
+  const { t } = useIdioma();
   const poblacion = useQuery({
     queryKey: ["kpi", "poblacion", indicador.clave, rango.desde],
     queryFn: () => obtenerPoblacionKpi(indicador.clave, rango),
@@ -798,8 +806,8 @@ function PanelPoblacion({
         />
       ) : !poblacion.data.length ? (
         <Vacio
-          titulo="Sin documentos"
-          detalle="Este indicador no tiene documentos en la ventana elegida."
+          titulo={t("panel.sinDocumentosPob")}
+          detalle={t("panel.sinDocumentosPobDetalle")}
         />
       ) : (
         <>
@@ -808,12 +816,9 @@ function PanelPoblacion({
               <IconoInfo tamano={15} />
             </span>
             <span>
-              <span className="font-bold">
-                {poblacion.data.length.toLocaleString("es-AR")}
-              </span>{" "}
-              documentos devueltos para este indicador. La consulta devuelve
-              hasta 200 registros; puede ser una muestra. En p50/p90 son la base
-              del cálculo, no el valor en horas.
+              {t("panel.poblacionInfo", {
+                total: formatearNumero(poblacion.data.length),
+              })}
             </span>
           </p>
           <ul className="mt-espacio-4 space-y-espacio-2">
@@ -829,8 +834,10 @@ function PanelPoblacion({
                   <InsigniaEstado estado={documento.estado} />
                 </div>
                 <p className="mt-espacio-1 text-pequeno text-tinta-suave [overflow-wrap:anywhere]">
-                  {documento.codigoPlantilla ?? "sin plantilla"} · recibido{" "}
-                  {formatearFecha(documento.recibido)}
+                  {documento.codigoPlantilla ?? t("panel.sinPlantilla")} ·{" "}
+                  {t("panel.recibidoEl", {
+                    fecha: formatearFecha(documento.recibido),
+                  })}
                 </p>
               </li>
             ))}
@@ -842,17 +849,20 @@ function PanelPoblacion({
   );
 }
 
-function formatearValor(indicador: IndicadorKpi) {
+function formatearValor(
+  indicador: IndicadorKpi,
+  t: (ruta: string) => string,
+) {
   if (indicador.valor == null) {
-    return "Sin datos";
+    return t("panel.sinDatos");
   }
   if (indicador.unidad === "PORCENTAJE") {
-    return `${indicador.valor.toLocaleString("es-AR")}%`;
+    return `${formatearNumero(indicador.valor)}%`;
   }
   if (indicador.unidad === "HORAS") {
     return formatearHoras(indicador.valor);
   }
-  return indicador.valor.toLocaleString("es-AR");
+  return formatearNumero(indicador.valor);
 }
 
 function formatearHoras(horas: number) {

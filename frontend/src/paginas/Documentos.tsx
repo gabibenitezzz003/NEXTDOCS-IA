@@ -15,6 +15,8 @@ import {
 import { VisorDocumento } from "./VisorDocumento";
 import { ingresarDocumento, listarDocumentos } from "../api/documentos";
 import { mensajeDeError } from "../api/cliente";
+import { useIdioma } from "../contextos/ProveedorIdioma";
+import { localeActual } from "../i18n";
 import { useSesion } from "../contextos/ProveedorSesion";
 import type { Documento, EstadoDocumento } from "../tipos/api";
 import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
@@ -25,6 +27,7 @@ const TAMANO = 25;
 
 export function Documentos() {
   const { tienePermiso } = useSesion();
+  const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const entradaArchivo = useRef<HTMLInputElement>(null);
 
@@ -60,7 +63,10 @@ export function Documentos() {
     onSuccess: (documento) => {
       setAvisoSubida({
         tono: "ok",
-        texto: `${documento.nombre ?? "Documento"} ingresado en estado ${ESTADOS_DOCUMENTALES[documento.estado].etiqueta}`,
+        texto: t("documentos.ingresadoEnEstado", {
+          nombre: documento.nombre ?? t("comun.documento"),
+          estado: t(`estadosDocumento.${documento.estado}`),
+        }),
       });
       clienteConsultas.invalidateQueries({ queryKey: ["documentos"] });
       clienteConsultas.invalidateQueries({ queryKey: ["resumen"] });
@@ -94,8 +100,8 @@ export function Documentos() {
   return (
     <>
       <Encabezado
-        titulo="Bandeja documental"
-        descripcion="Consultá los documentos, su estado y su trazabilidad."
+        titulo={t("documentos.titulo")}
+        descripcion={t("documentos.descripcion")}
         acciones={
           tienePermiso("documentos.escribir") ? (
             <>
@@ -103,7 +109,7 @@ export function Documentos() {
                 ref={entradaArchivo}
                 type="file"
                 accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.webp"
-                aria-label="Seleccionar un documento para cargar"
+                aria-label={t("documentos.seleccionarArchivo")}
                 disabled={subida.isPending}
                 className="hidden"
                 onChange={(evento) => {
@@ -124,7 +130,7 @@ export function Documentos() {
                 <span aria-hidden="true">
                   <IconoSubir tamano={16} />
                 </span>
-                Cargar documento
+                {t("documentos.cargarDocumento")}
               </Boton>
             </>
           ) : null
@@ -153,13 +159,13 @@ export function Documentos() {
           </div>
         ) : null}
         <p role="status" aria-atomic="true" className="sr-only">
-          {subida.isPending ? "Subiendo documento" : ""}
+          {subida.isPending ? t("documentos.subiendo") : ""}
         </p>
 
         <Tarjeta padding="p-espacio-4" className="mb-espacio-5">
           <form
             role="search"
-            aria-label="Buscar documentos"
+            aria-label={t("documentos.buscarDocumentos")}
             onSubmit={(evento) => {
               evento.preventDefault();
               setPagina(0);
@@ -168,22 +174,22 @@ export function Documentos() {
             className="grid min-w-0 gap-espacio-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end"
           >
             <Campo
-              etiqueta="Buscar documento"
+              etiqueta={t("documentos.buscarDocumento")}
               value={texto}
               onChange={(evento) => setTexto(evento.target.value)}
-              placeholder="Buscar por nombre, remitente o referencia externa"
+              placeholder={t("documentos.buscarPlaceholder")}
             />
             <Boton type="submit">
               <span aria-hidden="true">
                 <IconoBuscar tamano={16} />
               </span>
-              Buscar
+              {t("comun.buscar")}
             </Boton>
           </form>
 
           <fieldset className="mt-espacio-4 min-w-0 border-t border-borde pt-espacio-3">
             <legend className="text-pequeno font-semibold text-tinta-media">
-              Filtrar por estado
+              {t("documentos.filtrarPorEstado")}
             </legend>
             <div className="flex flex-wrap gap-espacio-2">
               {ESTADOS.map((estado) => {
@@ -198,7 +204,7 @@ export function Documentos() {
                     tamano="sm"
                     className="rounded-insignia! text-micro!"
                   >
-                    {ESTADOS_DOCUMENTALES[estado].etiqueta}
+                    {t(`estadosDocumento.${estado}`)}
                   </Boton>
                 );
               })}
@@ -209,7 +215,7 @@ export function Documentos() {
                   tamano="sm"
                   onClick={limpiarFiltros}
                 >
-                  Limpiar filtros
+                  {t("comun.limpiarFiltros")}
                 </Boton>
               ) : null}
             </div>
@@ -222,7 +228,7 @@ export function Documentos() {
           </Tarjeta>
         ) : consulta.isError ? (
           <ErrorPanel
-            contexto="No se pudo cargar la bandeja de documentos"
+            contexto={t("documentos.errorContexto")}
             mensaje={mensajeDeError(consulta.error)}
           error={consulta.error}
             reintentar={() => consulta.refetch()}
@@ -231,18 +237,18 @@ export function Documentos() {
           <Vacio
             titulo={
               hayFiltro
-                ? "No hay documentos que coincidan"
-                : "Todavía no hay documentos"
+                ? t("documentos.sinCoincidencias")
+                : t("documentos.sinDocumentos")
             }
             detalle={
               hayFiltro
-                ? "Probá quitando filtros o cambiando el término de búsqueda."
-                : "Cuando ingrese el primer documento va a aparecer acá."
+                ? t("documentos.sinCoincidenciasDetalle")
+                : t("documentos.sinDocumentosDetalle")
             }
             accion={
               hayFiltro ? (
                 <Boton type="button" onClick={limpiarFiltros}>
-                  Limpiar filtros
+                  {t("comun.limpiarFiltros")}
                 </Boton>
               ) : undefined
             }
@@ -252,8 +258,7 @@ export function Documentos() {
             <Tarjeta padding="p-0" className="hidden lg:block">
               <table className="w-full table-fixed text-left text-pequeno">
                 <caption className="sr-only">
-                  Documentos de la página {pagina + 1}. Abrí un documento para
-                  ver su detalle.
+                  {t("documentos.captionTabla", { pagina: pagina + 1 })}
                 </caption>
                 <colgroup>
                   <col className="w-[27%]" />
@@ -265,11 +270,11 @@ export function Documentos() {
                 <thead>
                   <tr className="border-b border-borde bg-grafito-alto text-blanco">
                     {[
-                      "Documento",
-                      "Estado",
-                      "Tipo detectado",
-                      "Sujeto",
-                      "Recibido",
+                      t("documentos.colDocumento"),
+                      t("documentos.colEstado"),
+                      t("documentos.colTipo"),
+                      t("documentos.colSujeto"),
+                      t("documentos.colRecibido"),
                     ].map((columna) => (
                       <th
                         key={columna}
@@ -316,7 +321,7 @@ export function Documentos() {
             </Tarjeta>
 
             <ul
-              aria-label="Documentos de la página"
+              aria-label={t("documentos.documentosDePagina")}
               className="grid min-w-0 gap-espacio-4 sm:grid-cols-2 lg:hidden"
             >
               {documentos.map((documento) => (
@@ -329,7 +334,7 @@ export function Documentos() {
                     <dl className="mt-espacio-4 grid min-w-0 gap-espacio-4 text-pequeno">
                       <div>
                         <dt className="mb-espacio-1 text-tinta-suave">
-                          Estado
+                          {t("documentos.colEstado")}
                         </dt>
                         <dd>
                           <InsigniaEstado estado={documento.estado} />
@@ -337,7 +342,7 @@ export function Documentos() {
                       </div>
                       <div>
                         <dt className="mb-espacio-1 text-tinta-suave">
-                          Tipo detectado
+                          {t("documentos.colTipo")}
                         </dt>
                         <dd>
                           <TipoDetectado documento={documento} />
@@ -345,7 +350,7 @@ export function Documentos() {
                       </div>
                       <div>
                         <dt className="mb-espacio-1 text-tinta-suave">
-                          Sujeto
+                          {t("documentos.colSujeto")}
                         </dt>
                         <dd>
                           <SujetoDocumento documento={documento} />
@@ -353,7 +358,7 @@ export function Documentos() {
                       </div>
                       <div>
                         <dt className="mb-espacio-1 text-tinta-suave">
-                          Recibido
+                          {t("documentos.colRecibido")}
                         </dt>
                         <dd className="tabular-nums">
                           {formatearFecha(documento.recibido)}
@@ -374,12 +379,11 @@ export function Documentos() {
                 <span className="font-semibold tabular-nums text-tinta">
                   {total}
                 </span>{" "}
-                documento
-                {total === 1 ? "" : "s"}
+                {total === 1 ? t("comun.documento") : t("comun.documentos")}
               </span>
               {totalPaginas > 1 ? (
                 <nav
-                  aria-label="Paginación de documentos"
+                  aria-label={t("documentos.paginacion")}
                   className="flex flex-wrap items-center gap-espacio-2"
                 >
                   <Boton
@@ -391,15 +395,15 @@ export function Documentos() {
                     <span aria-hidden="true">
                       <IconoIzquierda tamano={14} />
                     </span>
-                    Anterior
+                    {t("comun.anterior")}
                   </Boton>
                   <span
                     aria-live="polite"
                     aria-atomic="true"
                     className="px-espacio-1 text-pequeno tabular-nums text-tinta-suave"
                   >
-                    <span className="sr-only">Página </span>
-                    {pagina + 1} de {totalPaginas}
+                    <span className="sr-only">{t("comun.pagina")}</span>
+                    {t("comun.paginaDe", { actual: pagina + 1, total: totalPaginas })}
                   </span>
                   <Boton
                     type="button"
@@ -407,7 +411,7 @@ export function Documentos() {
                     disabled={pagina + 1 >= totalPaginas}
                     onClick={() => setPagina((actual) => actual + 1)}
                   >
-                    Siguiente
+                    {t("comun.siguiente")}
                     <span aria-hidden="true">
                       <IconoDerecha tamano={14} />
                     </span>
@@ -436,24 +440,26 @@ function NombreDocumento({
   documento: Documento;
   alAbrir: () => void;
 }) {
+  const { t } = useIdioma();
+  const nombre = documento.nombre ?? t("comun.sinNombre");
   return (
     <div className="min-w-0 [overflow-wrap:anywhere]">
       <Boton
         type="button"
         variante="fantasma"
-        aria-label={`Abrir documento ${documento.nombre ?? "Sin nombre"}`}
+        aria-label={t("documentos.abrirDocumento", { nombre })}
         onClick={(evento) => {
           evento.stopPropagation();
           alAbrir();
         }}
         className="h-auto! min-h-control-pequeno max-w-full justify-start px-0! text-left whitespace-normal! text-tinta hover:underline group-hover:text-accion-tonal-texto"
       >
-        <span className="min-w-0">{documento.nombre ?? "Sin nombre"}</span>
+        <span className="min-w-0">{nombre}</span>
       </Boton>
       <p className="mt-espacio-1 text-pequeno text-tinta-suave">
         {documento.origen}
         {documento.cantidadSegmentos
-          ? ` · ${documento.cantidadSegmentos} segmentos`
+          ? ` · ${t("documentos.segmentos", { cantidad: documento.cantidadSegmentos })}`
           : ""}
       </p>
     </div>
@@ -461,13 +467,14 @@ function NombreDocumento({
 }
 
 function TipoDetectado({ documento }: { documento: Documento }) {
+  const { t } = useIdioma();
   if (documento.origenTipo === "GENERICO") {
     return (
       <Pastilla
         tono="alerta"
         className="max-w-full whitespace-normal! [overflow-wrap:anywhere]"
       >
-        Captura genérica
+        {t("documentos.capturaGenerica")}
       </Pastilla>
     );
   }
@@ -479,7 +486,7 @@ function TipoDetectado({ documento }: { documento: Documento }) {
       {documento.codigoPlantilla}
     </Pastilla>
   ) : (
-    <span className="text-tinta-suave">sin detectar</span>
+    <span className="text-tinta-suave">{t("comun.sinDetectar")}</span>
   );
 }
 
@@ -500,7 +507,7 @@ export function formatearFecha(valor?: string) {
   if (!valor) {
     return "—";
   }
-  return new Date(valor).toLocaleString("es-AR", {
+  return new Date(valor).toLocaleString(localeActual(), {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

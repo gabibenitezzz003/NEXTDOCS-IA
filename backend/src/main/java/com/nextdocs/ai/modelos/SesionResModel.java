@@ -27,5 +27,7 @@ public class SesionResModel implements Serializable {
 
 	private String nombreTenant;
 
+	private String idioma;
+
 	private List<String> permisos = new ArrayList<>();
 }

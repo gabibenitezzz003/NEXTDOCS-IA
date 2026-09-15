@@ -3,6 +3,7 @@ package com.nextdocs.ai.servicios;
 import java.time.Instant;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +38,8 @@ public class UsuarioService {
 	public static final String ENTIDAD = "Usuario";
 
 	public static final int LONGITUD_MINIMA_CLAVE = 10;
+
+	public static final Set<String> IDIOMAS = Set.of("es", "en", "pt");
 
 	private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
 
@@ -177,6 +180,18 @@ public class UsuarioService {
 		auditoriaService.registrarConDetalle(tenantId, AccionAuditoria.USUARIO_ELIMINADO, ENTIDAD, usuarioId,
 				Map.of("email", usuario.getEmail()));
 		log.info("Baja del usuario {}", usuario.getEmail());
+	}
+
+	@Transactional
+	public UsuarioModel cambiarIdioma(String tenantId, String usuarioId, String idioma) {
+		String normalizado = idioma == null ? "" : idioma.trim().toLowerCase(Locale.ROOT);
+		if (!IDIOMAS.contains(normalizado)) {
+			throw new ValidacionException("El idioma " + normalizado + " no esta soportado");
+		}
+		Usuario usuario = buscarEntidad(tenantId, usuarioId);
+		usuario.setIdioma(normalizado);
+		usuarioRepository.save(usuario);
+		return administracionConverter.aModelo(usuario);
 	}
 
 	@Transactional

@@ -45,6 +45,7 @@ import {
   type Paso,
 } from "../utilidades/grafoProceso";
 import { useSesion } from "../contextos/ProveedorSesion";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import {
   BandejaInstancias,
   BandejaTareas,
@@ -53,21 +54,22 @@ import {
 import { ReglasSupervisora } from "./ReglasSupervisora";
 import { DiagramaProceso } from "../componentes/DiagramaProceso";
 
-const TIPOS_PASO: { valor: TipoNodoProceso; texto: string }[] = [
-  { valor: "SOLICITUD_DOCUMENTO", texto: "Solicitar documento" },
-  { valor: "FORMULARIO", texto: "Formulario" },
-  { valor: "VALIDACION_IA", texto: "Validar con IA" },
-  { valor: "REVISION_HUMANA", texto: "Revision humana" },
-  { valor: "TAREA_EXTERNA", texto: "Tarea externa" },
-  { valor: "NOTIFICACION", texto: "Notificar" },
-  { valor: "TEMPORIZADOR", texto: "Esperar (temporizador)" },
-  { valor: "ACCION_API", texto: "Accion de API" },
-  { valor: "SUBPROCESO", texto: "Subproceso" },
+const TIPOS_PASO: TipoNodoProceso[] = [
+  "SOLICITUD_DOCUMENTO",
+  "FORMULARIO",
+  "VALIDACION_IA",
+  "REVISION_HUMANA",
+  "TAREA_EXTERNA",
+  "NOTIFICACION",
+  "TEMPORIZADOR",
+  "ACCION_API",
+  "SUBPROCESO",
 ];
 
 type VistaProcesos = "definiciones" | "instancias" | "tareas" | "reglas";
 
 export function Procesos() {
+  const { t } = useIdioma();
   const [vista, setVista] = useState<VistaProcesos>("definiciones");
   const [procesoAbierto, setProcesoAbierto] = useState<string | null>(null);
   const [instanciaAbierta, setInstanciaAbierta] = useState<string | null>(null);
@@ -88,18 +90,18 @@ export function Procesos() {
   return (
     <>
       <Encabezado
-        titulo="Procesos"
-        descripcion="Diseñá procesos en el Studio, ejecutalos y resolvé las tareas pendientes desde las bandejas."
+        titulo={t("procesos.titulo")}
+        descripcion={t("procesos.descripcion")}
         acciones={
           <GrupoSegmentado
-            etiqueta="Vistas de procesos"
+            etiqueta={t("procesos.vistas")}
             valor={vista}
             alCambiar={setVista}
             opciones={[
-              { valor: "definiciones", texto: "Definiciones" },
-              { valor: "instancias", texto: "Instancias" },
-              { valor: "tareas", texto: "Tareas" },
-              { valor: "reglas", texto: "Reglas" },
+              { valor: "definiciones", texto: t("procesos.definiciones") },
+              { valor: "instancias", texto: t("procesos.instancias") },
+              { valor: "tareas", texto: t("procesos.tareas") },
+              { valor: "reglas", texto: t("procesos.reglas") },
             ]}
           />
         }
@@ -127,6 +129,7 @@ export function Procesos() {
 }
 
 function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
+  const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [creando, setCreando] = useState(false);
   const [codigo, setCodigo] = useState("");
@@ -162,8 +165,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
     <div>
       <div className="mb-espacio-4 flex flex-wrap items-end justify-between gap-espacio-4">
         <p className="max-w-xl text-pequeno text-tinta-suave">
-          Biblioteca de definiciones del espacio de trabajo. Abrí el Studio para
-          configurar los pasos de cada proceso y publicar una versión.
+          {t("procesos.bibliotecaDesc")}
         </p>
         <Boton
           variante={creando ? "secundario" : "primario"}
@@ -171,7 +173,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
           aria-controls={creando ? "crear-proceso" : undefined}
           onClick={() => setCreando((valor) => !valor)}
         >
-          {creando ? "Cancelar" : "Nuevo proceso"}
+          {creando ? t("comun.cancelar") : t("procesos.nuevoProceso")}
         </Boton>
       </div>
       {error ? (
@@ -187,12 +189,12 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
           <Tarjeta className="mb-espacio-6">
             <div id="crear-proceso">
               <CabeceraTarjeta
-                titulo="Nuevo proceso"
-                descripcion="Creá una definición con su primera versión en borrador."
+                titulo={t("procesos.nuevoProcesoTitulo")}
+                descripcion={t("procesos.nuevoProcesoDesc")}
               />
               <div className="mt-espacio-5 grid gap-espacio-4 md:grid-cols-2 xl:grid-cols-4">
                 <Campo
-                  etiqueta="Codigo"
+                  etiqueta={t("procesos.codigo")}
                   placeholder="COMEX-EX-MAR-FCL"
                   value={codigo}
                   onChange={(evento) =>
@@ -200,26 +202,26 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                   }
                 />
                 <Campo
-                  etiqueta="Familia"
+                  etiqueta={t("procesos.familia")}
                   placeholder="COMEX"
                   value={familia}
                   onChange={(evento) => setFamilia(evento.target.value)}
                 />
                 <Campo
-                  etiqueta="Nombre"
+                  etiqueta={t("procesos.nombre")}
                   placeholder="Exportacion maritima FCL"
                   value={nombre}
                   onChange={(evento) => setNombre(evento.target.value)}
                 />
                 <Campo
-                  etiqueta="SLA de la plantilla (horas)"
+                  etiqueta={t("procesos.slaPlantilla")}
                   type="number"
                   min="0.01"
                   step="0.25"
                   placeholder="24"
                   value={sla}
                   onChange={(evento) => setSla(evento.target.value)}
-                  ayuda="Cada paso hereda este plazo salvo que defina el suyo."
+                  ayuda={t("procesos.slaAyuda")}
                 />
               </div>
               <div className="mt-4 flex justify-end">
@@ -241,7 +243,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                     })
                   }
                 >
-                  Crear
+                  {t("procesos.crear")}
                 </Boton>
               </div>
             </div>
@@ -253,17 +255,17 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
         ) : consulta.isError ? (
           <ErrorPanel
             mensaje={mensajeDeError(consulta.error)}
-          error={consulta.error}
+            error={consulta.error}
             reintentar={() => consulta.refetch()}
           />
         ) : procesos.length === 0 ? (
           <Vacio
-            titulo="Todavía no hay definiciones de proceso"
-            detalle="Usá Nuevo proceso para crear un borrador y configurar su secuencia de pasos."
+            titulo={t("procesos.sinDefiniciones")}
+            detalle={t("procesos.sinDefinicionesDetalle")}
           />
         ) : (
           <ul
-            aria-label="Definiciones de proceso"
+            aria-label={t("procesos.listaDefiniciones")}
             className="space-y-espacio-4"
           >
             {procesos.map((proceso) => (
@@ -276,7 +278,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                           {proceso.nombre}
                         </h2>
                         <Pastilla tono={proceso.slaHoras == null ? "neutro" : "violeta"}>
-                          {textoSla(proceso.slaHoras)}
+                          {textoSla(proceso.slaHoras, t)}
                         </Pastilla>
                       </div>
                       <p className="mt-espacio-1 break-words text-pequeno text-tinta-suave">
@@ -284,7 +286,9 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                       </p>
                       {proceso.alta ? (
                         <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-                          Creado el {formatearFecha(proceso.alta)}
+                          {t("procesos.creadoEl", {
+                            fecha: formatearFecha(proceso.alta),
+                          })}
                         </p>
                       ) : null}
                     </div>
@@ -299,13 +303,15 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                           )
                         }
                       >
-                        {editando === proceso.id ? "Cerrar" : "Editar"}
+                        {editando === proceso.id
+                          ? t("procesos.cerrar")
+                          : t("procesos.editar")}
                       </Boton>
                       <Boton
                         variante="secundario"
                         onClick={() => alAbrir(proceso.id)}
                       >
-                        Abrir estudio
+                        {t("procesos.abrirEstudio")}
                       </Boton>
                     </div>
                   </div>
@@ -329,10 +335,15 @@ function slaNumerico(texto: string): number | undefined {
   return texto.trim() && Number.isFinite(valor) && valor > 0 ? valor : undefined;
 }
 
-function textoSla(horas?: number): string {
-  if (horas == null) return "sin SLA";
-  if (Number.isInteger(horas)) return `SLA ${horas} h`;
-  return `SLA ${horas.toFixed(2).replace(/0$/, "")} h`;
+function textoSla(
+  horas: number | undefined,
+  t: (ruta: string, params?: Record<string, string | number>) => string,
+): string {
+  if (horas == null) return t("procesos.sinSla");
+  const valor = Number.isInteger(horas)
+    ? horas
+    : horas.toFixed(2).replace(/0$/, "");
+  return t("procesos.sla", { horas: valor });
 }
 
 function EditorProceso({
@@ -342,6 +353,7 @@ function EditorProceso({
   proceso: Proceso;
   alCerrar: () => void;
 }) {
+  const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [familia, setFamilia] = useState(proceso.familia);
   const [nombre, setNombre] = useState(proceso.nombre);
@@ -377,29 +389,29 @@ function EditorProceso({
       ) : null}
       <div className="grid gap-espacio-4 md:grid-cols-3">
         <Campo
-          etiqueta="Familia"
+          etiqueta={t("procesos.familia")}
           value={familia}
           onChange={(evento) => setFamilia(evento.target.value)}
         />
         <Campo
-          etiqueta="Nombre"
+          etiqueta={t("procesos.nombre")}
           value={nombre}
           onChange={(evento) => setNombre(evento.target.value)}
         />
         <Campo
-          etiqueta="SLA de la plantilla (horas)"
+          etiqueta={t("procesos.slaPlantilla")}
           type="number"
           min="0.01"
           step="0.25"
-          placeholder="sin SLA"
+          placeholder={t("procesos.sinSla")}
           value={sla}
           onChange={(evento) => setSla(evento.target.value)}
-          ayuda="Vaciar el campo quita el SLA heredado."
+          ayuda={t("procesos.slaEditorAyuda")}
         />
       </div>
       <div className="mt-espacio-4 flex justify-end gap-espacio-2">
         <Boton variante="secundario" onClick={alCerrar} disabled={guardar.isPending}>
-          Cancelar
+          {t("comun.cancelar")}
         </Boton>
         <Boton
           variante="primario"
@@ -407,7 +419,7 @@ function EditorProceso({
           disabled={guardar.isPending || !familia.trim() || !nombre.trim()}
           onClick={() => guardar.mutate()}
         >
-          Guardar
+          {t("comun.guardar")}
         </Boton>
       </div>
     </div>
@@ -415,8 +427,9 @@ function EditorProceso({
 }
 
 function VersionesProceso({ versiones }: { versiones: VersionProceso[] }) {
+  const { t } = useIdioma();
   if (!versiones.length) {
-    return <Pastilla tono="neutro">sin versiones</Pastilla>;
+    return <Pastilla tono="neutro">{t("procesos.sinVersiones")}</Pastilla>;
   }
   const publicada = versiones
     .filter((version) => version.estado === "PUBLICADA")
@@ -425,11 +438,15 @@ function VersionesProceso({ versiones }: { versiones: VersionProceso[] }) {
   return (
     <div className="flex flex-wrap items-center gap-espacio-2">
       {publicada ? (
-        <Pastilla tono="exito">Version {publicada.numero} publicada</Pastilla>
+        <Pastilla tono="exito">
+          {t("procesos.versionPublicada", { numero: publicada.numero })}
+        </Pastilla>
       ) : null}
-      {borrador ? <Pastilla tono="alerta">borrador</Pastilla> : null}
+      {borrador ? (
+        <Pastilla tono="alerta">{t("procesos.borradorEtiqueta")}</Pastilla>
+      ) : null}
       {!publicada && !borrador ? (
-        <Pastilla tono="neutro">archivada</Pastilla>
+        <Pastilla tono="neutro">{t("procesos.archivada")}</Pastilla>
       ) : null}
     </div>
   );
@@ -446,6 +463,7 @@ function EstudioProceso({
 }) {
   const idEstudio = useId();
   const { sesion } = useSesion();
+  const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [pasos, setPasos] = useState<Paso[]>([]);
   const [expandido, setExpandido] = useState<string | null>(null);
@@ -477,14 +495,13 @@ function EstudioProceso({
     pasos: Paso[];
   } | null>(null);
   const analisis = base ? inspeccionarGrafo(base.grafo) : null;
-  const bloqueo = analisis?.bloqueo ?? conflicto;
+  const bloqueo = analisis?.bloqueo ? t(analisis.bloqueo) : conflicto;
   const baseLista = !!borrador && base?.versionId === borrador.id;
   const hayCambios =
     baseLista &&
     !analisis?.bloqueo &&
     JSON.stringify(pasos) !== JSON.stringify(base.pasos);
-  const advertenciaSalida =
-    "Hay cambios sin guardar. ¿Querés descartarlos y salir del estudio?";
+  const advertenciaSalida = t("procesos.advertenciaSalida");
 
   useEffect(() => {
     if (!hayCambios) return;
@@ -534,9 +551,7 @@ function EstudioProceso({
       versionCargada.current.grafo !== firma
     ) {
       if (hayCambios) {
-        setConflicto(
-          "El borrador cambió en el servidor. El guardado y la publicación están bloqueados. Volvé al listado y abrí el estudio para cargar la versión actual.",
-        );
+        setConflicto(t("procesos.conflictoBorrador"));
         return;
       }
       versionCargada.current = { id: borrador.id, grafo: firma };
@@ -561,7 +576,7 @@ function EstudioProceso({
   const guardar = useMutation({
     mutationFn: () => {
       if (!baseLista || bloqueo || consulta.isFetching)
-        throw new Error(bloqueo ?? "El borrador todavía no está disponible");
+        throw new Error(bloqueo ?? t("procesos.borradorNoDisponible"));
       const grafo = serializarGrafo(base.grafo, pasos);
       return actualizarGrafo(borrador!.id, grafo);
     },
@@ -576,7 +591,7 @@ function EstudioProceso({
       setPasos(guardados);
       setError(null);
       setDetalles([]);
-      setAviso("Los pasos del borrador quedaron guardados.");
+      setAviso(t("procesos.guardadoOk"));
       refrescar();
     },
     onError: (fallo) => {
@@ -589,13 +604,13 @@ function EstudioProceso({
   const publicar = useMutation({
     mutationFn: () => {
       if (!baseLista || bloqueo || hayCambios || consulta.isFetching)
-        throw new Error(bloqueo ?? "Guardá los cambios antes de publicar");
+        throw new Error(bloqueo ?? t("procesos.guardarAntesDePublicar"));
       return publicarVersion(borrador!.id);
     },
     onSuccess: () => {
       setError(null);
       setDetalles([]);
-      setAviso("Version publicada. Las instancias nuevas usan esta version.");
+      setAviso(t("procesos.publicadoOk"));
       refrescar();
       clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
     },
@@ -608,7 +623,7 @@ function EstudioProceso({
 
   const clonar = useMutation({
     mutationFn: () =>
-      nuevaVersion(procesoId, "Version creada desde el estudio"),
+      nuevaVersion(procesoId, t("procesos.notaNuevaVersion")),
     onSuccess: () => {
       setError(null);
       setAviso(null);
@@ -656,7 +671,7 @@ function EstudioProceso({
         decision === "RECHAZADO" &&
         (!motivo?.trim() || motivo.trim().length > 512)
       )
-        throw new Error("Ingresá un motivo de rechazo de hasta 512 caracteres");
+        throw new Error(t("operacion.motivoRechazoError"));
       return completarTarea(tareaId, {
         actor: sesion?.email ?? "estudio",
         decision,
@@ -693,8 +708,7 @@ function EstudioProceso({
     publicar.isPending;
 
   function agregarPaso(tipo: TipoNodoProceso) {
-    const nombre =
-      TIPOS_PASO.find((opcion) => opcion.valor === tipo)?.texto ?? tipo;
+    const nombre = t(`tipoPaso.${tipo}`);
     const paso: Paso = {
       id:
         "paso-" +
@@ -707,7 +721,7 @@ function EstudioProceso({
     setPasos((actuales) => [...actuales, paso]);
     setExpandido(paso.id);
     setPasoAgregado(paso.id);
-    setAviso(`Se agrego el paso "${nombre}" al final. Configuralo y guarda el borrador.`);
+    setAviso(t("procesos.pasoAgregado", { nombre }));
   }
 
   function mover(id: string, desplazamiento: -1 | 1) {
@@ -727,8 +741,8 @@ function EstudioProceso({
     return (
       <>
         <Encabezado
-          titulo="Studio de proceso"
-          descripcion="Cargando la definición y sus versiones."
+          titulo={t("procesos.studioTitulo")}
+          descripcion={t("procesos.studioCargando")}
         />
         <Contenido>
           <Cargando filas={4} alto="h-24" />
@@ -740,18 +754,18 @@ function EstudioProceso({
     return (
       <>
         <Encabezado
-          titulo="Studio de proceso"
+          titulo={t("procesos.studioTitulo")}
           acciones={
             <Boton variante="fantasma" onClick={volver}>
-              Volver
+              {t("procesos.volver")}
             </Boton>
           }
         />
         <Contenido>
           <ErrorPanel
-            contexto="No se pudo cargar el editor de procesos"
+            contexto={t("procesos.errorEditor")}
             mensaje={mensajeDeError(consulta.error)}
-          error={consulta.error}
+            error={consulta.error}
             reintentar={() => consulta.refetch()}
           />
         </Contenido>
@@ -767,7 +781,7 @@ function EstudioProceso({
         acciones={
           <div className="flex flex-wrap gap-espacio-2">
             <Boton variante="fantasma" onClick={volver}>
-              Volver
+              {t("procesos.volver")}
             </Boton>
             {publicada ? (
               <Boton
@@ -776,7 +790,7 @@ function EstudioProceso({
                 disabled={probar.isPending}
                 onClick={() => probar.mutate()}
               >
-                Probar proceso
+                {t("procesos.probarProceso")}
               </Boton>
             ) : null}
           </div>
@@ -788,8 +802,7 @@ function EstudioProceso({
             role="note"
             className="mb-espacio-6 rounded-panel border border-informacion-borde bg-informacion-tenue p-espacio-4 text-pequeno text-tinta-media"
           >
-            Probar proceso crea una instancia real persistente de la versión
-            publicada, la version {publicada.numero}. No utiliza los cambios del borrador.
+            {t("procesos.probarNota", { numero: publicada.numero })}
           </p>
         ) : null}
         {aviso ? (
@@ -823,8 +836,8 @@ function EstudioProceso({
         {!borrador ? (
           <Tarjeta className="mb-5">
             <CabeceraTarjeta
-              titulo="Sin borrador abierto"
-              descripcion="Para editar el proceso, creá un borrador a partir de su versión más reciente. Las versiones existentes se conservan."
+              titulo={t("procesos.sinBorrador")}
+              descripcion={t("procesos.sinBorradorDesc")}
             />
             <div className="flex justify-end">
               <Boton
@@ -833,7 +846,7 @@ function EstudioProceso({
                 disabled={clonar.isPending}
                 onClick={() => clonar.mutate()}
               >
-                Nueva version
+                {t("procesos.nuevaVersion")}
               </Boton>
             </div>
           </Tarjeta>
@@ -843,21 +856,25 @@ function EstudioProceso({
             padding="p-espacio-4 sm:p-espacio-6"
           >
             <CabeceraTarjeta
-              titulo={`Borrador · version ${borrador.numero}`}
-              descripcion="Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados."
+              titulo={t("procesos.borradorVersion", {
+                numero: borrador.numero,
+              })}
+              descripcion={t("procesos.borradorDesc")}
               acciones={
                 <div className="flex flex-wrap items-center gap-espacio-2">
                   <GrupoSegmentado
-                    etiqueta="Forma de ver el recorrido"
+                    etiqueta={t("procesos.formaVerRecorrido")}
                     valor={vistaRecorrido}
                     alCambiar={setVistaRecorrido}
                     opciones={[
-                      { valor: "lista", texto: "Lista" },
-                      { valor: "diagrama", texto: "Diagrama" },
+                      { valor: "lista", texto: t("procesos.lista") },
+                      { valor: "diagrama", texto: t("procesos.diagrama") },
                     ]}
                   />
                   <Pastilla tono={hayCambios ? "alerta" : "neutro"}>
-                    {hayCambios ? "Sin guardar" : "Borrador"}
+                    {hayCambios
+                      ? t("procesos.sinGuardar")
+                      : t("procesos.borradorEtiqueta")}
                   </Pastilla>
                 </div>
               }
@@ -865,8 +882,8 @@ function EstudioProceso({
             {bloqueo ? (
               <div className="mt-espacio-4">
                 <ErrorPanel
-                  titulo="Esta versión no se puede editar de forma segura"
-                  mensaje={`${bloqueo} Podés verlo en el diagrama.`}
+                  titulo={t("procesos.versionNoEditable")}
+                  mensaje={t("procesos.versionNoEditableDesc", { bloqueo })}
                 />
               </div>
             ) : null}
@@ -880,29 +897,26 @@ function EstudioProceso({
                 role="status"
                 className="my-espacio-4 rounded-panel border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-alerta-texto"
               >
-                Hay cambios sin guardar. Guardá el borrador antes de publicar.
+                {t("procesos.hayCambios")}
               </p>
             ) : null}
             <p
               role="note"
               className="mb-espacio-5 mt-espacio-4 text-pequeno text-tinta-suave"
             >
-              El catálogo MVP0 permite publicar Solicitud de documento,
-              Formulario, Revisión humana y Temporizador. Los demás tipos del
-              selector pueden guardarse en borrador, pero Workflow impide
-              publicarlos.
+              {t("procesos.catalogoNota")}
             </p>
             <fieldset
               disabled={editandoBloqueado}
               className={`min-w-0 ${vistaRecorrido === "diagrama" ? "hidden" : ""}`}
             >
-              <legend className="sr-only">Edición del borrador</legend>
+              <legend className="sr-only">{t("procesos.edicionBorrador")}</legend>
               {!bloqueo ? (
                 <ol
-                  aria-label="Secuencia de pasos"
+                  aria-label={t("procesos.secuenciaPasos")}
                   className="mt-espacio-4 [&>li+li]:before:mx-auto [&>li+li]:before:block [&>li+li]:before:h-espacio-5 [&>li+li]:before:w-px [&>li+li]:before:bg-violeta-borde"
                 >
-                  <PasoFijo etiqueta="Inicio" />
+                  <PasoFijo etiqueta={t("procesos.inicio")} />
                   {pasos.map((paso, indice) => (
                     <li key={paso.id} id={"paso-" + paso.id}>
                       <Tarjeta
@@ -920,16 +934,16 @@ function EstudioProceso({
                           </span>
                           <div className="min-w-0 flex-1 basis-40">
                             <p className="break-words text-micro font-semibold tracking-wide text-tinta-suave">
-                              {paso.tipo}
+                              {t(`tipoNodo.${paso.tipo}`)}
                             </p>
                             <h3
                               id={`${idEstudio}-paso-${paso.id}`}
                               className="mt-espacio-1 break-words font-titulo text-titulo-panel text-tinta"
                             >
                               <span className="sr-only">
-                                Paso {indice + 1}:{" "}
+                                {t("procesos.pasoN", { numero: indice + 1 })}
                               </span>
-                              {paso.nombre || paso.tipo}
+                              {paso.nombre || t(`tipoNodo.${paso.tipo}`)}
                             </h3>
                           </div>
                           <div className="flex w-full flex-wrap items-center justify-between gap-espacio-2 sm:w-auto">
@@ -937,7 +951,10 @@ function EstudioProceso({
                               <BotonIcono
                                 variante="fantasma"
                                 tamano="sm"
-                                aria-label={`Subir paso ${indice + 1}: ${paso.nombre}`}
+                                aria-label={t("procesos.subirPaso", {
+                                  numero: indice + 1,
+                                  nombre: paso.nombre,
+                                })}
                                 disabled={indice === 0}
                                 onClick={() => mover(paso.id, -1)}
                               >
@@ -946,7 +963,10 @@ function EstudioProceso({
                               <BotonIcono
                                 variante="fantasma"
                                 tamano="sm"
-                                aria-label={`Bajar paso ${indice + 1}: ${paso.nombre}`}
+                                aria-label={t("procesos.bajarPaso", {
+                                  numero: indice + 1,
+                                  nombre: paso.nombre,
+                                })}
                                 disabled={indice === pasos.length - 1}
                                 onClick={() => mover(paso.id, 1)}
                               >
@@ -955,7 +975,10 @@ function EstudioProceso({
                               <BotonIcono
                                 variante="fantasma"
                                 tamano="sm"
-                                aria-label={`Quitar paso ${indice + 1}: ${paso.nombre}`}
+                                aria-label={t("procesos.quitarPaso", {
+                                  numero: indice + 1,
+                                  nombre: paso.nombre,
+                                })}
                                 onClick={() =>
                                   setPasos((actuales) =>
                                     actuales.filter(
@@ -983,7 +1006,9 @@ function EstudioProceso({
                                 )
                               }
                             >
-                              {expandido === paso.id ? "Ocultar" : "Configurar"}
+                              {expandido === paso.id
+                                ? t("procesos.ocultar")
+                                : t("procesos.configurar")}
                             </Boton>
                           </div>
                         </div>
@@ -1010,13 +1035,13 @@ function EstudioProceso({
                       </Tarjeta>
                     </li>
                   ))}
-                  <PasoFijo etiqueta="Fin" />
+                  <PasoFijo etiqueta={t("procesos.fin")} />
                 </ol>
               ) : null}
               <div className="mt-espacio-6 grid gap-espacio-5 border-t border-borde pt-espacio-5">
                 <Selector
-                  etiqueta="Agregar paso"
-                  ayuda="El paso nuevo se suma al final del recorrido y se abre para que lo configures."
+                  etiqueta={t("procesos.agregarPaso")}
+                  ayuda={t("procesos.agregarPasoAyuda")}
                   disabled={editandoBloqueado}
                   value={tipoNuevoPaso}
                   onChange={(evento) => {
@@ -1029,10 +1054,10 @@ function EstudioProceso({
                   }}
                   className="w-full sm:max-w-sm"
                 >
-                  <option value="">Elegi un tipo de paso...</option>
+                  <option value="">{t("procesos.elegirTipo")}</option>
                   {TIPOS_PASO.map((opcion) => (
-                    <option key={opcion.valor} value={opcion.valor}>
-                      {opcion.texto}
+                    <option key={opcion} value={opcion}>
+                      {t(`tipoPaso.${opcion}`)}
                     </option>
                   ))}
                 </Selector>
@@ -1043,7 +1068,7 @@ function EstudioProceso({
                     disabled={guardar.isPending}
                     onClick={() => guardar.mutate()}
                   >
-                    Guardar borrador
+                    {t("procesos.guardarBorrador")}
                   </Boton>
                   <Boton
                     variante="primario"
@@ -1053,7 +1078,9 @@ function EstudioProceso({
                     }
                     onClick={() => publicar.mutate()}
                   >
-                    Publicar version {borrador.numero}
+                    {t("procesos.publicarVersion", {
+                      numero: borrador.numero,
+                    })}
                   </Boton>
                 </div>
               </div>
@@ -1064,14 +1091,18 @@ function EstudioProceso({
         {publicada ? (
           <Tarjeta>
             <CabeceraTarjeta
-              titulo={`Versión ${publicada.numero} publicada`}
-              descripcion="Las instancias nuevas usan esta versión. Una instancia ya iniciada conserva su versión aunque publiques otra."
-              acciones={<Pastilla tono="exito">Publicada</Pastilla>}
+              titulo={t("procesos.versionPublicadaTitulo", {
+                numero: publicada.numero,
+              })}
+              descripcion={t("procesos.versionPublicadaDesc")}
+              acciones={
+                <Pastilla tono="exito">{t("procesos.publicada")}</Pastilla>
+              }
             />
             <dl className="mt-espacio-4 grid gap-espacio-4 sm:grid-cols-3">
               <div>
                 <dt className="text-micro uppercase tracking-wide text-tinta-suave">
-                  Publicada
+                  {t("procesos.publicada")}
                 </dt>
                 <dd className="mt-espacio-1 text-pequeno text-tinta">
                   {publicada.publicada ? formatearFecha(publicada.publicada) : "—"}
@@ -1079,7 +1110,7 @@ function EstudioProceso({
               </div>
               <div>
                 <dt className="text-micro uppercase tracking-wide text-tinta-suave">
-                  Pasos del recorrido
+                  {t("procesos.pasosDelRecorrido")}
                 </dt>
                 <dd className="mt-espacio-1 text-pequeno text-tinta tabular-nums">
                   {inspeccionarGrafo(publicada.grafo).pasos.length}
@@ -1087,21 +1118,20 @@ function EstudioProceso({
               </div>
               <div>
                 <dt className="text-micro uppercase tracking-wide text-tinta-suave">
-                  Nota de la versión
+                  {t("procesos.notaVersion")}
                 </dt>
                 <dd className="mt-espacio-1 text-pequeno text-tinta [overflow-wrap:anywhere]">
-                  {publicada.cambios?.trim() || "Sin nota"}
+                  {publicada.cambios?.trim() || t("procesos.sinNota")}
                 </dd>
               </div>
             </dl>
             {publicada.hash ? (
               <details className="mt-espacio-4 border-t border-borde pt-espacio-3">
                 <summary className="cursor-pointer text-pequeno text-tinta-suave">
-                  Huella de integridad
+                  {t("procesos.huella")}
                 </summary>
                 <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-                  Identifica de forma única el contenido de esta versión. Sirve para auditoría:
-                  si el recorrido publicado cambiara, la huella cambia.
+                  {t("procesos.huellaDesc")}
                 </p>
                 <p className="mt-espacio-2 break-all rounded-control bg-lienzo p-espacio-3 font-codigo text-codigo text-tinta-suave">
                   {publicada.hash}
@@ -1156,20 +1186,21 @@ function ConfiguracionPaso({
   paso: Paso;
   alCambiar: (cambio: Partial<Paso>) => void;
 }) {
+  const { t } = useIdioma();
   return (
     <div className="rounded-b-tarjeta border-t border-violeta-borde bg-lienzo p-espacio-4 sm:p-espacio-5">
       <p className="mb-espacio-4 text-pequeno font-semibold text-tinta">
-        Configuración del paso
+        {t("procesos.configuracionPaso")}
       </p>
       <div className="grid gap-espacio-4 md:grid-cols-2 xl:grid-cols-3">
         <Campo
-          etiqueta="Nombre del paso"
+          etiqueta={t("procesos.nombreDelPaso")}
           value={paso.nombre}
           onChange={(evento) => alCambiar({ nombre: evento.target.value })}
         />
         {paso.tipo === "SOLICITUD_DOCUMENTO" ? (
           <Campo
-            etiqueta="Tipo de documento"
+            etiqueta={t("procesos.tipoDocumento")}
             placeholder="FACTURA_COMERCIAL"
             value={paso.tipoDocumento ?? ""}
             onChange={(evento) =>
@@ -1179,7 +1210,7 @@ function ConfiguracionPaso({
         ) : null}
         {paso.tipo === "SUBPROCESO" ? (
           <Campo
-            etiqueta="Codigo del subproceso"
+            etiqueta={t("procesos.codigoSubproceso")}
             placeholder="COMEX-OV-DG"
             value={paso.subprocesoCodigo ?? ""}
             onChange={(evento) =>
@@ -1195,8 +1226,8 @@ function ConfiguracionPaso({
           "TAREA_EXTERNA",
         ].includes(paso.tipo) ? (
           <Campo
-            etiqueta="Responsable"
-            placeholder="comex@empresa.com o rol"
+            etiqueta={t("procesos.responsablePaso")}
+            placeholder={t("procesos.responsablePlaceholder")}
             value={paso.asignadoA ?? ""}
             onChange={(evento) => alCambiar({ asignadoA: evento.target.value })}
           />
@@ -1210,7 +1241,7 @@ function ConfiguracionPaso({
           "TEMPORIZADOR",
         ].includes(paso.tipo) ? (
           <Campo
-            etiqueta="SLA (horas)"
+            etiqueta={t("procesos.slaHoras")}
             type="number"
             min={1}
             value={paso.slaHoras ?? ""}
@@ -1243,6 +1274,7 @@ function PanelPrueba({
   completando: boolean;
   alAbrir: (instanciaId: string) => void;
 }) {
+  const { t } = useIdioma();
   const [tareaRechazo, setTareaRechazo] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const enviando = useRef(false);
@@ -1266,7 +1298,7 @@ function PanelPrueba({
   if (!instancia) {
     return (
       <Tarjeta className="mt-espacio-6">
-        <CabeceraTarjeta titulo="Cargando instancia de prueba" />
+        <CabeceraTarjeta titulo={t("procesos.cargandoPrueba")} />
         <Cargando filas={2} />
       </Tarjeta>
     );
@@ -1282,11 +1314,16 @@ function PanelPrueba({
     <Tarjeta className="mt-espacio-6" padding="p-espacio-4 sm:p-espacio-6">
       <div className="flex flex-wrap items-start justify-between gap-espacio-4">
         <CabeceraTarjeta
-          titulo={`Prueba: instancia ${instancia.id.slice(0, 8)}`}
-          descripcion={`Estado ${instancia.estado} · version ${instancia.numeroVersion}`}
+          titulo={t("procesos.pruebaTitulo", {
+            id: instancia.id.slice(0, 8),
+          })}
+          descripcion={t("procesos.pruebaEstado", {
+            estado: t(`estadoInstancia.${instancia.estado}`),
+            version: instancia.numeroVersion,
+          })}
         />
         <Boton variante="fantasma" onClick={() => alAbrir(instancia.id)}>
-          Abrir en Instancias
+          {t("procesos.abrirEnInstancias")}
         </Boton>
       </div>
       {finalizada ? (
@@ -1294,7 +1331,9 @@ function PanelPrueba({
           role="status"
           className="mt-espacio-4 rounded-panel border border-borde bg-lienzo p-espacio-4 text-pequeno text-tinta-media"
         >
-          La instancia terminó {instancia.estado.toLowerCase()}.
+          {t("procesos.instanciaTermino", {
+            estado: t(`estadoInstancia.${instancia.estado}`).toLowerCase(),
+          })}
         </p>
       ) : (
         <>
@@ -1303,16 +1342,16 @@ function PanelPrueba({
             className="mt-espacio-4 text-pequeno text-tinta-media"
           >
             {instancia.estado === "BLOQUEADA"
-              ? "La instancia está bloqueada y no admite completar tareas."
+              ? t("procesos.instanciaBloqueada")
               : instancia.estado === "CREADA"
-                ? "La instancia está creada y todavía no admite completar tareas."
+                ? t("procesos.instanciaCreada")
                 : instancia.estado === "ESPERANDO"
-                  ? "La instancia está esperando la resolución de tareas."
-                  : "La instancia está activa."}
+                  ? t("procesos.instanciaEsperando")
+                  : t("procesos.instanciaActiva")}
           </p>
           {pendientes.length ? (
             <ul
-              aria-label="Tareas pendientes o vencidas de la prueba"
+              aria-label={t("procesos.tareasPrueba")}
               className="mt-espacio-5 space-y-espacio-4"
             >
               {pendientes.map((tarea) => (
@@ -1322,11 +1361,13 @@ function PanelPrueba({
                 >
                   <div className="flex flex-wrap items-center gap-espacio-3">
                     <div className="flex min-w-0 basis-full flex-wrap gap-espacio-2">
-                      <Pastilla tono="violeta">{tarea.tipoNodo}</Pastilla>
+                      <Pastilla tono="violeta">
+                        {t(`tipoNodo.${tarea.tipoNodo}`)}
+                      </Pastilla>
                       <Pastilla
                         tono={tarea.estado === "VENCIDA" ? "alerta" : "neutro"}
                       >
-                        {tarea.estado}
+                        {t(`estadoTarea.${tarea.estado}`)}
                       </Pastilla>
                     </div>
                     <h3 className="min-w-0 basis-full break-words font-titulo text-titulo-panel text-tinta sm:flex-1 sm:basis-auto">
@@ -1341,7 +1382,7 @@ function PanelPrueba({
                             disabled={completando}
                             onClick={() => enviar(tarea.id, "APROBADO")}
                           >
-                            Aprobar
+                            {t("operacion.aprobar")}
                           </Boton>
                           <Boton
                             variante="peligro"
@@ -1352,7 +1393,7 @@ function PanelPrueba({
                               setMotivo("");
                             }}
                           >
-                            Rechazar
+                            {t("operacion.rechazar")}
                           </Boton>
                         </>
                       ) : (
@@ -1362,7 +1403,7 @@ function PanelPrueba({
                           disabled={completando}
                           onClick={() => enviar(tarea.id)}
                         >
-                          Completar
+                          {t("operacion.completar")}
                         </Boton>
                       )
                     ) : null}
@@ -1376,7 +1417,7 @@ function PanelPrueba({
                       }}
                     >
                       <Campo
-                        etiqueta="Motivo del rechazo"
+                        etiqueta={t("procesos.motivoRechazo")}
                         value={motivo}
                         onChange={(evento) => setMotivo(evento.target.value)}
                         required
@@ -1394,7 +1435,7 @@ function PanelPrueba({
                             !motivo.trim() || motivo.trim().length > 512
                           }
                         >
-                          Confirmar rechazo
+                          {t("procesos.confirmarRechazo")}
                         </Boton>
                         <Boton
                           type="button"
@@ -1406,7 +1447,7 @@ function PanelPrueba({
                             setMotivo("");
                           }}
                         >
-                          Cancelar
+                          {t("comun.cancelar")}
                         </Boton>
                       </div>
                     </form>
@@ -1416,7 +1457,7 @@ function PanelPrueba({
             </ul>
           ) : (
             <p className="mt-2 text-sm text-tinta-suave">
-              Sin tareas pendientes o vencidas.
+              {t("procesos.sinTareasPendientes")}
             </p>
           )}
           {completando ? (
@@ -1425,7 +1466,7 @@ function PanelPrueba({
               aria-busy="true"
               className="mt-2 text-sm text-tinta-suave"
             >
-              Enviando decisión…
+              {t("procesos.enviandoDecision")}
             </p>
           ) : null}
         </>

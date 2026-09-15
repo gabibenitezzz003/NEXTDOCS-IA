@@ -66,12 +66,14 @@ public class OauthLoginService {
 
 	private final ObjectMapper mapeador;
 
+	private final MensajesService mensajes;
+
 	private final HttpClient http;
 
 	public OauthLoginService(ProveedorIdentidadRepository proveedorIdentidadRepository,
 			TenantRepository tenantRepository, FederacionIdentidadService federacionIdentidadService,
 			VerificadorTokenIdpService verificadorTokenIdpService, PropiedadesFederacion propiedades,
-			PropiedadesSeguridad seguridad, ObjectMapper mapeador) {
+			PropiedadesSeguridad seguridad, ObjectMapper mapeador, MensajesService mensajes) {
 		this.proveedorIdentidadRepository = proveedorIdentidadRepository;
 		this.tenantRepository = tenantRepository;
 		this.federacionIdentidadService = federacionIdentidadService;
@@ -79,6 +81,7 @@ public class OauthLoginService {
 		this.propiedades = propiedades;
 		this.seguridad = seguridad;
 		this.mapeador = mapeador;
+		this.mensajes = mensajes;
 		this.http = HttpClient.newBuilder()
 				.connectTimeout(Duration.ofMillis(propiedades.getTiempoEsperaMilisegundos())).build();
 	}
@@ -143,16 +146,21 @@ public class OauthLoginService {
 	}
 
 	public String resolverCallback(String codigo, String estado, String errorIdp) {
+		return resolverCallback(codigo, estado, errorIdp, null);
+	}
+
+	public String resolverCallback(String codigo, String estado, String errorIdp, String acceptLanguage) {
+		String idioma = mensajes.idiomaDe(acceptLanguage);
 		EstadoOauth datos;
 		try {
 			datos = leerEstado(estado);
 		}
 		catch (RuntimeException e) {
-			return urlError("El estado de la federacion no es valido o vencio");
+			return urlError("El estado de la federacion no es valido o vencio", idioma);
 		}
 		String portal = datos.retorno == null ? urlPortal() : datos.retorno;
 		if (errorIdp != null && !errorIdp.isBlank()) {
-			return urlErrorPortal(portal, "El proveedor rechazo el ingreso: " + errorIdp);
+			return urlErrorPortal(portal, "El proveedor rechazo el ingreso: " + errorIdp, idioma);
 		}
 		try {
 			ProveedorIdentidad proveedor = proveedorOauth(datos.tenant, datos.proveedor);
@@ -171,7 +179,7 @@ public class OauthLoginService {
 		}
 		catch (RuntimeException e) {
 			log.warn("Fallo el callback OAuth para el tenant {}: {}", datos.tenant, e.getMessage());
-			return urlErrorPortal(portal, e.getMessage());
+			return urlErrorPortal(portal, e.getMessage(), idioma);
 		}
 	}
 
@@ -312,16 +320,16 @@ public class OauthLoginService {
 		return propiedades.getUrlBasePortal();
 	}
 
-	public String urlErrorInicio(String mensaje) {
-		return urlError(mensaje);
+	public String urlErrorInicio(String mensaje, String acceptLanguage) {
+		return urlError(mensaje, mensajes.idiomaDe(acceptLanguage));
 	}
 
-	private String urlError(String mensaje) {
-		return urlErrorPortal(urlPortal(), mensaje);
+	private String urlError(String mensaje, String idioma) {
+		return urlErrorPortal(urlPortal(), mensaje, idioma);
 	}
 
-	private String urlErrorPortal(String portal, String mensaje) {
-		return portal + "/ingresar?errorFederado=" + codificar(mensaje);
+	private String urlErrorPortal(String portal, String mensaje, String idioma) {
+		return portal + "/ingresar?errorFederado=" + codificar(mensajes.resolverEnIdioma(mensaje, idioma));
 	}
 
 	private String codificar(String valor) {

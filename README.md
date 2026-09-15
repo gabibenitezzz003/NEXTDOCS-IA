@@ -46,6 +46,7 @@ El motor de procesos vive en el repositorio hermano `gabibenitezzz003/nextdocs-w
 
 - **Core documental**: ingesta, clasificación, extracción (Gemini/DeepSeek), validación por reglas versionadas, revisión humana, excepciones, auditoría completa, gobernanza, exportación, retención y costo por tenant.
 - **Login social**: Google y Microsoft sobre la federación por tenant, con aprovisionamiento automático del usuario y vínculo por email a cuentas existentes.
+- **Multi-idioma (es/en/pt)**: portal y errores del backend traducidos, selector de idioma con persistencia en el perfil y `Accept-Language` en cada request; detalle en `docs/I18N.md`.
 - **Workflow runtime**: semántica real por tipo de nodo — temporizadores que avanzan solos, tareas externas con enlace de un solo uso, solicitud de documento validada, validación IA que bloquea, acciones API, notificaciones, decisiones y subprocesos.
 - **Operación de procesos**: bandejas de instancias y tareas con filtros por estado, proceso y responsable; detalle con datos del proceso y timeline.
 - **IA Supervisora**: motor de condiciones (umbral + operador), evaluación automática al completar tareas, hallazgos resolubles y pantalla de reglas.

@@ -78,7 +78,7 @@ for (const caso of [
     if (caso === "id duplicado") grafo.nodos[2].id = grafo.nodos[1].id;
     const original = structuredClone(grafo);
     expect(inspeccionarGrafo(grafo).bloqueo).toBeTruthy();
-    expect(() => serializarGrafo(grafo, [])).toThrow(/no puede representar fielmente/);
+    expect(() => serializarGrafo(grafo, [])).toThrow("procesos.bloqueoSecuencial");
     expect(grafo).toEqual(original);
   });
 }

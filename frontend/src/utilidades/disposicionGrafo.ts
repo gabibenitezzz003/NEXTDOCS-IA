@@ -41,13 +41,13 @@ function sinDatos(problema: string): Disposicion {
 
 export function disponerGrafo(grafo: GrafoProceso | undefined): Disposicion {
   if (!grafo || !Array.isArray(grafo.nodos) || !Array.isArray(grafo.aristas)) {
-    return sinDatos("El recorrido no tiene un formato que se pueda dibujar.");
+    return sinDatos("diagramaProceso.problemaFormato");
   }
   if (!grafo.nodos.length) return VACIA;
 
   const porId = new Map(grafo.nodos.map((nodo) => [nodo.id, nodo]));
   if (porId.size !== grafo.nodos.length) {
-    return sinDatos("El recorrido tiene pasos repetidos.");
+    return sinDatos("diagramaProceso.problemaRepetidos");
   }
 
   const aristas = grafo.aristas.filter(
@@ -131,8 +131,6 @@ export function disponerGrafo(grafo: GrafoProceso | undefined): Disposicion {
     filas: Math.max(...[...porColumna.values()].map((ids) => ids.length)),
     hayRamas,
     hayCiclos,
-    problema: hayCiclos
-      ? "El recorrido tiene un ciclo. El diagrama lo dibuja igual, pero el orden de los pasos es aproximado."
-      : null,
+    problema: hayCiclos ? "diagramaProceso.problemaCiclo" : null,
   };
 }

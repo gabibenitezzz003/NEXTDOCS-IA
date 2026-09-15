@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { tituloDeError } from "../api/cliente";
+import { useIdioma } from "../contextos/ProveedorIdioma";
 import { IconoInfo, IconoRecargar, IconoVacio } from "./Iconos";
 import { Boton } from "./Interfaz";
 
@@ -10,6 +11,7 @@ export function Cargando({
   filas?: number;
   alto?: string;
 }) {
+  const { t } = useIdioma();
   return (
     <div
       className="space-y-espacio-3"
@@ -17,7 +19,7 @@ export function Cargando({
       aria-busy="true"
       aria-atomic="true"
     >
-      <span className="sr-only">Cargando contenido</span>
+      <span className="sr-only">{t("comun.cargandoContenido")}</span>
       {Array.from({ length: filas }).map((_, indice) => (
         <div
           key={indice}
@@ -30,6 +32,7 @@ export function Cargando({
 }
 
 export function CargandoTarjetas({ cantidad = 4 }: { cantidad?: number }) {
+  const { t } = useIdioma();
   return (
     <div
       className="grid gap-espacio-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
@@ -37,7 +40,7 @@ export function CargandoTarjetas({ cantidad = 4 }: { cantidad?: number }) {
       aria-busy="true"
       aria-atomic="true"
     >
-      <span className="sr-only">Cargando tarjetas</span>
+      <span className="sr-only">{t("comun.cargandoTarjetas")}</span>
       {Array.from({ length: cantidad }).map((_, indice) => (
         <div
           key={indice}
@@ -96,8 +99,9 @@ export function ErrorPanel({
   error?: unknown;
   contexto?: string;
 }) {
+  const { t } = useIdioma();
   const encabezado =
-    titulo ?? (error === undefined ? "No se pudo cargar" : tituloDeError(error));
+    titulo ?? (error === undefined ? t("comun.noSePudoCargar") : tituloDeError(error));
   const detalle = contexto ? `${contexto}. ${mensaje}` : mensaje;
   return (
     <div
@@ -124,7 +128,7 @@ export function ErrorPanel({
           <span aria-hidden="true" className="inline-flex">
             <IconoRecargar tamano={14} />
           </span>
-          Reintentar
+          {t("comun.reintentar")}
         </Boton>
       ) : null}
     </div>

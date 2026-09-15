@@ -80,7 +80,8 @@ class OauthLoginServiceTest {
 		PropiedadesSeguridad seguridad = new PropiedadesSeguridad();
 		seguridad.setJwtSecreto("secreto-de-prueba-con-mas-de-32-bytes-seguro");
 		servicio = new OauthLoginService(proveedorIdentidadRepository, tenantRepository,
-				federacionIdentidadService, verificadorTokenIdpService, propiedades, seguridad, MAPEADOR);
+				federacionIdentidadService, verificadorTokenIdpService, propiedades, seguridad, MAPEADOR,
+				new MensajesService(MAPEADOR));
 		servidorToken = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
 		servidorToken.createContext("/token", intercambio -> {
 			cuerpoRecibido = new String(intercambio.getRequestBody().readAllBytes(),

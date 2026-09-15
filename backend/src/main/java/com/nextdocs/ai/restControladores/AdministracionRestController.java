@@ -9,6 +9,7 @@ import com.nextdocs.ai.modelos.CambioClaveReqModel;
 import com.nextdocs.ai.modelos.CuentaServicioCreadaModel;
 import com.nextdocs.ai.modelos.CuentaServicioModel;
 import com.nextdocs.ai.modelos.CuentaServicioReqModel;
+import com.nextdocs.ai.modelos.IdiomaReqModel;
 import com.nextdocs.ai.modelos.RolModel;
 import com.nextdocs.ai.modelos.RolReqModel;
 import com.nextdocs.ai.modelos.TenantModel;
@@ -88,6 +89,12 @@ public class AdministracionRestController extends ControladorRest<Administracion
 	public ResponseEntity<Void> cambiarClavePropia(@Valid @RequestBody CambioClaveReqModel datos) {
 		usuarioService.cambiarClave(tenantId(), usuarioObligatorio(), datos);
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+	}
+
+	@PutMapping("/perfil/idioma")
+	public ResponseEntity<UsuarioModel> cambiarIdiomaPropio(@Valid @RequestBody IdiomaReqModel datos) {
+		return new ResponseEntity<>(usuarioService.cambiarIdioma(tenantId(), usuarioObligatorio().getId(),
+				datos.getIdioma()), HttpStatus.OK);
 	}
 
 	@PreAuthorize("hasAuthority('tenant.administrar')")
