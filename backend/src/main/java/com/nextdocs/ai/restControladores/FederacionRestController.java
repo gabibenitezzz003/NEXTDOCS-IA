@@ -64,7 +64,13 @@ public class FederacionRestController extends ControladorRest<FederacionRestCont
 	@GetMapping("/oauth/{codigoTenant}/{codigoProveedor}/iniciar")
 	public ResponseEntity<Void> iniciar(@PathVariable String codigoTenant,
 			@PathVariable String codigoProveedor, @RequestParam(required = false) String retorno) {
-		String destino = oauthLoginService.iniciar(codigoTenant, codigoProveedor, retorno);
+		String destino;
+		try {
+			destino = oauthLoginService.iniciar(codigoTenant, codigoProveedor, retorno);
+		}
+		catch (RuntimeException e) {
+			destino = oauthLoginService.urlErrorInicio(e.getMessage());
+		}
 		return ResponseEntity.status(HttpStatus.FOUND).header("Location", destino).build();
 	}
 

@@ -144,6 +144,15 @@ export function Ingresar() {
 
   function iniciarOauth(codigoProveedor: string) {
     setError(null);
+    if (
+      proveedoresOauth &&
+      !proveedoresOauth.some((p) => p.codigo === codigoProveedor)
+    ) {
+      setError(
+        `La organización "${tenantLimpio}" no tiene habilitado ese acceso. Revisá el nombre de tu organización.`,
+      );
+      return;
+    }
     window.location.assign(urlInicioOauth(tenantLimpio, codigoProveedor));
   }
 
