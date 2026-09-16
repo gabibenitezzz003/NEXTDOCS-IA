@@ -257,6 +257,10 @@ Piezas, todas declaradas en `infra/compose.produccion.yml`:
   `NEXT_PUBLIC_BASE_PATH=/firma` en tiempo de build: la imagen oficial no sirve la app
   bajo un subpath en runtime. Escucha en `127.0.0.1:3001` y nginx la publica en
   `https://<dominio>/firma/` (location propio, ver `infra/nginx/nextdocs-ia.conf`).
+  El build emite los assets como `/firmaassets/*` (bug del base path sin barra final)
+  y React Router pide `/__manifest` en raíz: nginx reescribe ambos hacia
+  `/firma/assets/*` y `/firma/__manifest`. Sin esos dos location el visor de la página
+  de firma queda colgado.
 - Base `documenso` en el mismo RDS con usuario dedicado `documenso`; las migraciones
   las aplica la imagen al arrancar.
 - Certificado de firma local `cert.p12` montado sólo lectura desde
