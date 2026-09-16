@@ -414,6 +414,72 @@ function EstudioProceso({
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [grafoTrabajo, setGrafoTrabajo] = useState<GrafoProceso | null>(null);
+  const pilaDeshacer = useRef<GrafoProceso[]>([]);
+  const pilaRehacer = useRef<GrafoProceso[]>([]);
+  const rafagaEdicion = useRef({ continua: false, instante: 0 });
+  const [historial, setHistorial] = useState({ deshacer: 0, rehacer: 0 });
+
+  function aplicarGrafo(
+    siguiente: GrafoProceso | ((actual: GrafoProceso) => GrafoProceso),
+    continuo = false,
+  ) {
+    setGrafoTrabajo((actual) => {
+      if (!actual) return actual;
+      const nuevo =
+        typeof siguiente === "function" ? siguiente(actual) : siguiente;
+      if (nuevo === actual) return actual;
+      const ahora = Date.now();
+      const estructural =
+        nuevo.nodos.length !== actual.nodos.length ||
+        nuevo.aristas.length !== actual.aristas.length;
+      const enRafaga =
+        !estructural &&
+        rafagaEdicion.current.continua === continuo &&
+        ahora - rafagaEdicion.current.instante < 700;
+      if (!enRafaga) {
+        pilaDeshacer.current.push(actual);
+        if (pilaDeshacer.current.length > 60) pilaDeshacer.current.shift();
+        pilaRehacer.current = [];
+        setHistorial({
+          deshacer: pilaDeshacer.current.length,
+          rehacer: 0,
+        });
+      }
+      rafagaEdicion.current = { continua: continuo, instante: ahora };
+      return nuevo;
+    });
+  }
+
+  function deshacer() {
+    const anterior = pilaDeshacer.current.pop();
+    if (!anterior || !grafoTrabajo) return;
+    pilaRehacer.current.push(grafoTrabajo);
+    rafagaEdicion.current = { continua: false, instante: 0 };
+    setGrafoTrabajo(anterior);
+    setHistorial({
+      deshacer: pilaDeshacer.current.length,
+      rehacer: pilaRehacer.current.length,
+    });
+  }
+
+  function rehacer() {
+    const siguiente = pilaRehacer.current.pop();
+    if (!siguiente || !grafoTrabajo) return;
+    pilaDeshacer.current.push(grafoTrabajo);
+    rafagaEdicion.current = { continua: false, instante: 0 };
+    setGrafoTrabajo(siguiente);
+    setHistorial({
+      deshacer: pilaDeshacer.current.length,
+      rehacer: pilaRehacer.current.length,
+    });
+  }
+
+  function limpiarHistorial() {
+    pilaDeshacer.current = [];
+    pilaRehacer.current = [];
+    rafagaEdicion.current = { continua: false, instante: 0 };
+    setHistorial({ deshacer: 0, rehacer: 0 });
+  }
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [detalles, setDetalles] = useState<string[]>([]);
@@ -500,6 +566,7 @@ function EstudioProceso({
       setConflicto(null);
       const grafo = structuredClone(borrador.grafo);
       setBase({ versionId: borrador.id, grafo });
+      limpiarHistorial();
       setGrafoTrabajo(structuredClone(grafo));
     }
   }, [borrador]);
@@ -520,6 +587,7 @@ function EstudioProceso({
       };
       const grafo = structuredClone(version.grafo);
       setBase({ versionId: version.id, grafo });
+      limpiarHistorial();
       setGrafoTrabajo(structuredClone(grafo));
       setError(null);
       setDetalles([]);
@@ -658,7 +726,7 @@ function EstudioProceso({
     publicar.isPending;
 
   function editarNodo(id: string, siguiente: NodoProceso) {
-    setGrafoTrabajo((actual) =>
+    aplicarGrafo((actual) =>
       actual
         ? {
             ...actual,
@@ -671,7 +739,7 @@ function EstudioProceso({
   }
 
   function duplicarNodo(id: string) {
-    setGrafoTrabajo((actual) => {
+    aplicarGrafo((actual) => {
       const original = actual?.nodos.find((nodo) => nodo.id === id);
       if (!actual || !original) return actual;
       const copia: NodoProceso = {
@@ -700,7 +768,7 @@ function EstudioProceso({
     const nodo = grafoTrabajo?.nodos.find((actual) => actual.id === id);
     if (!nodo) return;
     if (!window.confirm(t("canvas.confirmarEliminarNodo"))) return;
-    setGrafoTrabajo((actual) =>
+    aplicarGrafo((actual) =>
       actual
         ? {
             ...actual,
@@ -715,7 +783,7 @@ function EstudioProceso({
   }
 
   function editarArista(clave: string, condicion?: string) {
-    setGrafoTrabajo((actual) =>
+    aplicarGrafo((actual) =>
       actual
         ? {
             ...actual,
@@ -731,7 +799,7 @@ function EstudioProceso({
 
   function eliminarArista(clave: string) {
     if (!window.confirm(t("canvas.confirmarEliminarConexion"))) return;
-    setGrafoTrabajo((actual) =>
+    aplicarGrafo((actual) =>
       actual
         ? {
             ...actual,
@@ -770,6 +838,28 @@ function EstudioProceso({
     window.addEventListener("keydown", alTecla);
     return () => window.removeEventListener("keydown", alTecla);
   }, [seleccion, editandoBloqueado, grafoTrabajo]);
+
+  useEffect(() => {
+    if (editandoBloqueado) return;
+    const alTecla = (evento: KeyboardEvent) => {
+      if (!(evento.ctrlKey || evento.metaKey)) return;
+      const destino = evento.target as HTMLElement | null;
+      if (destino && destino.isContentEditable) return;
+      const tecla = evento.key.toLowerCase();
+      if (tecla === "z" && evento.shiftKey) {
+        evento.preventDefault();
+        rehacer();
+      } else if (tecla === "z") {
+        evento.preventDefault();
+        deshacer();
+      } else if (tecla === "y") {
+        evento.preventDefault();
+        rehacer();
+      }
+    };
+    window.addEventListener("keydown", alTecla);
+    return () => window.removeEventListener("keydown", alTecla);
+  });
 
   if (consulta.isPending) {
     return (
@@ -936,10 +1026,14 @@ function EstudioProceso({
               <div className="mt-espacio-5 grid items-start gap-espacio-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
                 <CanvasProceso
                   grafo={grafoTrabajo}
-                  alCambiar={setGrafoTrabajo}
+                  alCambiar={aplicarGrafo}
                   seleccion={seleccion}
                   alSeleccionar={setSeleccion}
                   deshabilitado={editandoBloqueado}
+                  alDeshacer={deshacer}
+                  alRehacer={rehacer}
+                  puedeDeshacer={historial.deshacer > 0}
+                  puedeRehacer={historial.rehacer > 0}
                 />
                 <PanelSeleccion
                   seleccion={seleccion}

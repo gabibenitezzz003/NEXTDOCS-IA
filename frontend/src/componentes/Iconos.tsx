@@ -312,6 +312,24 @@ export function IconoCopiar(props: PropsIcono) {
   );
 }
 
+export function IconoDeshacer(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M8 5 4 9l4 4" />
+      <path d="M4 9h9a6 6 0 0 1 6 6v1" />
+    </Base>
+  );
+}
+
+export function IconoRehacer(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="m16 5 4 4-4 4" />
+      <path d="M20 9h-9a6 6 0 0 0-6 6v1" />
+    </Base>
+  );
+}
+
 export function IconoSol(props: PropsIcono) {
   return (
     <Base {...props}>

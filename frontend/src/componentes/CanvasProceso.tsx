@@ -11,6 +11,7 @@ import { Boton, BotonIcono, Selector } from "./Interfaz";
 import {
   IconoAjustar,
   IconoCheck,
+  IconoDeshacer,
   IconoDocumentos,
   IconoInfo,
   IconoMas,
@@ -19,6 +20,7 @@ import {
   IconoPanel,
   IconoProceso,
   IconoRecargar,
+  IconoRehacer,
   IconoReloj,
   IconoSupervisora,
   IconoTareas,
@@ -31,6 +33,9 @@ const RADIO_PUERTO = 6;
 const SEP_X = 150;
 const SEP_Y = 96;
 const GRID = 24;
+const MINI_ANCHO = 168;
+const MINI_ALTO = 104;
+const MINI_MARGEN = 60;
 
 export interface SeleccionCanvas {
   tipo: "nodo" | "arista";
@@ -126,13 +131,21 @@ export function CanvasProceso({
   alSeleccionar,
   deshabilitado = false,
   soloLectura = false,
+  alDeshacer,
+  alRehacer,
+  puedeDeshacer = false,
+  puedeRehacer = false,
 }: {
   grafo: GrafoProceso;
-  alCambiar: (grafo: GrafoProceso) => void;
+  alCambiar: (grafo: GrafoProceso, continuo?: boolean) => void;
   seleccion: SeleccionCanvas | null;
   alSeleccionar: (seleccion: SeleccionCanvas | null) => void;
   deshabilitado?: boolean;
   soloLectura?: boolean;
+  alDeshacer?: () => void;
+  alRehacer?: () => void;
+  puedeDeshacer?: boolean;
+  puedeRehacer?: boolean;
 }) {
   const { t } = useIdioma();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -164,21 +177,25 @@ export function CanvasProceso({
     };
   }
 
-  function mutarNodo(id: string, mutar: (nodo: NodoProceso) => NodoProceso) {
-    alCambiar({
+  function fijarPosicion(id: string, x: number, y: number, continuo = false) {
+    const siguiente = {
       ...grafo,
-      nodos: grafo.nodos.map((nodo) => (nodo.id === id ? mutar(nodo) : nodo)),
-    });
-  }
-
-  function fijarPosicion(id: string, x: number, y: number) {
-    mutarNodo(id, (nodo) => ({
-      ...nodo,
-      configuracion: {
-        ...nodo.configuracion,
-        posicion: { x: Math.round(x / 4) * 4, y: Math.round(y / 4) * 4 },
-      },
-    }));
+      nodos: grafo.nodos.map((nodo) =>
+        nodo.id === id
+          ? {
+              ...nodo,
+              configuracion: {
+                ...nodo.configuracion,
+                posicion: {
+                  x: Math.round(x / 4) * 4,
+                  y: Math.round(y / 4) * 4,
+                },
+              },
+            }
+          : nodo,
+      ),
+    };
+    alCambiar(siguiente, continuo);
   }
 
   function conectar(origen: string, destino: string) {
@@ -251,7 +268,12 @@ export function CanvasProceso({
     const punto = mundoDe(evento);
     if (arrastre.tipo === "nodo") {
       if (deshabilitado) return;
-      fijarPosicion(arrastre.id, punto.x - arrastre.dx, punto.y - arrastre.dy);
+      fijarPosicion(
+        arrastre.id,
+        punto.x - arrastre.dx,
+        punto.y - arrastre.dy,
+        true,
+      );
       return;
     }
     setArrastre({ ...arrastre, x: punto.x, y: punto.y });
@@ -333,6 +355,42 @@ export function CanvasProceso({
     seleccion?.tipo === "arista" ? seleccion.id : null;
   const seleccionNodo = seleccion?.tipo === "nodo" ? seleccion.id : null;
 
+  const minimapa = useMemo(() => {
+    if (!grafo.nodos.length) return null;
+    const puntos = grafo.nodos.map((nodo) => posicion(nodo));
+    const minX = Math.min(...puntos.map((p) => p.x)) - MINI_MARGEN;
+    const minY = Math.min(...puntos.map((p) => p.y)) - MINI_MARGEN;
+    const maxX = Math.max(...puntos.map((p) => p.x + ANCHO)) + MINI_MARGEN;
+    const maxY = Math.max(...puntos.map((p) => p.y + ALTO)) + MINI_MARGEN;
+    const escala = Math.min(
+      MINI_ANCHO / (maxX - minX),
+      MINI_ALTO / (maxY - minY),
+    );
+    const aMini = (p: { x: number; y: number }) => ({
+      x: (p.x - minX) * escala,
+      y: (p.y - minY) * escala,
+    });
+    return { escala, minX, minY, aMini };
+  }, [grafo]);
+
+  function aMiniInversa(
+    mini: { escala: number; minX: number; minY: number },
+    mx: number,
+    my: number,
+  ) {
+    return { x: mx / mini.escala + mini.minX, y: my / mini.escala + mini.minY };
+  }
+
+  function irAPuntoMundo(punto: { x: number; y: number }) {
+    const caja = svgRef.current?.getBoundingClientRect();
+    if (!caja) return;
+    setVista((actual) => ({
+      ...actual,
+      x: caja.width / 2 - punto.x * actual.k,
+      y: caja.height / 2 - punto.y * actual.k,
+    }));
+  }
+
   return (
     <div>
       {!soloLectura ? (
@@ -356,6 +414,28 @@ export function CanvasProceso({
             </option>
           ))}
         </Selector>
+        {alDeshacer && alRehacer ? (
+          <div className="flex items-center gap-espacio-1">
+            <BotonIcono
+              variante="fantasma"
+              tamano="sm"
+              aria-label={t("canvas.deshacer")}
+              disabled={!puedeDeshacer || deshabilitado}
+              onClick={alDeshacer}
+            >
+              <IconoDeshacer tamano={15} />
+            </BotonIcono>
+            <BotonIcono
+              variante="fantasma"
+              tamano="sm"
+              aria-label={t("canvas.rehacer")}
+              disabled={!puedeRehacer || deshabilitado}
+              onClick={alRehacer}
+            >
+              <IconoRehacer tamano={15} />
+            </BotonIcono>
+          </div>
+        ) : null}
         <p className="text-pequeno text-tinta-suave">
           {t("canvas.ayudaBreve")}
         </p>
@@ -625,6 +705,87 @@ export function CanvasProceso({
               ) : null}
             </div>
           </div>
+        ) : null}
+        {minimapa ? (
+          <svg
+            aria-hidden="true"
+            width={MINI_ANCHO}
+            height={MINI_ALTO}
+            className="absolute bottom-espacio-3 left-espacio-3 cursor-pointer rounded-panel border border-borde bg-superficie/90 shadow-panel"
+            onPointerDown={(evento) => {
+              const caja = evento.currentTarget.getBoundingClientRect();
+              const mx = evento.clientX - caja.left;
+              const my = evento.clientY - caja.top;
+              const origen = grafo.nodos.length
+                ? aMiniInversa(minimapa, mx, my)
+                : null;
+              if (origen) irAPuntoMundo(origen);
+            }}
+          >
+            {grafo.aristas.map((arista) => {
+              const origen = grafo.nodos.find((n) => n.id === arista.origen);
+              const destino = grafo.nodos.find((n) => n.id === arista.destino);
+              if (!origen || !destino) return null;
+              const a = minimapa.aMini({
+                x: posicion(origen).x + ANCHO / 2,
+                y: posicion(origen).y + ALTO / 2,
+              });
+              const b = minimapa.aMini({
+                x: posicion(destino).x + ANCHO / 2,
+                y: posicion(destino).y + ALTO / 2,
+              });
+              return (
+                <line
+                  key={claveArista(arista)}
+                  x1={a.x}
+                  y1={a.y}
+                  x2={b.x}
+                  y2={b.y}
+                  stroke="var(--color-borde-fuerte)"
+                  strokeWidth={1}
+                />
+              );
+            })}
+            {grafo.nodos.map((nodo) => {
+              const p = minimapa.aMini(posicion(nodo));
+              return (
+                <rect
+                  key={nodo.id}
+                  x={p.x}
+                  y={p.y}
+                  width={Math.max(4, ANCHO * minimapa.escala)}
+                  height={Math.max(3, ALTO * minimapa.escala)}
+                  rx={2}
+                  fill={colorDe(nodo.tipo).relleno}
+                  stroke={
+                    seleccionNodo === nodo.id
+                      ? "var(--color-violeta)"
+                      : colorDe(nodo.tipo).borde
+                  }
+                  strokeWidth={seleccionNodo === nodo.id ? 1.5 : 0.8}
+                />
+              );
+            })}
+            {(() => {
+              const caja = svgRef.current?.getBoundingClientRect();
+              if (!caja) return null;
+              const vp = minimapa.aMini({ x: -vista.x / vista.k, y: -vista.y / vista.k });
+              return (
+                <rect
+                  x={vp.x}
+                  y={vp.y}
+                  width={(caja.width / vista.k) * minimapa.escala}
+                  height={(caja.height / vista.k) * minimapa.escala}
+                  fill="var(--color-violeta-tenue)"
+                  fillOpacity={0.35}
+                  stroke="var(--color-violeta)"
+                  strokeWidth={1}
+                  rx={2}
+                  className="pointer-events-none"
+                />
+              );
+            })()}
+          </svg>
         ) : null}
         <div className="absolute bottom-espacio-3 right-espacio-3 flex gap-espacio-1 rounded-panel border border-borde bg-superficie p-espacio-1 shadow-panel">
           <BotonIcono
