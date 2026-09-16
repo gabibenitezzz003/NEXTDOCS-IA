@@ -199,6 +199,8 @@ export const pt: Diccionario = {
     agregarNodo: "＋ Adicionar passo",
     ayudaBreve:
       "Arraste os passos para posicioná-los; arraste do ponto violeta de um passo até outro para conectá-los.",
+    deshacer: "Desfazer (Ctrl+Z)",
+    rehacer: "Refazer (Ctrl+Shift+Z)",
     ariaRecorrido: "Canvas do percurso: {cantidad} passos",
     pasos: "{cantidad} passos",
     vacio:

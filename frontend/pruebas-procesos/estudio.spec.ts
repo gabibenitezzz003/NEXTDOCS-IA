@@ -494,3 +494,78 @@ test("un canvas vacío ofrece sembrar el recorrido mínimo y queda editable", as
     { origen: "inicio", destino: "fin" },
   ]);
 });
+
+test("deshacer y rehacer funcionan con botones y teclado", async ({ page }) => {
+  await preparar(page);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido: 3 pasos/ }),
+  ).toBeVisible();
+
+  const deshacer = page.getByRole("button", { name: /Deshacer/ });
+  const rehacer = page.getByRole("button", { name: /Rehacer/ });
+  await expect(deshacer).toBeDisabled();
+  await expect(rehacer).toBeDisabled();
+
+  await elegirEnDesplegable(page, "Agregar paso", "Notificar");
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido: 4 pasos/ }),
+  ).toBeVisible();
+  await expect(deshacer).toBeEnabled();
+
+  await deshacer.click();
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido: 3 pasos/ }),
+  ).toBeVisible();
+  await expect(rehacer).toBeEnabled();
+
+  await page.keyboard.press("ControlOrMeta+Shift+z");
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido: 4 pasos/ }),
+  ).toBeVisible();
+
+  await page.keyboard.press("ControlOrMeta+z");
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido: 3 pasos/ }),
+  ).toBeVisible();
+});
+
+test("deshacer revierte la edición del panel y el drag es una sola entrada", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+  const canvas = page.getByRole("application", {
+    name: /Canvas del recorrido/,
+  });
+  await canvas.getByText("Paso A", { exact: true }).click();
+
+  const campo = page.getByLabel("Nombre del paso");
+  await campo.fill("");
+  await campo.pressSequentially("Nombre nuevo");
+  await page.waitForTimeout(750);
+  await page.getByRole("button", { name: /Deshacer/ }).click();
+  await expect(campo).toHaveValue("Paso A");
+
+  const etiquetaEntrada = canvas.getByText("Entrada", { exact: true });
+  const cajaEntrada = await etiquetaEntrada.boundingBox();
+  await page.mouse.move(
+    cajaEntrada!.x + cajaEntrada!.width / 2,
+    cajaEntrada!.y + cajaEntrada!.height / 2,
+  );
+  await page.mouse.down();
+  await page.mouse.move(
+    cajaEntrada!.x + cajaEntrada!.width / 2 + 80,
+    cajaEntrada!.y + cajaEntrada!.height / 2 + 60,
+    { steps: 8 },
+  );
+  await page.mouse.up();
+  await page.waitForTimeout(750);
+  await page.getByRole("button", { name: /Deshacer/ }).click();
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect.poll(() => control.guardados.length).toBe(1);
+  const entrada = control.guardados[0].nodos.find((nodo) => nodo.id === "entrada");
+  expect(
+    (entrada?.configuracion?.posicion as { x?: number } | undefined)?.x,
+  ).toBeUndefined();
+});

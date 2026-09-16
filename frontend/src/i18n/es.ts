@@ -197,6 +197,8 @@ export const es = {
     agregarNodo: "＋ Agregar paso",
     ayudaBreve:
       "Arrastrá los pasos para ubicarlos; tirá del punto violeta de un paso hasta otro para conectarlos.",
+    deshacer: "Deshacer (Ctrl+Z)",
+    rehacer: "Rehacer (Ctrl+Mayús+Z)",
     ariaRecorrido: "Canvas del recorrido: {cantidad} pasos",
     pasos: "{cantidad} pasos",
     vacio:

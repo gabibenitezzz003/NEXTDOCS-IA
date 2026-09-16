@@ -198,6 +198,8 @@ export const en: Diccionario = {
     agregarNodo: "＋ Add step",
     ayudaBreve:
       "Drag the steps to position them; drag from a step's violet dot to another step to connect them.",
+    deshacer: "Undo (Ctrl+Z)",
+    rehacer: "Redo (Ctrl+Shift+Z)",
     ariaRecorrido: "Route canvas: {cantidad} steps",
     pasos: "{cantidad} steps",
     vacio:
