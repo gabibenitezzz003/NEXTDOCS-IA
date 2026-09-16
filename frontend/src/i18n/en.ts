@@ -74,7 +74,7 @@ export const en: Diccionario = {
     navExcepciones: "Exceptions",
     navTareas: "Tasks",
     navOperacion: "Operations",
-    navStudio: "Studio",
+    navStudio: "Workflow",
     navSupervisora: "Supervisor",
     navPanel: "Dashboard",
     navTiposNuevos: "Detected types",
@@ -532,7 +532,7 @@ export const en: Diccionario = {
     todosLosProcesos: "All processes",
     sinInstancias: "No processes running yet",
     sinInstanciasDetalle:
-      "Start one from the Studio with the Test process button on a published version, or from wherever the product triggers it.",
+      "Start one from Workflow with the Test process button on a published version, or from wherever the product triggers it.",
     listaInstancias: "Process instances",
     version: "Version {version}",
     iniciada: "started {fecha}",
@@ -591,6 +591,7 @@ export const en: Diccionario = {
     listaTareas: "Process tasks",
     vence: "due {fecha}",
     instancia: "Instance {id}",
+    procesoSinNombre: "process",
     paso: "step {nodo}",
     asignada: "assigned to {actor}",
     completadaEl: "Completed {fecha}",
@@ -599,8 +600,12 @@ export const en: Diccionario = {
     enlaceExterno: "Link for the external party: {token}",
     cerrar: "Close",
     completar: "Complete",
-    documentoEntregado: "Delivered document (identifier)",
-    documentoPlaceholder: "E.g.: INVOICE-0004-182",
+    documentoEntregado: "Delivered document",
+    documentoEntregadoAyuda:
+      "Pick the document you already uploaded to the document inbox.",
+    documentosCargando: "Loading documents…",
+    documentoElegir: "Choose a document",
+    documentoSinNombre: "unnamed document",
     decision: "Decision",
     aprobado: "Approved",
     rechazado: "Rejected",
@@ -621,9 +626,9 @@ export const en: Diccionario = {
     SUBPROCESO: "Subprocess",
   },
   studio: {
-    titulo: "Studio",
+    titulo: "Workflow",
     descripcion:
-      "Process library: design the steps, publish versions and test them in execution.",
+      "Design processes on the canvas, publish versions and test them in execution.",
   },
   procesos: {
     bibliotecaDesc:
@@ -645,7 +650,7 @@ export const en: Diccionario = {
     creadoEl: "Created on {fecha}",
     cerrar: "Close",
     editar: "Edit",
-    abrirEstudio: "Open studio",
+    abrirEstudio: "Open process",
     sinSla: "no SLA",
     sla: "SLA {horas} h",
     slaEditorAyuda: "Clearing the field removes the inherited SLA.",
@@ -653,7 +658,10 @@ export const en: Diccionario = {
     versionPublicada: "Version {numero} published",
     borradorEtiqueta: "draft",
     archivada: "archived",
-    studioTitulo: "Process Studio",
+    studioTitulo: "Process workflow",
+    recorridoPublicado: "Published route (version {numero})",
+    recorridoPublicadoDesc:
+      "This is the version in use. To edit it, create a new version with the button above.",
     studioCargando: "Loading the definition and its versions.",
     errorEditor: "Could not load the process editor",
     volver: "Back",

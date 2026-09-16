@@ -1,11 +1,17 @@
 package com.nextdocs.ai.servicios;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import com.nextdocs.ai.config.PropiedadesCola;
+import com.nextdocs.ai.entidades.Documento;
+import com.nextdocs.ai.enumeraciones.EstadoDocumento;
+import com.nextdocs.ai.repositorios.DocumentoRepository;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
@@ -20,12 +26,16 @@ public class TrabajadorExtraccionService {
 
 	private final ExtractorDocumentalService extractorDocumentalService;
 
+	private final DocumentoRepository documentoRepository;
+
 	private final PropiedadesCola propiedades;
 
 	public TrabajadorExtraccionService(ColaExtraccionService colaExtraccionService,
-			ExtractorDocumentalService extractorDocumentalService, PropiedadesCola propiedades) {
+			ExtractorDocumentalService extractorDocumentalService, DocumentoRepository documentoRepository,
+			PropiedadesCola propiedades) {
 		this.colaExtraccionService = colaExtraccionService;
 		this.extractorDocumentalService = extractorDocumentalService;
+		this.documentoRepository = documentoRepository;
 		this.propiedades = propiedades;
 	}
 
@@ -45,6 +55,25 @@ public class TrabajadorExtraccionService {
 	public void consumirReintentos() {
 		Optional<String> documentoId = colaExtraccionService.desencolarReintentoVencido();
 		documentoId.ifPresent(this::procesarSeguro);
+	}
+
+	@Scheduled(fixedDelayString = "${nextdocs.cola.intervaloRecuperacionMilisegundos:60000}")
+	public void recuperarEstancados() {
+		Instant limite = Instant.now().minusMillis(propiedades.getEsperaEstancadoMilisegundos());
+		PageRequest paginado = PageRequest.of(0, Math.max(propiedades.getDocumentosRecuperacionPorCiclo(), 1));
+		List<Documento> recibidos = documentoRepository.listarRecibidosAnteriores(limite, paginado);
+		List<Documento> procesando = documentoRepository.listarEstancadosPorEstado(EstadoDocumento.PROCESANDO,
+				limite, paginado);
+		for (Documento documento : recibidos) {
+			colaExtraccionService.encolar(documento.getId());
+		}
+		for (Documento documento : procesando) {
+			colaExtraccionService.encolar(documento.getId());
+		}
+		if (!recibidos.isEmpty() || !procesando.isEmpty()) {
+			log.info("Se reencolaron {} documentos recibidos y {} estancados en procesamiento",
+					recibidos.size(), procesando.size());
+		}
 	}
 
 	private void procesarSeguro(String documentoId) {

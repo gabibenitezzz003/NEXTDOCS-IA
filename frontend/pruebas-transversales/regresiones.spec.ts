@@ -292,8 +292,8 @@ for (const accion of ["Publicar versión 8", "Nueva versión"]) {
     const control = await preparar(page);
     if (accion === "Nueva versión")
       control.proceso.versiones[0].estado = "PUBLICADA";
-    await page.goto("/studio");
-    await page.getByRole("button", { name: "Abrir estudio" }).click();
+    await page.goto("/workflow");
+    await page.getByRole("button", { name: "Abrir proceso" }).click();
     await page.getByRole("button", { name: accion, exact: true }).click();
     await expect
       .poll(() => control.peticiones.some((p) => p.metodo === "POST"))

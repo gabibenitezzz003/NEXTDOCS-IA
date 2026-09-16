@@ -125,7 +125,7 @@ test("AT-01 un 401 del motor de procesos tambien refresca y reintenta", async ({
   page,
 }) => {
   const control = await preparar(page);
-  await page.goto("/studio");
+  await page.goto("/workflow");
   await expect(page.getByText("Proceso controlado")).toBeVisible();
 
   await page.route("**/api/v1/autenticacion/refrescar", (ruta) =>
@@ -163,7 +163,7 @@ test("AT-01 un 401 irrecuperable del motor de procesos cierra la sesion, no deja
     ruta.fulfill({ status: 401, body: "", headers: { "content-type": "text/plain" } }),
   );
 
-  await page.goto("/studio");
+  await page.goto("/workflow");
 
   await expect(page.getByLabel("Organización", { exact: true })).toBeVisible();
   await expect(page.getByText("Ocurrio un error inesperado")).toHaveCount(0);
@@ -181,7 +181,7 @@ test("un error del motor de procesos dice que paso en vez de un mensaje generico
     }),
   );
 
-  await page.goto("/studio");
+  await page.goto("/workflow");
 
   const alerta = page.getByRole("alert").first();
   await expect(alerta).toContainText("Error del servidor");

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Disposicion } from "./componentes/Disposicion";
 import { Ingresar } from "./paginas/Ingresar";
 import { Resumen } from "./paginas/Resumen";
@@ -64,12 +64,24 @@ export function Aplicacion() {
         <Route path="/tareas" element={<Tareas />} />
         <Route path="/operacion" element={<Operacion />} />
         <Route path="/operacion/instancias/:instanciaId" element={<Operacion />} />
-        <Route path="/studio" element={<Studio />} />
-        <Route path="/studio/:procesoId" element={<Studio />} />
+        <Route path="/workflow" element={<Studio />} />
+        <Route path="/workflow/:procesoId" element={<Studio />} />
         <Route path="/supervisora" element={<Supervisora />} />
-        <Route path="/procesos" element={<Navigate to="/studio" replace />} />
+        <Route path="/studio" element={<Navigate to="/workflow" replace />} />
+        <Route path="/studio/:procesoId" element={<RedirigirWorkflow />} />
+        <Route path="/procesos" element={<Navigate to="/workflow" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/resumen" replace />} />
     </Routes>
+  );
+}
+
+function RedirigirWorkflow() {
+  const { procesoId } = useParams();
+  return (
+    <Navigate
+      to={procesoId ? `/workflow/${procesoId}` : "/workflow"}
+      replace
+    />
   );
 }

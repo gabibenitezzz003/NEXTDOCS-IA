@@ -72,7 +72,7 @@ export const es = {
     navExcepciones: "Excepciones",
     navTareas: "Tareas",
     navOperacion: "Operación",
-    navStudio: "Studio",
+    navStudio: "Workflow",
     navSupervisora: "Supervisora",
     navPanel: "Panel de control",
     navTiposNuevos: "Tipos detectados",
@@ -532,7 +532,7 @@ export const es = {
     todosLosProcesos: "Todos los procesos",
     sinInstancias: "Todavía no hay procesos en ejecución",
     sinInstanciasDetalle:
-      "Iniciá uno desde el Studio con el botón Probar proceso de una versión publicada, o desde donde el producto lo dispare.",
+      "Iniciá uno desde Workflow con el botón Probar proceso de una versión publicada, o desde donde el producto lo dispare.",
     listaInstancias: "Instancias de proceso",
     version: "Versión {version}",
     iniciada: "iniciada {fecha}",
@@ -592,6 +592,7 @@ export const es = {
     listaTareas: "Tareas de proceso",
     vence: "vence {fecha}",
     instancia: "Instancia {id}",
+    procesoSinNombre: "proceso",
     paso: "paso {nodo}",
     asignada: "asignada a {actor}",
     completadaEl: "Completada {fecha}",
@@ -600,8 +601,12 @@ export const es = {
     enlaceExterno: "Enlace para el externo: {token}",
     cerrar: "Cerrar",
     completar: "Completar",
-    documentoEntregado: "Documento entregado (identificador)",
-    documentoPlaceholder: "Ej.: FACTURA-0004-182",
+    documentoEntregado: "Documento entregado",
+    documentoEntregadoAyuda:
+      "Elegí el documento que ya subiste a la bandeja documental.",
+    documentosCargando: "Cargando documentos…",
+    documentoElegir: "Elegí un documento",
+    documentoSinNombre: "documento sin nombre",
     decision: "Decisión",
     aprobado: "Aprobado",
     rechazado: "Rechazado",
@@ -622,9 +627,9 @@ export const es = {
     SUBPROCESO: "Subproceso",
   },
   studio: {
-    titulo: "Studio",
+    titulo: "Workflow",
     descripcion:
-      "Biblioteca de procesos: diseñá los pasos, publicá versiones y probalos en ejecución.",
+      "Diseñá procesos en el canvas, publicá versiones y probalos en ejecución.",
   },
   procesos: {
     bibliotecaDesc:
@@ -646,7 +651,7 @@ export const es = {
     creadoEl: "Creado el {fecha}",
     cerrar: "Cerrar",
     editar: "Editar",
-    abrirEstudio: "Abrir estudio",
+    abrirEstudio: "Abrir proceso",
     sinSla: "sin SLA",
     sla: "SLA {horas} h",
     slaEditorAyuda: "Vaciar el campo quita el SLA heredado.",
@@ -654,7 +659,10 @@ export const es = {
     versionPublicada: "Versión {numero} publicada",
     borradorEtiqueta: "borrador",
     archivada: "archivada",
-    studioTitulo: "Studio de proceso",
+    studioTitulo: "Workflow del proceso",
+    recorridoPublicado: "Recorrido publicado (versión {numero})",
+    recorridoPublicadoDesc:
+      "Esta es la versión en uso. Para editarla, creá una versión nueva con el botón de arriba.",
     studioCargando: "Cargando la definición y sus versiones.",
     errorEditor: "No se pudo cargar el editor de procesos",
     volver: "Volver",

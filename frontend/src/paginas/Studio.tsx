@@ -443,7 +443,7 @@ function EstudioProceso({
   const [aviso, setAviso] = useState<string | null>(null);
   const [pasoAgregado, setPasoAgregado] = useState<string | null>(null);
   const [tipoNuevoPaso, setTipoNuevoPaso] = useState("");
-  const [vistaRecorrido, setVistaRecorrido] = useState<"lista" | "canvas">("lista");
+  const [vistaRecorrido, setVistaRecorrido] = useState<"lista" | "canvas">("canvas");
   const [seleccion, setSeleccion] = useState<SeleccionCanvas | null>(null);
 
   const consulta = useQuery({
@@ -785,6 +785,33 @@ function EstudioProceso({
     setSeleccion(null);
   }
 
+  useEffect(() => {
+    if (vistaRecorrido !== "canvas" || !seleccion || editandoBloqueado) return;
+    const alTecla = (evento: KeyboardEvent) => {
+      if (evento.key !== "Delete" && evento.key !== "Backspace") return;
+      const destino = evento.target as HTMLElement | null;
+      if (
+        destino &&
+        (["INPUT", "TEXTAREA", "SELECT"].includes(destino.tagName) ||
+          destino.isContentEditable)
+      )
+        return;
+      evento.preventDefault();
+      if (seleccion.tipo === "arista") {
+        eliminarArista(seleccion.id);
+        return;
+      }
+      const nodo = grafoTrabajo?.nodos.find(
+        (actual) => actual.id === seleccion.id,
+      );
+      if (nodo && nodo.tipo !== "INICIO" && nodo.tipo !== "FIN") {
+        eliminarNodo(seleccion.id);
+      }
+    };
+    window.addEventListener("keydown", alTecla);
+    return () => window.removeEventListener("keydown", alTecla);
+  }, [vistaRecorrido, seleccion, editandoBloqueado, grafoTrabajo]);
+
   if (consulta.isPending) {
     return (
       <>
@@ -882,22 +909,44 @@ function EstudioProceso({
         ) : null}
 
         {!borrador ? (
-          <Tarjeta className="mb-5">
-            <CabeceraTarjeta
-              titulo={t("procesos.sinBorrador")}
-              descripcion={t("procesos.sinBorradorDesc")}
-            />
-            <div className="flex justify-end">
-              <Boton
-                variante="primario"
-                cargando={clonar.isPending}
-                disabled={clonar.isPending}
-                onClick={() => clonar.mutate()}
-              >
-                {t("procesos.nuevaVersion")}
-              </Boton>
-            </div>
-          </Tarjeta>
+          <>
+            <Tarjeta className="mb-5">
+              <CabeceraTarjeta
+                titulo={t("procesos.sinBorrador")}
+                descripcion={t("procesos.sinBorradorDesc")}
+              />
+              <div className="flex justify-end">
+                <Boton
+                  variante="primario"
+                  cargando={clonar.isPending}
+                  disabled={clonar.isPending}
+                  onClick={() => clonar.mutate()}
+                >
+                  {t("procesos.nuevaVersion")}
+                </Boton>
+              </div>
+            </Tarjeta>
+            {publicada ? (
+              <Tarjeta className="mb-espacio-6">
+                <CabeceraTarjeta
+                  titulo={t("procesos.recorridoPublicado", {
+                    numero: publicada.numero,
+                  })}
+                  descripcion={t("procesos.recorridoPublicadoDesc")}
+                />
+                <div className="mt-espacio-5">
+                  <CanvasProceso
+                    grafo={publicada.grafo}
+                    alCambiar={() => {}}
+                    seleccion={seleccion}
+                    alSeleccionar={setSeleccion}
+                    deshabilitado
+                    soloLectura
+                  />
+                </div>
+              </Tarjeta>
+            ) : null}
+          </>
         ) : (
           <Tarjeta
             className="mb-espacio-6"
