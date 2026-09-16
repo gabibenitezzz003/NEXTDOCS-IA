@@ -245,12 +245,61 @@ La clave en claro se muestra una sola vez, por eso el script la guarda en lugar 
 `documentosEncontrados`: la falta de configuración produce ausencia, nunca documentos inventados.
 No hay conector simulado al que caer.
 
+#### Firma electrónica (Documenso)
+
+El nodo `FIRMA` crea un sobre en Documenso, expone el enlace de firma en la tarea
+(`firmaEnlace`) y el webhook del proveedor cierra la tarea con `APROBADO`/`RECHAZADO`.
+El circuito quedó verificado de punta a punta en producción el 16/09/2026.
+
+Piezas, todas declaradas en `infra/compose.produccion.yml`:
+
+- Servicio `documenso` con la imagen propia `documenso-firma:v2.18.0`, construida con
+  `NEXT_PUBLIC_BASE_PATH=/firma` en tiempo de build: la imagen oficial no sirve la app
+  bajo un subpath en runtime. Escucha en `127.0.0.1:3001` y nginx la publica en
+  `https://<dominio>/firma/` (location propio, ver `infra/nginx/nextdocs-ia.conf`).
+- Base `documenso` en el mismo RDS con usuario dedicado `documenso`; las migraciones
+  las aplica la imagen al arrancar.
+- Certificado de firma local `cert.p12` montado sólo lectura desde
+  `/etc/nextdocs-ia/documenso/`; la frase va en `DOCUMENSO_FIRMA_FRASE`.
+- `NEXT_PUBLIC_UPLOAD_TRANSPORT=database` y `NEXT_PRIVATE_JOBS_PROVIDER=local`: sin S3
+  ni cola externa para el proveedor. SMTP queda configurado pero sin uso real: los
+  sobres se crean con `distributionMethod: NONE`, así que Documenso no envía correos y
+  el enlace lo entrega la tarea del workflow.
+
+Variables del lado del workflow (`/etc/nextdocs-ia/nextdocs.env`):
+
+- `NEXTDOCS_WORKFLOW_FIRMA_URL_BASE`: URL interna del proveedor
+  (`http://nextdocs-ia-documenso:3000/firma`), la usa el adapter para la API v2.
+- `NEXTDOCS_WORKFLOW_FIRMA_URL_PUBLICA`: URL que ve el firmante
+  (`https://<dominio>/firma`), base del `firmaEnlace`.
+- `NEXTDOCS_WORKFLOW_FIRMA_CLAVES`: lista `tenantId=apiKeyDeDocumenso` separada por
+  comas, mismo mecanismo que `DOCUMENTAL_CLAVES`. **Un tenant sin entrada aquí no
+  dispara firma**: la tarea queda sin `firmaEnlace`.
+- `NEXTDOCS_WORKFLOW_FIRMA_WEBHOOK_SECRETO`: secreto compartido que el webhook exige
+  en `X-Documenso-Secret`. Sin header o con valor incorrecto responde 401.
+
+En Documenso hay que registrar el webhook apuntando a
+`https://<dominio>/api/v1/firma/webhook` con los eventos `DOCUMENT_COMPLETED` y
+`DOCUMENT_REJECTED` y el secreto anterior. Los eventos intermedios, duplicados y los de
+tareas ya cerradas se ignoran.
+
+**La cuenta de servicio necesita `documentos.escribir`.** El webhook descarga el PDF
+firmado del proveedor y lo sube al core con la misma clave del conector documental.
+Una cuenta creada sólo para leer (alcance `documentos.leer`) recibe 403 del core, el
+webhook falla con `EVENTO_EXTERNO_FALLIDO`/502 y la tarea queda `PENDIENTE` aunque el
+documento ya esté firmado. El alta es por tabla `cuenta_servicio_alcance` si la cuenta
+ya existe, o dándole ambos alcances al crearla.
+
+Documenso reintenta el webhook unas pocas veces y lo da por `FAILED` (tabla
+`WebhookCall`). Para re-entregarlo se puede reenviar el `requestBody` registrado al
+endpoint del workflow con el header `X-Documenso-Secret` correcto.
+
 Requisitos en la instancia (una sola vez): clave de despliegue SSH de sólo lectura para
 `gabibenitezzz003/nextdocs-workflow` en el usuario `ubuntu` (el `git clone` corre con ella), y
 `NEXTDOCS_JWT_SECRETO` presente en `/etc/nextdocs-ia/nextdocs.env` con el mismo valor que usa
 el core. nginx ya rutea `/api/v1/{procesos,instancias,tareas,kpi-procesos,partners,
 marketplace,supervisora,colaboracion-externa,template-recommendations,
-workflow-instances}` a `127.0.0.1:8091` desde `infra/nginx/nextdocs-ia.conf`.
+workflow-instances,firma}` a `127.0.0.1:8091` desde `infra/nginx/nextdocs-ia.conf`.
 Cada ruta nueva del workflow exige sumarla a esa lista y recargar nginx en el
 servidor (`sudo nginx -t && sudo systemctl reload nginx`): el archivo productivo
 vive en `/etc` y no se auto-aplica con el deploy.
