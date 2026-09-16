@@ -752,6 +752,9 @@ export const pt: Diccionario = {
     copiarEnlace: "Copiar link",
     enlaceCopiado: "Copiado",
     abrirEnlace: "Abrir",
+    abrirFirma: "Assinar",
+    firmaPendiente:
+      "Assinatura eletrônica pendente · conclui sozinha quando o signatário termina",
     revocarEnlace: "Revogar",
     revocarEnlaceConfirmar:
       "Revogar o link? A pessoa externa não poderá mais responder com ele.",

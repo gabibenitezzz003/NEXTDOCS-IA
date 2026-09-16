@@ -748,6 +748,9 @@ export const en: Diccionario = {
     copiarEnlace: "Copy link",
     enlaceCopiado: "Copied",
     abrirEnlace: "Open",
+    abrirFirma: "Sign",
+    firmaPendiente:
+      "Electronic signature pending · completes automatically when the signer finishes",
     revocarEnlace: "Revoke",
     revocarEnlaceConfirmar:
       "Revoke the link? The external party will no longer be able to respond with it.",

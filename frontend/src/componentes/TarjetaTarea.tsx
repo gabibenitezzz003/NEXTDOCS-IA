@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Boton,
-  Campo,
-  Pastilla,
-  Selector,
-  Tarjeta,
-} from "./Interfaz";
+import { Boton, Campo, Pastilla, Selector, Tarjeta } from "./Interfaz";
 import { formatearFecha } from "../paginas/Documentos";
 import {
   completarTarea,
@@ -31,7 +25,10 @@ const TIPOS_TAREA_CONOCIDOS = new Set([
   "FIRMA",
 ]);
 
-type Traductor = (ruta: string, params?: Record<string, string | number>) => string;
+type Traductor = (
+  ruta: string,
+  params?: Record<string, string | number>,
+) => string;
 
 export function textoTipoTarea(tipo: string, t: Traductor): string {
   return TIPOS_TAREA_CONOCIDOS.has(tipo) ? t(`tipoTarea.${tipo}`) : tipo;
@@ -57,7 +54,13 @@ function tonoEstadoTarea(estado: TareaProceso["estado"]) {
   }
 }
 
-export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProceso; conInstancia?: boolean }) {
+export function TarjetaTarea({
+  tarea,
+  conInstancia = false,
+}: {
+  tarea: TareaProceso;
+  conInstancia?: boolean;
+}) {
   const { sesion } = useSesion();
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
@@ -115,6 +118,10 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
     tarea.tipoNodo === "TAREA_EXTERNA" && tarea.datos
       ? String(tarea.datos["enlaceToken"] ?? "")
       : "";
+  const firmaEnlace =
+    tarea.tipoNodo === "FIRMA" && tarea.datos
+      ? String(tarea.datos["firmaEnlace"] ?? "")
+      : "";
 
   const consultaEnlaces = useQuery({
     queryKey: ["enlacesExternos"],
@@ -123,7 +130,8 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
     staleTime: 15_000,
   });
   const enlace = consultaEnlaces.data?.find(
-    (candidato) => candidato.tareaId === tarea.id && candidato.token === enlaceToken,
+    (candidato) =>
+      candidato.tareaId === tarea.id && candidato.token === enlaceToken,
   );
 
   const revocar = useMutation({
@@ -186,7 +194,10 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
           {enlaceToken ? (
             <div className="mt-espacio-2 rounded-control border border-violeta-borde bg-violeta-tenue px-espacio-3 py-espacio-2">
               <div className="flex flex-wrap items-center gap-espacio-2">
-                <IconoEnlaceExterno tamano={14} className="shrink-0 text-violeta" />
+                <IconoEnlaceExterno
+                  tamano={14}
+                  className="shrink-0 text-violeta"
+                />
                 <span className="min-w-0 flex-1 truncate text-pequeno text-tinta">
                   {`${window.location.origin}/externo/${enlaceToken}`}
                 </span>
@@ -206,7 +217,9 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
                   }}
                 >
                   <IconoCopiar tamano={13} />
-                  {copiado ? t("operacion.enlaceCopiado") : t("operacion.copiarEnlace")}
+                  {copiado
+                    ? t("operacion.enlaceCopiado")
+                    : t("operacion.copiarEnlace")}
                 </Boton>
                 <a
                   href={`/externo/${enlaceToken}`}
@@ -223,7 +236,9 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
                     tamano="sm"
                     cargando={revocar.isPending}
                     onClick={() => {
-                      if (window.confirm(t("operacion.revocarEnlaceConfirmar"))) {
+                      if (
+                        window.confirm(t("operacion.revocarEnlaceConfirmar"))
+                      ) {
                         revocar.mutate();
                       }
                     }}
@@ -243,6 +258,49 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
                     : ""}
                 </p>
               ) : null}
+            </div>
+          ) : null}
+          {firmaEnlace ? (
+            <div className="mt-espacio-2 rounded-control border border-violeta-borde bg-violeta-tenue px-espacio-3 py-espacio-2">
+              <div className="flex flex-wrap items-center gap-espacio-2">
+                <IconoEnlaceExterno
+                  tamano={14}
+                  className="shrink-0 text-violeta"
+                />
+                <span className="min-w-0 flex-1 truncate text-pequeno text-tinta">
+                  {firmaEnlace}
+                </span>
+                <Boton
+                  variante="fantasma"
+                  tamano="sm"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(firmaEnlace);
+                      setCopiado(true);
+                      setTimeout(() => setCopiado(false), 2000);
+                    } catch {
+                      setCopiado(false);
+                    }
+                  }}
+                >
+                  <IconoCopiar tamano={13} />
+                  {copiado
+                    ? t("operacion.enlaceCopiado")
+                    : t("operacion.copiarEnlace")}
+                </Boton>
+                <a
+                  href={firmaEnlace}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-control-pequeno items-center gap-espacio-2 whitespace-nowrap rounded-control px-espacio-3 text-pequeno font-semibold text-accion-primaria transition-colors hover:bg-violeta-borde"
+                >
+                  <IconoEnlaceExterno tamano={13} />
+                  {t("operacion.abrirFirma")}
+                </a>
+              </div>
+              <p className="mt-espacio-1 text-micro text-tinta-suave">
+                {t("operacion.firmaPendiente")}
+              </p>
             </div>
           ) : null}
         </div>

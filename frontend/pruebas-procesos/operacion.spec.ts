@@ -88,7 +88,8 @@ async function preparar(pagina: Page) {
     if (camino === "/api/v1/instancias") return responder([control.instancia]);
     if (camino === "/api/v1/instancias/instancia-1")
       return responder(control.instancia);
-    if (camino === "/api/v1/kpi-procesos") return responder({ indicadores: [] });
+    if (camino === "/api/v1/kpi-procesos")
+      return responder({ indicadores: [] });
     if (camino === "/api/v1/kpi-procesos/poblacion") return responder([]);
     if (camino.endsWith("/hallazgos")) return responder([]);
     return responder({ mensaje: "Endpoint inesperado" }, 404);
@@ -124,6 +125,59 @@ test("el detalle dibuja el grafo con el estado de cada paso", async ({
   await expect(
     page.locator('svg g[opacity="0.45"]', { hasText: "Salida" }),
   ).toHaveCount(1);
+});
+
+test("una tarea de firma con sobre externo muestra el enlace para firmar", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  control.instancia.tareas = [
+    {
+      id: "t-firma",
+      instanciaId: "instancia-1",
+      nodoId: "firma",
+      tipoNodo: "FIRMA",
+      estado: "PENDIENTE",
+      asignadoA: "firmante@prueba.test",
+      datos: {
+        firmaEnlace: "https://firma.prueba.test/sign/tok-abc",
+        firmaProveedor: "DOCUMENSO",
+        firmaSobreId: "env-1",
+        documentosEsperados: ["CONTRATO"],
+      },
+    },
+  ];
+  await page.goto("/operacion/instancias/instancia-1");
+
+  await expect(
+    page.getByText("https://firma.prueba.test/sign/tok-abc"),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Firmar" })).toHaveAttribute(
+    "href",
+    "https://firma.prueba.test/sign/tok-abc",
+  );
+  await expect(page.getByText(/Firma electrónica pendiente/)).toBeVisible();
+});
+
+test("una tarea de firma sin proveedor externo no muestra enlace", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  control.instancia.tareas = [
+    {
+      id: "t-firma",
+      instanciaId: "instancia-1",
+      nodoId: "firma",
+      tipoNodo: "FIRMA",
+      estado: "PENDIENTE",
+      asignadoA: "firmante@prueba.test",
+      datos: { documentosEsperados: ["CONTRATO"] },
+    },
+  ];
+  await page.goto("/operacion/instancias/instancia-1");
+
+  await expect(page.getByRole("link", { name: "Firmar" })).not.toBeVisible();
+  await expect(page.getByText(/Firma electrónica pendiente/)).not.toBeVisible();
 });
 
 test("una instancia completada sin eventos pinta todo el recorrido", async ({
@@ -186,7 +240,11 @@ test("el detalle pinta dos ramas en curso a la vez dentro de un paralelo", async
                 { id: "entrada", tipo: "INICIO", nombre: "Entrada" },
                 { id: "division", tipo: "PARALELO", nombre: "Dividir" },
                 { id: "rama-legal", tipo: "REVISION_HUMANA", nombre: "Legal" },
-                { id: "rama-finanzas", tipo: "REVISION_HUMANA", nombre: "Finanzas" },
+                {
+                  id: "rama-finanzas",
+                  tipo: "REVISION_HUMANA",
+                  nombre: "Finanzas",
+                },
                 { id: "union", tipo: "UNION", nombre: "Unir" },
                 { id: "salida", tipo: "FIN", nombre: "Salida" },
               ],

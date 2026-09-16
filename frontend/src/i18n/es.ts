@@ -749,6 +749,9 @@ export const es = {
     copiarEnlace: "Copiar enlace",
     enlaceCopiado: "Copiado",
     abrirEnlace: "Abrir",
+    abrirFirma: "Firmar",
+    firmaPendiente:
+      "Firma electrónica pendiente · se completa sola cuando el firmante termina",
     revocarEnlace: "Revocar",
     revocarEnlaceConfirmar:
       "¿Revocar el enlace? La persona externa ya no va a poder responder con él.",
