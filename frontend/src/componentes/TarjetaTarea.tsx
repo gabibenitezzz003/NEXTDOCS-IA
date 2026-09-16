@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Boton,
   Campo,
@@ -10,6 +10,7 @@ import {
 import { formatearFecha } from "../paginas/Documentos";
 import { completarTarea, mensajeDeError } from "../api/procesos";
 import type { TareaProceso } from "../api/procesos";
+import { listarDocumentos } from "../api/documentos";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 
@@ -52,6 +53,15 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
   const [documentoId, setDocumentoId] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const consultaDocumentos = useQuery({
+    queryKey: ["documentos", "entregables"],
+    queryFn: () =>
+      listarDocumentos({ tamano: 50, orden: "alta,desc", soloRaiz: true }),
+    enabled: abierta && tarea.tipoNodo === "SOLICITUD_DOCUMENTO",
+    staleTime: 30_000,
+  });
+  const documentos = consultaDocumentos.data?.content ?? [];
+
   const completar = useMutation({
     mutationFn: () => {
       const datos: Record<string, unknown> = {};
@@ -80,8 +90,7 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
       clienteConsultas.invalidateQueries({ queryKey: ["instancias"] });
       clienteConsultas.invalidateQueries({ queryKey: ["instancia"] });
     },
-    onError: (fallo) =>
-      setError(fallo instanceof Error ? fallo.message : mensajeDeError(fallo)),
+    onError: (fallo) => setError(mensajeDeError(fallo)),
   });
 
   const pendiente = tarea.estado === "PENDIENTE" || tarea.estado === "VENCIDA";
@@ -111,9 +120,11 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
           </div>
           <p className="mt-espacio-1 text-pequeno text-tinta-suave">
             {conInstancia
-              ? `${t("operacion.instancia", { id: tarea.instanciaId })} · `
+              ? `${tarea.nombreDefinicion?.trim() || tarea.codigoDefinicion?.trim() || t("operacion.procesoSinNombre")} · `
               : ""}
-            {t("operacion.paso", { nodo: tarea.nodoId })}
+            {t("operacion.paso", {
+              nodo: tarea.nombreNodo?.trim() || tarea.nodoId,
+            })}
             {tarea.asignadoA
               ? ` · ${t("operacion.asignada", { actor: tarea.asignadoA })}`
               : ""}
@@ -156,12 +167,30 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
       {abierta ? (
         <div className="mt-espacio-4 space-y-espacio-3 border-t border-borde pt-espacio-4">
           {tarea.tipoNodo === "SOLICITUD_DOCUMENTO" ? (
-            <Campo
+            <Selector
               etiqueta={t("operacion.documentoEntregado")}
-              placeholder={t("operacion.documentoPlaceholder")}
+              ayuda={t("operacion.documentoEntregadoAyuda")}
               value={documentoId}
               onChange={(evento) => setDocumentoId(evento.target.value)}
-            />
+            >
+              <option value="">
+                {consultaDocumentos.isPending
+                  ? t("operacion.documentosCargando")
+                  : t("operacion.documentoElegir")}
+              </option>
+              {documentos.map((documento) => (
+                <option key={documento.id} value={documento.id}>
+                  {[
+                    documento.nombre ?? t("operacion.documentoSinNombre"),
+                    documento.nombrePlantilla ?? documento.codigoPlantilla,
+                    documento.estado,
+                    documento.alta ? formatearFecha(documento.alta) : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </option>
+              ))}
+            </Selector>
           ) : null}
           <div className="grid gap-espacio-3 md:grid-cols-2">
             <Selector

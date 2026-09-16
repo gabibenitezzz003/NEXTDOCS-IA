@@ -74,7 +74,7 @@ export const pt: Diccionario = {
     navExcepciones: "Exceções",
     navTareas: "Tarefas",
     navOperacion: "Operação",
-    navStudio: "Studio",
+    navStudio: "Workflow",
     navSupervisora: "Supervisora",
     navPanel: "Painel de controle",
     navTiposNuevos: "Tipos detectados",
@@ -534,7 +534,7 @@ export const pt: Diccionario = {
     todosLosProcesos: "Todos os processos",
     sinInstancias: "Ainda não há processos em execução",
     sinInstanciasDetalle:
-      "Inicie um pelo Studio com o botão Testar processo de uma versão publicada, ou de onde o produto o disparar.",
+      "Inicie um pelo Workflow com o botão Testar processo de uma versão publicada, ou de onde o produto o disparar.",
     listaInstancias: "Instâncias de processo",
     version: "Versão {version}",
     iniciada: "iniciada {fecha}",
@@ -594,6 +594,7 @@ export const pt: Diccionario = {
     listaTareas: "Tarefas de processo",
     vence: "vence {fecha}",
     instancia: "Instância {id}",
+    procesoSinNombre: "processo",
     paso: "etapa {nodo}",
     asignada: "atribuída a {actor}",
     completadaEl: "Concluída {fecha}",
@@ -602,8 +603,12 @@ export const pt: Diccionario = {
     enlaceExterno: "Link para o externo: {token}",
     cerrar: "Fechar",
     completar: "Concluir",
-    documentoEntregado: "Documento entregue (identificador)",
-    documentoPlaceholder: "Ex.: FATURA-0004-182",
+    documentoEntregado: "Documento entregue",
+    documentoEntregadoAyuda:
+      "Escolha o documento que você já subiu à bandeja documental.",
+    documentosCargando: "Carregando documentos…",
+    documentoElegir: "Escolha um documento",
+    documentoSinNombre: "documento sem nome",
     decision: "Decisão",
     aprobado: "Aprovado",
     rechazado: "Rejeitado",
@@ -624,9 +629,9 @@ export const pt: Diccionario = {
     SUBPROCESO: "Subprocesso",
   },
   studio: {
-    titulo: "Studio",
+    titulo: "Workflow",
     descripcion:
-      "Biblioteca de processos: desenhe os passos, publique versões e teste-os em execução.",
+      "Desenhe processos no canvas, publique versões e teste-os em execução.",
   },
   procesos: {
     bibliotecaDesc:
@@ -648,7 +653,7 @@ export const pt: Diccionario = {
     creadoEl: "Criado em {fecha}",
     cerrar: "Fechar",
     editar: "Editar",
-    abrirEstudio: "Abrir estúdio",
+    abrirEstudio: "Abrir processo",
     sinSla: "sem SLA",
     sla: "SLA {horas} h",
     slaEditorAyuda: "Esvaziar o campo remove o SLA herdado.",
@@ -656,7 +661,10 @@ export const pt: Diccionario = {
     versionPublicada: "Versão {numero} publicada",
     borradorEtiqueta: "rascunho",
     archivada: "arquivada",
-    studioTitulo: "Studio de processo",
+    studioTitulo: "Workflow do processo",
+    recorridoPublicado: "Percurso publicado (versão {numero})",
+    recorridoPublicadoDesc:
+      "Esta é a versão em uso. Para editá-la, crie uma versão nova com o botão acima.",
     studioCargando: "Carregando a definição e suas versões.",
     errorEditor: "Não foi possível carregar o editor de processos",
     volver: "Voltar",

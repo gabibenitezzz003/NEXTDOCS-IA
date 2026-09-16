@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import type { SVGProps } from "react";
 import type {
   GrafoProceso,
   NodoProceso,
@@ -8,8 +9,18 @@ import { disponerGrafo } from "../utilidades/disposicionGrafo";
 import { BotonIcono, Selector } from "./Interfaz";
 import {
   IconoAjustar,
+  IconoCheck,
+  IconoDocumentos,
+  IconoInfo,
   IconoMas,
   IconoMenos,
+  IconoOperacion,
+  IconoPanel,
+  IconoProceso,
+  IconoRecargar,
+  IconoReloj,
+  IconoSupervisora,
+  IconoTareas,
 } from "./Iconos";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 
@@ -76,18 +87,51 @@ export function claveArista(arista: {
   return `${arista.origen}->${arista.destino}`;
 }
 
+function IconoNodo({
+  tipo,
+  ...resto
+}: { tipo: TipoNodoProceso } & SVGProps<SVGSVGElement>) {
+  switch (tipo) {
+    case "INICIO":
+    case "FIN":
+      return <IconoCheck {...resto} />;
+    case "SOLICITUD_DOCUMENTO":
+      return <IconoDocumentos {...resto} />;
+    case "FORMULARIO":
+      return <IconoPanel {...resto} />;
+    case "VALIDACION_IA":
+      return <IconoSupervisora {...resto} />;
+    case "REVISION_HUMANA":
+      return <IconoTareas {...resto} />;
+    case "DECISION":
+      return <IconoProceso {...resto} />;
+    case "TAREA_EXTERNA":
+      return <IconoOperacion {...resto} />;
+    case "NOTIFICACION":
+      return <IconoInfo {...resto} />;
+    case "TEMPORIZADOR":
+      return <IconoReloj {...resto} />;
+    case "ACCION_API":
+      return <IconoRecargar {...resto} />;
+    default:
+      return <IconoProceso {...resto} />;
+  }
+}
+
 export function CanvasProceso({
   grafo,
   alCambiar,
   seleccion,
   alSeleccionar,
   deshabilitado = false,
+  soloLectura = false,
 }: {
   grafo: GrafoProceso;
   alCambiar: (grafo: GrafoProceso) => void;
   seleccion: SeleccionCanvas | null;
   alSeleccionar: (seleccion: SeleccionCanvas | null) => void;
   deshabilitado?: boolean;
+  soloLectura?: boolean;
 }) {
   const { t } = useIdioma();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -263,6 +307,7 @@ export function CanvasProceso({
 
   return (
     <div>
+      {!soloLectura ? (
       <div className="mb-espacio-3 flex flex-wrap items-center gap-espacio-3">
         <Selector
           etiqueta={t("procesos.agregarPaso")}
@@ -287,6 +332,7 @@ export function CanvasProceso({
           {t("canvas.ayudaBreve")}
         </p>
       </div>
+      ) : null}
       <div className="relative overflow-hidden rounded-panel border border-borde bg-lienzo">
         <svg
           ref={svgRef}
@@ -451,6 +497,22 @@ export function CanvasProceso({
                       ? (nodo.nombre ?? nodo.tipo).slice(0, 21) + "…"
                       : nodo.nombre ?? nodo.tipo}
                   </text>
+                  <circle
+                    cx={ANCHO - 24}
+                    cy={ALTO / 2}
+                    r={14}
+                    fill="var(--color-superficie)"
+                    stroke={color.borde}
+                    strokeWidth={1}
+                  />
+                  <IconoNodo
+                    tipo={nodo.tipo}
+                    x={ANCHO - 34}
+                    y={ALTO / 2 - 10}
+                    width={20}
+                    height={20}
+                    className="text-tinta-media pointer-events-none"
+                  />
                   {nodo.tipo !== "INICIO" ? (
                     <circle
                       cx={0}

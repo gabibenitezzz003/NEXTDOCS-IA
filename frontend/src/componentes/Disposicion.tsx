@@ -69,7 +69,7 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
     titulo: "disposicion.grupoProcesos",
     entradas: [
       {
-        a: "/studio",
+        a: "/workflow",
         texto: "disposicion.navStudio",
         permiso: "tenant.administrar",
         icono: IconoProceso,

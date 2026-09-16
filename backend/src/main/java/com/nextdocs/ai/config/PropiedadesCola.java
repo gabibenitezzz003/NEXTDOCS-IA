@@ -15,4 +15,8 @@ public class PropiedadesCola {
 	private int documentosPorCiclo;
 
 	private long intervaloSondeoMilisegundos;
+
+	private long esperaEstancadoMilisegundos = 180_000;
+
+	private int documentosRecuperacionPorCiclo = 50;
 }

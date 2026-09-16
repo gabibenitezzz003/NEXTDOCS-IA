@@ -68,7 +68,10 @@ export interface Proceso {
 export interface TareaProceso {
   id: string;
   instanciaId: string;
+  codigoDefinicion?: string;
+  nombreDefinicion?: string;
   nodoId: string;
+  nombreNodo?: string;
   tipoNodo: string;
   estado: "PENDIENTE" | "COMPLETADA" | "CANCELADA" | "VENCIDA";
   asignadoA?: string;

@@ -19,8 +19,9 @@ public final class MaquinaEstadoDocumento {
 		Map<EstadoDocumento, Set<EstadoDocumento>> mapa = new EnumMap<>(EstadoDocumento.class);
 		mapa.put(EstadoDocumento.RECIBIDO,
 				EnumSet.of(EstadoDocumento.PROCESANDO, EstadoDocumento.DIVIDIDO, EstadoDocumento.RECHAZADO));
-		mapa.put(EstadoDocumento.PROCESANDO, EnumSet.of(EstadoDocumento.EXTRAIDO, EstadoDocumento.DIVIDIDO,
-				EstadoDocumento.OBSERVADO, EstadoDocumento.RECHAZADO));
+		mapa.put(EstadoDocumento.PROCESANDO,
+				EnumSet.of(EstadoDocumento.PROCESANDO, EstadoDocumento.EXTRAIDO, EstadoDocumento.DIVIDIDO,
+						EstadoDocumento.OBSERVADO, EstadoDocumento.RECHAZADO));
 		mapa.put(EstadoDocumento.EXTRAIDO,
 				EnumSet.of(EstadoDocumento.VALIDADO, EstadoDocumento.OBSERVADO, EstadoDocumento.RECHAZADO));
 		mapa.put(EstadoDocumento.VALIDADO, EnumSet.of(EstadoDocumento.APROBADO, EstadoDocumento.OBSERVADO,

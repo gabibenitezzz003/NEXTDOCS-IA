@@ -124,7 +124,7 @@ async function preparar(pagina: Page, grafo = grafoLineal()) {
     }
     return responder({ mensaje: "Endpoint inesperado" }, 404);
   });
-  await pagina.goto("/studio");
+  await pagina.goto("/workflow");
   return control;
 }
 
@@ -133,7 +133,8 @@ test("guardar conserva extremos y configuración adicional; publicar exige guard
 }) => {
   const control = await preparar(page);
   await expect(page.getByText("Versión 7 publicada", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+  await page.getByRole("button", { name: "Lista", exact: true }).click();
   await page.getByRole("button", { name: "Configurar", exact: true }).click();
   await page.getByLabel("Nombre del paso").fill("Paso modificado");
   await expect(page.getByRole("button", { name: "Publicar versión 8" })).toBeDisabled();
@@ -164,7 +165,7 @@ for (const caso of ["ramas", "condición"]) {
       });
     } else grafo.aristas[0].condicion = "decision=APROBADO";
     const control = await preparar(page, grafo);
-    await page.getByRole("button", { name: "Abrir estudio" }).click();
+    await page.getByRole("button", { name: "Abrir proceso" }).click();
     await expect(
       page.getByRole("application", { name: /Canvas del recorrido/ }),
     ).toBeVisible();
@@ -176,7 +177,8 @@ for (const caso of ["ramas", "condición"]) {
 
 test("protege la salida con cambios locales", async ({ page }) => {
   await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+  await page.getByRole("button", { name: "Lista", exact: true }).click();
   await page.getByRole("button", { name: "Configurar", exact: true }).click();
   await page.getByLabel("Nombre del paso").fill("Sin guardar");
   page.once("dialog", (dialogo) => dialogo.dismiss());
@@ -184,12 +186,12 @@ test("protege la salida con cambios locales", async ({ page }) => {
   await expect(page.getByLabel("Nombre del paso")).toHaveValue("Sin guardar");
   page.once("dialog", (dialogo) => dialogo.accept());
   await page.getByRole("button", { name: "Volver", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Abrir estudio" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Abrir proceso" })).toBeVisible();
 });
 
 test("ESPERANDO permite VENCIDA y rechaza con motivo real", async ({ page }) => {
   const control = await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await page.getByRole("button", { name: /Probar/ }).click();
   await expect(page.getByText("Vencida", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Rechazar", exact: true }).click();
@@ -212,7 +214,7 @@ test("ESPERANDO permite VENCIDA y rechaza con motivo real", async ({ page }) => 
 test("consulta fallida muestra error y permite reintentar", async ({ page }) => {
   const control = await preparar(page);
   control.errorInstancia = true;
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await page.getByRole("button", { name: /Probar/ }).click();
   await expect(page.getByRole("alert")).toContainText("Detalle de prueba no disponible");
   control.errorInstancia = false;
@@ -241,7 +243,7 @@ for (const estado of [
     const control = await preparar(page);
     control.instancia.estado = estado;
     control.instancia.tareas[0].estado = "PENDIENTE";
-    await page.getByRole("button", { name: "Abrir estudio" }).click();
+    await page.getByRole("button", { name: "Abrir proceso" }).click();
     await page.getByRole("button", { name: /Probar/ }).click();
     await expect(page.getByText(`Estado ${nombreEstado[estado]} · versión 7`, { exact: true })).toBeVisible();
     const finalizada = estado === "COMPLETADA" || estado === "CANCELADA";
@@ -255,7 +257,7 @@ for (const estado of [
 test("actualiza por polling y se detiene al finalizar", async ({ page }) => {
   await page.clock.install();
   const control = await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await page.getByRole("button", { name: /Probar/ }).click();
   await expect(page.getByText("Estado Esperando · versión 7", { exact: true })).toBeVisible();
   const inicial = control.consultasInstancia;
@@ -271,7 +273,7 @@ test("actualiza por polling y se detiene al finalizar", async ({ page }) => {
 test("el rechazo conserva motivo y muestra error si falla el envío", async ({ page }) => {
   const control = await preparar(page);
   control.errorCompletar = true;
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await page.getByRole("button", { name: /Probar/ }).click();
   await page.getByRole("button", { name: "Rechazar", exact: true }).click();
   await page.getByLabel("Motivo del rechazo").fill("Motivo conservado");
@@ -284,13 +286,14 @@ test("el rechazo conserva motivo y muestra error si falla el envío", async ({ p
 test("un grafo con ramas abre en canvas tras actualizar desde caché", async ({ page }) => {
   await page.clock.install();
   const control = await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+  await page.getByRole("button", { name: "Lista", exact: true }).click();
   await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Volver", exact: true }).click();
   control.grafo = grafoLineal();
   control.grafo.aristas[0].condicion = "decision=APROBADO";
   await page.clock.fastForward(16_000);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await expect(
     page.getByRole("application", { name: /Canvas del recorrido/ }),
   ).toBeVisible();
@@ -301,7 +304,8 @@ test("agregar un paso avisa que se agrego y lo deja abierto para configurar", as
   page,
 }) => {
   await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+  await page.getByRole("button", { name: "Lista", exact: true }).click();
 
   const pasos = page.locator('ol li[id^="paso-"]');
   await expect(pasos).toHaveCount(1);
@@ -318,7 +322,7 @@ test("la version publicada muestra datos utiles y esconde la huella tecnica", as
   page,
 }) => {
   await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
 
   const tarjeta = page.locator("section", { hasText: "Versión 7 publicada" }).first();
   await expect(tarjeta.getByText("Publicada", { exact: true }).first()).toBeVisible();
@@ -345,7 +349,7 @@ test("el canvas muestra un recorrido con ramas que la lista bloquea", async ({
   grafo.aristas.push({ origen: "otra-salida", destino: "salida" });
 
   await preparar(page, grafo);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
 
   const canvas = page.getByRole("application", {
     name: /Canvas del recorrido/,
@@ -358,25 +362,25 @@ test("el canvas muestra un recorrido con ramas que la lista bloquea", async ({
 
 test("el canvas y la lista son dos vistas del mismo recorrido", async ({ page }) => {
   await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
 
-  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
-
-  await page.getByRole("button", { name: "Canvas" }).click();
   await expect(
     page.getByRole("application", { name: /Canvas del recorrido/ }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeHidden();
 
-  await page.getByRole("button", { name: "Lista" }).click();
+  await page.getByRole("button", { name: "Lista", exact: true }).click();
   await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
+
+  await page.getByRole("button", { name: "Canvas", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeHidden();
 });
 
 test("el canvas permite seleccionar un paso, editar su nombre y guardar", async ({
   page,
 }) => {
   const control = await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await page.getByRole("button", { name: "Canvas" }).click();
 
   const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
@@ -396,7 +400,7 @@ test("el canvas permite seleccionar un paso, editar su nombre y guardar", async 
 
 test("arrastrar un paso en el canvas guarda su posición", async ({ page }) => {
   const control = await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await page.getByRole("button", { name: "Canvas" }).click();
 
   const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
@@ -421,7 +425,7 @@ test("el canvas permite editar la condición de una conexión", async ({
   page,
 }) => {
   const control = await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await page.getByRole("button", { name: "Canvas" }).click();
 
   const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
@@ -441,7 +445,7 @@ test("el canvas permite editar la condición de una conexión", async ({
 
 test("validar consulta al workflow y muestra el resultado", async ({ page }) => {
   const control = await preparar(page);
-  await page.getByRole("button", { name: "Abrir estudio" }).click();
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
   await expect(
     page.getByRole("button", { name: "Validar", exact: true }),
   ).toBeEnabled();
