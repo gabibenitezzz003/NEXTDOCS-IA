@@ -102,7 +102,7 @@ en procesos, terceros, partners y contenido COMEX.
 | **D. Colaboración externa** | ✅ Cuenta externa, enlace de acción seguro (token, scopes, expiración, usos máximos) y **portal público `/externo/{token}`** con aprobar/rechazar y **carga de documentos** proxied al repositorio del tenant | — |
 | **E. IA Supervisora v0** | ✅ Reglas configurables por plantilla con umbral y operador, hallazgos, bloqueo de instancia y pantalla de administración | Controles cross-doc y de secuencia — **fuera del MVP0** (§6) |
 | **F. Biblioteca COMEX/Follow** | ✅ Catálogo argentino de 11 tipos documentales y plantillas de proceso COMEX con fixtures | Overlays por vertical |
-| **G. Partner Foundation** | ✅ Partner org, delegated grants, ownership/provenance/fork/install | Pantalla de delegaciones — **fuera del MVP0** (§6). 11 endpoints de partners y marketplace sin consumir |
+| **G. Partner Foundation** | ✅ Partner org, delegated grants, ownership/provenance/fork/install + pantallas de partners y marketplace | Certificación comercial del marketplace — **fuera del MVP0** (§6) |
 | **H. Gobernanza & KPI** | ✅ Auditoría, reconstrucción de decisión, 11 KPI documentales y 14 de proceso con drill-down, export con manifiesto, costo por tenant | — |
 | **I. Integración** | ✅ API REST, webhooks HMAC, SSO, FollowConnector de matching | Context Contract + Template Recommender + `subject_ref` genérico (P0-10) |
 

@@ -415,6 +415,28 @@ export function IconoGoogle({ tamano = 18, ...resto }: PropsIcono) {
   );
 }
 
+export function IconoPartner(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <circle cx="8" cy="8" r="3" />
+      <circle cx="16.5" cy="9.5" r="2.5" />
+      <path d="M3.5 19c0-3 2-5 4.5-5s4.5 2 4.5 5" />
+      <path d="M13.5 19c0-2.5 1.3-4.2 3-4.2s3 1.7 3 4.2" />
+    </Base>
+  );
+}
+
+export function IconoMarketplace(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M4 8l1-3.5h14L20 8" />
+      <path d="M4 8v11.5h16V8" />
+      <path d="M4 8h16" />
+      <path d="M9.5 19.5v-6h5v6" />
+    </Base>
+  );
+}
+
 export function IconoMicrosoft({ tamano = 18, ...resto }: PropsIcono) {
   return (
     <svg
