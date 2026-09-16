@@ -216,6 +216,48 @@ export const es = {
       "En pasos de decisión, la condición distingue cada salida.",
     eliminarPaso: "Eliminar paso",
     eliminarConexion: "Eliminar conexión",
+    duplicarPaso: "Duplicar paso",
+    pasoDuplicado: "Paso duplicado en el canvas",
+    copia: "(copia)",
+    confirmarEliminarNodo:
+      "¿Eliminar este paso y sus conexiones? Esta acción no se puede deshacer.",
+    confirmarEliminarConexion:
+      "¿Eliminar esta conexión? Esta acción no se puede deshacer.",
+    tipoDocumentoAyuda:
+      "Código del catálogo documental que este paso exige al completarse.",
+    subprocesoAyuda:
+      "Código del proceso publicado que se instancia como subproceso.",
+    condicionesIa: "Condiciones de validación",
+    condicionesIaAyuda:
+      "Una por línea, en formato clave = valor. Si alguna no se cumple, la instancia queda bloqueada.",
+    mensajeNotificacion: "Mensaje de la notificación",
+    mensajePlaceholder: "Ej.: Se aprobó la documentación de la orden {orden}",
+    duracionHoras: "Duración (horas)",
+    duracionAyuda:
+      "Tiempo que el temporizador espera antes de continuar. Acepta decimales.",
+    urlApi: "URL de la acción",
+    metodoApi: "Método HTTP",
+    cuerpoApi: "Cuerpo de la petición (opcional)",
+    cuerpoApiAyuda: "JSON que se envía en la petición. Podés usar {{datos.clave}}.",
+    campoRespuesta: "Campo donde guardar la respuesta",
+    campoRespuestaAyuda:
+      "Clave dentro de los datos de la instancia donde queda el resultado de la llamada.",
+    expiracionEnlace: "Vencimiento del enlace (horas)",
+    expiracionEnlaceAyuda:
+      "Horas de validez del enlace seguro que recibe el tercero para completar la tarea.",
+    decisionAyuda:
+      "Las condiciones de cada salida se editan tocando la conexión que sale de este paso.",
+    avisoCondiciones:
+      "Falta al menos una condición: sin reglas el motor no puede evaluar este paso y la instancia se bloquea.",
+    avisoUrl: "Falta la URL: sin destino la acción API falla al ejecutarse.",
+    avisoMensaje:
+      "Falta el mensaje: la notificación se registra vacía y no comunica nada.",
+    avisoDuracion:
+      "Falta la duración: sin tiempo definido el temporizador falla al ejecutarse.",
+    avisoSubproceso:
+      "Falta el código del subproceso: sin él el paso falla al ejecutarse.",
+    avisoTipoDocumento:
+      "Sin tipo documental la tarea acepta cualquier documento al completarse.",
     ayuda:
       "Tocá un paso para configurarlo, o una conexión para editar su condición. Los pasos Inicio y Fin son fijos.",
   },
@@ -681,33 +723,13 @@ export const es = {
     borradorVersion: "Borrador · versión {numero}",
     borradorDesc:
       "Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados.",
-    formaVerRecorrido: "Forma de ver el recorrido",
-    lista: "Lista",
-    canvas: "Canvas",
     validar: "Validar",
     validacionOk: "La versión es válida: puede publicarse.",
     sinGuardar: "Sin guardar",
     versionNoEditable: "Esta versión no se puede editar de forma segura",
-    versionNoEditableDesc:
-      "{bloqueo} La lista no puede representar fielmente este recorrido: editalo en la vista Canvas.",
     hayCambios:
       "Hay cambios sin guardar. Guardá el borrador antes de publicar.",
-    catalogoNota:
-      "El catálogo MVP0 permite publicar Solicitud de documento, Formulario, Revisión humana y Temporizador. Los demás tipos del selector pueden guardarse en borrador, pero Workflow impide publicarlos.",
-    edicionBorrador: "Edición del borrador",
-    secuenciaPasos: "Secuencia de pasos",
-    inicio: "Inicio",
-    fin: "Fin",
-    pasoN: "Paso {numero}: ",
-    subirPaso: "Subir paso {numero}: {nombre}",
-    bajarPaso: "Bajar paso {numero}: {nombre}",
-    quitarPaso: "Quitar paso {numero}: {nombre}",
-    ocultar: "Ocultar",
-    configurar: "Configurar",
     agregarPaso: "Agregar paso",
-    agregarPasoAyuda:
-      "El paso nuevo se suma al final del recorrido y se abre para que lo configures.",
-    elegirTipo: "Elegí un tipo de paso...",
     guardarBorrador: "Guardar borrador",
     publicarVersion: "Publicar versión {numero}",
     versionPublicadaTitulo: "Versión {numero} publicada",
@@ -737,7 +759,6 @@ export const es = {
     sinTareasPendientes: "Sin tareas pendientes o vencidas.",
     enviandoDecision: "Enviando decisión…",
     cargandoPrueba: "Cargando instancia de prueba",
-    configuracionPaso: "Configuración del paso",
     nombreDelPaso: "Nombre del paso",
     tipoDocumento: "Tipo de documento",
     codigoSubproceso: "Código del subproceso",
@@ -753,8 +774,6 @@ export const es = {
     guardadoOk: "Los pasos del borrador quedaron guardados.",
     publicadoOk: "Versión publicada. Las instancias nuevas usan esta versión.",
     notaNuevaVersion: "Versión creada desde el estudio",
-    pasoAgregado:
-      "Se agregó el paso \"{nombre}\" al final. Configuralo y guardá el borrador.",
     bloqueoSecuencial:
       "El editor secuencial no puede representar fielmente este grafo. La edición, el guardado y la publicación están bloqueados para conservar su información.",
   },

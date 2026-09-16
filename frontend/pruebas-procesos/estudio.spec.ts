@@ -1,6 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import type { GrafoProceso, InstanciaProceso } from "../src/api/procesos";
-import { desplegable, elegirEnDesplegable } from "../pruebas-transversales/desplegable";
+import { elegirEnDesplegable } from "../pruebas-transversales/desplegable";
 
 function grafoLineal(): GrafoProceso {
   return {
@@ -134,8 +134,8 @@ test("guardar conserva extremos y configuración adicional; publicar exige guard
   const control = await preparar(page);
   await expect(page.getByText("Versión 7 publicada", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Abrir proceso" }).click();
-  await page.getByRole("button", { name: "Lista", exact: true }).click();
-  await page.getByRole("button", { name: "Configurar", exact: true }).click();
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await canvas.getByText("Paso A", { exact: true }).click();
   await page.getByLabel("Nombre del paso").fill("Paso modificado");
   await expect(page.getByRole("button", { name: "Publicar versión 8" })).toBeDisabled();
   control.errorGuardar = true;
@@ -178,8 +178,8 @@ for (const caso of ["ramas", "condición"]) {
 test("protege la salida con cambios locales", async ({ page }) => {
   await preparar(page);
   await page.getByRole("button", { name: "Abrir proceso" }).click();
-  await page.getByRole("button", { name: "Lista", exact: true }).click();
-  await page.getByRole("button", { name: "Configurar", exact: true }).click();
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await canvas.getByText("Paso A", { exact: true }).click();
   await page.getByLabel("Nombre del paso").fill("Sin guardar");
   page.once("dialog", (dialogo) => dialogo.dismiss());
   await page.getByRole("button", { name: "Volver", exact: true }).click();
@@ -287,8 +287,9 @@ test("un grafo con ramas abre en canvas tras actualizar desde caché", async ({ 
   await page.clock.install();
   const control = await preparar(page);
   await page.getByRole("button", { name: "Abrir proceso" }).click();
-  await page.getByRole("button", { name: "Lista", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido/ }),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Volver", exact: true }).click();
   control.grafo = grafoLineal();
   control.grafo.aristas[0].condicion = "decision=APROBADO";
@@ -300,22 +301,23 @@ test("un grafo con ramas abre en canvas tras actualizar desde caché", async ({ 
   await expect(page.getByRole("button", { name: "Guardar borrador" })).toBeEnabled();
 });
 
-test("agregar un paso avisa que se agrego y lo deja abierto para configurar", async ({
+test("agregar un paso desde la paleta lo dibuja en el canvas", async ({
   page,
 }) => {
   await preparar(page);
   await page.getByRole("button", { name: "Abrir proceso" }).click();
-  await page.getByRole("button", { name: "Lista", exact: true }).click();
 
-  const pasos = page.locator('ol li[id^="paso-"]');
-  await expect(pasos).toHaveCount(1);
-  const antes = await pasos.count();
+  const canvas = page.getByRole("application", {
+    name: /Canvas del recorrido: 3 pasos/,
+  });
+  await expect(canvas).toBeVisible();
 
   await elegirEnDesplegable(page, "Agregar paso", "Notificar");
 
-  await expect(pasos).toHaveCount(antes + 1);
-  await expect(page.getByText(/Se agregó el paso "Notificar" al final/)).toBeVisible();
-  await expect(desplegable(page, "Agregar paso")).toContainText("Elegí un tipo de paso");
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido: 4 pasos/ }),
+  ).toBeVisible();
+  await expect(page.getByText("4 pasos")).toBeVisible();
 });
 
 test("la version publicada muestra datos utiles y esconde la huella tecnica", async ({
@@ -360,20 +362,39 @@ test("el canvas muestra un recorrido con ramas que la lista bloquea", async ({
   await expect(canvas).toContainText("decision=RECHAZADO");
 });
 
-test("el canvas y la lista son dos vistas del mismo recorrido", async ({ page }) => {
+test("el panel de propiedades muestra los campos que el motor exige por tipo", async ({
+  page,
+}) => {
+  const grafo = grafoLineal();
+  grafo.nodos[1].tipo = "ACCION_API";
+  grafo.nodos[1].nombre = "Llamar ERP";
+  await preparar(page, grafo);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await canvas.getByText("Llamar ERP", { exact: true }).click();
+
+  await expect(page.getByText("Propiedades del paso")).toBeVisible();
+  await expect(page.getByLabel("URL de la acción")).toBeVisible();
+  await expect(page.getByLabel("Método HTTP")).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("Falta la URL");
+
+  await page.getByLabel("URL de la acción").fill("https://erp.test/api");
+  await expect(page.getByRole("alert")).toHaveCount(0);
+});
+
+test("duplicar un paso crea una copia en el canvas", async ({ page }) => {
   await preparar(page);
   await page.getByRole("button", { name: "Abrir proceso" }).click();
 
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await canvas.getByText("Paso A", { exact: true }).click();
+  await page.getByRole("button", { name: "Duplicar paso" }).click();
+
   await expect(
-    page.getByRole("application", { name: /Canvas del recorrido/ }),
+    page.getByRole("application", { name: /Canvas del recorrido: 4 pasos/ }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeHidden();
-
-  await page.getByRole("button", { name: "Lista", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeVisible();
-
-  await page.getByRole("button", { name: "Canvas", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Configurar", exact: true })).toBeHidden();
+  await expect(page.getByText("Paso duplicado en el canvas")).toBeVisible();
 });
 
 test("el canvas permite seleccionar un paso, editar su nombre y guardar", async ({
@@ -381,7 +402,6 @@ test("el canvas permite seleccionar un paso, editar su nombre y guardar", async 
 }) => {
   const control = await preparar(page);
   await page.getByRole("button", { name: "Abrir proceso" }).click();
-  await page.getByRole("button", { name: "Canvas" }).click();
 
   const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
   await expect(canvas).toBeVisible();
@@ -401,7 +421,6 @@ test("el canvas permite seleccionar un paso, editar su nombre y guardar", async 
 test("arrastrar un paso en el canvas guarda su posición", async ({ page }) => {
   const control = await preparar(page);
   await page.getByRole("button", { name: "Abrir proceso" }).click();
-  await page.getByRole("button", { name: "Canvas" }).click();
 
   const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
   const paso = canvas.getByText("Paso A", { exact: true });
@@ -426,7 +445,6 @@ test("el canvas permite editar la condición de una conexión", async ({
 }) => {
   const control = await preparar(page);
   await page.getByRole("button", { name: "Abrir proceso" }).click();
-  await page.getByRole("button", { name: "Canvas" }).click();
 
   const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
   await canvas.locator("path.cursor-pointer").first().dispatchEvent("click");

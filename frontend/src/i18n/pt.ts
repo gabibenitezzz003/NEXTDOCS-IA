@@ -218,6 +218,48 @@ export const pt: Diccionario = {
       "Em passos de decisão, a condição distingue cada saída.",
     eliminarPaso: "Excluir passo",
     eliminarConexion: "Excluir conexão",
+    duplicarPaso: "Duplicar passo",
+    pasoDuplicado: "Passo duplicado no canvas",
+    copia: "(cópia)",
+    confirmarEliminarNodo:
+      "Excluir este passo e suas conexões? Esta ação não pode ser desfeita.",
+    confirmarEliminarConexion:
+      "Excluir esta conexão? Esta ação não pode ser desfeita.",
+    tipoDocumentoAyuda:
+      "Código do catálogo documental que este passo exige para ser concluído.",
+    subprocesoAyuda:
+      "Código do processo publicado instanciado como subproceso.",
+    condicionesIa: "Condições de validação",
+    condicionesIaAyuda:
+      "Uma por linha, no formato chave = valor. Se alguma falhar, a instância fica bloqueada.",
+    mensajeNotificacion: "Mensagem da notificação",
+    mensajePlaceholder: "Ex.: Documentação da ordem aprovada {orden}",
+    duracionHoras: "Duração (horas)",
+    duracionAyuda:
+      "Tempo que o temporizador aguarda antes de continuar. Aceita decimais.",
+    urlApi: "URL da ação",
+    metodoApi: "Método HTTP",
+    cuerpoApi: "Corpo da requisição (opcional)",
+    cuerpoApiAyuda: "JSON enviado na requisição. Você pode usar {{datos.chave}}.",
+    campoRespuesta: "Campo para guardar a resposta",
+    campoRespuestaAyuda:
+      "Chave dentro dos dados da instância onde fica o resultado da chamada.",
+    expiracionEnlace: "Validade do link (horas)",
+    expiracionEnlaceAyuda:
+      "Horas de validade do link seguro que o terceiro recebe para completar a tarefa.",
+    decisionAyuda:
+      "As condições de cada saída são editadas tocando na conexão que sai deste passo.",
+    avisoCondiciones:
+      "Falta pelo menos uma condição: sem regras o motor não avalia este passo e a instância fica bloqueada.",
+    avisoUrl: "Falta a URL: sem destino a ação API falha na execução.",
+    avisoMensaje:
+      "Falta a mensagem: a notificação fica registrada vazia e não comunica nada.",
+    avisoDuracion:
+      "Falta a duração: sem tempo definido o temporizador falha na execução.",
+    avisoSubproceso:
+      "Falta o código do subproceso: sem ele o passo falha na execução.",
+    avisoTipoDocumento:
+      "Sem tipo documental a tarefa aceita qualquer documento ao ser concluída.",
     ayuda:
       "Toque em um passo para configurá-lo, ou em uma conexão para editar sua condição. Os passos Início e Fim são fixos.",
   },
@@ -683,33 +725,13 @@ export const pt: Diccionario = {
     borradorVersion: "Rascunho · versão {numero}",
     borradorDesc:
       "Edite a sequência e salve o rascunho antes de publicar. O Workflow valida o percurso e os tipos habilitados.",
-    formaVerRecorrido: "Forma de ver o percurso",
-    lista: "Lista",
-    canvas: "Canvas",
     validar: "Validar",
     validacionOk: "A versão é válida: pode ser publicada.",
     sinGuardar: "Não salvo",
-    versionNoEditable: "Esta versão não pode ser editada com segurança",
-    versionNoEditableDesc:
-      "{bloqueo} A lista não consegue representar fielmente este percurso: edite-o na visualização Canvas.",
+    versionNoEditable: "Esta versión não pode ser editada com segurança",
     hayCambios:
       "Há alterações não salvas. Salve o rascunho antes de publicar.",
-    catalogoNota:
-      "O catálogo MVP0 permite publicar Solicitação de documento, Formulário, Revisão humana e Temporizador. Os demais tipos do seletor podem ser salvos em rascunho, mas o Workflow impede publicá-los.",
-    edicionBorrador: "Edição do rascunho",
-    secuenciaPasos: "Sequência de passos",
-    inicio: "Início",
-    fin: "Fim",
-    pasoN: "Passo {numero}: ",
-    subirPaso: "Subir passo {numero}: {nombre}",
-    bajarPaso: "Descer passo {numero}: {nombre}",
-    quitarPaso: "Remover passo {numero}: {nombre}",
-    ocultar: "Ocultar",
-    configurar: "Configurar",
     agregarPaso: "Adicionar passo",
-    agregarPasoAyuda:
-      "O novo passo é adicionado ao final do percurso e abre para você configurá-lo.",
-    elegirTipo: "Escolha um tipo de passo...",
     guardarBorrador: "Salvar rascunho",
     publicarVersion: "Publicar versão {numero}",
     versionPublicadaTitulo: "Versão {numero} publicada",
@@ -739,7 +761,6 @@ export const pt: Diccionario = {
     sinTareasPendientes: "Sem tarefas pendentes ou vencidas.",
     enviandoDecision: "Enviando decisão…",
     cargandoPrueba: "Carregando instância de teste",
-    configuracionPaso: "Configuração do passo",
     nombreDelPaso: "Nome do passo",
     tipoDocumento: "Tipo de documento",
     codigoSubproceso: "Código do subprocesso",
@@ -755,8 +776,6 @@ export const pt: Diccionario = {
     guardadoOk: "Os passos do rascunho foram salvos.",
     publicadoOk: "Versão publicada. As instâncias novas usam esta versão.",
     notaNuevaVersion: "Versão criada no estúdio",
-    pasoAgregado:
-      "O passo \"{nombre}\" foi adicionado ao final. Configure-o e salve o rascunho.",
     bloqueoSecuencial:
       "O editor sequencial não pode representar fielmente este grafo. A edição, o salvamento e a publicação estão bloqueados para preservar suas informações.",
   },
