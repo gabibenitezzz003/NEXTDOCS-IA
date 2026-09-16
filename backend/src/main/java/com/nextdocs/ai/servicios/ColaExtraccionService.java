@@ -2,8 +2,11 @@ package com.nextdocs.ai.servicios;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.nextdocs.ai.config.PropiedadesCola;
+
+import io.micrometer.core.instrument.MeterRegistry;
 
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -15,9 +18,18 @@ public class ColaExtraccionService {
 
 	private final PropiedadesCola propiedades;
 
-	public ColaExtraccionService(StringRedisTemplate redis, PropiedadesCola propiedades) {
+	private final AtomicLong profundidadMedida = new AtomicLong();
+
+	private final AtomicLong profundidadReintentoMedida = new AtomicLong();
+
+	public ColaExtraccionService(StringRedisTemplate redis, PropiedadesCola propiedades,
+			MeterRegistry meterRegistry) {
 		this.redis = redis;
 		this.propiedades = propiedades;
+		meterRegistry.gauge("nextdocs.cola.extraccion.profundidad", profundidadMedida,
+				AtomicLong::doubleValue);
+		meterRegistry.gauge("nextdocs.cola.extraccion.reintentos", profundidadReintentoMedida,
+				AtomicLong::doubleValue);
 	}
 
 	public void encolar(String documentoId) {
@@ -43,11 +55,15 @@ public class ColaExtraccionService {
 
 	public long profundidad() {
 		Long tamano = redis.opsForList().size(propiedades.getNombreExtraccion());
-		return tamano == null ? 0 : tamano;
+		long valor = tamano == null ? 0 : tamano;
+		profundidadMedida.set(valor);
+		return valor;
 	}
 
 	public long profundidadReintento() {
 		Long tamano = redis.opsForZSet().size(propiedades.getNombreReintento());
-		return tamano == null ? 0 : tamano;
+		long valor = tamano == null ? 0 : tamano;
+		profundidadReintentoMedida.set(valor);
+		return valor;
 	}
 }
