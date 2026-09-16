@@ -200,6 +200,10 @@ export const en: Diccionario = {
       "Drag the steps to position them; drag from a step's violet dot to another step to connect them.",
     ariaRecorrido: "Route canvas: {cantidad} steps",
     pasos: "{cantidad} steps",
+    vacio:
+      "The canvas is empty. Start with the minimum route or add steps with the selector above.",
+    vacioLectura: "This version has no steps yet.",
+    empezar: "Start with Start → End",
     alejar: "Zoom out",
     acercar: "Zoom in",
     ajustar: "Recenter the route",
@@ -492,12 +496,12 @@ export const en: Diccionario = {
   tareas: {
     titulo: "Tasks",
     descripcion:
-      "Everything your processes ask you to do, in a single inbox.",
+      "What the running executions ask you to do. Completing a task moves the process forward in Operations.",
   },
   operacion: {
     titulo: "Process operations",
     descripcion:
-      "Running processes: active instances, indicators and the detail of each one.",
+      "Executions of the processes published in Workflow: active instances, indicators and the step each one is on.",
     indicadores: "Indicators",
     indicadoresDesc: "How the process engine is doing in the chosen window.",
     ventanaIndicadores: "Indicator window",
@@ -619,6 +623,7 @@ export const en: Diccionario = {
     FORMULARIO: "Form",
     VALIDACION_IA: "Validate with AI",
     REVISION_HUMANA: "Human review",
+    DECISION: "Decision",
     TAREA_EXTERNA: "External task",
     NOTIFICACION: "Notify",
     TEMPORIZADOR: "Wait (timer)",
@@ -628,11 +633,11 @@ export const en: Diccionario = {
   studio: {
     titulo: "Workflow",
     descripcion:
-      "Design processes on the canvas, publish versions and test them in execution.",
+      "Design your processes on the canvas: each published version runs in Operations and generates the work that shows up in Tasks.",
   },
   procesos: {
     bibliotecaDesc:
-      "Workspace definition library. Open the Studio to configure each process's steps and publish a version.",
+      "Workspace process library. Open one to draw its steps on the canvas and publish a version.",
     nuevoProceso: "New process",
     nuevoProcesoTitulo: "New process",
     nuevoProcesoDesc:

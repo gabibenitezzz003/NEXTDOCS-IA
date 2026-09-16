@@ -453,3 +453,26 @@ test("validar consulta al workflow y muestra el resultado", async ({ page }) => 
   await expect.poll(() => control.validaciones).toBe(1);
   await expect(page.getByText(/es válida/)).toBeVisible();
 });
+
+test("un canvas vacío ofrece sembrar el recorrido mínimo y queda editable", async ({
+  page,
+}) => {
+  const control = await preparar(page, { nodos: [], aristas: [] });
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+
+  await expect(page.getByText(/El canvas está vacío/)).toBeVisible();
+  await page.getByRole("button", { name: "Empezar con Inicio → Fin" }).click();
+  await expect(
+    page.getByRole("application", { name: /Canvas del recorrido: 2 pasos/ }),
+  ).toBeVisible();
+  await expect(page.getByText("2 pasos")).toBeVisible();
+
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect.poll(() => control.guardados.length).toBe(1);
+  expect(
+    control.guardados[0].nodos.map((nodo) => nodo.tipo).sort(),
+  ).toEqual(["FIN", "INICIO"]);
+  expect(control.guardados[0].aristas).toEqual([
+    { origen: "inicio", destino: "fin" },
+  ]);
+});

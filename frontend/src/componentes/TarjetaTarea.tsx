@@ -30,6 +30,13 @@ export function textoTipoTarea(tipo: string, t: Traductor): string {
   return TIPOS_TAREA_CONOCIDOS.has(tipo) ? t(`tipoTarea.${tipo}`) : tipo;
 }
 
+function tonoVencimiento(fecha: string) {
+  const restante = new Date(fecha).getTime() - Date.now();
+  if (restante < 0) return "rojo" as const;
+  if (restante < 24 * 60 * 60 * 1000) return "alerta" as const;
+  return "informacion" as const;
+}
+
 function tonoEstadoTarea(estado: TareaProceso["estado"]) {
   switch (estado) {
     case "COMPLETADA":
@@ -111,7 +118,7 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
               {t(`estadoTarea.${tarea.estado}`)}
             </Pastilla>
             {tarea.vencimiento ? (
-              <Pastilla tono="neutro">
+              <Pastilla tono={tonoVencimiento(tarea.vencimiento)}>
                 {t("operacion.vence", {
                   fecha: formatearFecha(tarea.vencimiento),
                 })}
