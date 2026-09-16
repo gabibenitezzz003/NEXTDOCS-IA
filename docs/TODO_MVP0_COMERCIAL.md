@@ -196,7 +196,7 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   aduaneros se parametrizan por país; los IDs de tipos de carga Follow vienen por Connector, no
   se duplican maestros.
 
-- [ ] **P0-10 · Follow Context/Template Recommender** (E10 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-09*
+- [x] **P0-10 · Follow Context/Template Recommender** (E10 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-09*
   Contrato canónico de contexto (scope/direction/mode/logistic_unit/cargo_profile/follow_operation/
   flags/subject_ref), `POST /template-recommendations`, `POST /workflow-instances`, eventos
   `document.*`/`task.*`/`workflow.completed`. Follow no hardcodea nombres de plantilla: envía
