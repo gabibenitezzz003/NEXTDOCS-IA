@@ -37,10 +37,7 @@ import type {
   SimulacionResultado,
   VersionProceso,
 } from "../api/procesos";
-import {
-  aplicarConfiguracion,
-  avisosNodo,
-} from "../utilidades/grafoProceso";
+import { aplicarConfiguracion, avisosNodo } from "../utilidades/grafoProceso";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 import {
@@ -128,162 +125,166 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
         </Boton>
       </div>
       {error ? (
-          <div
-            role="alert"
-            className="aparecer mb-espacio-4 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-4 py-espacio-3 text-pequeno text-rojo-alto"
-          >
-            {error}
-          </div>
-        ) : null}
+        <div
+          role="alert"
+          className="aparecer mb-espacio-4 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-4 py-espacio-3 text-pequeno text-rojo-alto"
+        >
+          {error}
+        </div>
+      ) : null}
 
-        {creando ? (
-          <Tarjeta className="mb-espacio-6">
-            <div id="crear-proceso">
-              <CabeceraTarjeta
-                titulo={t("procesos.nuevoProcesoTitulo")}
-                descripcion={t("procesos.nuevoProcesoDesc")}
+      {creando ? (
+        <Tarjeta className="mb-espacio-6">
+          <div id="crear-proceso">
+            <CabeceraTarjeta
+              titulo={t("procesos.nuevoProcesoTitulo")}
+              descripcion={t("procesos.nuevoProcesoDesc")}
+            />
+            <div className="mt-espacio-5 grid gap-espacio-4 md:grid-cols-2 xl:grid-cols-4">
+              <Campo
+                etiqueta={t("procesos.codigo")}
+                placeholder="COMEX-EX-MAR-FCL"
+                value={codigo}
+                onChange={(evento) =>
+                  setCodigo(evento.target.value.toUpperCase())
+                }
               />
-              <div className="mt-espacio-5 grid gap-espacio-4 md:grid-cols-2 xl:grid-cols-4">
-                <Campo
-                  etiqueta={t("procesos.codigo")}
-                  placeholder="COMEX-EX-MAR-FCL"
-                  value={codigo}
-                  onChange={(evento) =>
-                    setCodigo(evento.target.value.toUpperCase())
-                  }
-                />
-                <Campo
-                  etiqueta={t("procesos.familia")}
-                  placeholder="COMEX"
-                  value={familia}
-                  onChange={(evento) => setFamilia(evento.target.value)}
-                />
-                <Campo
-                  etiqueta={t("procesos.nombre")}
-                  placeholder="Exportacion maritima FCL"
-                  value={nombre}
-                  onChange={(evento) => setNombre(evento.target.value)}
-                />
-                <Campo
-                  etiqueta={t("procesos.slaPlantilla")}
-                  type="number"
-                  min="0.01"
-                  step="0.25"
-                  placeholder="24"
-                  value={sla}
-                  onChange={(evento) => setSla(evento.target.value)}
-                  ayuda={t("procesos.slaAyuda")}
-                />
-              </div>
-              <div className="mt-4 flex justify-end">
-                <Boton
-                  variante="primario"
-                  cargando={crear.isPending}
-                  disabled={
-                    crear.isPending ||
-                    !codigo.trim() ||
-                    !familia.trim() ||
-                    !nombre.trim()
-                  }
-                  onClick={() =>
-                    crear.mutate({
-                      codigo: codigo.trim(),
-                      familia: familia.trim(),
-                      nombre: nombre.trim(),
-                      slaHoras: slaNumerico(sla),
-                    })
-                  }
-                >
-                  {t("procesos.crear")}
-                </Boton>
-              </div>
+              <Campo
+                etiqueta={t("procesos.familia")}
+                placeholder="COMEX"
+                value={familia}
+                onChange={(evento) => setFamilia(evento.target.value)}
+              />
+              <Campo
+                etiqueta={t("procesos.nombre")}
+                placeholder="Exportacion maritima FCL"
+                value={nombre}
+                onChange={(evento) => setNombre(evento.target.value)}
+              />
+              <Campo
+                etiqueta={t("procesos.slaPlantilla")}
+                type="number"
+                min="0.01"
+                step="0.25"
+                placeholder="24"
+                value={sla}
+                onChange={(evento) => setSla(evento.target.value)}
+                ayuda={t("procesos.slaAyuda")}
+              />
             </div>
-          </Tarjeta>
-        ) : null}
+            <div className="mt-4 flex justify-end">
+              <Boton
+                variante="primario"
+                cargando={crear.isPending}
+                disabled={
+                  crear.isPending ||
+                  !codigo.trim() ||
+                  !familia.trim() ||
+                  !nombre.trim()
+                }
+                onClick={() =>
+                  crear.mutate({
+                    codigo: codigo.trim(),
+                    familia: familia.trim(),
+                    nombre: nombre.trim(),
+                    slaHoras: slaNumerico(sla),
+                  })
+                }
+              >
+                {t("procesos.crear")}
+              </Boton>
+            </div>
+          </div>
+        </Tarjeta>
+      ) : null}
 
-        {consulta.isPending ? (
-          <Cargando filas={3} alto="h-24" />
-        ) : consulta.isError ? (
-          <ErrorPanel
-            mensaje={mensajeDeError(consulta.error)}
-            error={consulta.error}
-            reintentar={() => consulta.refetch()}
-          />
-        ) : procesos.length === 0 ? (
-          <Vacio
-            titulo={t("procesos.sinDefiniciones")}
-            detalle={t("procesos.sinDefinicionesDetalle")}
-          />
-        ) : (
-          <ul
-            aria-label={t("procesos.listaDefiniciones")}
-            className="space-y-espacio-4"
-          >
-            {procesos.map((proceso) => (
-              <li key={proceso.id}>
-                <Tarjeta>
-                  <div className="grid items-center gap-espacio-4 lg:grid-cols-[minmax(0,1fr)_auto]">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-espacio-3">
-                        <h2 className="break-words font-titulo text-titulo-panel text-tinta">
-                          {proceso.nombre}
-                        </h2>
-                        <Pastilla tono={proceso.slaHoras == null ? "neutro" : "violeta"}>
-                          {textoSla(proceso.slaHoras, t)}
-                        </Pastilla>
-                      </div>
-                      <p className="mt-espacio-1 break-words text-pequeno text-tinta-suave">
-                        {proceso.codigo} · {proceso.familia}
+      {consulta.isPending ? (
+        <Cargando filas={3} alto="h-24" />
+      ) : consulta.isError ? (
+        <ErrorPanel
+          mensaje={mensajeDeError(consulta.error)}
+          error={consulta.error}
+          reintentar={() => consulta.refetch()}
+        />
+      ) : procesos.length === 0 ? (
+        <Vacio
+          titulo={t("procesos.sinDefiniciones")}
+          detalle={t("procesos.sinDefinicionesDetalle")}
+        />
+      ) : (
+        <ul
+          aria-label={t("procesos.listaDefiniciones")}
+          className="space-y-espacio-4"
+        >
+          {procesos.map((proceso) => (
+            <li key={proceso.id}>
+              <Tarjeta>
+                <div className="grid items-center gap-espacio-4 lg:grid-cols-[minmax(0,1fr)_auto]">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-espacio-3">
+                      <h2 className="break-words font-titulo text-titulo-panel text-tinta">
+                        {proceso.nombre}
+                      </h2>
+                      <Pastilla
+                        tono={proceso.slaHoras == null ? "neutro" : "violeta"}
+                      >
+                        {textoSla(proceso.slaHoras, t)}
+                      </Pastilla>
+                    </div>
+                    <p className="mt-espacio-1 break-words text-pequeno text-tinta-suave">
+                      {proceso.codigo} · {proceso.familia}
+                    </p>
+                    {proceso.alta ? (
+                      <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+                        {t("procesos.creadoEl", {
+                          fecha: formatearFecha(proceso.alta),
+                        })}
                       </p>
-                      {proceso.alta ? (
-                        <p className="mt-espacio-2 text-pequeno text-tinta-suave">
-                          {t("procesos.creadoEl", {
-                            fecha: formatearFecha(proceso.alta),
-                          })}
-                        </p>
-                      ) : null}
-                    </div>
-                    <div className="flex flex-wrap items-center justify-between gap-espacio-4 lg:justify-end">
-                      <VersionesProceso versiones={proceso.versiones} />
-                      <Boton
-                        variante="fantasma"
-                        aria-expanded={editando === proceso.id}
-                        onClick={() =>
-                          setEditando((actual) =>
-                            actual === proceso.id ? null : proceso.id,
-                          )
-                        }
-                      >
-                        {editando === proceso.id
-                          ? t("procesos.cerrar")
-                          : t("procesos.editar")}
-                      </Boton>
-                      <Boton
-                        variante="secundario"
-                        onClick={() => alAbrir(proceso.id)}
-                      >
-                        {t("procesos.abrirEstudio")}
-                      </Boton>
-                    </div>
+                    ) : null}
                   </div>
-                  {editando === proceso.id ? (
-                    <EditorProceso
-                      proceso={proceso}
-                      alCerrar={() => setEditando(null)}
-                    />
-                  ) : null}
-                </Tarjeta>
-              </li>
-            ))}
-          </ul>
-        )}
+                  <div className="flex flex-wrap items-center justify-between gap-espacio-4 lg:justify-end">
+                    <VersionesProceso versiones={proceso.versiones} />
+                    <Boton
+                      variante="fantasma"
+                      aria-expanded={editando === proceso.id}
+                      onClick={() =>
+                        setEditando((actual) =>
+                          actual === proceso.id ? null : proceso.id,
+                        )
+                      }
+                    >
+                      {editando === proceso.id
+                        ? t("procesos.cerrar")
+                        : t("procesos.editar")}
+                    </Boton>
+                    <Boton
+                      variante="secundario"
+                      onClick={() => alAbrir(proceso.id)}
+                    >
+                      {t("procesos.abrirEstudio")}
+                    </Boton>
+                  </div>
+                </div>
+                {editando === proceso.id ? (
+                  <EditorProceso
+                    proceso={proceso}
+                    alCerrar={() => setEditando(null)}
+                  />
+                ) : null}
+              </Tarjeta>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
 
 function slaNumerico(texto: string): number | undefined {
   const valor = Number(texto.trim());
-  return texto.trim() && Number.isFinite(valor) && valor > 0 ? valor : undefined;
+  return texto.trim() && Number.isFinite(valor) && valor > 0
+    ? valor
+    : undefined;
 }
 
 function textoSla(
@@ -308,7 +309,9 @@ function EditorProceso({
   const clienteConsultas = useQueryClient();
   const [familia, setFamilia] = useState(proceso.familia);
   const [nombre, setNombre] = useState(proceso.nombre);
-  const [sla, setSla] = useState(proceso.slaHoras == null ? "" : String(proceso.slaHoras));
+  const [sla, setSla] = useState(
+    proceso.slaHoras == null ? "" : String(proceso.slaHoras),
+  );
   const [error, setError] = useState<string | null>(null);
 
   const guardar = useMutation({
@@ -361,7 +364,11 @@ function EditorProceso({
         />
       </div>
       <div className="mt-espacio-4 flex justify-end gap-espacio-2">
-        <Boton variante="secundario" onClick={alCerrar} disabled={guardar.isPending}>
+        <Boton
+          variante="secundario"
+          onClick={alCerrar}
+          disabled={guardar.isPending}
+        >
           {t("comun.cancelar")}
         </Boton>
         <Boton
@@ -578,12 +585,12 @@ function EstudioProceso({
     clienteConsultas.invalidateQueries({ queryKey: ["proceso", procesoId] });
 
   const guardar = useMutation({
-    mutationFn: () => {
-      if (!baseLista || conflicto || consulta.isFetching || !grafoTrabajo)
+    mutationFn: (grafo: GrafoProceso) => {
+      if (!baseLista || conflicto || consulta.isFetching)
         throw new Error(conflicto ?? t("procesos.borradorNoDisponible"));
-      return actualizarGrafo(borrador!.id, grafoTrabajo);
+      return actualizarGrafo(borrador!.id, grafo);
     },
-    onSuccess: (version) => {
+    onSuccess: (version, grafoEnviado) => {
       versionCargada.current = {
         id: version.id,
         grafo: JSON.stringify(version.grafo),
@@ -591,7 +598,11 @@ function EstudioProceso({
       const grafo = structuredClone(version.grafo);
       setBase({ versionId: version.id, grafo });
       limpiarHistorial();
-      setGrafoTrabajo(structuredClone(grafo));
+      setGrafoTrabajo((actual) =>
+        actual && JSON.stringify(actual) !== JSON.stringify(grafoEnviado)
+          ? actual
+          : structuredClone(grafo),
+      );
       setError(null);
       setDetalles([]);
       setAviso(t("procesos.guardadoOk"));
@@ -654,8 +665,7 @@ function EstudioProceso({
   });
 
   const clonar = useMutation({
-    mutationFn: () =>
-      nuevaVersion(procesoId, t("procesos.notaNuevaVersion")),
+    mutationFn: () => nuevaVersion(procesoId, t("procesos.notaNuevaVersion")),
     onSuccess: () => {
       setError(null);
       setAviso(null);
@@ -765,8 +775,7 @@ function EstudioProceso({
         nombre: `${original.nombre ?? original.tipo} ${t("canvas.copia")}`,
       };
       const posicion = copia.configuracion?.posicion as
-        | { x?: number; y?: number }
-        | undefined;
+        { x?: number; y?: number } | undefined;
       if (posicion) {
         copia.configuracion = {
           ...copia.configuracion,
@@ -779,16 +788,25 @@ function EstudioProceso({
   }
 
   function eliminarNodo(id: string) {
-    const nodo = grafoTrabajo?.nodos.find((actual) => actual.id === id);
-    if (!nodo) return;
+    eliminarNodos([id]);
+  }
+
+  function eliminarNodos(ids: string[]) {
+    const eliminables = ids.filter((id) => {
+      const nodo = grafoTrabajo?.nodos.find((actual) => actual.id === id);
+      return nodo && nodo.tipo !== "INICIO" && nodo.tipo !== "FIN";
+    });
+    if (!eliminables.length) return;
     if (!window.confirm(t("canvas.confirmarEliminarNodo"))) return;
+    const conjunto = new Set(eliminables);
     aplicarGrafo((actual) =>
       actual
         ? {
             ...actual,
-            nodos: actual.nodos.filter((actual2) => actual2.id !== id),
+            nodos: actual.nodos.filter((nodo) => !conjunto.has(nodo.id)),
             aristas: actual.aristas.filter(
-              (arista) => arista.origen !== id && arista.destino !== id,
+              (arista) =>
+                !conjunto.has(arista.origen) && !conjunto.has(arista.destino),
             ),
           }
         : actual,
@@ -842,12 +860,11 @@ function EstudioProceso({
         eliminarArista(seleccion.id);
         return;
       }
-      const nodo = grafoTrabajo?.nodos.find(
-        (actual) => actual.id === seleccion.id,
-      );
-      if (nodo && nodo.tipo !== "INICIO" && nodo.tipo !== "FIN") {
-        eliminarNodo(seleccion.id);
+      if (seleccion.tipo === "nodos") {
+        eliminarNodos(seleccion.ids ?? []);
+        return;
       }
+      eliminarNodos([seleccion.id]);
     };
     window.addEventListener("keydown", alTecla);
     return () => window.removeEventListener("keydown", alTecla);
@@ -1073,8 +1090,8 @@ function EstudioProceso({
               <Boton
                 variante="secundario"
                 cargando={guardar.isPending}
-                disabled={editandoBloqueado}
-                onClick={() => guardar.mutate()}
+                disabled={editandoBloqueado || !grafoTrabajo}
+                onClick={() => guardar.mutate(grafoTrabajo!)}
               >
                 {t("procesos.guardarBorrador")}
               </Boton>
@@ -1151,7 +1168,9 @@ function EstudioProceso({
                   {t("procesos.publicada")}
                 </dt>
                 <dd className="mt-espacio-1 text-pequeno text-tinta">
-                  {publicada.publicada ? formatearFecha(publicada.publicada) : "—"}
+                  {publicada.publicada
+                    ? formatearFecha(publicada.publicada)
+                    : "—"}
                 </dd>
               </div>
               <div>
@@ -1195,7 +1214,7 @@ function EstudioProceso({
           consultaInstancia.isError ? (
             <ErrorPanel
               mensaje={mensajeDeError(consultaInstancia.error)}
-          error={consultaInstancia.error}
+              error={consultaInstancia.error}
               reintentar={() => consultaInstancia.refetch()}
             />
           ) : (
@@ -1222,10 +1241,7 @@ const TIPOS_CON_RESPONSABLE = new Set([
   "FIRMA",
 ]);
 
-const TIPOS_CON_SLA = new Set([
-  ...TIPOS_CON_RESPONSABLE,
-  "TEMPORIZADOR",
-]);
+const TIPOS_CON_SLA = new Set([...TIPOS_CON_RESPONSABLE, "TEMPORIZADOR"]);
 
 function ConfiguracionNodo({
   nodo,
@@ -1295,12 +1311,18 @@ function ConfiguracionNodo({
         />
       ) : null}
       {nodo.tipo === "PARALELO" ? (
-        <p role="note" className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave">
+        <p
+          role="note"
+          className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave"
+        >
           {t("canvas.paraleloAyuda")}
         </p>
       ) : null}
       {nodo.tipo === "UNION" ? (
-        <p role="note" className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave">
+        <p
+          role="note"
+          className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave"
+        >
           {t("canvas.unionAyuda")}
         </p>
       ) : null}
@@ -1321,9 +1343,11 @@ function ConfiguracionNodo({
           placeholder={"monto_total > 0\nmoneda = USD"}
           ayuda={t("canvas.condicionesIaAyuda")}
           rows={3}
-          value={(Array.isArray(configuracion.condiciones)
-            ? (configuracion.condiciones as unknown[]).map(String).join("\n")
-            : texto("condicion"))}
+          value={
+            Array.isArray(configuracion.condiciones)
+              ? (configuracion.condiciones as unknown[]).map(String).join("\n")
+              : texto("condicion")
+          }
           onChange={(evento) =>
             cambiar(
               "condiciones",
@@ -1423,7 +1447,10 @@ function ConfiguracionNodo({
         </>
       ) : null}
       {nodo.tipo === "DECISION" ? (
-        <p role="note" className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave">
+        <p
+          role="note"
+          className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave"
+        >
           {t("canvas.decisionAyuda")}
         </p>
       ) : null}
@@ -1696,10 +1723,26 @@ function PanelSeleccion({
       : undefined;
   const arista =
     seleccion?.tipo === "arista"
-      ? grafo.aristas.find(
-          (actual) => claveArista(actual) === seleccion.id,
-        )
+      ? grafo.aristas.find((actual) => claveArista(actual) === seleccion.id)
       : undefined;
+
+  if (seleccion?.tipo === "nodos") {
+    return (
+      <Tarjeta padding="p-0" className="overflow-hidden">
+        <div className="p-espacio-4 sm:p-espacio-5">
+          <CabeceraTarjeta
+            titulo={t("canvas.seleccionMultiple")}
+            descripcion={t("canvas.seleccionMultipleDetalle", {
+              cantidad: seleccion.ids?.length ?? 0,
+            })}
+          />
+          <p className="mt-espacio-3 text-pequeno text-tinta-suave">
+            {t("canvas.seleccionMultipleAyuda")}
+          </p>
+        </div>
+      </Tarjeta>
+    );
+  }
 
   if (nodo) {
     const extremo = nodo.tipo === "INICIO" || nodo.tipo === "FIN";
@@ -1822,7 +1865,11 @@ function PanelSimulacion({
     let parseado: Record<string, unknown>;
     try {
       parseado = JSON.parse(datos || "{}") as Record<string, unknown>;
-      if (typeof parseado !== "object" || parseado === null || Array.isArray(parseado))
+      if (
+        typeof parseado !== "object" ||
+        parseado === null ||
+        Array.isArray(parseado)
+      )
         throw new Error();
     } catch {
       setErrorDatos(t("procesos.simulacionDatosInvalidos"));

@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import type { ReactNode, SVGProps } from "react";
 
 type PropsIcono = SVGProps<SVGSVGElement> & { tamano?: number };
 
@@ -368,6 +368,80 @@ export function IconoRehacer(props: PropsIcono) {
   );
 }
 
+export function IconoAlinear({
+  modo,
+  ...resto
+}: PropsIcono & {
+  modo: "izquierda" | "centroX" | "derecha" | "arriba" | "centroY" | "abajo";
+}) {
+  const barras: Record<string, ReactNode> = {
+    izquierda: (
+      <>
+        <path d="M4 3v18" />
+        <rect x="7" y="6" width="10" height="4" rx="1" />
+        <rect x="7" y="14" width="14" height="4" rx="1" />
+      </>
+    ),
+    derecha: (
+      <>
+        <path d="M20 3v18" />
+        <rect x="7" y="6" width="10" height="4" rx="1" />
+        <rect x="3" y="14" width="14" height="4" rx="1" />
+      </>
+    ),
+    centroX: (
+      <>
+        <path d="M12 3v18" />
+        <rect x="6" y="6" width="12" height="4" rx="1" />
+        <rect x="8" y="14" width="8" height="4" rx="1" />
+      </>
+    ),
+    arriba: (
+      <>
+        <path d="M3 4h18" />
+        <rect x="6" y="7" width="4" height="10" rx="1" />
+        <rect x="14" y="7" width="4" height="14" rx="1" />
+      </>
+    ),
+    abajo: (
+      <>
+        <path d="M3 20h18" />
+        <rect x="6" y="7" width="4" height="10" rx="1" />
+        <rect x="14" y="3" width="4" height="14" rx="1" />
+      </>
+    ),
+    centroY: (
+      <>
+        <path d="M3 12h18" />
+        <rect x="6" y="6" width="4" height="12" rx="1" />
+        <rect x="14" y="8" width="4" height="8" rx="1" />
+      </>
+    ),
+  };
+  return <Base {...resto}>{barras[modo]}</Base>;
+}
+
+export function IconoDistribuir({
+  eje,
+  ...resto
+}: PropsIcono & { eje: "x" | "y" }) {
+  return (
+    <Base {...resto}>
+      {eje === "x" ? (
+        <>
+          <path d="M4 4v16M20 4v16" />
+          <rect x="9.5" y="8" width="5" height="8" rx="1" />
+        </>
+      ) : (
+        <>
+          <path d="M4 4h16M4 20h16" />
+          <rect x="8" y="9.5" width="8" height="5" rx="1" />
+        </>
+      )}
+    </Base>
+  );
+}
+
 export function IconoSol(props: PropsIcono) {
   return (
     <Base {...props}>
@@ -384,7 +458,6 @@ export function IconoLuna(props: PropsIcono) {
     </Base>
   );
 }
-
 
 export function IconoGoogle({ tamano = 18, ...resto }: PropsIcono) {
   return (
