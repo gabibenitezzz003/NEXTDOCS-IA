@@ -546,3 +546,222 @@ export async function listarEnlacesExternos(): Promise<EnlaceExterno[]> {
 export async function revocarEnlaceExterno(enlaceId: string): Promise<void> {
   await clienteProcesos.delete(`/colaboracion-externa/enlaces/${enlaceId}`);
 }
+
+export interface OrganizacionPartner {
+  id: string;
+  codigo: string;
+  nombre: string;
+  emailContacto?: string;
+  estado?: string;
+  alta?: string;
+  delegaciones?: DelegacionAcceso[];
+}
+
+export interface NuevaOrganizacionPartner {
+  codigo: string;
+  nombre: string;
+  emailContacto?: string;
+}
+
+export interface DelegacionAcceso {
+  id: string;
+  partnerId: string;
+  tenantClienteId: string;
+  scopes?: string[];
+  expiracion?: string;
+  aprobador?: string;
+  alta?: string;
+}
+
+export interface NuevaDelegacionAcceso {
+  partnerId: string;
+  tenantClienteId: string;
+  scopes?: string[];
+  expiracion?: string;
+  aprobador?: string;
+}
+
+export async function listarOrganizacionesPartner(): Promise<OrganizacionPartner[]> {
+  const { data } = await clienteProcesos.get<OrganizacionPartner[]>(
+    "/partners/organizaciones",
+  );
+  return data;
+}
+
+export async function crearOrganizacionPartner(
+  requerimiento: NuevaOrganizacionPartner,
+): Promise<OrganizacionPartner> {
+  const { data } = await clienteProcesos.post<OrganizacionPartner>(
+    "/partners/organizaciones",
+    requerimiento,
+  );
+  return data;
+}
+
+export async function obtenerOrganizacionPartner(
+  organizacionId: string,
+): Promise<OrganizacionPartner> {
+  const { data } = await clienteProcesos.get<OrganizacionPartner>(
+    `/partners/organizaciones/${organizacionId}`,
+  );
+  return data;
+}
+
+export async function desactivarOrganizacionPartner(
+  organizacionId: string,
+): Promise<void> {
+  await clienteProcesos.delete(`/partners/organizaciones/${organizacionId}`);
+}
+
+export async function listarDelegaciones(): Promise<DelegacionAcceso[]> {
+  const { data } = await clienteProcesos.get<DelegacionAcceso[]>(
+    "/partners/delegaciones",
+  );
+  return data;
+}
+
+export async function crearDelegacion(
+  requerimiento: NuevaDelegacionAcceso,
+): Promise<DelegacionAcceso> {
+  const { data } = await clienteProcesos.post<DelegacionAcceso>(
+    "/partners/delegaciones",
+    requerimiento,
+  );
+  return data;
+}
+
+export async function revocarDelegacion(delegacionId: string): Promise<void> {
+  await clienteProcesos.delete(`/partners/delegaciones/${delegacionId}`);
+}
+
+export interface PublicacionMarketplace {
+  id: string;
+  definicionId: string;
+  tenantId: string;
+  categoria?: string;
+  comercial?: {
+    nombreProceso?: string;
+    codigoProceso?: string;
+    descripcionProceso?: string;
+    versionNumero?: number;
+    nodosTotal?: number;
+    tiposNodo?: string[];
+    precio?: string;
+    contacto?: string;
+    publicadorNombre?: string;
+  };
+  alta?: string;
+}
+
+export interface NuevaPublicacionMarketplace {
+  versionId: string;
+  categoria?: string;
+  comercial?: Record<string, unknown>;
+}
+
+export interface SobreescrituraPlantilla {
+  id: string;
+  instalacionId: string;
+  nodoId: string;
+  datos?: Record<string, unknown>;
+  alta?: string;
+}
+
+export interface NuevaSobreescrituraPlantilla {
+  instalacionId?: string;
+  nodoId: string;
+  datos?: Record<string, unknown>;
+}
+
+export interface InstalacionMarketplace {
+  id: string;
+  definicionId: string;
+  versionId: string;
+  publicadorTenantId: string;
+  definicionLocalId?: string;
+  pin?: boolean;
+  politicaActualizacion?: string;
+  alta?: string;
+  sobreescrituras?: SobreescrituraPlantilla[];
+}
+
+export interface NuevaInstalacionMarketplace {
+  publicacionId: string;
+  pin?: boolean;
+  politicaActualizacion?: string;
+  sobreescrituras?: NuevaSobreescrituraPlantilla[];
+}
+
+export async function publicarPlantilla(
+  requerimiento: NuevaPublicacionMarketplace,
+): Promise<PublicacionMarketplace> {
+  const { data } = await clienteProcesos.post<PublicacionMarketplace>(
+    "/marketplace/publicaciones",
+    requerimiento,
+  );
+  return data;
+}
+
+export async function despublicarPlantilla(publicacionId: string): Promise<void> {
+  await clienteProcesos.delete(`/marketplace/publicaciones/${publicacionId}`);
+}
+
+export async function listarCatalogoMarketplace(): Promise<PublicacionMarketplace[]> {
+  const { data } = await clienteProcesos.get<PublicacionMarketplace[]>(
+    "/marketplace/publicaciones",
+  );
+  return data;
+}
+
+export async function listarMisPublicaciones(): Promise<PublicacionMarketplace[]> {
+  const { data } = await clienteProcesos.get<PublicacionMarketplace[]>(
+    "/marketplace/publicaciones/mias",
+  );
+  return data;
+}
+
+export async function obtenerPublicacion(
+  publicacionId: string,
+): Promise<PublicacionMarketplace> {
+  const { data } = await clienteProcesos.get<PublicacionMarketplace>(
+    `/marketplace/publicaciones/${publicacionId}`,
+  );
+  return data;
+}
+
+export async function instalarPlantilla(
+  requerimiento: NuevaInstalacionMarketplace,
+): Promise<InstalacionMarketplace> {
+  const { data } = await clienteProcesos.post<InstalacionMarketplace>(
+    "/marketplace/instalaciones",
+    requerimiento,
+  );
+  return data;
+}
+
+export async function listarInstalaciones(): Promise<InstalacionMarketplace[]> {
+  const { data } = await clienteProcesos.get<InstalacionMarketplace[]>(
+    "/marketplace/instalaciones",
+  );
+  return data;
+}
+
+export async function agregarSobreescritura(
+  instalacionId: string,
+  requerimiento: NuevaSobreescrituraPlantilla,
+): Promise<SobreescrituraPlantilla> {
+  const { data } = await clienteProcesos.post<SobreescrituraPlantilla>(
+    `/marketplace/instalaciones/${instalacionId}/sobrescrituras`,
+    requerimiento,
+  );
+  return data;
+}
+
+export async function listarSobreescrituras(
+  instalacionId: string,
+): Promise<SobreescrituraPlantilla[]> {
+  const { data } = await clienteProcesos.get<SobreescrituraPlantilla[]>(
+    `/marketplace/instalaciones/${instalacionId}/sobrescrituras`,
+  );
+  return data;
+}
