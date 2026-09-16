@@ -1399,19 +1399,28 @@ function ConfiguracionNodo({
         </>
       ) : null}
       {nodo.tipo === "TAREA_EXTERNA" ? (
-        <Campo
-          etiqueta={t("canvas.expiracionEnlace")}
-          type="number"
-          min={1}
-          ayuda={t("canvas.expiracionEnlaceAyuda")}
-          value={numero("expiracionEnlaceHoras")}
-          onChange={(evento) =>
-            cambiar(
-              "expiracionEnlaceHoras",
-              evento.target.value ? Number(evento.target.value) : undefined,
-            )
-          }
-        />
+        <>
+          <Campo
+            etiqueta={t("canvas.expiracionEnlace")}
+            type="number"
+            min={1}
+            ayuda={t("canvas.expiracionEnlaceAyuda")}
+            value={numero("expiracionEnlaceHoras")}
+            onChange={(evento) =>
+              cambiar(
+                "expiracionEnlaceHoras",
+                evento.target.value ? Number(evento.target.value) : undefined,
+              )
+            }
+          />
+          <Campo
+            etiqueta={t("procesos.tipoDocumento")}
+            placeholder="FACTURA_COMERCIAL"
+            ayuda={t("canvas.tipoDocumentoExternoAyuda")}
+            value={texto("tipoDocumento")}
+            onChange={(evento) => cambiar("tipoDocumento", evento.target.value)}
+          />
+        </>
       ) : null}
       {nodo.tipo === "DECISION" ? (
         <p role="note" className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave">

@@ -15,6 +15,7 @@ import { useIdioma } from "../contextos/ProveedorIdioma";
 import {
   obtenerEnlaceExterno,
   usarEnlaceExterno,
+  subirDocumentoEnlaceExterno,
   mensajeDeError,
 } from "../api/procesos";
 import { formatearFecha } from "./Documentos";
@@ -43,6 +44,20 @@ export function Externo() {
   const [observaciones, setObservaciones] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviada, setEnviada] = useState<"APROBADO" | "RECHAZADO" | null>(null);
+  const [documentoId, setDocumentoId] = useState<string | null>(null);
+  const [cargados, setCargados] = useState<string[]>([]);
+
+  const subirDocumento = useMutation({
+    mutationFn: (archivo: File) => subirDocumentoEnlaceExterno(token, archivo),
+    onSuccess: (documento) => {
+      setError(null);
+      if (documento.id) setDocumentoId(documento.id);
+      if (documento.nombre) {
+        setCargados((previos) => [...previos, documento.nombre as string]);
+      }
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
 
   const consulta = useQuery({
     queryKey: ["enlaceExterno", token],
@@ -52,14 +67,16 @@ export function Externo() {
   });
 
   const completar = useMutation({
-    mutationFn: (eleccion: "APROBADO" | "RECHAZADO") =>
-      usarEnlaceExterno(token, {
+    mutationFn: (eleccion: "APROBADO" | "RECHAZADO") => {
+      const datos: Record<string, unknown> = {};
+      if (observaciones.trim()) datos.observaciones = observaciones.trim();
+      if (documentoId) datos.documentoId = documentoId;
+      return usarEnlaceExterno(token, {
         decision: eleccion,
         motivo: motivo.trim() || undefined,
-        datos: observaciones.trim()
-          ? { observaciones: observaciones.trim() }
-          : undefined,
-      }),
+        datos: Object.keys(datos).length ? datos : undefined,
+      });
+    },
     onSuccess: (_resultado, eleccion) => {
       setError(null);
       setEnviada(eleccion);
@@ -72,6 +89,10 @@ export function Externo() {
   const tareaAbierta =
     enlace?.estadoTarea === "PENDIENTE" || enlace?.estadoTarea === "VENCIDA";
   const puedeResponder = Boolean(enlaceActivo && tareaAbierta && !enviada);
+  const esperados = enlace?.documentosEsperados ?? [];
+  const cargadosPrevios = enlace?.documentosCargados ?? [];
+  const cargadosVisibles = [...cargadosPrevios, ...cargados];
+  const exigeDocumento = esperados.length > 0;
 
   return (
     <main className="flex min-h-dvh flex-col items-center bg-lienzo px-espacio-4 py-espacio-8">
@@ -195,6 +216,50 @@ export function Externo() {
               </div>
             ) : (
               <div className="mt-espacio-6 space-y-espacio-4">
+                {exigeDocumento ? (
+                  <div className="rounded-panel border border-borde bg-lienzo px-espacio-4 py-espacio-4">
+                    <p className="text-pequeno font-semibold text-tinta">
+                      {t("externo.documentosTitulo")}
+                    </p>
+                    <ul className="mt-espacio-2 list-inside list-disc text-pequeno text-tinta-suave">
+                      {esperados.map((esperado) => (
+                        <li key={esperado}>{esperado}</li>
+                      ))}
+                    </ul>
+                    {cargadosVisibles.length ? (
+                      <div className="mt-espacio-3 space-y-espacio-1">
+                        {cargadosVisibles.map((nombre, indice) => (
+                          <p
+                            key={`${nombre}-${indice}`}
+                            className="flex items-center gap-espacio-2 text-pequeno text-exito-texto"
+                          >
+                            <IconoCheck tamano={12} />
+                            {nombre}
+                          </p>
+                        ))}
+                      </div>
+                    ) : null}
+                    <label className="mt-espacio-3 block">
+                      <span className="sr-only">
+                        {t("externo.documentosSubir")}
+                      </span>
+                      <input
+                        type="file"
+                        className="block w-full text-pequeno text-tinta-suave file:mr-espacio-3 file:rounded-control file:border file:border-borde file:bg-superficie file:px-espacio-3 file:py-espacio-2 file:text-pequeno file:font-semibold file:text-tinta hover:file:border-borde-fuerte"
+                        onChange={(evento) => {
+                          const archivo = evento.target.files?.[0];
+                          if (archivo) subirDocumento.mutate(archivo);
+                          evento.target.value = "";
+                        }}
+                      />
+                    </label>
+                    {subirDocumento.isPending ? (
+                      <p className="mt-espacio-2 text-pequeno text-tinta-suave">
+                        {t("externo.documentosSubiendo")}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
                 {!decision ? (
                   <div className="grid gap-espacio-3 sm:grid-cols-2">
                     <Boton
@@ -255,7 +320,10 @@ export function Externo() {
                       <Boton
                         variante={decision === "RECHAZADO" ? "peligro" : "primario"}
                         cargando={completar.isPending}
-                        disabled={decision === "RECHAZADO" && !motivo.trim()}
+                        disabled={
+                          (decision === "RECHAZADO" && !motivo.trim()) ||
+                          (decision === "APROBADO" && exigeDocumento && !documentoId)
+                        }
                         onClick={() => completar.mutate(decision)}
                       >
                         {t("comun.confirmar")}

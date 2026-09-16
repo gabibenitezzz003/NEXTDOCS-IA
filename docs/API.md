@@ -438,10 +438,16 @@ POST /api/v1/integraciones/suscripciones/{id}/probar          permiso: gobernanz
 DEL  /api/v1/integraciones/suscripciones/{id}                 permiso: gobernanza.administrar
 GET  /api/v1/integraciones/entregas?estado&suscripcionId      permiso: gobernanza.leer
 POST /api/v1/integraciones/entregas/{id}/reintentar           permiso: gobernanza.administrar
+POST /api/v1/integraciones/eventos                          permiso: integraciones.escribir
 ```
 
-No se crearon permisos nuevos: los tenants ya existentes no migran roles solos. Quien ya puede
-leer gobernanza ve el monitor; quien la administra da de alta suscripciones.
+`POST /integraciones/eventos` es la puerta de entrada de eventos para servicios: recibe
+`{tipoEvento, tipoAgregado, idAgregado, carga}` y encola un `EventoSalida` que el despachador
+reparte a las suscripciones del tenant con firma HMAC. Sólo admite tipos `process.*` (hoy
+`process.notification`): un servicio no puede falsificar eventos del dominio documental.
+`integraciones.escribir` es un alcance exclusivo de cuentas de servicio: no entra en ningún rol
+predefinido ni se puede asignar a roles propios, y el endpoint además exige que el actor sea una
+cuenta de servicio — un usuario con el permiso recibe 403.
 
 **Secreto.** Se genera si no viene (`ndwh_...`). El alta y la rotación lo devuelven **una sola vez**.
 El listado y el detalle sólo exponen un prefijo de 8 caracteres. Nunca viaja en eventos de auditoría.
@@ -760,6 +766,7 @@ públicos; métricas no.
 | `excepciones.leer` / `excepciones.gestionar` | Exception Center |
 | `gobernanza.leer` / `gobernanza.administrar` | Auditoría, retención, proveedores, webhooks, monitor de integraciones y costo por tenant |
 | `tenant.administrar` | Usuarios, roles, cuentas de servicio |
+| `integraciones.escribir` | Publicar eventos de servicio (`process.*`) — sólo cuentas de servicio, ningún rol humano lo trae |
 
 Roles predefinidos al crear un tenant: `ADMINISTRADOR` (todos), `OPERADOR`, `REVISOR`, `AUDITOR`.
 

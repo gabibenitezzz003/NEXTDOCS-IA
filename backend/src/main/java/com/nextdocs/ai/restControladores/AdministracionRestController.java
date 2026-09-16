@@ -74,7 +74,8 @@ public class AdministracionRestController extends ControladorRest<Administracion
 	public ResponseEntity<Map<String, Object>> configuracion() {
 		Map<String, Object> configuracion = new HashMap<>();
 		configuracion.put("estadosUsuario", listar(EstadoUsuario.values()));
-		configuracion.put("permisos", Permiso.todos());
+		configuracion.put("permisos", Permiso.deAdministrador());
+		configuracion.put("alcancesServicio", Permiso.todos());
 		configuracion.put("longitudMinimaClave", UsuarioService.LONGITUD_MINIMA_CLAVE);
 		return new ResponseEntity<>(configuracion, HttpStatus.OK);
 	}

@@ -6,8 +6,11 @@ import java.util.List;
 import java.util.Map;
 
 import com.nextdocs.ai.enumeraciones.EstadoEntregaWebhook;
+import com.nextdocs.ai.enumeraciones.TipoActor;
 import com.nextdocs.ai.enumeraciones.TipoEventoCanonico;
+import com.nextdocs.ai.exceptions.ProhibidoException;
 import com.nextdocs.ai.modelos.EntregaWebhookModel;
+import com.nextdocs.ai.modelos.EventoServicioReqModel;
 import com.nextdocs.ai.modelos.SaludIntegracionModel;
 import com.nextdocs.ai.modelos.SuscripcionWebhookCreadaModel;
 import com.nextdocs.ai.modelos.SuscripcionWebhookModel;
@@ -125,6 +128,17 @@ public class IntegracionRestController extends ControladorRest<IntegracionRestCo
 	@PostMapping("/entregas/{id}/reintentar")
 	public ResponseEntity<EntregaWebhookModel> reintentar(@PathVariable String id) {
 		return new ResponseEntity<>(integracionService.reintentar(tenantId(), id), HttpStatus.OK);
+	}
+
+	@PreAuthorize("hasAuthority('integraciones.escribir')")
+	@PostMapping("/eventos")
+	public ResponseEntity<Map<String, Object>> publicarEvento(
+			@Valid @RequestBody EventoServicioReqModel datos) {
+		if (principal().getTipoActor() != TipoActor.CUENTA_SERVICIO) {
+			throw new ProhibidoException("La publicacion de eventos de proceso requiere una cuenta de servicio");
+		}
+		return new ResponseEntity<>(integracionService.publicarEventoServicio(tenantId(), datos),
+				HttpStatus.ACCEPTED);
 	}
 
 	private List<String> claves() {

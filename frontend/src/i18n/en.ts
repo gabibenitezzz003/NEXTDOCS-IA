@@ -283,6 +283,8 @@ export const en: Diccionario = {
       "Name of the event that instantiates the published process (e.g.: documento.recibido).",
     tipoDocumentoFirmaAyuda:
       "Document catalog code that the signer must deliver signed.",
+    tipoDocumentoExternoAyuda:
+      "Optional: if set, the third party must attach the document through the secure link to approve.",
     ayuda:
       "Click a step to configure it, or a connection to edit its condition. Start and End steps are fixed.",
   },
@@ -568,6 +570,9 @@ export const en: Diccionario = {
     cerrada: "This task is no longer available to answer.",
     respuestaRegistrada: "Registered response: {decision}",
     elegiste: "You are answering: {decision}",
+    documentosTitulo: "Requested documents",
+    documentosSubir: "Attach document",
+    documentosSubiendo: "Uploading document…",
     observaciones: "Observations",
     observacionesPlaceholder: "Comments for the organization (optional)",
     exitoTitulo: "Response sent",

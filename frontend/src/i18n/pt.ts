@@ -285,6 +285,8 @@ export const pt: Diccionario = {
       "Nome do evento que instancia o processo publicado (ex.: documento.recibido).",
     tipoDocumentoFirmaAyuda:
       "Código do catálogo documental que o signatário deve entregar assinado.",
+    tipoDocumentoExternoAyuda:
+      "Opcional: se definido, o terceiro deve anexar o documento pelo link seguro para aprovar.",
     ayuda:
       "Toque em um passo para configurá-lo, ou em uma conexão para editar sua condição. Os passos Início e Fim são fixos.",
   },
@@ -570,6 +572,9 @@ export const pt: Diccionario = {
     cerrada: "Esta tarefa não está mais disponível para responder.",
     respuestaRegistrada: "Resposta registrada: {decision}",
     elegiste: "Você está respondendo: {decision}",
+    documentosTitulo: "Documentos solicitados",
+    documentosSubir: "Anexar documento",
+    documentosSubiendo: "Enviando documento…",
     observaciones: "Observações",
     observacionesPlaceholder: "Comentários para a organização (opcional)",
     exitoTitulo: "Resposta enviada",

@@ -481,6 +481,14 @@ export interface EnlaceExternoPublico {
   decision?: string;
   motivo?: string;
   completada?: string;
+  documentosEsperados?: string[];
+  documentosCargados?: string[];
+}
+
+export interface DocumentoExternoCargado {
+  id?: string;
+  nombre?: string;
+  estado?: string;
 }
 
 export async function obtenerEnlaceExterno(token: string): Promise<EnlaceExternoPublico> {
@@ -497,6 +505,20 @@ export async function usarEnlaceExterno(
   const { data } = await clienteProcesos.post<TareaProceso>(
     `/colaboracion-externa/enlaces/${token}`,
     cuerpo,
+  );
+  return data;
+}
+
+export async function subirDocumentoEnlaceExterno(
+  token: string,
+  archivo: File,
+): Promise<DocumentoExternoCargado> {
+  const formulario = new FormData();
+  formulario.append("archivo", archivo);
+  const { data } = await clienteProcesos.post<DocumentoExternoCargado>(
+    `/colaboracion-externa/enlaces/${token}/documentos`,
+    formulario,
+    { headers: { "Content-Type": "multipart/form-data" } },
   );
   return data;
 }

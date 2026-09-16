@@ -97,9 +97,9 @@ en procesos, terceros, partners y contenido COMEX.
 | Módulo | Estado hoy | Qué falta |
 |---|---|---|
 | **A. Docs Core** | ✅ Completo: ingesta segura, clasificación automática, captura genérica, extracción Gemini/DeepSeek, validación, revisión, aprendizaje, excepciones, auditoría, API/webhooks | Documentación real de un cliente (P0-02 punto 3) |
-| **B. Workflow Core** | ✅ Motor completo: 8 controladores, 48 endpoints, 16 entidades, 11 migraciones, 107 pruebas. Los 12 nodos del MVP0, instancia fijada a versión, SLA de plantilla y de nodo | Conectores productivos e IAM real |
-| **C. Studio guiado** | ✅ Editor de pasos con panel de configuración, borrador, versionado, probar y publicar | Duplicar una plantilla: el backend expone `/clonar` y el portal no lo usa (P0-04) |
-| **D. Colaboración externa** | ✅ Cuenta externa y enlace de acción seguro con token, scopes, expiración y usos máximos | Portal del tercero — **fuera del MVP0** (§6) |
+| **B. Workflow Core** | ✅ Motor completo: 15 tipos de nodo (los 12 del MVP0 + PARALELO/UNION/FIRMA), ejecución paralela real con join persistente e idempotente, disparadores por evento y por agenda, firma con documento exigido, notificaciones por webhook vía core, simulador sin persistencia, instancia fijada a versión, SLA de plantilla y de nodo | Conectores productivos e IAM real |
+| **C. Studio guiado** | ✅ Canvas completo: paleta, panel por nodo, deshacer/rehacer, minimapa, avisos de diseño, simulador, duplicar plantilla | — |
+| **D. Colaboración externa** | ✅ Cuenta externa, enlace de acción seguro (token, scopes, expiración, usos máximos) y **portal público `/externo/{token}`** con aprobar/rechazar y **carga de documentos** proxied al repositorio del tenant | — |
 | **E. IA Supervisora v0** | ✅ Reglas configurables por plantilla con umbral y operador, hallazgos, bloqueo de instancia y pantalla de administración | Controles cross-doc y de secuencia — **fuera del MVP0** (§6) |
 | **F. Biblioteca COMEX/Follow** | ✅ Catálogo argentino de 11 tipos documentales y plantillas de proceso COMEX con fixtures | Overlays por vertical |
 | **G. Partner Foundation** | ✅ Partner org, delegated grants, ownership/provenance/fork/install | Pantalla de delegaciones — **fuera del MVP0** (§6). 11 endpoints de partners y marketplace sin consumir |
@@ -107,7 +107,7 @@ en procesos, terceros, partners y contenido COMEX.
 | **I. Integración** | ✅ API REST, webhooks HMAC, SSO, FollowConnector de matching | Context Contract + Template Recommender + `subject_ref` genérico (P0-10) |
 
 **Lo que ya está es la mitad difícil del MVP0:** Docs Core con 121 pruebas unitarias y 175 de
-integración contra infraestructura real, el motor de procesos con 107, 67 pruebas de navegador,
+integración contra infraestructura real, el motor de procesos con 180, 90+ pruebas de navegador,
 versionado de plantillas con quality gate, y la infra de despliegue. El
 cierre es construir el eje de procesos sobre esa base sin desestabilizarla.
 
@@ -142,13 +142,13 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   a la versión con la que nació: publicar v2 no mueve las instancias de v1.
   El SLA se hereda de la plantilla y el nodo lo pisa si define el suyo.
 
-- [ ] **P0-04 · Studio guiado** (E05 · gate 0D) · *Esfuerzo: M/L* · *Depende de: P0-03*
-  Construido casi entero: editor de pasos con panel de configuración, guardar borrador, nueva
-  versión, probar con una instancia real y publicar con versionado, todo sobre el mismo JSON de
-  definición que va a usar el Canvas de MVP1.
-  **Falta una sola cosa: duplicar una plantilla.** El backend ya expone
-  `POST /procesos/{id}/clonar` y el portal no lo consume — el botón "Nueva version" del estudio
-  crea otro borrador de la *misma* definición, que es algo distinto.
+- [x] **P0-04 · Studio guiado** (E05 · gate 0D) · *Esfuerzo: M/L* · *Depende de: P0-03*
+  Canvas como superficie única de edición: paleta de los 15 tipos de nodo, conexión arrastrando,
+  panel de configuración por nodo (incl. disparadores del INICIO, documentos esperados de
+  TAREA_EXTERNA y documento requerido de FIRMA), avisos de diseño en el nodo y el panel,
+  deshacer/rehacer con Ctrl+Z, minimapa navegable, guardar borrador, nueva versión, duplicar
+  plantilla (`/clonar`), probar con instancia real, simular con datos de ejemplo y publicar con
+  versionado.
 
 - [x] **P0-05 · External Collaboration** (E06 · gate 0D) · *Esfuerzo: M* · *Depende de: P0-03*
   Cuenta externa + enlace de accion seguro con token, scopes, expiracion y usos maximos. Implementado en workflow.
