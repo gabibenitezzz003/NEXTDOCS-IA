@@ -4,6 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.nextdocs.ai.exceptions.ArchivoRechazadoException;
+import com.nextdocs.ai.exceptions.ConectorNoDisponibleException;
 import com.nextdocs.ai.exceptions.EntidadNoEncontradaException;
 import com.nextdocs.ai.exceptions.NoAutorizadoException;
 import com.nextdocs.ai.exceptions.ProhibidoException;
@@ -90,6 +91,13 @@ public class ErrorHandler {
 	public ResponseEntity<WebErrorModel> proveedorNoDisponible(HttpServletRequest peticion,
 			ProveedorNoDisponibleException e) {
 		log.error("Proveedor no disponible: {}", e.getMessage());
+		return respuesta(peticion, e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
+	}
+
+	@ExceptionHandler(ConectorNoDisponibleException.class)
+	public ResponseEntity<WebErrorModel> conectorNoDisponible(HttpServletRequest peticion,
+			ConectorNoDisponibleException e) {
+		log.error("Conector {} no disponible: {}", e.getCodigoConector(), e.getMessage());
 		return respuesta(peticion, e.getMessage(), HttpStatus.SERVICE_UNAVAILABLE);
 	}
 

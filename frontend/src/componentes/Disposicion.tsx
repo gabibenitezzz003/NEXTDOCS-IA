@@ -7,6 +7,7 @@ import {
   IconoDocumentos,
   IconoExcepciones,
   IconoInfo,
+  IconoInteligencia,
   IconoMarketplace,
   IconoOperacion,
   IconoPanel,
@@ -46,6 +47,12 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         texto: "disposicion.navDocumentos",
         permiso: "documentos.leer",
         icono: IconoDocumentos,
+      },
+      {
+        a: "/documental",
+        texto: "disposicion.navDocumental",
+        permiso: "documentos.leer",
+        icono: IconoInteligencia,
       },
       {
         a: "/excepciones",
