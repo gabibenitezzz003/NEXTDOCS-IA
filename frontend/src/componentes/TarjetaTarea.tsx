@@ -8,11 +8,17 @@ import {
   Tarjeta,
 } from "./Interfaz";
 import { formatearFecha } from "../paginas/Documentos";
-import { completarTarea, mensajeDeError } from "../api/procesos";
+import {
+  completarTarea,
+  listarEnlacesExternos,
+  mensajeDeError,
+  revocarEnlaceExterno,
+} from "../api/procesos";
 import type { TareaProceso } from "../api/procesos";
 import { listarDocumentos } from "../api/documentos";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
+import { IconoCopiar, IconoEnlaceExterno } from "./Iconos";
 
 const TIPOS_TAREA_CONOCIDOS = new Set([
   "SOLICITUD_DOCUMENTO",
@@ -59,6 +65,7 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
   const [motivo, setMotivo] = useState("");
   const [documentoId, setDocumentoId] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
 
   const consultaDocumentos = useQuery({
     queryKey: ["documentos", "entregables"],
@@ -105,6 +112,25 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
     tarea.tipoNodo === "TAREA_EXTERNA" && tarea.datos
       ? String(tarea.datos["enlaceToken"] ?? "")
       : "";
+
+  const consultaEnlaces = useQuery({
+    queryKey: ["enlacesExternos"],
+    queryFn: listarEnlacesExternos,
+    enabled: Boolean(enlaceToken),
+    staleTime: 15_000,
+  });
+  const enlace = consultaEnlaces.data?.find(
+    (candidato) => candidato.tareaId === tarea.id && candidato.token === enlaceToken,
+  );
+
+  const revocar = useMutation({
+    mutationFn: () => revocarEnlaceExterno(enlace!.id),
+    onSuccess: () => {
+      consultaEnlaces.refetch();
+      setError(null);
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
 
   return (
     <Tarjeta>
@@ -155,9 +181,66 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
             </p>
           ) : null}
           {enlaceToken ? (
-            <p className="mt-espacio-2 break-all rounded-control bg-lienzo px-espacio-3 py-espacio-2 text-pequeno text-tinta-suave">
-              {t("operacion.enlaceExterno", { token: enlaceToken })}
-            </p>
+            <div className="mt-espacio-2 rounded-control border border-violeta-borde bg-violeta-tenue px-espacio-3 py-espacio-2">
+              <div className="flex flex-wrap items-center gap-espacio-2">
+                <IconoEnlaceExterno tamano={14} className="shrink-0 text-violeta" />
+                <span className="min-w-0 flex-1 truncate text-pequeno text-tinta">
+                  {`${window.location.origin}/externo/${enlaceToken}`}
+                </span>
+                <Boton
+                  variante="fantasma"
+                  tamano="sm"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(
+                        `${window.location.origin}/externo/${enlaceToken}`,
+                      );
+                      setCopiado(true);
+                      setTimeout(() => setCopiado(false), 2000);
+                    } catch {
+                      setCopiado(false);
+                    }
+                  }}
+                >
+                  <IconoCopiar tamano={13} />
+                  {copiado ? t("operacion.enlaceCopiado") : t("operacion.copiarEnlace")}
+                </Boton>
+                <a
+                  href={`/externo/${enlaceToken}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-control-pequeno items-center gap-espacio-2 whitespace-nowrap rounded-control px-espacio-3 text-pequeno font-semibold text-accion-primaria transition-colors hover:bg-violeta-borde"
+                >
+                  <IconoEnlaceExterno tamano={13} />
+                  {t("operacion.abrirEnlace")}
+                </a>
+                {enlace?.estado === "ACTIVO" ? (
+                  <Boton
+                    variante="fantasma"
+                    tamano="sm"
+                    cargando={revocar.isPending}
+                    onClick={() => {
+                      if (window.confirm(t("operacion.revocarEnlaceConfirmar"))) {
+                        revocar.mutate();
+                      }
+                    }}
+                  >
+                    {t("operacion.revocarEnlace")}
+                  </Boton>
+                ) : null}
+              </div>
+              {enlace ? (
+                <p className="mt-espacio-1 text-micro text-tinta-suave">
+                  {t(`estadoEnlace.${enlace.estado ?? "ACTIVO"}`)}
+                  {enlace.expiracion
+                    ? ` · ${t("operacion.enlaceExpira", { fecha: formatearFecha(enlace.expiracion) })}`
+                    : ""}
+                  {enlace.usosMaximos
+                    ? ` · ${t("operacion.enlaceUsos", { usos: enlace.usos ?? 0, maximo: enlace.usosMaximos })}`
+                    : ""}
+                </p>
+              ) : null}
+            </div>
           ) : null}
         </div>
         {pendiente ? (
