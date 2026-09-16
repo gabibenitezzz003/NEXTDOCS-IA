@@ -1,5 +1,9 @@
 # Frontend y Figma
 
+> **Superseded-for-scope (16/09/2026).** Log de fases del rediseño frontend del plan viejo
+> (FASE 1–13). El baseline vigente es `TODO_MVP0_COMERCIAL.md` (numeración MVP0–MVP4). Se
+> conserva como registro histórico de las decisiones visuales.
+
 ## Alcance
 
 FASE 1 quedó cerrada con las fundaciones de `1d2ae93` y las primitivas de `c53cfcc`.

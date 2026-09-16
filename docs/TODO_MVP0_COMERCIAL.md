@@ -120,10 +120,12 @@ columna "en el repo" ancla cada ítem al estado actual del código.
 
 ### P0 — cierra el MVP0 Comercial
 
-- [ ] **P0-01 · Baseline único y nomenclatura** (E00 · gate 0A) · *Esfuerzo: S*
-  Marcar los documentos V7 contradictorios como superseded-for-scope y adoptar la numeración
-  MVP0–MVP4. Este documento es ese paso; falta la contraparte en la Base V7 (fuera del repo) y
-  un pase de revista de `README.md` y `EMPEZAR_ACA.md` cuando cierre el P0-02.
+- [x] **P0-01 · Baseline único y nomenclatura** (E00 · gate 0A) · *Esfuerzo: S*
+  Este documento es el baseline. Pase in-repo hecho el 16/09/2026: `EMPEZAR_ACA.md` ya remite
+  a este tablero como plan maestro (el `TODO.md` viejo queda como registro de Fases 1–2), y
+  `discovery-v11.md` y `frontend-figma.md` quedaron marcados superseded-for-scope
+  (`implementation-v11/` vive fuera del control de versiones). Pendiente sólo la contraparte
+  en la Base V7 (fuera del repo, acción del PO) y la aceptación formal del ADR 0001.
 
 - [ ] **P0-02 · Cerrar la validación del MVP0 técnico** (E01 · gate G-DEMO) · *Esfuerzo: S*
   Tres de los cuatro puntos cerrados; detalle en [P0_02_VALIDACION.md](P0_02_VALIDACION.md).
@@ -196,7 +198,7 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   aduaneros se parametrizan por país; los IDs de tipos de carga Follow vienen por Connector, no
   se duplican maestros.
 
-- [ ] **P0-10 · Follow Context/Template Recommender** (E10 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-09*
+- [x] **P0-10 · Follow Context/Template Recommender** (E10 · gate 0F) · *Esfuerzo: M* · *Depende de: P0-09*
   Contrato canónico de contexto (scope/direction/mode/logistic_unit/cargo_profile/follow_operation/
   flags/subject_ref), `POST /template-recommendations`, `POST /workflow-instances`, eventos
   `document.*`/`task.*`/`workflow.completed`. Follow no hardcodea nombres de plantilla: envía

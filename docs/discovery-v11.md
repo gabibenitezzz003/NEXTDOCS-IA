@@ -1,5 +1,10 @@
 # E00 · Discovery V11 — Baseline de NEXT DOC AI
 
+> **Superseded-for-scope (16/09/2026).** Este baseline pertenece al kit V11 del plan viejo.
+> El baseline vigente es `TODO_MVP0_COMERCIAL.md` (numeración MVP0–MVP4) y el estado real en
+> `verificaciones/e14-acta-salida.md`. Se conserva como registro histórico del descubrimiento;
+> donde contradiga al baseline comercial, manda el comercial.
+
 Documento generado por el Prompt 00 de descubrimiento del kit V11.  
 Fecha: 2026-09-07 (baseline reportado) / descubrimiento ejecutado en la sesión actual.  
 Repositorio core: `/home/gabibenitezzz/Escritorio/NEXT AI/nextdocs-ai`.  
