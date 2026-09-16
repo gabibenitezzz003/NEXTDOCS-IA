@@ -293,6 +293,25 @@ export function IconoCandado(props: PropsIcono) {
   );
 }
 
+export function IconoEnlaceExterno(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M14 4h6v6" />
+      <path d="M20 4 11 13" />
+      <path d="M19 13.5V19a1.5 1.5 0 0 1-1.5 1.5H5A1.5 1.5 0 0 1 3.5 19V6.5A1.5 1.5 0 0 1 5 5h5.5" />
+    </Base>
+  );
+}
+
+export function IconoCopiar(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15V5.5A1.5 1.5 0 0 1 6.5 4H15" />
+    </Base>
+  );
+}
+
 export function IconoSol(props: PropsIcono) {
   return (
     <Base {...props}>

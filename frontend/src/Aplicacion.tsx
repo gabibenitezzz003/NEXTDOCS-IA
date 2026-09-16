@@ -10,6 +10,7 @@ import { Tareas } from "./paginas/Tareas";
 import { Operacion } from "./paginas/Operacion";
 import { Studio } from "./paginas/Studio";
 import { Supervisora } from "./paginas/Supervisora";
+import { Externo } from "./paginas/Externo";
 import { useSesion } from "./contextos/ProveedorSesion";
 import { Logotipo } from "./componentes/Marca";
 import { Tarjeta } from "./componentes/Interfaz";
@@ -46,6 +47,7 @@ export function Aplicacion() {
   if (!sesion) {
     return (
       <Routes>
+        <Route path="/externo/:token" element={<Externo />} />
         <Route path="/ingresar" element={<Ingresar />} />
         <Route path="*" element={<Navigate to="/ingresar" replace />} />
       </Routes>
@@ -54,6 +56,7 @@ export function Aplicacion() {
 
   return (
     <Routes>
+      <Route path="/externo/:token" element={<Externo />} />
       <Route path="/ingresar" element={<Navigate to="/resumen" replace />} />
       <Route element={<Disposicion />}>
         <Route path="/resumen" element={<Resumen />} />

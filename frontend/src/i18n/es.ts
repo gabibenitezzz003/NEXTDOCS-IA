@@ -504,6 +504,36 @@ export const es = {
     APROBADO: "Aprobado",
     RECHAZADO: "Rechazado",
   },
+  estadoEnlace: {
+    ACTIVO: "Activo",
+    USADO: "Utilizado",
+    EXPIRADO: "Expirado",
+    REVOCADO: "Revocado",
+  },
+  externo: {
+    titulo: "Tarea externa",
+    descripcion:
+      "La organización te invitó a completar este paso del proceso. Tu respuesta se registra directamente en la ejecución.",
+    proceso: "Proceso",
+    paso: "Paso solicitado",
+    venceTarea: "La tarea vence",
+    venceEnlace: "Este enlace vence",
+    invalidoTitulo: "Enlace no disponible",
+    invalidoDescripcion:
+      "El enlace no es válido o ya no está disponible. Pedile a la organización que genere uno nuevo.",
+    revocado: "Este enlace fue revocado por la organización.",
+    expirado: "Este enlace expiró. Pedile a la organización uno nuevo.",
+    usado: "Este enlace ya fue utilizado.",
+    cerrada: "Esta tarea ya no está disponible para responder.",
+    respuestaRegistrada: "Respuesta registrada: {decision}",
+    elegiste: "Vas a responder: {decision}",
+    observaciones: "Observaciones",
+    observacionesPlaceholder:
+      "Comentarios para la organización (opcional)",
+    exitoTitulo: "Respuesta enviada",
+    exitoDescripcion:
+      "Gracias. La organización ya recibió tu respuesta y el proceso continúa.",
+  },
   accionSupervisora: {
     ADVERTIR: "Advertir",
     SOLICITAR: "Solicitar información",
@@ -644,7 +674,14 @@ export const es = {
     completadaEl: "Completada {fecha}",
     completadaPor: "por {actor}",
     motivo: "Motivo: {motivo}",
-    enlaceExterno: "Enlace para el externo: {token}",
+    copiarEnlace: "Copiar enlace",
+    enlaceCopiado: "Copiado",
+    abrirEnlace: "Abrir",
+    revocarEnlace: "Revocar",
+    revocarEnlaceConfirmar:
+      "¿Revocar el enlace? La persona externa ya no va a poder responder con él.",
+    enlaceExpira: "vence {fecha}",
+    enlaceUsos: "{usos}/{maximo} usos",
     cerrar: "Cerrar",
     completar: "Completar",
     documentoEntregado: "Documento entregado",

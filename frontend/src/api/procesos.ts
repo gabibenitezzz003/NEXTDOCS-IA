@@ -428,3 +428,60 @@ export async function completarTarea(
   const { data } = await clienteProcesos.post<TareaProceso>(`/tareas/${tareaId}/completar`, cuerpo);
   return data;
 }
+
+export interface EnlaceExternoPublico {
+  estado?: string;
+  expiracion?: string;
+  actor?: string;
+  nombrePaso?: string;
+  tipoNodo?: string;
+  nombreProceso?: string;
+  codigoProceso?: string;
+  vencimientoTarea?: string;
+  estadoTarea?: string;
+  decision?: string;
+  motivo?: string;
+  completada?: string;
+}
+
+export async function obtenerEnlaceExterno(token: string): Promise<EnlaceExternoPublico> {
+  const { data } = await clienteProcesos.get<EnlaceExternoPublico>(
+    `/colaboracion-externa/enlaces/${token}`,
+  );
+  return data;
+}
+
+export async function usarEnlaceExterno(
+  token: string,
+  cuerpo: { decision?: string; motivo?: string; datos?: Record<string, unknown> },
+): Promise<TareaProceso> {
+  const { data } = await clienteProcesos.post<TareaProceso>(
+    `/colaboracion-externa/enlaces/${token}`,
+    cuerpo,
+  );
+  return data;
+}
+
+export interface EnlaceExterno {
+  id: string;
+  token: string;
+  tareaId: string;
+  actor?: string;
+  scopes?: string[];
+  expiracion?: string;
+  usosMaximos?: number;
+  usos?: number;
+  estado?: string;
+  alta?: string;
+}
+
+export async function listarEnlacesExternos(): Promise<EnlaceExterno[]> {
+  const { data } = await clienteProcesos.get<EnlaceExterno[]>(
+    "/colaboracion-externa/enlaces",
+  );
+  return data;
+}
+
+export async function revocarEnlaceExterno(enlaceId: string): Promise<void> {
+  await clienteProcesos.delete(`/colaboracion-externa/enlaces/${enlaceId}`);
+}
