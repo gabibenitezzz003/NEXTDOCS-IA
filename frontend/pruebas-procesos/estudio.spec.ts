@@ -41,6 +41,16 @@ async function preparar(pagina: Page, grafo = grafoLineal()) {
     errorCompletar: false,
     consultasInstancia: 0,
     validaciones: 0,
+    simulaciones: [] as unknown[],
+    resultadoSimulacion: {
+      pasos: [
+        { nodoId: "entrada", nombre: "Entrada", tipo: "INICIO", accion: "INICIADO" },
+        { nodoId: "a", nombre: "Paso A", tipo: "FORMULARIO", accion: "TAREA", detalle: "Crea tarea" },
+        { nodoId: "salida", nombre: "Salida", tipo: "FIN", accion: "FINALIZADO" },
+      ],
+      terminada: true,
+      advertencias: [],
+    },
     completadas: [] as unknown[],
     instancia: {
       id: "instancia-prueba",
@@ -108,6 +118,10 @@ async function preparar(pagina: Page, grafo = grafoLineal()) {
     if (camino.endsWith("/validar")) {
       control.validaciones++;
       return responder(version());
+    }
+    if (camino.endsWith("/simular")) {
+      control.simulaciones.push(peticion.postDataJSON());
+      return responder(control.resultadoSimulacion);
     }
     if (camino === "/api/v1/instancias") return responder(control.instancia);
     if (camino === "/api/v1/instancias/instancia-prueba") {
@@ -568,4 +582,104 @@ test("deshacer revierte la edición del panel y el drag es una sola entrada", as
   expect(
     (entrada?.configuracion?.posicion as { x?: number } | undefined)?.x,
   ).toBeUndefined();
+});
+
+test("la paleta ofrece los pasos de paralelismo, unión y firma", async ({
+  page,
+}) => {
+  await preparar(page);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+
+  await page.getByRole("combobox", { name: "Agregar paso" }).click();
+  const lista = page.getByRole("listbox", { name: "Agregar paso" });
+  await expect(lista).toBeVisible();
+  await expect(
+    lista.getByRole("option", { name: "Dividir en paralelo", exact: true }),
+  ).toBeVisible();
+  await expect(
+    lista.getByRole("option", { name: "Unir ramas", exact: true }),
+  ).toBeVisible();
+  await expect(
+    lista.getByRole("option", { name: "Firmar documento", exact: true }),
+  ).toBeVisible();
+});
+
+test("el paso Inicio expone los disparadores programado y por evento", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await canvas.getByText("Entrada", { exact: true }).click();
+
+  await page.getByLabel("Ejecutar cada (minutos)").fill("30");
+  await page.getByLabel("Evento que dispara el proceso").fill("doc.recibido");
+
+  await page.getByRole("button", { name: "Guardar borrador" }).click();
+  await expect.poll(() => control.guardados.length).toBe(1);
+  const entrada = control.guardados[0].nodos.find((nodo) => nodo.id === "entrada");
+  expect(entrada?.configuracion?.programadoMinutos).toBe(30);
+  expect(entrada?.configuracion?.evento).toBe("doc.recibido");
+});
+
+test("un paso paralelo con una sola salida muestra el aviso de diseño", async ({
+  page,
+}) => {
+  const grafo = grafoLineal();
+  grafo.nodos.splice(1, 0, {
+    id: "division",
+    tipo: "PARALELO",
+    nombre: "Dividir",
+  });
+  grafo.aristas[0].destino = "division";
+  grafo.aristas.push({ origen: "division", destino: "a" });
+
+  await preparar(page, grafo);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+
+  const canvas = page.getByRole("application", { name: /Canvas del recorrido/ });
+  await canvas.getByText("Dividir", { exact: true }).click();
+
+  await expect(page.getByRole("alert")).toContainText(
+    "al menos dos salidas",
+  );
+  await expect(
+    page.getByText(/cada conexión saliente arranca una rama/),
+  ).toBeVisible();
+});
+
+test("simular recorre el grafo guardado y muestra los pasos", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+
+  await page.getByRole("button", { name: "Simular", exact: true }).click();
+  await expect(page.getByText("Simulación del recorrido")).toBeVisible();
+
+  await page.getByLabel("Datos de ejemplo (JSON)").fill('{"monto": 100}');
+  await page.getByRole("button", { name: "Ejecutar simulación" }).click();
+
+  await expect.poll(() => control.simulaciones).toEqual([
+    { datos: { monto: 100 } },
+  ]);
+  await expect(page.getByText("El recorrido llegó al fin")).toBeVisible();
+  await expect(page.getByText("3 pasos recorridos")).toBeVisible();
+});
+
+test("simular rechaza datos de ejemplo que no son JSON válido", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  await page.getByRole("button", { name: "Abrir proceso" }).click();
+
+  await page.getByRole("button", { name: "Simular", exact: true }).click();
+  await page.getByLabel("Datos de ejemplo (JSON)").fill("{no-json");
+  await page.getByRole("button", { name: "Ejecutar simulación" }).click();
+
+  await expect(
+    page.getByText("Los datos de ejemplo deben ser un JSON válido."),
+  ).toBeVisible();
+  expect(control.simulaciones).toHaveLength(0);
 });

@@ -171,6 +171,9 @@ export const es = {
     TEMPORIZADOR: "Espera",
     ACCION_API: "Acción de API",
     SUBPROCESO: "Subproceso",
+    PARALELO: "Paralelo",
+    UNION: "Unión",
+    FIRMA: "Firma",
   },
   insignias: {
     confianzaLectura: "Confianza de lectura",
@@ -260,6 +263,26 @@ export const es = {
       "Falta el código del subproceso: sin él el paso falla al ejecutarse.",
     avisoTipoDocumento:
       "Sin tipo documental la tarea acepta cualquier documento al completarse.",
+    avisoParalelo:
+      "La bifurcación necesita al menos dos salidas: con una sola no hay paralelismo.",
+    avisoUnionEntradas:
+      "La unión necesita al menos dos entradas: con una sola no sincroniza nada.",
+    avisoUnionSalida:
+      "La unión debe continuar por una única salida.",
+    avisoProgramado:
+      "El intervalo programado debe ser un número de minutos mayor a cero.",
+    paraleloAyuda:
+      "Divide la ejecución en ramas simultáneas: cada conexión saliente arranca una rama con sus propias tareas. Las ramas se reúnen en un paso de unión.",
+    unionAyuda:
+      "Espera a que lleguen todas las ramas antes de continuar. Conectá acá las ramas que salieron del paso paralelo.",
+    programadoMinutos: "Ejecutar cada (minutos)",
+    programadoMinutosAyuda:
+      "Si la versión publicada tiene intervalo, el proceso se instancia solo de forma periódica.",
+    eventoInicio: "Evento que dispara el proceso",
+    eventoInicioAyuda:
+      "Nombre del evento que instancia el proceso publicado (ej.: documento.recibido).",
+    tipoDocumentoFirmaAyuda:
+      "Código del catálogo documental que el firmante debe entregar firmado.",
     ayuda:
       "Tocá un paso para configurarlo, o una conexión para editar su condición. Los pasos Inicio y Fin son fijos.",
   },
@@ -581,6 +604,7 @@ export const es = {
     TAREA_EXTERNA: "Tarea externa",
     TEMPORIZADOR: "Espera (temporizador)",
     SUBPROCESO: "Subproceso",
+    FIRMA: "Firma de documento",
   },
   tareas: {
     titulo: "Tareas",
@@ -705,6 +729,9 @@ export const es = {
     documentoEntregado: "Documento entregado",
     documentoEntregadoAyuda:
       "Elegí el documento que ya subiste a la bandeja documental.",
+    documentoFirmado: "Documento a firmar",
+    documentoFirmadoAyuda:
+      "Elegí el documento firmado que ya subiste a la bandeja documental.",
     documentosCargando: "Cargando documentos…",
     documentoElegir: "Elegí un documento",
     documentoSinNombre: "documento sin nombre",
@@ -727,6 +754,9 @@ export const es = {
     TEMPORIZADOR: "Esperar (temporizador)",
     ACCION_API: "Acción de API",
     SUBPROCESO: "Subproceso",
+    PARALELO: "Dividir en paralelo",
+    UNION: "Unir ramas",
+    FIRMA: "Firmar documento",
   },
   studio: {
     titulo: "Workflow",
@@ -780,6 +810,18 @@ export const es = {
       "Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados.",
     validar: "Validar",
     validacionOk: "La versión es válida: puede publicarse.",
+    simular: "Simular",
+    simulacionTitulo: "Simulación del recorrido",
+    simulacionDesc:
+      "Recorre el grafo en memoria con datos de ejemplo: no crea instancias ni tareas reales.",
+    simulacionDatos: "Datos de ejemplo (JSON)",
+    simulacionDatosAyuda:
+      "Las decisiones y validaciones se evalúan contra estos datos.",
+    simulacionDatosInvalidos: "Los datos de ejemplo deben ser un JSON válido.",
+    ejecutarSimulacion: "Ejecutar simulación",
+    simulacionTerminada: "El recorrido llegó al fin",
+    simulacionIncompleta: "El recorrido no llegó al fin",
+    simulacionPasos: "{cantidad} pasos recorridos",
     sinGuardar: "Sin guardar",
     versionNoEditable: "Esta versión no se puede editar de forma segura",
     hayCambios:

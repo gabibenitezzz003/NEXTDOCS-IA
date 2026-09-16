@@ -10,9 +10,11 @@ import { avisosNodo } from "../utilidades/grafoProceso";
 import { Boton, BotonIcono, Selector } from "./Interfaz";
 import {
   IconoAjustar,
+  IconoBifurcar,
   IconoCheck,
   IconoDeshacer,
   IconoDocumentos,
+  IconoFirma,
   IconoInfo,
   IconoMas,
   IconoMenos,
@@ -24,6 +26,7 @@ import {
   IconoReloj,
   IconoSupervisora,
   IconoTareas,
+  IconoUnir,
 } from "./Iconos";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 
@@ -67,6 +70,12 @@ function colorDe(tipo: TipoNodoProceso): { relleno: string; borde: string } {
   if (tipo === "DECISION") {
     return { relleno: "var(--color-alerta-tenue)", borde: "var(--color-alerta-borde)" };
   }
+  if (tipo === "PARALELO" || tipo === "UNION") {
+    return { relleno: "var(--color-informacion-tenue)", borde: "var(--color-informacion-borde)" };
+  }
+  if (tipo === "FIRMA") {
+    return { relleno: "var(--color-exito-tenue)", borde: "var(--color-exito-borde)" };
+  }
   if (tipo === "REVISION_HUMANA" || tipo === "TAREA_EXTERNA") {
     return { relleno: "var(--color-violeta-tenue)", borde: "var(--color-violeta-borde)" };
   }
@@ -84,6 +93,9 @@ const TIPOS_CANVAS: TipoNodoProceso[] = [
   "TEMPORIZADOR",
   "ACCION_API",
   "SUBPROCESO",
+  "PARALELO",
+  "UNION",
+  "FIRMA",
 ];
 
 export function claveArista(arista: {
@@ -119,6 +131,12 @@ function IconoNodo({
       return <IconoReloj {...resto} />;
     case "ACCION_API":
       return <IconoRecargar {...resto} />;
+    case "PARALELO":
+      return <IconoBifurcar {...resto} />;
+    case "UNION":
+      return <IconoUnir {...resto} />;
+    case "FIRMA":
+      return <IconoFirma {...resto} />;
     default:
       return <IconoProceso {...resto} />;
   }
@@ -561,7 +579,7 @@ export function CanvasProceso({
               const p = posicion(nodo);
               const color = colorDe(nodo.tipo);
               const activo = seleccionNodo === nodo.id;
-              const conAviso = avisosNodo(nodo).length > 0;
+              const conAviso = avisosNodo(nodo, grafo).length > 0;
               const destinoConexion =
                 arrastre?.tipo === "conexion" && !deshabilitado
                   ? destinoEn({ x: arrastre.x, y: arrastre.y }, arrastre.origen)

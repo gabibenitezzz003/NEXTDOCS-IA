@@ -17,7 +17,10 @@ export type TipoNodoProceso =
   | "NOTIFICACION"
   | "TEMPORIZADOR"
   | "ACCION_API"
-  | "SUBPROCESO";
+  | "SUBPROCESO"
+  | "PARALELO"
+  | "UNION"
+  | "FIRMA";
 
 export type EstadoVersionProceso = "BORRADOR" | "PUBLICADA" | "ARCHIVADA";
 
@@ -273,6 +276,42 @@ export async function actualizarGrafo(versionId: string, grafo: GrafoProceso): P
 
 export async function validarVersion(versionId: string): Promise<VersionProceso> {
   const { data } = await clienteProcesos.post<VersionProceso>(`/procesos/versiones/${versionId}/validar`);
+  return data;
+}
+
+export interface SimulacionPaso {
+  nodoId: string;
+  nombre?: string;
+  tipo?: string;
+  accion?: string;
+  detalle?: string;
+}
+
+export interface SimulacionResultado {
+  pasos: SimulacionPaso[];
+  terminada: boolean;
+  advertencias: string[];
+}
+
+export async function simularVersion(
+  versionId: string,
+  datos: Record<string, unknown>,
+): Promise<SimulacionResultado> {
+  const { data } = await clienteProcesos.post<SimulacionResultado>(
+    `/procesos/versiones/${versionId}/simular`,
+    { datos },
+  );
+  return data;
+}
+
+export async function dispararEvento(
+  evento: string,
+  datos?: Record<string, unknown>,
+): Promise<InstanciaProceso[]> {
+  const { data } = await clienteProcesos.post<InstanciaProceso[]>(
+    `/procesos/eventos/${encodeURIComponent(evento)}`,
+    datos ?? {},
+  );
   return data;
 }
 

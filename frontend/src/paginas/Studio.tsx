@@ -26,6 +26,7 @@ import {
   obtenerInstancia,
   obtenerProceso,
   publicarVersion,
+  simularVersion,
   validarVersion,
 } from "../api/procesos";
 import type {
@@ -33,6 +34,7 @@ import type {
   InstanciaProceso,
   NodoProceso,
   Proceso,
+  SimulacionResultado,
   VersionProceso,
 } from "../api/procesos";
 import {
@@ -481,6 +483,7 @@ function EstudioProceso({
     setHistorial({ deshacer: 0, rehacer: 0 });
   }
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
+  const [simulacionAbierta, setSimulacionAbierta] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detalles, setDetalles] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -636,6 +639,17 @@ function EstudioProceso({
       setAviso(null);
       setError(mensajeDeError(fallo));
       setDetalles(erroresDeValidacion(fallo));
+    },
+  });
+
+  const simular = useMutation({
+    mutationFn: (datos: Record<string, unknown>) => {
+      if (!borrador) throw new Error(t("procesos.guardarAntesDePublicar"));
+      return simularVersion(borrador.id, datos);
+    },
+    onError: (fallo) => {
+      setAviso(null);
+      setError(mensajeDeError(fallo));
     },
   });
 
@@ -1078,6 +1092,16 @@ function EstudioProceso({
                 {t("procesos.validar")}
               </Boton>
               <Boton
+                variante="secundario"
+                disabled={editandoBloqueado || hayCambios || !grafoTrabajo}
+                onClick={() => {
+                  setError(null);
+                  setSimulacionAbierta((abierta) => !abierta);
+                }}
+              >
+                {t("procesos.simular")}
+              </Boton>
+              <Boton
                 variante="primario"
                 cargando={publicar.isPending}
                 disabled={
@@ -1097,6 +1121,18 @@ function EstudioProceso({
             </div>
           </Tarjeta>
         )}
+
+        {simulacionAbierta ? (
+          <PanelSimulacion
+            alSimular={(datos) => simular.mutate(datos)}
+            resultado={simular.data}
+            simulando={simular.isPending}
+            alCerrar={() => {
+              setSimulacionAbierta(false);
+              simular.reset();
+            }}
+          />
+        ) : null}
 
         {publicada ? (
           <Tarjeta>
@@ -1183,6 +1219,7 @@ const TIPOS_CON_RESPONSABLE = new Set([
   "VALIDACION_IA",
   "REVISION_HUMANA",
   "TAREA_EXTERNA",
+  "FIRMA",
 ]);
 
 const TIPOS_CON_SLA = new Set([
@@ -1219,14 +1256,53 @@ function ConfiguracionNodo({
           alCambiar({ ...nodo, nombre: evento.target.value })
         }
       />
-      {nodo.tipo === "SOLICITUD_DOCUMENTO" ? (
+      {nodo.tipo === "INICIO" ? (
+        <>
+          <Campo
+            etiqueta={t("canvas.programadoMinutos")}
+            type="number"
+            min={1}
+            placeholder="60"
+            ayuda={t("canvas.programadoMinutosAyuda")}
+            value={numero("programadoMinutos")}
+            onChange={(evento) =>
+              cambiar(
+                "programadoMinutos",
+                evento.target.value ? Number(evento.target.value) : undefined,
+              )
+            }
+          />
+          <Campo
+            etiqueta={t("canvas.eventoInicio")}
+            placeholder="documento.recibido"
+            ayuda={t("canvas.eventoInicioAyuda")}
+            value={texto("evento")}
+            onChange={(evento) => cambiar("evento", evento.target.value)}
+          />
+        </>
+      ) : null}
+      {nodo.tipo === "SOLICITUD_DOCUMENTO" || nodo.tipo === "FIRMA" ? (
         <Campo
           etiqueta={t("procesos.tipoDocumento")}
           placeholder="FACTURA_COMERCIAL"
-          ayuda={t("canvas.tipoDocumentoAyuda")}
+          ayuda={
+            nodo.tipo === "FIRMA"
+              ? t("canvas.tipoDocumentoFirmaAyuda")
+              : t("canvas.tipoDocumentoAyuda")
+          }
           value={texto("tipoDocumento")}
           onChange={(evento) => cambiar("tipoDocumento", evento.target.value)}
         />
+      ) : null}
+      {nodo.tipo === "PARALELO" ? (
+        <p role="note" className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave">
+          {t("canvas.paraleloAyuda")}
+        </p>
+      ) : null}
+      {nodo.tipo === "UNION" ? (
+        <p role="note" className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave">
+          {t("canvas.unionAyuda")}
+        </p>
       ) : null}
       {nodo.tipo === "SUBPROCESO" ? (
         <Campo
@@ -1618,7 +1694,7 @@ function PanelSeleccion({
 
   if (nodo) {
     const extremo = nodo.tipo === "INICIO" || nodo.tipo === "FIN";
-    const avisos = avisosNodo(nodo);
+    const avisos = avisosNodo(nodo, grafo);
     return (
       <Tarjeta padding="p-0" className="overflow-hidden">
         <div className="p-espacio-4 sm:p-espacio-5">
@@ -1714,6 +1790,125 @@ function PanelSeleccion({
       <p className="mt-espacio-4 text-pequeno text-tinta-suave">
         {t("canvas.ayuda")}
       </p>
+    </Tarjeta>
+  );
+}
+
+function PanelSimulacion({
+  alSimular,
+  resultado,
+  simulando,
+  alCerrar,
+}: {
+  alSimular: (datos: Record<string, unknown>) => void;
+  resultado?: SimulacionResultado;
+  simulando: boolean;
+  alCerrar: () => void;
+}) {
+  const { t } = useIdioma();
+  const [datos, setDatos] = useState("{\n\n}");
+  const [errorDatos, setErrorDatos] = useState<string | null>(null);
+
+  function ejecutar() {
+    let parseado: Record<string, unknown>;
+    try {
+      parseado = JSON.parse(datos || "{}") as Record<string, unknown>;
+      if (typeof parseado !== "object" || parseado === null || Array.isArray(parseado))
+        throw new Error();
+    } catch {
+      setErrorDatos(t("procesos.simulacionDatosInvalidos"));
+      return;
+    }
+    setErrorDatos(null);
+    alSimular(parseado);
+  }
+
+  return (
+    <Tarjeta className="mt-espacio-6" padding="p-espacio-4 sm:p-espacio-6">
+      <div className="flex flex-wrap items-start justify-between gap-espacio-4">
+        <CabeceraTarjeta
+          titulo={t("procesos.simulacionTitulo")}
+          descripcion={t("procesos.simulacionDesc")}
+        />
+        <Boton variante="fantasma" tamano="sm" onClick={alCerrar}>
+          {t("comun.cerrar")}
+        </Boton>
+      </div>
+      <AreaTexto
+        etiqueta={t("procesos.simulacionDatos")}
+        placeholder='{"monto_total": 1200, "decision": "APROBADO"}'
+        ayuda={t("procesos.simulacionDatosAyuda")}
+        rows={4}
+        className="mt-espacio-4 font-codigo"
+        value={datos}
+        onChange={(evento) => setDatos(evento.target.value)}
+      />
+      {errorDatos ? (
+        <p role="alert" className="mt-espacio-2 text-pequeno text-peligro">
+          {errorDatos}
+        </p>
+      ) : null}
+      <div className="mt-espacio-4">
+        <Boton
+          variante="primario"
+          cargando={simulando}
+          disabled={simulando}
+          onClick={ejecutar}
+        >
+          {t("procesos.ejecutarSimulacion")}
+        </Boton>
+      </div>
+      {resultado ? (
+        <div className="mt-espacio-5 border-t border-borde pt-espacio-4">
+          <p className="flex items-center gap-espacio-2 text-pequeno text-tinta-media">
+            <Pastilla tono={resultado.terminada ? "exito" : "informacion"}>
+              {resultado.terminada
+                ? t("procesos.simulacionTerminada")
+                : t("procesos.simulacionIncompleta")}
+            </Pastilla>
+            <span className="tabular-nums">
+              {t("procesos.simulacionPasos", {
+                cantidad: resultado.pasos.length,
+              })}
+            </span>
+          </p>
+          {resultado.advertencias.length ? (
+            <ul
+              role="alert"
+              className="mt-espacio-4 space-y-espacio-1 rounded-control border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-alerta-texto"
+            >
+              {resultado.advertencias.map((advertencia) => (
+                <li key={advertencia}>{advertencia}</li>
+              ))}
+            </ul>
+          ) : null}
+          <ol className="mt-espacio-4 space-y-espacio-2">
+            {resultado.pasos.map((paso, indice) => (
+              <li
+                key={`${paso.nodoId}-${indice}`}
+                className="flex items-baseline gap-espacio-3 rounded-control bg-lienzo p-espacio-3"
+              >
+                <span className="w-6 shrink-0 text-right text-micro text-tinta-suave tabular-nums">
+                  {indice + 1}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-pequeno font-semibold text-tinta">
+                    {paso.nombre || paso.nodoId}
+                    <span className="ml-espacio-2 font-normal text-tinta-suave">
+                      {paso.tipo ? t(`tipoNodo.${paso.tipo}`) : ""}
+                    </span>
+                  </p>
+                  {paso.detalle ? (
+                    <p className="text-pequeno text-tinta-suave">
+                      {paso.detalle}
+                    </p>
+                  ) : null}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
     </Tarjeta>
   );
 }
