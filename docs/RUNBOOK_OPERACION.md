@@ -121,6 +121,11 @@ La clave se muestra una sola vez y va al `scrape_config` de Prometheus como cabe
 `X-Clave-Servicio`. Verificado el 16/09/2026: la cuenta lee las métricas, no puede publicar
 eventos ni escribir fuera de su alcance, y al revocarla el acceso corta en el acto (403).
 
+En producción el scrape va contra el **puerto interno** de la instancia
+(`http://127.0.0.1:8090/actuator/prometheus` en el core, `:8091` en el workflow), no por el
+dominio: nginx no rutea `/actuator` y devuelve el index.html del SPA. Las métricas quedan
+dentro de la red interna, que es donde pertenecen.
+
 En el workflow el endpoint existía en la configuración pero faltaba la dependencia
 `micrometer-registry-prometheus`, así que devolvía 404: la configuración prometía algo que el
 binario no podía dar. Corregido.
