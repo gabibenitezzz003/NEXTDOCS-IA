@@ -57,6 +57,12 @@ public class TrabajadorExtraccionService {
 		documentoId.ifPresent(this::procesarSeguro);
 	}
 
+	@Scheduled(fixedDelay = 10000)
+	public void medirColas() {
+		colaExtraccionService.profundidad();
+		colaExtraccionService.profundidadReintento();
+	}
+
 	@Scheduled(fixedDelayString = "${nextdocs.cola.intervaloRecuperacionMilisegundos:60000}")
 	public void recuperarEstancados() {
 		Instant limite = Instant.now().minusMillis(propiedades.getEsperaEstancadoMilisegundos());

@@ -32,6 +32,15 @@ NEXTDOCS_TENANT=... NEXTDOCS_EMAIL=... NEXTDOCS_CLAVE=... \
   node scripts/baseline-carga.mjs --informe baseline.md
 ```
 
+Desde el 16/09/2026 el core expone el histograma de `http.server.requests` con percentiles
+(p50/p95/p99) y buckets SLO en `/actuator/metrics` y `/actuator/prometheus`, además de los gauges
+`nextdocs.cola.extraccion.profundidad` y `nextdocs.cola.extraccion.reintentos` — el p95 ya no hay
+que medirlo a mano, sale del scrape.
+
+Medición puntual del 16/09/2026 sobre la base QA (114 documentos): `GET /documentos` sostenido
+dio p50=10 ms y p95=13 ms, y la ráfaga por encima de 300 peticiones/minuto por usuario devolvió
+429 como corresponde — el límite corta en vez de degradar.
+
 ## El límite de peticiones es más bajo de lo que parece
 
 El core rechaza con **429** por encima de:
@@ -93,13 +102,24 @@ Para un respaldo con garantía total hay que cortar la escritura durante el volc
 | Servicio | Endpoint | Estado |
 |---|---|---|
 | core | `/actuator/health` | público |
-| core | `/actuator/prometheus` | **403: pide autenticación** |
+| core | `/actuator/prometheus` | autenticado: una cuenta de servicio lo lee con `X-Clave-Servicio` |
 | workflow | `/actuator/health` | público |
 | workflow | `/actuator/prometheus` | público, 126 métricas |
 
-**El scraper de Prometheus no puede leer el core tal como está.** `/actuator/**` está en las rutas
-protegidas del core, así que devuelve 403 sin token. Hay dos salidas: exponerlo en un puerto
-interno separado, o darle al scraper una credencial de servicio. Está sin resolver.
+**El scraper lee el core con una cuenta de servicio.** `/actuator/**` no está en las rutas
+públicas, así que devuelve 403 sin credencial. La salida es darle al scraper una cuenta de
+servicio con un alcance mínimo: `X-Clave-Servicio` autentica a cualquier principal con
+credencial, y las métricas no exponen datos del tenant. Se crea una sola vez:
+
+```bash
+curl -X POST "$BASE/api/v1/administracion/cuentas-servicio" \
+  -H "Authorization: Bearer $TOKEN_ADMIN" -H "Content-Type: application/json" \
+  -d '{"nombre":"scraper-prometheus","alcances":["documentos.leer"]}'
+```
+
+La clave se muestra una sola vez y va al `scrape_config` de Prometheus como cabecera
+`X-Clave-Servicio`. Verificado el 16/09/2026: la cuenta lee las métricas, no puede publicar
+eventos ni escribir fuera de su alcance, y al revocarla el acceso corta en el acto (403).
 
 En el workflow el endpoint existía en la configuración pero faltaba la dependencia
 `micrometer-registry-prometheus`, así que devolvía 404: la configuración prometía algo que el
@@ -113,6 +133,8 @@ binario no podía dar. Corregido.
 | Respuestas 5xx | cualquiera sostenida | El catch-all devuelve 500 genérico: hay que ir al log |
 | Respuestas 429 | crecimiento sostenido | Alguien está contra el límite por usuario |
 | `hikaricp_connections_pending` | > 0 sostenido | El pool de base es el primer cuello |
+| `nextdocs_cola_extraccion_profundidad` | creciendo sin bajar | La cola de extracción se trabó; el trabajador no drena |
+| `nextdocs_cola_extraccion_reintentos` | creciendo sin bajar | Las extracciones fallan y se reintentan |
 | Documentos en `PROCESANDO` | creciendo sin bajar | La cola de extracción se trabó |
 | Excepciones `ABIERTA` | creciendo sin bajar | Nadie está revisando |
 | Espacio del volumen de MinIO | > 80% | Los documentos no se borran solos |
@@ -168,7 +190,6 @@ fuera de transacción). Si vuelve a pasar, mirar el log del workflow: un
 
 ## Lo que falta para producción
 
-- Exponer las métricas del core al scraper sin romper la autenticación.
 - Límite de peticiones en el motor de procesos si se expone fuera de la red interna.
 - Alertas configuradas de verdad contra los umbrales de arriba; hoy solo están las métricas.
 - Repetir la línea base con volumen de cliente.

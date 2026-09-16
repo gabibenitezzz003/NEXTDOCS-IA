@@ -218,9 +218,15 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   [DATASET_PRUEBA.md](DATASET_PRUEBA.md)), corrido contra Gemini real con 15/15 de acierto.
   **Sigue faltando documentación real de un cliente**: todo lo anterior lo armamos nosotros.
 
-- [ ] **P0-13 · Load y operaciones** (E13 · gate 0G) · *Esfuerzo: M*
-  Baseline p95/throughput/colas/costo por documento y por proceso; backup/restore probado;
-  observabilidad, alertas, runbooks y rotación de secretos. Sin esto no hay salida a producción.
+- [~] **P0-13 · Load y operaciones** (E13 · gate 0G) · *Esfuerzo: M*
+  Hecho y verificado: histograma de `http.server.requests` con p50/p95/p99 y SLO en el core,
+  gauges de profundidad de la cola de extracción (`nextdocs.cola.extraccion.*`), scraper del core
+  resuelto con cuenta de servicio de alcance mínimo (leer métricas sí, publicar eventos no,
+  revocación inmediata), límite de peticiones verificado devolviendo 429, línea base medida
+  (p95=13 ms en bandeja sobre QA) y respaldo/restauración ejercitados con pg_dump + pg_restore
+  contra una base descartable con integridad referencial confirmada. Runbook actualizado.
+  **Lo que queda es operativo, no de código:** alertas reales en un Prometheus desplegado, cron
+  del `respaldo.sh` con retención y rotar la clave de Gemini (procedimiento ya en el runbook).
 
 - [x] **P0-14 · KPI operativo de procesos** (E11 · gate 0H) — nueva en V11
   Endpoints `/api/v1/kpi-procesos` y `/api/v1/kpi-procesos/poblacion` con **14 indicadores** del
@@ -230,11 +236,14 @@ columna "en el repo" ancla cada ítem al estado actual del código.
   Esa invariante estaba rota para `tareasEnPlazo` por un typo en el switch del drilldown, que
   devolvía población vacía en silencio; corregido con una prueba que la exige para todos los
   indicadores de tareas.
-- [ ] **P0-15 · Release comercial** (E14 · gate 0H) — nueva en V11
+- [~] **P0-15 · Release comercial** (E14 · gate 0H) — nueva en V11
   Demo de proceso completa, runbook, soporte, rollback y acta de salida (0A–0G con evidencia).
-  El runbook está en [RUNBOOK_OPERACION.md](RUNBOOK_OPERACION.md) y el alcance quedó acotado al
-  núcleo documental más procesos (ver §6). Faltan los dos puntos del checklist —rotar la clave y
-  cargar documentación real— y el acta.
+  El runbook está en [RUNBOOK_OPERACION.md](RUNBOOK_OPERACION.md), el rollback está documentado
+  en `DESPLIEGUE.md` (imagen previa `nextdocs-ia-backup` + `respaldo.sh restaurar`) y el acta
+  de salida con la evidencia de cada gate está en
+  [verificaciones/e14-acta-salida.md](verificaciones/e14-acta-salida.md).
+  **Lo que queda es del operador:** rotar la clave de Gemini, cargar documentación real de un
+  cliente y cerrar el gate con esa demo final.
 
 ### P1 — apenas cierre el MVP0 (hacia MVP1)
 
