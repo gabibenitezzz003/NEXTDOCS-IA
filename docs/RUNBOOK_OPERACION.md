@@ -193,6 +193,23 @@ Ya pasó dos veces por bugs distintos (un typo en el switch del drilldown y una 
 fuera de transacción). Si vuelve a pasar, mirar el log del workflow: un
 `LazyInitializationException` en `KpiProcesoService` apunta a un método sin `@Transactional`.
 
+### La firma se completó pero la tarea sigue PENDIENTE
+
+El webhook del proveedor no llegó o falló. Orden de diagnóstico:
+
+1. Eventos de la instancia (`evento_instancia`): `EVENTO_EXTERNO_FALLIDO` con
+   `tipoEvento: firma.solicitud` dice por qué el sobre no se creó; `FIRMA_SOLICITADA`
+   confirma que el sobre salió.
+2. Log del workflow buscando `/api/v1/firma/webhook`: un `IntegracionException ... 403`
+   al subir `firmado-*.pdf` es la cuenta de servicio del tenant sin el alcance
+   `documentos.escribir` en el core (`cuenta_servicio_alcance`).
+3. Tabla `WebhookCall` de la base `documenso`: los envíos quedan `FAILED` tras unos
+   pocos reintentos. Corregida la causa, re-entregar posteando el `requestBody`
+   registrado al webhook del workflow con el `X-Documenso-Secret` del entorno.
+
+Si la tarea ni siquiera tiene `firmaEnlace`, el tenant no está en
+`NEXTDOCS_WORKFLOW_FIRMA_CLAVES` o falta `documentosEncontrados` (conector documental).
+
 ## Lo que falta para producción
 
 - Límite de peticiones en el motor de procesos si se expone fuera de la red interna.

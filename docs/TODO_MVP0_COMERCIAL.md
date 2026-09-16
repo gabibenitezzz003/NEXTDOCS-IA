@@ -255,8 +255,12 @@ columna "en el repo" ancla cada ítem al estado actual del código.
 - [x] **P1-02 · Firma por adapter** — circuito real implementado: `ConectorFirmaInt` con
   adapter `DOCUMENSO` (API v2 envelopes), webhook `POST /api/v1/firma/webhook` autenticado
   por `X-Documenso-Secret` que completa/rechaza la tarea y archiva el PDF firmado en el
-  core (workflow PR #29, monorepo PR #65). Pendiente: credenciales reales de Documenso y
-  aplicar el conf de nginx en el servidor. Legale/Docusign quedan como adapters futuros
+  core (workflow PRs #29/#31/#32, monorepo PRs #65 y siguientes). **Verificado E2E en
+  producción (16/09/2026)**: Documenso v2.18 bajo `/firma/`, sobre → firma → webhook →
+  tarea `COMPLETADA`/`APROBADO` + PDF firmado archivado en el core. En el camino se
+  corrigieron la doble codificación de la URL firmada de S3 al descargar el original
+  (workflow #32) y el alcance `documentos.escribir` que la cuenta de servicio necesita
+  para archivar el PDF firmado. Legale/Docusign quedan como adapters futuros
   si un cliente exige firma digital argentina.
 - [ ] **P1-03 · Canvas avanzado** — grafo visual sobre el mismo schema del Studio guiado (vieja
   tarea 26 completa). MVP1.

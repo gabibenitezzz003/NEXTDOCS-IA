@@ -107,6 +107,10 @@ services:
       NEXTDOCS_WORKFLOW_FIXTURES_HABILITADO: "false"
       NEXTDOCS_WORKFLOW_DOCUMENTAL_URL_BASE: ${NEXTDOCS_WORKFLOW_DOCUMENTAL_URL_BASE}
       NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES: ${NEXTDOCS_WORKFLOW_DOCUMENTAL_CLAVES}
+      NEXTDOCS_WORKFLOW_FIRMA_URL_BASE: ${NEXTDOCS_WORKFLOW_FIRMA_URL_BASE}
+      NEXTDOCS_WORKFLOW_FIRMA_URL_PUBLICA: ${NEXTDOCS_WORKFLOW_FIRMA_URL_PUBLICA}
+      NEXTDOCS_WORKFLOW_FIRMA_WEBHOOK_SECRETO: ${NEXTDOCS_WORKFLOW_FIRMA_WEBHOOK_SECRETO}
+      NEXTDOCS_WORKFLOW_FIRMA_CLAVES: ${NEXTDOCS_WORKFLOW_FIRMA_CLAVES}
       NEXTDOCS_WORKFLOW_COMEX_HABILITADO: ${NEXTDOCS_WORKFLOW_COMEX_HABILITADO:-false}
       NEXTDOCS_WORKFLOW_COMEX_TENANT_ID: ${NEXTDOCS_WORKFLOW_COMEX_TENANT_ID:-}
     ports:
@@ -131,6 +135,45 @@ services:
       timeout: 5s
       start_period: 120s
       retries: 5
+
+  documenso:
+    image: documenso-firma:v2.18.0
+    container_name: nextdocs-ia-documenso
+    restart: unless-stopped
+    environment:
+      PORT: "3000"
+      NEXTAUTH_SECRET: ${DOCUMENSO_AUTH_SECRETO}
+      NEXT_PRIVATE_ENCRYPTION_KEY: ${DOCUMENSO_ENCRIPTACION_CLAVE}
+      NEXT_PRIVATE_ENCRYPTION_SECONDARY_KEY: ${DOCUMENSO_ENCRIPTACION_CLAVE_2}
+      NEXT_PUBLIC_WEBAPP_URL: https://nextdocsia.fenixgroup.tech/firma
+      NEXT_PUBLIC_BASE_PATH: /firma
+      NEXT_PRIVATE_INTERNAL_WEBAPP_URL: http://127.0.0.1:3000/firma
+      NEXT_PRIVATE_DATABASE_URL: postgresql://documenso:${DOCUMENSO_BD_CLAVE}@nextdocs-ia-prod.cspyua8o6elx.us-east-1.rds.amazonaws.com:5432/documenso
+      NEXT_PRIVATE_DIRECT_DATABASE_URL: postgresql://documenso:${DOCUMENSO_BD_CLAVE}@nextdocs-ia-prod.cspyua8o6elx.us-east-1.rds.amazonaws.com:5432/documenso
+      NEXT_PUBLIC_UPLOAD_TRANSPORT: database
+      NEXT_PRIVATE_JOBS_PROVIDER: local
+      NEXT_PRIVATE_SIGNING_LOCAL_FILE_PATH: /opt/documenso/cert.p12
+      NEXT_PRIVATE_SIGNING_PASSPHRASE: ${DOCUMENSO_FIRMA_FRASE}
+      NEXT_PRIVATE_SMTP_TRANSPORT: smtp-auth
+      NEXT_PRIVATE_SMTP_HOST: 127.0.0.1
+      NEXT_PRIVATE_SMTP_PORT: "25"
+      NEXT_PRIVATE_SMTP_USERNAME: sin-smtp
+      NEXT_PRIVATE_SMTP_PASSWORD: sin-smtp
+      NEXT_PRIVATE_SMTP_FROM_ADDRESS: firma@fenixgroup.tech
+      DOCUMENSO_DISABLE_TELEMETRY: "true"
+    ports:
+      - "127.0.0.1:3001:3000"
+    volumes:
+      - /etc/nextdocs-ia/documenso/cert.p12:/opt/documenso/cert.p12:ro
+    networks:
+      - nextdocs-interno
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
 
 networks:
   nextdocs-interno:
