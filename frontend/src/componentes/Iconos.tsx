@@ -54,6 +54,16 @@ export function IconoDocumentos(props: PropsIcono) {
   );
 }
 
+export function IconoInteligencia(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+      <path d="M14 3v5h5" />
+      <path d="M12 10.5l1.1 2.2 2.2 1.1-2.2 1.1-1.1 2.2-1.1-2.2-2.2-1.1 2.2-1.1z" />
+    </Base>
+  );
+}
+
 export function IconoExcepciones(props: PropsIcono) {
   return (
     <Base {...props}>
