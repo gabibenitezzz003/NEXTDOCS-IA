@@ -35,13 +35,17 @@ export const en: Diccionario = {
   },
   errores: {
     limitePeticiones: "The request limit was exceeded",
-    limitePeticionesReintenta: "The request limit was exceeded. Retry in {espera} seconds",
-    sinConexionServidor: "Could not reach the server. Check that the backend is running",
+    limitePeticionesReintenta:
+      "The request limit was exceeded. Retry in {espera} seconds",
+    sinConexionServidor:
+      "Could not reach the server. Check that the backend is running",
     inesperado: "An unexpected error occurred",
     sesionInvalida: "The session is not valid for this service. Sign in again",
     sinPermiso: "Your user does not have permission for this operation",
-    direccionDesconocida: "The service does not recognize this address (404). It may be outdated",
-    servicioNoResponde: "The service is not responding ({estado}). Retry in a few seconds",
+    direccionDesconocida:
+      "The service does not recognize this address (404). It may be outdated",
+    servicioNoResponde:
+      "The service is not responding ({estado}). Retry in a few seconds",
     errorServicio: "The service returned an error ({estado})",
     peticionRechazada: "The request was rejected ({estado})",
     tituloSinConexion: "No connection",
@@ -94,9 +98,10 @@ export const en: Diccionario = {
     oContinuaCon: "or continue with",
     continuarCon: "Continue with {proveedor}",
     accesoNoHabilitado:
-      "The organization \"{tenant}\" does not have that sign-in enabled. Check your organization name.",
+      'The organization "{tenant}" does not have that sign-in enabled. Check your organization name.',
     tituloMarca: "Your documents know what to do next.",
-    subtituloMarca: "Document intelligence and process automation on our own platform.",
+    subtituloMarca:
+      "Document intelligence and process automation on our own platform.",
     pilar1: "Extraction with per-field evidence and traceable confidence",
     pilar2: "Validation through versioned rules, no opaque decisions",
     pilar3: "Full audit trail: who decided what, when and why",
@@ -202,7 +207,20 @@ export const en: Diccionario = {
   canvas: {
     agregarNodo: "＋ Add step",
     ayudaBreve:
-      "Drag the steps to position them; drag from a step's violet dot to another step to connect them.",
+      "Drag the steps to position them; drag from a step's violet dot to another step to connect them. Shift+click marks several; Shift+drag selects an area.",
+    alinearGrupo: "Align selected steps",
+    alinearIzquierda: "Align left",
+    alinearCentroX: "Align horizontal center",
+    alinearDerecha: "Align right",
+    alinearArriba: "Align top",
+    alinearCentroY: "Align vertical center",
+    alinearAbajo: "Align bottom",
+    distribuirHorizontal: "Distribute horizontally",
+    distribuirVertical: "Distribute vertically",
+    seleccionMultiple: "Selected steps",
+    seleccionMultipleDetalle: "{cantidad} steps marked",
+    seleccionMultipleAyuda:
+      "Use the toolbar above to align or distribute them, the arrow keys to move them, Ctrl+D to duplicate and Del to delete.",
     deshacer: "Undo (Ctrl+Z)",
     rehacer: "Redo (Ctrl+Shift+Z)",
     ariaRecorrido: "Route canvas: {cantidad} steps",
@@ -270,7 +288,8 @@ export const en: Diccionario = {
       "The fork needs at least two outgoing connections: with only one there is no parallelism.",
     avisoUnionEntradas:
       "The join needs at least two incoming connections: with only one it synchronizes nothing.",
-    avisoUnionSalida: "The join must continue through a single outgoing connection.",
+    avisoUnionSalida:
+      "The join must continue through a single outgoing connection.",
     avisoProgramado:
       "The scheduled interval must be a number of minutes greater than zero.",
     paraleloAyuda:
@@ -323,9 +342,11 @@ export const en: Diccionario = {
     ceroDelTotal: "0% of total",
     operacionYAtencion: "Operations and attention",
     distribucion: "Distribution by status",
-    distribucionDesc: "The organization's current documents, with no date filtering.",
+    distribucionDesc:
+      "The organization's current documents, with no date filtering.",
     sinDocumentos: "No documents yet",
-    sinDocumentosDetalle: "When the first document arrives, its status will appear here.",
+    sinDocumentosDetalle:
+      "When the first document arrives, its status will appear here.",
     figcaption: "Number of documents by status, highest to lowest.",
     cantidadPorEstado: "Count by status",
     excepcionesAbiertas: "Open exceptions",
@@ -353,9 +374,12 @@ export const en: Diccionario = {
     errorContexto: "Could not load the document inbox",
     sinCoincidencias: "No documents match",
     sinDocumentos: "No documents yet",
-    sinCoincidenciasDetalle: "Try removing filters or changing the search term.",
-    sinDocumentosDetalle: "When the first document arrives it will appear here.",
-    captionTabla: "Documents on page {pagina}. Open a document to see its detail.",
+    sinCoincidenciasDetalle:
+      "Try removing filters or changing the search term.",
+    sinDocumentosDetalle:
+      "When the first document arrives it will appear here.",
+    captionTabla:
+      "Documents on page {pagina}. Open a document to see its detail.",
     colDocumento: "Document",
     colEstado: "Status",
     colTipo: "Detected type",
@@ -369,7 +393,8 @@ export const en: Diccionario = {
   },
   excepciones: {
     titulo: "Exception center",
-    descripcion: "Review and resolve document flow exceptions, with their priority and due date.",
+    descripcion:
+      "Review and resolve document flow exceptions, with their priority and due date.",
     grupoEstado: "Exception status",
     conteo: "{total} {etiqueta} · {estado}",
     unaExcepcion: "exception",
@@ -379,9 +404,12 @@ export const en: Diccionario = {
     sinResultadosPagina: "No results on this page",
     sinAbiertas: "There are no open exceptions",
     sinCoincidencias: "No matches in this status",
-    sinResultadosPaginaDetalle: "There are still exceptions in this status. Select the status again to return to the first page.",
-    sinAbiertasDetalle: "The open exceptions query returned no results. You can check the other statuses with the filter.",
-    sinCoincidenciasDetalle: "There are no results in status {estado} for this page. You can check another status with the filter.",
+    sinResultadosPaginaDetalle:
+      "There are still exceptions in this status. Select the status again to return to the first page.",
+    sinAbiertasDetalle:
+      "The open exceptions query returned no results. You can check the other statuses with the filter.",
+    sinCoincidenciasDetalle:
+      "There are no results in status {estado} for this page. You can check another status with the filter.",
     lista: "Document exceptions",
     prioridad: "Priority {prioridad}",
     slaVencido: "SLA breached",
@@ -413,7 +441,8 @@ export const en: Diccionario = {
     conteo: "{cantidad} {etiqueta} in this status",
     unaPropuesta: "proposal",
     muchasPropuestas: "proposals",
-    aprobadoAviso: "{codigo} is now a catalog type. Incoming documents classify themselves.",
+    aprobadoAviso:
+      "{codigo} is now a catalog type. Incoming documents classify themselves.",
     errorAccion: "Could not complete the action",
     sinPendientes: "No pending types",
     sinAprobadas: "No new types detected yet",
@@ -429,7 +458,8 @@ export const en: Diccionario = {
     porQueLoPropone: "Why it is proposed: ",
     camposSugeridos: "Suggested fields ({cantidad})",
     camposSugeridosDe: "Suggested fields of {codigo}",
-    sinCampos: "There are no suggested fields. Approval requires at least one field with a usable key; a template cannot be created without data to extract.",
+    sinCampos:
+      "There are no suggested fields. Approval requires at least one field with a usable key; a template cannot be created without data to extract.",
     requerido: "Required",
     opcional: "Optional",
     ejemplo: "Example: ",
@@ -486,8 +516,7 @@ export const en: Diccionario = {
     camposCorregidos:
       "{cantidad} corrected field(s) not sent yet. They are sent with the decision.",
     motivoDecision: "Decision reason",
-    motivoPlaceholder:
-      "Decision reason (required to reject, flag or correct)",
+    motivoPlaceholder: "Decision reason (required to reject, flag or correct)",
     aprobar: "Approve",
     observar: "Flag",
     rechazar: "Reject",
@@ -497,8 +526,7 @@ export const en: Diccionario = {
     estadoFinal:
       "This document is in a final state and does not allow further transitions.",
     sinExtraccion: "No extraction",
-    sinExtraccionDetalle:
-      "No extraction has been run on this document yet.",
+    sinExtraccionDetalle: "No extraction has been run on this document yet.",
     sinCampos: "No extracted fields",
     sinCamposDetalle: "The extraction returned no fields to display.",
     camposExtraidos: "Extracted fields",
@@ -514,8 +542,7 @@ export const en: Diccionario = {
     sobreescrito: "Overridden",
     sobreescritoPor: "by {nombre}",
     sinCandidatos: "No candidates",
-    sinCandidatosDetalle:
-      "No connector returned candidates for this document.",
+    sinCandidatosDetalle: "No connector returned candidates for this document.",
     asociacion: "Association",
     sinDescripcion: "No description available",
     puntaje: " · score {puntaje}",
@@ -677,15 +704,13 @@ export const en: Diccionario = {
     pausar: "Pause",
     reanudar: "Resume",
     cancelarProceso: "Cancel process",
-    confirmarCancelar:
-      "Cancel this process? Pending tasks will be canceled.",
+    confirmarCancelar: "Cancel this process? Pending tasks will be canceled.",
     tareas: "Tasks",
     tareasDesc:
       "The human tasks of this process. Pending ones can be completed from here.",
     sinTareas: "This process has no human tasks.",
     datosProceso: "Process data",
-    datosDesc:
-      "What this instance knows: start data, validations and results.",
+    datosDesc: "What this instance knows: start data, validations and results.",
     lineaTiempo: "Timeline",
     lineaDesc: "Everything that happened to this instance, in order.",
     hallazgosTitulo: "Supervisor findings",
@@ -744,8 +769,7 @@ export const en: Diccionario = {
     rechazado: "Rejected",
     motivoRechazo: "Reason (required when rejecting)",
     motivoRechazoPlaceholder: "E.g.: the amount does not match",
-    motivoRechazoError:
-      "Enter a rejection reason of up to 512 characters",
+    motivoRechazoError: "Enter a rejection reason of up to 512 characters",
   },
   tipoPaso: {
     SOLICITUD_DOCUMENTO: "Request document",
@@ -772,8 +796,7 @@ export const en: Diccionario = {
       "Workspace process library. Open one to draw its steps on the canvas and publish a version.",
     nuevoProceso: "New process",
     nuevoProcesoTitulo: "New process",
-    nuevoProcesoDesc:
-      "Create a definition with its first version in draft.",
+    nuevoProcesoDesc: "Create a definition with its first version in draft.",
     codigo: "Code",
     familia: "Family",
     nombre: "Name",
@@ -828,8 +851,7 @@ export const en: Diccionario = {
     simulacionPasos: "{cantidad} steps visited",
     sinGuardar: "Unsaved",
     versionNoEditable: "This version cannot be edited safely",
-    hayCambios:
-      "There are unsaved changes. Save the draft before publishing.",
+    hayCambios: "There are unsaved changes. Save the draft before publishing.",
     agregarPaso: "Add step",
     guardarBorrador: "Save draft",
     publicarVersion: "Publish version {numero}",
@@ -851,8 +873,7 @@ export const en: Diccionario = {
       "The instance is blocked and does not allow completing tasks.",
     instanciaCreada:
       "The instance is created and does not yet allow completing tasks.",
-    instanciaEsperando:
-      "The instance is waiting for tasks to be resolved.",
+    instanciaEsperando: "The instance is waiting for tasks to be resolved.",
     instanciaActiva: "The instance is active.",
     tareasPrueba: "Pending or overdue tasks of the test",
     motivoRechazo: "Rejection reason",
@@ -947,10 +968,8 @@ export const en: Diccionario = {
     recibidoEl: "received {fecha}",
     contexto: {
       documentosRecibidos: "Roots received in the period; excludes segments.",
-      documentosCerrados:
-        "By closing date in the period; includes segments.",
-      automatizacion:
-        "Closed without human review / closed in the period.",
+      documentosCerrados: "By closing date in the period; includes segments.",
+      automatizacion: "Closed without human review / closed in the period.",
       cumplimientoSla:
         "Exceptions resolved in the period; unexpired ones also meet SLA.",
       tiempoCicloP50:
@@ -965,16 +984,17 @@ export const en: Diccionario = {
         "Retention due in the next 30 days, independent of the period.",
       almacenamientoUtilizado:
         "Bytes of current files / storage quota. Current measurement.",
-      entregaDeEventos:
-        "Delivery records created in the period; not retries.",
+      entregaDeEventos: "Delivery records created in the period; not retries.",
     },
   },
   reglasSupervisora: {
     titulo: "Supervisor AI rules",
-    descripcion: "Each rule compares an instance data point against a threshold. They are evaluated when each task completes.",
+    descripcion:
+      "Each rule compares an instance data point against a threshold. They are evaluated when each task completes.",
     nuevaRegla: "New rule",
     sinReglas: "No rules yet",
-    sinReglasDetalle: "Without rules the supervisor generates no findings. Create one to start watching your process data.",
+    sinReglasDetalle:
+      "Without rules the supervisor generates no findings. Create one to start watching your process data.",
     bloquea: "Blocks",
     editar: "Edit",
     cerrar: "Close",
@@ -983,17 +1003,20 @@ export const en: Diccionario = {
     darDeBaja: "Remove",
     todasLasPlantillas: "All templates",
     datoObservado: "Observed data: ",
-    confirmarBajaDetalle: "The rule stops being evaluated. Findings it already generated are kept. Press the button again to confirm.",
+    confirmarBajaDetalle:
+      "The rule stops being evaluated. Findings it already generated are kept. Press the button again to confirm.",
     nombreRegla: "Rule name",
     alcance: "Scope",
     alcanceAyuda: "Without a template the rule watches all tenant processes.",
     datoAObservar: "Data to observe",
-    datoAObservarAyuda: "The exact key of the data in the instance, e.g. confidence.",
+    datoAObservarAyuda:
+      "The exact key of the data in the instance, e.g. confidence.",
     condicion: "Condition",
     umbral: "Threshold",
     umbralError: "It must be a number up to {maximo}",
     queHace: "What the supervisor does",
-    bloquearAyuda: "Blocking stops the active instance as soon as the rule fires.",
+    bloquearAyuda:
+      "Blocking stops the active instance as soon as the rule fires.",
     severidadHallazgo: "Finding severity",
     mensajeHallazgo: "Finding message",
     opcional: "Optional",

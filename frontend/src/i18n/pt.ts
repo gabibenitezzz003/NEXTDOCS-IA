@@ -35,13 +35,17 @@ export const pt: Diccionario = {
   },
   errores: {
     limitePeticiones: "O limite de requisições foi excedido",
-    limitePeticionesReintenta: "O limite de requisições foi excedido. Tente novamente em {espera} segundos",
-    sinConexionServidor: "Não foi possível contatar o servidor. Verifique se o backend está ativo",
+    limitePeticionesReintenta:
+      "O limite de requisições foi excedido. Tente novamente em {espera} segundos",
+    sinConexionServidor:
+      "Não foi possível contatar o servidor. Verifique se o backend está ativo",
     inesperado: "Ocorreu um erro inesperado",
     sesionInvalida: "A sessão não é válida para este serviço. Entre novamente",
     sinPermiso: "Seu usuário não tem permissão para esta operação",
-    direccionDesconocida: "O serviço não reconhece este endereço (404). Pode estar desatualizado",
-    servicioNoResponde: "O serviço não está respondendo ({estado}). Tente novamente em alguns segundos",
+    direccionDesconocida:
+      "O serviço não reconhece este endereço (404). Pode estar desatualizado",
+    servicioNoResponde:
+      "O serviço não está respondendo ({estado}). Tente novamente em alguns segundos",
     errorServicio: "O serviço respondeu com um erro ({estado})",
     peticionRechazada: "A requisição foi rejeitada ({estado})",
     tituloSinConexion: "Sem conexão",
@@ -94,9 +98,10 @@ export const pt: Diccionario = {
     oContinuaCon: "ou continue com",
     continuarCon: "Continuar com {proveedor}",
     accesoNoHabilitado:
-      "A organização \"{tenant}\" não tem esse acesso habilitado. Verifique o nome da sua organização.",
+      'A organização "{tenant}" não tem esse acesso habilitado. Verifique o nome da sua organização.',
     tituloMarca: "Seus documentos sabem o que fazer a seguir.",
-    subtituloMarca: "Inteligência documental e automação de processos em uma plataforma própria.",
+    subtituloMarca:
+      "Inteligência documental e automação de processos em uma plataforma própria.",
     pilar1: "Extração com evidência por campo e confiança rastreável",
     pilar2: "Validação por regras versionadas, sem decisões opacas",
     pilar3: "Auditoria completa: quem decidiu o quê, quando e por quê",
@@ -185,12 +190,12 @@ export const pt: Diccionario = {
   diagramaProceso: {
     titulo: "Diagrama do percurso",
     sinPasos: "Ainda não há etapas para desenhar",
-    sinPasosDetalle: "Adicione etapas ao percurso e o diagrama se monta sozinho.",
+    sinPasosDetalle:
+      "Adicione etapas ao percurso e o diagrama se monta sozinho.",
     pasos: "{cantidad} etapas",
     conRamas: " · o percurso tem ramificações",
     ariaPasos: "{titulo}: {cantidad} etapas",
-    problemaFormato:
-      "O percurso não tem um formato que possa ser desenhado.",
+    problemaFormato: "O percurso não tem um formato que possa ser desenhado.",
     problemaRepetidos: "O percurso tem etapas repetidas.",
     problemaCiclo:
       "O percurso tem um ciclo. O diagrama o desenha mesmo assim, mas a ordem das etapas é aproximada.",
@@ -203,7 +208,20 @@ export const pt: Diccionario = {
   canvas: {
     agregarNodo: "＋ Adicionar passo",
     ayudaBreve:
-      "Arraste os passos para posicioná-los; arraste do ponto violeta de um passo até outro para conectá-los.",
+      "Arraste os passos para posicioná-los; arraste do ponto violeta de um passo até outro para conectá-los. Shift+clique marca vários; Shift+arraste seleciona uma área.",
+    alinearGrupo: "Alinhar passos selecionados",
+    alinearIzquierda: "Alinhar à esquerda",
+    alinearCentroX: "Alinhar ao centro horizontal",
+    alinearDerecha: "Alinhar à direita",
+    alinearArriba: "Alinhar ao topo",
+    alinearCentroY: "Alinhar ao centro vertical",
+    alinearAbajo: "Alinhar abaixo",
+    distribuirHorizontal: "Distribuir na horizontal",
+    distribuirVertical: "Distribuir na vertical",
+    seleccionMultiple: "Passos selecionados",
+    seleccionMultipleDetalle: "{cantidad} passos marcados",
+    seleccionMultipleAyuda:
+      "Use a barra acima para alinhar ou distribuir, as setas para mover, Ctrl+D para duplicar e Del para excluir.",
     deshacer: "Desfazer (Ctrl+Z)",
     rehacer: "Refazer (Ctrl+Shift+Z)",
     ariaRecorrido: "Canvas do percurso: {cantidad} passos",
@@ -221,8 +239,7 @@ export const pt: Diccionario = {
     conexion: "Conexão",
     condicion: "Condição (opcional)",
     condicionPlaceholder: "Ex.: decision=APROVADO",
-    condicionAyuda:
-      "Em passos de decisão, a condição distingue cada saída.",
+    condicionAyuda: "Em passos de decisão, a condição distingue cada saída.",
     eliminarPaso: "Excluir passo",
     eliminarConexion: "Excluir conexão",
     duplicarPaso: "Duplicar passo",
@@ -247,7 +264,8 @@ export const pt: Diccionario = {
     urlApi: "URL da ação",
     metodoApi: "Método HTTP",
     cuerpoApi: "Corpo da requisição (opcional)",
-    cuerpoApiAyuda: "JSON enviado na requisição. Você pode usar {{datos.chave}}.",
+    cuerpoApiAyuda:
+      "JSON enviado na requisição. Você pode usar {{datos.chave}}.",
     campoRespuesta: "Campo para guardar a resposta",
     campoRespuestaAyuda:
       "Chave dentro dos dados da instância onde fica o resultado da chamada.",
@@ -271,8 +289,7 @@ export const pt: Diccionario = {
       "A bifurcação precisa de pelo menos duas saídas: com uma só não há paralelismo.",
     avisoUnionEntradas:
       "A união precisa de pelo menos duas entradas: com uma só não sincroniza nada.",
-    avisoUnionSalida:
-      "A união deve continuar por uma única saída.",
+    avisoUnionSalida: "A união deve continuar por uma única saída.",
     avisoProgramado:
       "O intervalo programado deve ser um número de minutos maior que zero.",
     paraleloAyuda:
@@ -298,7 +315,8 @@ export const pt: Diccionario = {
       "O que precisa da sua atenção agora: tarefas pendentes, processos bloqueados e atividade recente.",
     accionRequerida: "Ação requerida",
     miTrabajo: "Seu trabalho pendente",
-    miTrabajoDesc: "Tarefas que as execuções em curso pedem para você concluir.",
+    miTrabajoDesc:
+      "Tarefas que as execuções em curso pedem para você concluir.",
     alDia: "Você está em dia — não há tarefas pendentes.",
     asignadaA: "atribuída a {actor}",
     sinAsignar: "sem atribuição",
@@ -327,7 +345,8 @@ export const pt: Diccionario = {
     distribucion: "Distribuição por estado",
     distribucionDesc: "Documentos atuais da organização, sem recorte de datas.",
     sinDocumentos: "Ainda não há documentos",
-    sinDocumentosDetalle: "Quando o primeiro documento chegar, seu estado aparecerá aqui.",
+    sinDocumentosDetalle:
+      "Quando o primeiro documento chegar, seu estado aparecerá aqui.",
     figcaption: "Quantidade de documentos por estado, do maior ao menor.",
     cantidadPorEstado: "Quantidade por estado",
     excepcionesAbiertas: "Exceções abertas",
@@ -356,8 +375,10 @@ export const pt: Diccionario = {
     sinCoincidencias: "Não há documentos correspondentes",
     sinDocumentos: "Ainda não há documentos",
     sinCoincidenciasDetalle: "Tente remover filtros ou mudar o termo de busca.",
-    sinDocumentosDetalle: "Quando o primeiro documento chegar, ele aparecerá aqui.",
-    captionTabla: "Documentos da página {pagina}. Abra um documento para ver seu detalhe.",
+    sinDocumentosDetalle:
+      "Quando o primeiro documento chegar, ele aparecerá aqui.",
+    captionTabla:
+      "Documentos da página {pagina}. Abra um documento para ver seu detalhe.",
     colDocumento: "Documento",
     colEstado: "Estado",
     colTipo: "Tipo detectado",
@@ -371,7 +392,8 @@ export const pt: Diccionario = {
   },
   excepciones: {
     titulo: "Centro de exceções",
-    descripcion: "Consulte e resolva as exceções do fluxo documental, com sua prioridade e vencimento.",
+    descripcion:
+      "Consulte e resolva as exceções do fluxo documental, com sua prioridade e vencimento.",
     grupoEstado: "Estado das exceções",
     conteo: "{total} {etiqueta} · {estado}",
     unaExcepcion: "exceção",
@@ -381,9 +403,12 @@ export const pt: Diccionario = {
     sinResultadosPagina: "Sem resultados nesta página",
     sinAbiertas: "Não há exceções abertas",
     sinCoincidencias: "Sem correspondências neste estado",
-    sinResultadosPaginaDetalle: "Ainda há exceções neste estado. Selecione novamente o estado para voltar à primeira página.",
-    sinAbiertasDetalle: "A consulta de exceções abertas não retornou resultados. Você pode consultar os demais estados com o filtro.",
-    sinCoincidenciasDetalle: "Não há resultados no estado {estado} para esta página. Você pode consultar outro estado com o filtro.",
+    sinResultadosPaginaDetalle:
+      "Ainda há exceções neste estado. Selecione novamente o estado para voltar à primeira página.",
+    sinAbiertasDetalle:
+      "A consulta de exceções abertas não retornou resultados. Você pode consultar os demais estados com o filtro.",
+    sinCoincidenciasDetalle:
+      "Não há resultados no estado {estado} para esta página. Você pode consultar outro estado com o filtro.",
     lista: "Exceções documentais",
     prioridad: "Prioridade {prioridad}",
     slaVencido: "SLA vencido",
@@ -415,7 +440,8 @@ export const pt: Diccionario = {
     conteo: "{cantidad} {etiqueta} neste estado",
     unaPropuesta: "proposta",
     muchasPropuestas: "propostas",
-    aprobadoAviso: "{codigo} agora é um tipo do catálogo. Os próximos documentos se classificam sozinhos.",
+    aprobadoAviso:
+      "{codigo} agora é um tipo do catálogo. Os próximos documentos se classificam sozinhos.",
     errorAccion: "Não foi possível concluir a ação",
     sinPendientes: "Não há tipos pendentes",
     sinAprobadas: "Nenhum tipo novo detectado ainda",
@@ -431,7 +457,8 @@ export const pt: Diccionario = {
     porQueLoPropone: "Por que é proposto: ",
     camposSugeridos: "Campos sugeridos ({cantidad})",
     camposSugeridosDe: "Campos sugeridos de {codigo}",
-    sinCampos: "Não há campos sugeridos. A aprovação requer pelo menos um campo com chave utilizável; não é possível criar um modelo sem dados para extrair.",
+    sinCampos:
+      "Não há campos sugeridos. A aprovação requer pelo menos um campo com chave utilizável; não é possível criar um modelo sem dados para extrair.",
     requerido: "Obrigatório",
     opcional: "Opcional",
     ejemplo: "Exemplo: ",
@@ -639,8 +666,7 @@ export const pt: Diccionario = {
     sinPasos: "Sem etapas para comparar",
     sinPasosDetalle:
       "Precisamos de tarefas concluídas na janela escolhida para medir quanto demora cada etapa.",
-    captionCuellos:
-      "Etapas com maior duração média na janela escolhida",
+    captionCuellos: "Etapas com maior duração média na janela escolhida",
     colProceso: "Processo",
     colPaso: "Etapa",
     colTareas: "Tarefas",
@@ -695,8 +721,7 @@ export const pt: Diccionario = {
     hallazgosDesc:
       "Regras da IA supervisora que dispararam sobre os dados do processo. Resolva cada achado para deixar registro.",
     errorHallazgos: "Não foi possível carregar os achados.",
-    sinHallazgos:
-      "Sem achados: nenhuma regra disparou sobre este processo.",
+    sinHallazgos: "Sem achados: nenhuma regra disparou sobre este processo.",
     listaHallazgos: "Achados do processo",
     hallazgo: "Achado",
     aprobar: "Aprovar",
@@ -748,8 +773,7 @@ export const pt: Diccionario = {
     rechazado: "Rejeitado",
     motivoRechazo: "Motivo (obrigatório se rejeita)",
     motivoRechazoPlaceholder: "Ex.: o valor não confere",
-    motivoRechazoError:
-      "Informe um motivo de rejeição de até 512 caracteres",
+    motivoRechazoError: "Informe um motivo de rejeição de até 512 caracteres",
   },
   tipoPaso: {
     SOLICITUD_DOCUMENTO: "Solicitar documento",
@@ -776,8 +800,7 @@ export const pt: Diccionario = {
       "Biblioteca de processos do espaço de trabalho. Abra um para desenhar seus passos no canvas e publicar uma versão.",
     nuevoProceso: "Novo processo",
     nuevoProcesoTitulo: "Novo processo",
-    nuevoProcesoDesc:
-      "Crie uma definição com sua primeira versão em rascunho.",
+    nuevoProcesoDesc: "Crie uma definição com sua primeira versão em rascunho.",
     codigo: "Código",
     familia: "Família",
     nombre: "Nome",
@@ -832,8 +855,7 @@ export const pt: Diccionario = {
     simulacionPasos: "{cantidad} passos percorridos",
     sinGuardar: "Não salvo",
     versionNoEditable: "Esta versión não pode ser editada com segurança",
-    hayCambios:
-      "Há alterações não salvas. Salve o rascunho antes de publicar.",
+    hayCambios: "Há alterações não salvas. Salve o rascunho antes de publicar.",
     agregarPaso: "Adicionar passo",
     guardarBorrador: "Salvar rascunho",
     publicarVersion: "Publicar versão {numero}",
@@ -855,8 +877,7 @@ export const pt: Diccionario = {
       "A instância está bloqueada e não permite concluir tarefas.",
     instanciaCreada:
       "A instância está criada e ainda não permite concluir tarefas.",
-    instanciaEsperando:
-      "A instância está aguardando a resolução de tarefas.",
+    instanciaEsperando: "A instância está aguardando a resolução de tarefas.",
     instanciaActiva: "A instância está ativa.",
     tareasPrueba: "Tarefas pendentes ou vencidas do teste",
     motivoRechazo: "Motivo da rejeição",
@@ -953,16 +974,14 @@ export const pt: Diccionario = {
       documentosRecibidos: "Raízes recebidas no período; exclui segmentos.",
       documentosCerrados:
         "Por data de fechamento no período; inclui segmentos.",
-      automatizacion:
-        "Fechados sem revisão humana / fechados do período.",
+      automatizacion: "Fechados sem revisão humana / fechados do período.",
       cumplimientoSla:
         "Exceções resolvidas no período; sem vencimento também cumprem SLA.",
       tiempoCicloP50:
         "Fechados no período com data de recepção; inclui segmentos.",
       tiempoCicloP90:
         "Fechados no período com data de recepção; inclui segmentos.",
-      excepcionesAbiertas:
-        "Atual: ABERTA + EM_CURSO. Sem recorte de datas.",
+      excepcionesAbiertas: "Atual: ABERTA + EM_CURSO. Sem recorte de datas.",
       excepcionesVencidas:
         "Atual: vencidas não RESOLVIDAS, incluídas DESCARTADAS.",
       documentosPorVencer:
@@ -975,10 +994,12 @@ export const pt: Diccionario = {
   },
   reglasSupervisora: {
     titulo: "Regras da IA Supervisora",
-    descripcion: "Cada regra compara um dado da instância com um limite. São avaliadas ao concluir cada tarefa.",
+    descripcion:
+      "Cada regra compara um dado da instância com um limite. São avaliadas ao concluir cada tarefa.",
     nuevaRegla: "Nova regra",
     sinReglas: "Ainda não há regras",
-    sinReglasDetalle: "Sem regras a supervisora não gera achados. Crie uma para começar a vigiar os dados dos seus processos.",
+    sinReglasDetalle:
+      "Sem regras a supervisora não gera achados. Crie uma para começar a vigiar os dados dos seus processos.",
     bloquea: "Bloqueia",
     editar: "Editar",
     cerrar: "Fechar",
@@ -987,17 +1008,20 @@ export const pt: Diccionario = {
     darDeBaja: "Dar baixa",
     todasLasPlantillas: "Todos os modelos",
     datoObservado: "Dado observado: ",
-    confirmarBajaDetalle: "A regra deixa de ser avaliada. Os achados já gerados são mantidos. Toque no botão novamente para confirmar.",
+    confirmarBajaDetalle:
+      "A regra deixa de ser avaliada. Os achados já gerados são mantidos. Toque no botão novamente para confirmar.",
     nombreRegla: "Nome da regra",
     alcance: "Escopo",
     alcanceAyuda: "Sem modelo a regra vigia todos os processos do tenant.",
     datoAObservar: "Dado a observar",
-    datoAObservarAyuda: "A chave exata do dado na instância, por exemplo confidence.",
+    datoAObservarAyuda:
+      "A chave exata do dado na instância, por exemplo confidence.",
     condicion: "Condição",
     umbral: "Limite",
     umbralError: "Deve ser um número de até {maximo}",
     queHace: "O que a supervisora faz",
-    bloquearAyuda: "Bloquear interrompe a instância ativa assim que a regra dispara.",
+    bloquearAyuda:
+      "Bloquear interrompe a instância ativa assim que a regra dispara.",
     severidadHallazgo: "Severidade do achado",
     mensajeHallazgo: "Mensagem do achado",
     opcional: "Opcional",

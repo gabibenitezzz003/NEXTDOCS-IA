@@ -33,13 +33,17 @@ export const es = {
   },
   errores: {
     limitePeticiones: "Se supero el limite de peticiones",
-    limitePeticionesReintenta: "Se supero el limite de peticiones. Reintenta en {espera} segundos",
-    sinConexionServidor: "No se pudo contactar al servidor. Verifica que el backend este levantado",
+    limitePeticionesReintenta:
+      "Se supero el limite de peticiones. Reintenta en {espera} segundos",
+    sinConexionServidor:
+      "No se pudo contactar al servidor. Verifica que el backend este levantado",
     inesperado: "Ocurrio un error inesperado",
     sesionInvalida: "La sesion no es valida para este servicio. Volve a entrar",
     sinPermiso: "Tu usuario no tiene permiso para esta operacion",
-    direccionDesconocida: "El servicio no reconoce esta direccion (404). Puede estar desactualizado",
-    servicioNoResponde: "El servicio no esta respondiendo ({estado}). Reintenta en unos segundos",
+    direccionDesconocida:
+      "El servicio no reconoce esta direccion (404). Puede estar desactualizado",
+    servicioNoResponde:
+      "El servicio no esta respondiendo ({estado}). Reintenta en unos segundos",
     errorServicio: "El servicio respondio con un error ({estado})",
     peticionRechazada: "La peticion fue rechazada ({estado})",
     tituloSinConexion: "Sin conexión",
@@ -92,9 +96,10 @@ export const es = {
     oContinuaCon: "o continuá con",
     continuarCon: "Continuar con {proveedor}",
     accesoNoHabilitado:
-      "La organización \"{tenant}\" no tiene habilitado ese acceso. Revisá el nombre de tu organización.",
+      'La organización "{tenant}" no tiene habilitado ese acceso. Revisá el nombre de tu organización.',
     tituloMarca: "Tus documentos saben qué hacer después.",
-    subtituloMarca: "Inteligencia documental y automatización de procesos sobre una plataforma propia.",
+    subtituloMarca:
+      "Inteligencia documental y automatización de procesos sobre una plataforma propia.",
     pilar1: "Extracción con evidencia por campo y confianza trazable",
     pilar2: "Validación por reglas versionadas, sin decisiones opacas",
     pilar3: "Auditoría completa: quién decidió qué, cuándo y por qué",
@@ -187,8 +192,7 @@ export const es = {
     pasos: "{cantidad} pasos",
     conRamas: " · el recorrido tiene ramas",
     ariaPasos: "{titulo}: {cantidad} pasos",
-    problemaFormato:
-      "El recorrido no tiene un formato que se pueda dibujar.",
+    problemaFormato: "El recorrido no tiene un formato que se pueda dibujar.",
     problemaRepetidos: "El recorrido tiene pasos repetidos.",
     problemaCiclo:
       "El recorrido tiene un ciclo. El diagrama lo dibuja igual, pero el orden de los pasos es aproximado.",
@@ -201,7 +205,20 @@ export const es = {
   canvas: {
     agregarNodo: "＋ Agregar paso",
     ayudaBreve:
-      "Arrastrá los pasos para ubicarlos; tirá del punto violeta de un paso hasta otro para conectarlos.",
+      "Arrastrá los pasos para ubicarlos; tirá del punto violeta de un paso hasta otro para conectarlos. Mayús+clic marca varios; Mayús+arrastre selecciona por área.",
+    alinearGrupo: "Alinear pasos seleccionados",
+    alinearIzquierda: "Alinear a la izquierda",
+    alinearCentroX: "Alinear al centro horizontal",
+    alinearDerecha: "Alinear a la derecha",
+    alinearArriba: "Alinear arriba",
+    alinearCentroY: "Alinear al centro vertical",
+    alinearAbajo: "Alinear abajo",
+    distribuirHorizontal: "Distribuir en horizontal",
+    distribuirVertical: "Distribuir en vertical",
+    seleccionMultiple: "Pasos seleccionados",
+    seleccionMultipleDetalle: "{cantidad} pasos marcados",
+    seleccionMultipleAyuda:
+      "Usá la barra de arriba para alinearlos o distribuirlos, las flechas para moverlos, Ctrl+D para duplicarlos y Supr para eliminarlos.",
     deshacer: "Deshacer (Ctrl+Z)",
     rehacer: "Rehacer (Ctrl+Mayús+Z)",
     ariaRecorrido: "Canvas del recorrido: {cantidad} pasos",
@@ -219,8 +236,7 @@ export const es = {
     conexion: "Conexión",
     condicion: "Condición (opcional)",
     condicionPlaceholder: "Ej.: decision=APROBADO",
-    condicionAyuda:
-      "En pasos de decisión, la condición distingue cada salida.",
+    condicionAyuda: "En pasos de decisión, la condición distingue cada salida.",
     eliminarPaso: "Eliminar paso",
     eliminarConexion: "Eliminar conexión",
     duplicarPaso: "Duplicar paso",
@@ -245,7 +261,8 @@ export const es = {
     urlApi: "URL de la acción",
     metodoApi: "Método HTTP",
     cuerpoApi: "Cuerpo de la petición (opcional)",
-    cuerpoApiAyuda: "JSON que se envía en la petición. Podés usar {{datos.clave}}.",
+    cuerpoApiAyuda:
+      "JSON que se envía en la petición. Podés usar {{datos.clave}}.",
     campoRespuesta: "Campo donde guardar la respuesta",
     campoRespuestaAyuda:
       "Clave dentro de los datos de la instancia donde queda el resultado de la llamada.",
@@ -269,8 +286,7 @@ export const es = {
       "La bifurcación necesita al menos dos salidas: con una sola no hay paralelismo.",
     avisoUnionEntradas:
       "La unión necesita al menos dos entradas: con una sola no sincroniza nada.",
-    avisoUnionSalida:
-      "La unión debe continuar por una única salida.",
+    avisoUnionSalida: "La unión debe continuar por una única salida.",
     avisoProgramado:
       "El intervalo programado debe ser un número de minutos mayor a cero.",
     paraleloAyuda:
@@ -323,9 +339,11 @@ export const es = {
     ceroDelTotal: "0% del total",
     operacionYAtencion: "Operación y atención",
     distribucion: "Distribución por estado",
-    distribucionDesc: "Documentos actuales de la organización, sin recorte de fechas.",
+    distribucionDesc:
+      "Documentos actuales de la organización, sin recorte de fechas.",
     sinDocumentos: "Todavía no hay documentos",
-    sinDocumentosDetalle: "Cuando ingrese el primer documento, su estado aparecerá aquí.",
+    sinDocumentosDetalle:
+      "Cuando ingrese el primer documento, su estado aparecerá aquí.",
     figcaption: "Cantidad de documentos por estado, de mayor a menor.",
     cantidadPorEstado: "Cantidad por estado",
     excepcionesAbiertas: "Excepciones abiertas",
@@ -353,9 +371,12 @@ export const es = {
     errorContexto: "No se pudo cargar la bandeja de documentos",
     sinCoincidencias: "No hay documentos que coincidan",
     sinDocumentos: "Todavía no hay documentos",
-    sinCoincidenciasDetalle: "Probá quitando filtros o cambiando el término de búsqueda.",
-    sinDocumentosDetalle: "Cuando ingrese el primer documento va a aparecer acá.",
-    captionTabla: "Documentos de la página {pagina}. Abrí un documento para ver su detalle.",
+    sinCoincidenciasDetalle:
+      "Probá quitando filtros o cambiando el término de búsqueda.",
+    sinDocumentosDetalle:
+      "Cuando ingrese el primer documento va a aparecer acá.",
+    captionTabla:
+      "Documentos de la página {pagina}. Abrí un documento para ver su detalle.",
     colDocumento: "Documento",
     colEstado: "Estado",
     colTipo: "Tipo detectado",
@@ -369,7 +390,8 @@ export const es = {
   },
   excepciones: {
     titulo: "Centro de excepciones",
-    descripcion: "Consultá y resolvé las excepciones del flujo documental, con su prioridad y vencimiento.",
+    descripcion:
+      "Consultá y resolvé las excepciones del flujo documental, con su prioridad y vencimiento.",
     grupoEstado: "Estado de las excepciones",
     conteo: "{total} {etiqueta} · {estado}",
     unaExcepcion: "excepción",
@@ -379,9 +401,12 @@ export const es = {
     sinResultadosPagina: "Sin resultados en esta página",
     sinAbiertas: "No hay excepciones abiertas",
     sinCoincidencias: "Sin coincidencias en este estado",
-    sinResultadosPaginaDetalle: "Todavía hay excepciones en este estado. Seleccioná nuevamente el estado para volver a la primera página.",
-    sinAbiertasDetalle: "La consulta de excepciones abiertas no devolvió resultados. Podés consultar los demás estados con el filtro.",
-    sinCoincidenciasDetalle: "No hay resultados en estado {estado} para esta página. Podés consultar otro estado con el filtro.",
+    sinResultadosPaginaDetalle:
+      "Todavía hay excepciones en este estado. Seleccioná nuevamente el estado para volver a la primera página.",
+    sinAbiertasDetalle:
+      "La consulta de excepciones abiertas no devolvió resultados. Podés consultar los demás estados con el filtro.",
+    sinCoincidenciasDetalle:
+      "No hay resultados en estado {estado} para esta página. Podés consultar otro estado con el filtro.",
     lista: "Excepciones documentales",
     prioridad: "Prioridad {prioridad}",
     slaVencido: "SLA vencido",
@@ -413,7 +438,8 @@ export const es = {
     conteo: "{cantidad} {etiqueta} en este estado",
     unaPropuesta: "propuesta",
     muchasPropuestas: "propuestas",
-    aprobadoAviso: "{codigo} ya es un tipo del catalogo. Los proximos documentos asi se clasifican solos.",
+    aprobadoAviso:
+      "{codigo} ya es un tipo del catalogo. Los proximos documentos asi se clasifican solos.",
     errorAccion: "No se pudo completar la acción",
     sinPendientes: "No hay tipos pendientes",
     sinAprobadas: "Todavía no se detectó ningún tipo nuevo",
@@ -429,7 +455,8 @@ export const es = {
     porQueLoPropone: "Por qué lo propone: ",
     camposSugeridos: "Campos sugeridos ({cantidad})",
     camposSugeridosDe: "Campos sugeridos de {codigo}",
-    sinCampos: "No hay campos sugeridos. La aprobación requiere al menos un campo con clave utilizable; no se puede crear una plantilla sin datos para extraer.",
+    sinCampos:
+      "No hay campos sugeridos. La aprobación requiere al menos un campo con clave utilizable; no se puede crear una plantilla sin datos para extraer.",
     requerido: "Requerido",
     opcional: "Opcional",
     ejemplo: "Ejemplo: ",
@@ -576,8 +603,7 @@ export const es = {
     documentosSubir: "Adjuntar documento",
     documentosSubiendo: "Subiendo documento…",
     observaciones: "Observaciones",
-    observacionesPlaceholder:
-      "Comentarios para la organización (opcional)",
+    observacionesPlaceholder: "Comentarios para la organización (opcional)",
     exitoTitulo: "Respuesta enviada",
     exitoDescripcion:
       "Gracias. La organización ya recibió tu respuesta y el proceso continúa.",
@@ -625,8 +651,7 @@ export const es = {
     indicadores: "Indicadores",
     indicadoresDesc: "Cómo viene el motor de procesos en la ventana elegida.",
     ventanaIndicadores: "Ventana de los indicadores",
-    errorIndicadores:
-      "No se pudo cargar los indicadores del motor de procesos",
+    errorIndicadores: "No se pudo cargar los indicadores del motor de procesos",
     sinIndicadores: "Todavía no hay indicadores",
     sinIndicadoresDetalle:
       "Aparecen cuando el motor registra instancias y tareas en la ventana elegida.",
@@ -638,8 +663,7 @@ export const es = {
     sinPasos: "Sin pasos para comparar",
     sinPasosDetalle:
       "Necesitamos tareas completadas en la ventana elegida para medir cuánto tarda cada paso.",
-    captionCuellos:
-      "Pasos con mayor duración promedio en la ventana elegida",
+    captionCuellos: "Pasos con mayor duración promedio en la ventana elegida",
     colProceso: "Proceso",
     colPaso: "Paso",
     colTareas: "Tareas",
@@ -694,8 +718,7 @@ export const es = {
     hallazgosDesc:
       "Reglas de la IA supervisora que se dispararon sobre los datos del proceso. Resolvé cada hallazgo para dejar registro.",
     errorHallazgos: "No se pudieron cargar los hallazgos.",
-    sinHallazgos:
-      "Sin hallazgos: ninguna regla se disparó sobre este proceso.",
+    sinHallazgos: "Sin hallazgos: ninguna regla se disparó sobre este proceso.",
     listaHallazgos: "Hallazgos del proceso",
     hallazgo: "Hallazgo",
     aprobar: "Aprobar",
@@ -747,8 +770,7 @@ export const es = {
     rechazado: "Rechazado",
     motivoRechazo: "Motivo (obligatorio si rechaza)",
     motivoRechazoPlaceholder: "Ej.: el importe no coincide",
-    motivoRechazoError:
-      "Ingresá un motivo de rechazo de hasta 512 caracteres",
+    motivoRechazoError: "Ingresá un motivo de rechazo de hasta 512 caracteres",
   },
   tipoPaso: {
     SOLICITUD_DOCUMENTO: "Solicitar documento",
@@ -775,8 +797,7 @@ export const es = {
       "Biblioteca de procesos del espacio de trabajo. Abrí uno para dibujar sus pasos en el canvas y publicar una versión.",
     nuevoProceso: "Nuevo proceso",
     nuevoProcesoTitulo: "Nuevo proceso",
-    nuevoProcesoDesc:
-      "Creá una definición con su primera versión en borrador.",
+    nuevoProcesoDesc: "Creá una definición con su primera versión en borrador.",
     codigo: "Código",
     familia: "Familia",
     nombre: "Nombre",
@@ -854,8 +875,7 @@ export const es = {
       "La instancia está bloqueada y no admite completar tareas.",
     instanciaCreada:
       "La instancia está creada y todavía no admite completar tareas.",
-    instanciaEsperando:
-      "La instancia está esperando la resolución de tareas.",
+    instanciaEsperando: "La instancia está esperando la resolución de tareas.",
     instanciaActiva: "La instancia está activa.",
     tareasPrueba: "Tareas pendientes o vencidas de la prueba",
     motivoRechazo: "Motivo del rechazo",
@@ -952,16 +972,14 @@ export const es = {
       documentosRecibidos: "Raíces recibidas en el período; excluye segmentos.",
       documentosCerrados:
         "Por fecha de cierre en el período; incluye segmentos.",
-      automatizacion:
-        "Cerrados sin revisión humana / cerrados del período.",
+      automatizacion: "Cerrados sin revisión humana / cerrados del período.",
       cumplimientoSla:
         "Excepciones resueltas en el período; sin vencimiento también cumplen SLA.",
       tiempoCicloP50:
         "Cerrados en el período con fecha de recepción; incluye segmentos.",
       tiempoCicloP90:
         "Cerrados en el período con fecha de recepción; incluye segmentos.",
-      excepcionesAbiertas:
-        "Actual: ABIERTA + EN_CURSO. Sin recorte de fechas.",
+      excepcionesAbiertas: "Actual: ABIERTA + EN_CURSO. Sin recorte de fechas.",
       excepcionesVencidas:
         "Actual: vencidas no RESUELTAS, incluidas DESCARTADAS.",
       documentosPorVencer:
@@ -974,10 +992,12 @@ export const es = {
   },
   reglasSupervisora: {
     titulo: "Reglas de la IA Supervisora",
-    descripcion: "Cada regla compara un dato de la instancia contra un umbral. Se evaluan al completar cada tarea.",
+    descripcion:
+      "Cada regla compara un dato de la instancia contra un umbral. Se evaluan al completar cada tarea.",
     nuevaRegla: "Nueva regla",
     sinReglas: "Todavia no hay reglas",
-    sinReglasDetalle: "Sin reglas la supervisora no genera hallazgos. Crea una para empezar a vigilar los datos de tus procesos.",
+    sinReglasDetalle:
+      "Sin reglas la supervisora no genera hallazgos. Crea una para empezar a vigilar los datos de tus procesos.",
     bloquea: "Bloquea",
     editar: "Editar",
     cerrar: "Cerrar",
@@ -986,17 +1006,21 @@ export const es = {
     darDeBaja: "Dar de baja",
     todasLasPlantillas: "Todas las plantillas",
     datoObservado: "Dato observado: ",
-    confirmarBajaDetalle: "La regla deja de evaluarse. Los hallazgos que ya genero se conservan. Volve a tocar el boton para confirmar.",
+    confirmarBajaDetalle:
+      "La regla deja de evaluarse. Los hallazgos que ya genero se conservan. Volve a tocar el boton para confirmar.",
     nombreRegla: "Nombre de la regla",
     alcance: "Alcance",
-    alcanceAyuda: "Sin plantilla la regla vigila todos los procesos del tenant.",
+    alcanceAyuda:
+      "Sin plantilla la regla vigila todos los procesos del tenant.",
     datoAObservar: "Dato a observar",
-    datoAObservarAyuda: "La clave exacta del dato en la instancia, por ejemplo confidence.",
+    datoAObservarAyuda:
+      "La clave exacta del dato en la instancia, por ejemplo confidence.",
     condicion: "Condicion",
     umbral: "Umbral",
     umbralError: "Tiene que ser un numero de hasta {maximo}",
     queHace: "Que hace la supervisora",
-    bloquearAyuda: "Bloquear detiene la instancia activa apenas se dispara la regla.",
+    bloquearAyuda:
+      "Bloquear detiene la instancia activa apenas se dispara la regla.",
     severidadHallazgo: "Severidad del hallazgo",
     mensajeHallazgo: "Mensaje del hallazgo",
     opcional: "Opcional",

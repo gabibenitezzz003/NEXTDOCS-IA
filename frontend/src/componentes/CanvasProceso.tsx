@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { SVGProps } from "react";
 import type {
   GrafoProceso,
@@ -17,6 +17,8 @@ import {
   IconoFirma,
   IconoInfo,
   IconoMas,
+  IconoAlinear,
+  IconoDistribuir,
   IconoMenos,
   IconoOperacion,
   IconoPanel,
@@ -41,14 +43,31 @@ const MINI_ALTO = 104;
 const MINI_MARGEN = 60;
 
 export interface SeleccionCanvas {
-  tipo: "nodo" | "arista";
+  tipo: "nodo" | "arista" | "nodos";
   id: string;
+  ids?: string[];
 }
 
 type Arrastre =
   | { tipo: "pan"; x0: number; y0: number; vx: number; vy: number }
-  | { tipo: "nodo"; id: string; dx: number; dy: number }
-  | { tipo: "conexion"; origen: string; x: number; y: number };
+  | {
+      tipo: "nodo";
+      id: string;
+      dx: number;
+      dy: number;
+      grupo?: { id: string; x: number; y: number }[];
+      x0: number;
+      y0: number;
+    }
+  | { tipo: "conexion"; origen: string; x: number; y: number }
+  | { tipo: "marquee"; x0: number; y0: number; x: number; y: number };
+
+interface Guias {
+  vertical?: number;
+  horizontal?: number;
+}
+
+const TOLERANCIA_GUIA = 6;
 
 function posicionDe(nodo: NodoProceso): { x: number; y: number } | null {
   const posicion = nodo.configuracion?.posicion;
@@ -65,19 +84,34 @@ function posicionDe(nodo: NodoProceso): { x: number; y: number } | null {
 
 function colorDe(tipo: TipoNodoProceso): { relleno: string; borde: string } {
   if (tipo === "INICIO" || tipo === "FIN") {
-    return { relleno: "var(--color-lienzo)", borde: "var(--color-borde-fuerte)" };
+    return {
+      relleno: "var(--color-lienzo)",
+      borde: "var(--color-borde-fuerte)",
+    };
   }
   if (tipo === "DECISION") {
-    return { relleno: "var(--color-alerta-tenue)", borde: "var(--color-alerta-borde)" };
+    return {
+      relleno: "var(--color-alerta-tenue)",
+      borde: "var(--color-alerta-borde)",
+    };
   }
   if (tipo === "PARALELO" || tipo === "UNION") {
-    return { relleno: "var(--color-informacion-tenue)", borde: "var(--color-informacion-borde)" };
+    return {
+      relleno: "var(--color-informacion-tenue)",
+      borde: "var(--color-informacion-borde)",
+    };
   }
   if (tipo === "FIRMA") {
-    return { relleno: "var(--color-exito-tenue)", borde: "var(--color-exito-borde)" };
+    return {
+      relleno: "var(--color-exito-tenue)",
+      borde: "var(--color-exito-borde)",
+    };
   }
   if (tipo === "REVISION_HUMANA" || tipo === "TAREA_EXTERNA") {
-    return { relleno: "var(--color-violeta-tenue)", borde: "var(--color-violeta-borde)" };
+    return {
+      relleno: "var(--color-violeta-tenue)",
+      borde: "var(--color-violeta-borde)",
+    };
   }
   return { relleno: "var(--color-superficie)", borde: "var(--color-borde)" };
 }
@@ -170,6 +204,7 @@ export function CanvasProceso({
   const [vista, setVista] = useState({ x: 40, y: 32, k: 1 });
   const [arrastre, setArrastre] = useState<Arrastre | null>(null);
   const [tipoNuevo, setTipoNuevo] = useState("");
+  const [guias, setGuias] = useState<Guias>({});
 
   const automatica = useMemo(() => {
     const disposicion = disponerGrafo(grafo);
@@ -221,7 +256,8 @@ export function CanvasProceso({
     const nodos = new Map(grafo.nodos.map((nodo) => [nodo.id, nodo]));
     const desde = nodos.get(origen);
     const hasta = nodos.get(destino);
-    if (!desde || !hasta || desde.tipo === "FIN" || hasta.tipo === "INICIO") return;
+    if (!desde || !hasta || desde.tipo === "FIN" || hasta.tipo === "INICIO")
+      return;
     const duplicada = grafo.aristas.some(
       (arista) => arista.origen === origen && arista.destino === destino,
     );
@@ -263,6 +299,17 @@ export function CanvasProceso({
   function alPointerDown(evento: React.PointerEvent<SVGSVGElement>) {
     if (evento.button !== 0) return;
     svgRef.current?.setPointerCapture(evento.pointerId);
+    if (evento.shiftKey && !deshabilitado) {
+      const punto = mundoDe(evento);
+      setArrastre({
+        tipo: "marquee",
+        x0: punto.x,
+        y0: punto.y,
+        x: punto.x,
+        y: punto.y,
+      });
+      return;
+    }
     setArrastre({
       tipo: "pan",
       x0: evento.clientX,
@@ -284,14 +331,26 @@ export function CanvasProceso({
       return;
     }
     const punto = mundoDe(evento);
+    if (arrastre.tipo === "marquee") {
+      setArrastre({ ...arrastre, x: punto.x, y: punto.y });
+      return;
+    }
     if (arrastre.tipo === "nodo") {
       if (deshabilitado) return;
-      fijarPosicion(
-        arrastre.id,
-        punto.x - arrastre.dx,
-        punto.y - arrastre.dy,
-        true,
-      );
+      if (arrastre.grupo && arrastre.grupo.length > 1) {
+        const dx = punto.x - arrastre.x0;
+        const dy = punto.y - arrastre.y0;
+        const movimientos = new Map<string, { x: number; y: number }>();
+        for (const miembro of arrastre.grupo) {
+          movimientos.set(miembro.id, { x: miembro.x + dx, y: miembro.y + dy });
+        }
+        fijarPosiciones(movimientos, true);
+        return;
+      }
+      const crudo = { x: punto.x - arrastre.dx, y: punto.y - arrastre.dy };
+      const ajustado = guiasPara(arrastre.id, crudo.x, crudo.y);
+      setGuias(ajustado.guias);
+      fijarPosicion(arrastre.id, ajustado.x, ajustado.y, true);
       return;
     }
     setArrastre({ ...arrastre, x: punto.x, y: punto.y });
@@ -315,6 +374,25 @@ export function CanvasProceso({
       const destino = destinoEn(mundoDe(evento), arrastre.origen);
       if (destino) conectar(arrastre.origen, destino.id);
     }
+    if (arrastre?.tipo === "marquee") {
+      const minX = Math.min(arrastre.x0, arrastre.x);
+      const maxX = Math.max(arrastre.x0, arrastre.x);
+      const minY = Math.min(arrastre.y0, arrastre.y);
+      const maxY = Math.max(arrastre.y0, arrastre.y);
+      const dentro = grafo.nodos
+        .filter((nodo) => {
+          const p = posicion(nodo);
+          return (
+            p.x >= minX &&
+            p.x + ANCHO <= maxX &&
+            p.y >= minY &&
+            p.y + ALTO <= maxY
+          );
+        })
+        .map((nodo) => nodo.id);
+      marcar([...marcados, ...dentro]);
+    }
+    setGuias({});
     setArrastre(null);
   }
 
@@ -355,6 +433,106 @@ export function CanvasProceso({
     });
   }
 
+  function duplicarMarcados() {
+    const elegidos = grafo.nodos.filter(
+      (nodo) =>
+        marcados.has(nodo.id) && nodo.tipo !== "INICIO" && nodo.tipo !== "FIN",
+    );
+    if (!elegidos.length) return;
+    const nuevas = new Map<string, string>();
+    const copias = elegidos.map((nodo) => {
+      const id =
+        "paso-" +
+        Math.random().toString(36).slice(2, 8) +
+        Date.now().toString(36);
+      nuevas.set(nodo.id, id);
+      const p = posicion(nodo);
+      return {
+        ...structuredClone(nodo),
+        id,
+        nombre: `${nodo.nombre ?? nodo.tipo} ${t("canvas.copia")}`,
+        configuracion: {
+          ...nodo.configuracion,
+          posicion: { x: p.x + GRID, y: p.y + GRID },
+        },
+      };
+    });
+    const aristasCopiadas = grafo.aristas
+      .filter(
+        (arista) => nuevas.has(arista.origen) && nuevas.has(arista.destino),
+      )
+      .map((arista) => ({
+        ...arista,
+        origen: nuevas.get(arista.origen)!,
+        destino: nuevas.get(arista.destino)!,
+      }));
+    alCambiar({
+      ...grafo,
+      nodos: [...grafo.nodos, ...copias],
+      aristas: [...grafo.aristas, ...aristasCopiadas],
+    });
+    const ids = copias.map((nodo) => nodo.id);
+    alSeleccionar(
+      ids.length === 1
+        ? { tipo: "nodo", id: ids[0] }
+        : { tipo: "nodos", id: ids.join(","), ids },
+    );
+  }
+
+  function moverSeleccion(dx: number, dy: number) {
+    if (!marcados.size) return;
+    const movimientos = new Map<string, { x: number; y: number }>();
+    for (const nodo of grafo.nodos) {
+      if (!marcados.has(nodo.id)) continue;
+      const p = posicion(nodo);
+      movimientos.set(nodo.id, { x: p.x + dx, y: p.y + dy });
+    }
+    fijarPosiciones(movimientos);
+  }
+
+  useEffect(() => {
+    if (deshabilitado || soloLectura) return;
+    const alTecla = (evento: KeyboardEvent) => {
+      const destino = evento.target as HTMLElement | null;
+      if (
+        destino &&
+        (["INPUT", "TEXTAREA", "SELECT"].includes(destino.tagName) ||
+          destino.isContentEditable)
+      )
+        return;
+      const paso = evento.shiftKey ? 4 : GRID;
+      if (evento.key === "ArrowUp") {
+        evento.preventDefault();
+        moverSeleccion(0, -paso);
+      } else if (evento.key === "ArrowDown") {
+        evento.preventDefault();
+        moverSeleccion(0, paso);
+      } else if (evento.key === "ArrowLeft") {
+        evento.preventDefault();
+        moverSeleccion(-paso, 0);
+      } else if (evento.key === "ArrowRight") {
+        evento.preventDefault();
+        moverSeleccion(paso, 0);
+      } else if (
+        (evento.ctrlKey || evento.metaKey) &&
+        evento.key.toLowerCase() === "a"
+      ) {
+        evento.preventDefault();
+        marcar(grafo.nodos.map((nodo) => nodo.id));
+      } else if (
+        (evento.ctrlKey || evento.metaKey) &&
+        evento.key.toLowerCase() === "d"
+      ) {
+        evento.preventDefault();
+        duplicarMarcados();
+      } else if (evento.key === "Escape") {
+        alSeleccionar(null);
+      }
+    };
+    window.addEventListener("keydown", alTecla);
+    return () => window.removeEventListener("keydown", alTecla);
+  });
+
   function zoom(factor: number) {
     setVista((actual) => {
       const k = Math.min(2, Math.max(0.4, actual.k * factor));
@@ -369,9 +547,142 @@ export function CanvasProceso({
     });
   }
 
-  const seleccionArista =
-    seleccion?.tipo === "arista" ? seleccion.id : null;
+  const seleccionArista = seleccion?.tipo === "arista" ? seleccion.id : null;
+  const marcados =
+    seleccion?.tipo === "nodos"
+      ? new Set(seleccion.ids ?? [])
+      : new Set(seleccion?.tipo === "nodo" ? [seleccion.id] : []);
   const seleccionNodo = seleccion?.tipo === "nodo" ? seleccion.id : null;
+
+  function marcar(ids: string[]) {
+    const limpios = [...new Set(ids)].filter((id) =>
+      grafo.nodos.some((nodo) => nodo.id === id),
+    );
+    if (limpios.length === 0) {
+      alSeleccionar(null);
+    } else if (limpios.length === 1) {
+      alSeleccionar({ tipo: "nodo", id: limpios[0] });
+    } else {
+      alSeleccionar({ tipo: "nodos", id: limpios.join(","), ids: limpios });
+    }
+  }
+
+  function fijarPosiciones(
+    movimientos: Map<string, { x: number; y: number }>,
+    continuo = false,
+  ) {
+    alCambiar(
+      {
+        ...grafo,
+        nodos: grafo.nodos.map((nodo) => {
+          const destino = movimientos.get(nodo.id);
+          if (!destino) return nodo;
+          return {
+            ...nodo,
+            configuracion: {
+              ...nodo.configuracion,
+              posicion: {
+                x: Math.round(destino.x / 4) * 4,
+                y: Math.round(destino.y / 4) * 4,
+              },
+            },
+          };
+        }),
+      },
+      continuo,
+    );
+  }
+
+  function alinear(
+    modo: "izquierda" | "centroX" | "derecha" | "arriba" | "centroY" | "abajo",
+  ) {
+    const elegidos = grafo.nodos.filter((nodo) => marcados.has(nodo.id));
+    if (elegidos.length < 2) return;
+    const puntos = elegidos.map((nodo) => ({ id: nodo.id, ...posicion(nodo) }));
+    const movimientos = new Map<string, { x: number; y: number }>();
+    if (modo === "izquierda") {
+      const min = Math.min(...puntos.map((p) => p.x));
+      puntos.forEach((p) => movimientos.set(p.id, { x: min, y: p.y }));
+    } else if (modo === "derecha") {
+      const max = Math.max(...puntos.map((p) => p.x));
+      puntos.forEach((p) => movimientos.set(p.id, { x: max, y: p.y }));
+    } else if (modo === "centroX") {
+      const centro = puntos.reduce((suma, p) => suma + p.x, 0) / puntos.length;
+      puntos.forEach((p) => movimientos.set(p.id, { x: centro, y: p.y }));
+    } else if (modo === "arriba") {
+      const min = Math.min(...puntos.map((p) => p.y));
+      puntos.forEach((p) => movimientos.set(p.id, { x: p.x, y: min }));
+    } else if (modo === "abajo") {
+      const max = Math.max(...puntos.map((p) => p.y));
+      puntos.forEach((p) => movimientos.set(p.id, { x: p.x, y: max }));
+    } else {
+      const centro = puntos.reduce((suma, p) => suma + p.y, 0) / puntos.length;
+      puntos.forEach((p) => movimientos.set(p.id, { x: p.x, y: centro }));
+    }
+    fijarPosiciones(movimientos);
+  }
+
+  function distribuir(eje: "x" | "y") {
+    const elegidos = grafo.nodos.filter((nodo) => marcados.has(nodo.id));
+    if (elegidos.length < 3) return;
+    const puntos = elegidos
+      .map((nodo) => ({ id: nodo.id, ...posicion(nodo) }))
+      .sort((a, b) => a[eje] - b[eje]);
+    const primero = puntos[0];
+    const ultimo = puntos[puntos.length - 1];
+    const paso = (ultimo[eje] - primero[eje]) / (puntos.length - 1);
+    const movimientos = new Map<string, { x: number; y: number }>();
+    puntos.forEach((p, indice) =>
+      movimientos.set(p.id, {
+        x: eje === "x" ? primero.x + paso * indice : p.x,
+        y: eje === "y" ? primero.y + paso * indice : p.y,
+      }),
+    );
+    fijarPosiciones(movimientos);
+  }
+
+  function guiasPara(
+    id: string,
+    x: number,
+    y: number,
+  ): { x: number; y: number; guias: Guias } {
+    const guiasEncontradas: Guias = {};
+    let sx = x;
+    let sy = y;
+    for (const otro of grafo.nodos) {
+      if (otro.id === id || marcados.has(otro.id)) continue;
+      const p = posicion(otro);
+      const candidatosX: [number, number][] = [
+        [x, p.x],
+        [x + ANCHO, p.x + ANCHO],
+        [x + ANCHO / 2, p.x + ANCHO / 2],
+        [x, p.x + ANCHO],
+        [x + ANCHO, p.x],
+      ];
+      for (const [propio, ajeno] of candidatosX) {
+        if (Math.abs(propio - ajeno) <= TOLERANCIA_GUIA) {
+          sx += ajeno - propio;
+          guiasEncontradas.vertical = ajeno;
+          break;
+        }
+      }
+      const candidatosY: [number, number][] = [
+        [y, p.y],
+        [y + ALTO, p.y + ALTO],
+        [y + ALTO / 2, p.y + ALTO / 2],
+        [y, p.y + ALTO],
+        [y + ALTO, p.y],
+      ];
+      for (const [propio, ajeno] of candidatosY) {
+        if (Math.abs(propio - ajeno) <= TOLERANCIA_GUIA) {
+          sy += ajeno - propio;
+          guiasEncontradas.horizontal = ajeno;
+          break;
+        }
+      }
+    }
+    return { x: sx, y: sy, guias: guiasEncontradas };
+  }
 
   const minimapa = useMemo(() => {
     if (!grafo.nodos.length) return null;
@@ -412,52 +723,103 @@ export function CanvasProceso({
   return (
     <div>
       {!soloLectura ? (
-      <div className="mb-espacio-3 flex flex-wrap items-center gap-espacio-3">
-        <Selector
-          etiqueta={t("procesos.agregarPaso")}
-          aria-label={t("canvas.agregarNodo")}
-          value={tipoNuevo}
-          disabled={deshabilitado}
-          onChange={(evento) => {
-            const elegido = evento.target.value;
-            setTipoNuevo("");
-            if (elegido) agregarNodo(elegido as TipoNodoProceso);
-          }}
-          className="w-full sm:max-w-xs"
-        >
-          <option value="">{t("canvas.agregarNodo")}</option>
-          {TIPOS_CANVAS.map((tipo) => (
-            <option key={tipo} value={tipo}>
-              {t(`tipoPaso.${tipo}`)}
-            </option>
-          ))}
-        </Selector>
-        {alDeshacer && alRehacer ? (
-          <div className="flex items-center gap-espacio-1">
-            <BotonIcono
-              variante="fantasma"
-              tamano="sm"
-              aria-label={t("canvas.deshacer")}
-              disabled={!puedeDeshacer || deshabilitado}
-              onClick={alDeshacer}
+        <div className="mb-espacio-3 flex flex-wrap items-center gap-espacio-3">
+          <Selector
+            etiqueta={t("procesos.agregarPaso")}
+            aria-label={t("canvas.agregarNodo")}
+            value={tipoNuevo}
+            disabled={deshabilitado}
+            onChange={(evento) => {
+              const elegido = evento.target.value;
+              setTipoNuevo("");
+              if (elegido) agregarNodo(elegido as TipoNodoProceso);
+            }}
+            className="w-full sm:max-w-xs"
+          >
+            <option value="">{t("canvas.agregarNodo")}</option>
+            {TIPOS_CANVAS.map((tipo) => (
+              <option key={tipo} value={tipo}>
+                {t(`tipoPaso.${tipo}`)}
+              </option>
+            ))}
+          </Selector>
+          {alDeshacer && alRehacer ? (
+            <div className="flex items-center gap-espacio-1">
+              <BotonIcono
+                variante="fantasma"
+                tamano="sm"
+                aria-label={t("canvas.deshacer")}
+                disabled={!puedeDeshacer || deshabilitado}
+                onClick={alDeshacer}
+              >
+                <IconoDeshacer tamano={15} />
+              </BotonIcono>
+              <BotonIcono
+                variante="fantasma"
+                tamano="sm"
+                aria-label={t("canvas.rehacer")}
+                disabled={!puedeRehacer || deshabilitado}
+                onClick={alRehacer}
+              >
+                <IconoRehacer tamano={15} />
+              </BotonIcono>
+            </div>
+          ) : null}
+          {marcados.size >= 2 ? (
+            <div
+              className="flex items-center gap-espacio-1"
+              role="group"
+              aria-label={t("canvas.alinearGrupo")}
             >
-              <IconoDeshacer tamano={15} />
-            </BotonIcono>
-            <BotonIcono
-              variante="fantasma"
-              tamano="sm"
-              aria-label={t("canvas.rehacer")}
-              disabled={!puedeRehacer || deshabilitado}
-              onClick={alRehacer}
-            >
-              <IconoRehacer tamano={15} />
-            </BotonIcono>
-          </div>
-        ) : null}
-        <p className="text-pequeno text-tinta-suave">
-          {t("canvas.ayudaBreve")}
-        </p>
-      </div>
+              {(
+                [
+                  ["izquierda", "canvas.alinearIzquierda"],
+                  ["centroX", "canvas.alinearCentroX"],
+                  ["derecha", "canvas.alinearDerecha"],
+                  ["arriba", "canvas.alinearArriba"],
+                  ["centroY", "canvas.alinearCentroY"],
+                  ["abajo", "canvas.alinearAbajo"],
+                ] as const
+              ).map(([modo, clave]) => (
+                <BotonIcono
+                  key={modo}
+                  variante="fantasma"
+                  tamano="sm"
+                  aria-label={t(clave)}
+                  disabled={deshabilitado}
+                  onClick={() => alinear(modo)}
+                >
+                  <IconoAlinear modo={modo} />
+                </BotonIcono>
+              ))}
+              {marcados.size >= 3 ? (
+                <>
+                  <BotonIcono
+                    variante="fantasma"
+                    tamano="sm"
+                    aria-label={t("canvas.distribuirHorizontal")}
+                    disabled={deshabilitado}
+                    onClick={() => distribuir("x")}
+                  >
+                    <IconoDistribuir eje="x" />
+                  </BotonIcono>
+                  <BotonIcono
+                    variante="fantasma"
+                    tamano="sm"
+                    aria-label={t("canvas.distribuirVertical")}
+                    disabled={deshabilitado}
+                    onClick={() => distribuir("y")}
+                  >
+                    <IconoDistribuir eje="y" />
+                  </BotonIcono>
+                </>
+              ) : null}
+            </div>
+          ) : null}
+          <p className="text-pequeno text-tinta-suave">
+            {t("canvas.ayudaBreve")}
+          </p>
+        </div>
       ) : null}
       <div className="relative overflow-hidden rounded-panel border border-borde bg-lienzo">
         <svg
@@ -502,8 +864,12 @@ export function CanvasProceso({
               fill="url(#canvas-grid)"
             />
             {grafo.aristas.map((arista) => {
-              const origen = grafo.nodos.find((nodo) => nodo.id === arista.origen);
-              const destino = grafo.nodos.find((nodo) => nodo.id === arista.destino);
+              const origen = grafo.nodos.find(
+                (nodo) => nodo.id === arista.origen,
+              );
+              const destino = grafo.nodos.find(
+                (nodo) => nodo.id === arista.destino,
+              );
               if (!origen || !destino) return null;
               const a = posicion(origen);
               const b = posicion(destino);
@@ -524,9 +890,7 @@ export function CanvasProceso({
                     strokeWidth={14}
                     className="cursor-pointer"
                     onPointerDown={(evento) => evento.stopPropagation()}
-                    onClick={() =>
-                      alSeleccionar({ tipo: "arista", id: clave })
-                    }
+                    onClick={() => alSeleccionar({ tipo: "arista", id: clave })}
                   />
                   <path
                     d={trazo}
@@ -578,7 +942,7 @@ export function CanvasProceso({
             {grafo.nodos.map((nodo) => {
               const p = posicion(nodo);
               const color = colorDe(nodo.tipo);
-              const activo = seleccionNodo === nodo.id;
+              const activo = seleccionNodo === nodo.id || marcados.has(nodo.id);
               const conAviso = avisosNodo(nodo, grafo).length > 0;
               const destinoConexion =
                 arrastre?.tipo === "conexion" && !deshabilitado
@@ -593,14 +957,38 @@ export function CanvasProceso({
                   onPointerDown={(evento) => {
                     evento.stopPropagation();
                     if (evento.button !== 0) return;
-                    alSeleccionar({ tipo: "nodo", id: nodo.id });
+                    if (evento.shiftKey && !deshabilitado) {
+                      const siguiente = marcados.has(nodo.id)
+                        ? [...marcados].filter((id) => id !== nodo.id)
+                        : [...marcados, nodo.id];
+                      marcar(siguiente);
+                      return;
+                    }
+                    if (!marcados.has(nodo.id)) {
+                      alSeleccionar({ tipo: "nodo", id: nodo.id });
+                    }
                     svgRef.current?.setPointerCapture(evento.pointerId);
                     const punto = mundoDe(evento);
+                    const grupo =
+                      marcados.size > 1 && marcados.has(nodo.id)
+                        ? [...marcados].map((id) => {
+                            const miembro = grafo.nodos.find(
+                              (actual) => actual.id === id,
+                            );
+                            const mp = miembro
+                              ? posicion(miembro)
+                              : { x: 0, y: 0 };
+                            return { id, x: mp.x, y: mp.y };
+                          })
+                        : undefined;
                     setArrastre({
                       tipo: "nodo",
                       id: nodo.id,
                       dx: punto.x - p.x,
                       dy: punto.y - p.y,
+                      grupo,
+                      x0: punto.x,
+                      y0: punto.y,
                     });
                   }}
                 >
@@ -652,7 +1040,7 @@ export function CanvasProceso({
                   >
                     {(nodo.nombre ?? nodo.tipo).length > 22
                       ? (nodo.nombre ?? nodo.tipo).slice(0, 21) + "…"
-                      : nodo.nombre ?? nodo.tipo}
+                      : (nodo.nombre ?? nodo.tipo)}
                   </text>
                   <circle
                     cx={ANCHO - 24}
@@ -706,15 +1094,50 @@ export function CanvasProceso({
                 </g>
               );
             })}
+            {guias.vertical !== undefined ? (
+              <line
+                x1={guias.vertical}
+                y1={-4000}
+                x2={guias.vertical}
+                y2={4000}
+                stroke="var(--color-violeta)"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+                className="pointer-events-none"
+              />
+            ) : null}
+            {guias.horizontal !== undefined ? (
+              <line
+                x1={-4000}
+                y1={guias.horizontal}
+                x2={4000}
+                y2={guias.horizontal}
+                stroke="var(--color-violeta)"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+                className="pointer-events-none"
+              />
+            ) : null}
+            {arrastre?.tipo === "marquee" ? (
+              <rect
+                x={Math.min(arrastre.x0, arrastre.x)}
+                y={Math.min(arrastre.y0, arrastre.y)}
+                width={Math.abs(arrastre.x - arrastre.x0)}
+                height={Math.abs(arrastre.y - arrastre.y0)}
+                fill="var(--color-violeta-tenue)"
+                stroke="var(--color-violeta)"
+                strokeWidth={1}
+                strokeDasharray="5 4"
+                className="pointer-events-none"
+              />
+            ) : null}
           </g>
         </svg>
         {grafo.nodos.length === 0 ? (
           <div className="absolute inset-0 grid place-items-center bg-lienzo/80 p-espacio-6 text-center">
             <div className="space-y-espacio-3">
               <p className="text-pequeno text-tinta-suave">
-                {soloLectura
-                  ? t("canvas.vacioLectura")
-                  : t("canvas.vacio")}
+                {soloLectura ? t("canvas.vacioLectura") : t("canvas.vacio")}
               </p>
               {!soloLectura && !deshabilitado ? (
                 <Boton variante="primario" onClick={sembrarExtremos}>
@@ -787,7 +1210,10 @@ export function CanvasProceso({
             {(() => {
               const caja = svgRef.current?.getBoundingClientRect();
               if (!caja) return null;
-              const vp = minimapa.aMini({ x: -vista.x / vista.k, y: -vista.y / vista.k });
+              const vp = minimapa.aMini({
+                x: -vista.x / vista.k,
+                y: -vista.y / vista.k,
+              });
               return (
                 <rect
                   x={vp.x}
@@ -838,5 +1264,3 @@ export function CanvasProceso({
     </div>
   );
 }
-
-
