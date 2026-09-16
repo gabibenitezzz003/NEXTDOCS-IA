@@ -63,7 +63,7 @@ test("AT-01 una respuesta de documentos anterior al logout no repuebla la sesió
     page.getByRole("button", { name: "Abrir documento Documento B.pdf" }),
   ).toBeVisible();
   anterior.liberar();
-  await navegar(page, "Resumen");
+  await navegar(page, "Mi trabajo");
   await navegar(page, "Documentos");
   await expect(page.getByText("Documento A.pdf", { exact: true })).toHaveCount(
     0,

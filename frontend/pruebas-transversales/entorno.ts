@@ -115,6 +115,9 @@ export async function preparar(pagina: Page, restaurar = true) {
     inesperadas: [] as string[],
     errores: [] as string[],
     consola: [] as string[],
+    tareas: [] as import("../src/api/procesos").TareaProceso[],
+    instancias: [] as import("../src/api/procesos").InstanciaProceso[],
+    observados: 0,
   };
   if (restaurar)
     await pagina.addInitScript(() =>
@@ -151,6 +154,15 @@ export async function preparar(pagina: Page, restaurar = true) {
         ? responder({ mensaje: control.errorLogin }, 400)
         : responder(sesionControlada(cuerpo.codigoTenant));
     if (camino === "/api/v1/documentos") {
+      if (url.searchParams.get("estados") === "OBSERVADO") {
+        return responder({
+          content: [],
+          totalElements: control.observados,
+          totalPages: 0,
+          number: 0,
+          size: 1,
+        });
+      }
       const documento: Documento = {
         ...detalle.documento,
         nombre: control.documentos[tenant],
@@ -216,6 +228,22 @@ export async function preparar(pagina: Page, restaurar = true) {
       return responder([detalle.documento]);
     if (camino === "/api/v1/procesos") return responder([proceso]);
     if (camino === "/api/v1/procesos/proceso") return responder(proceso);
+    if (camino === "/api/v1/tareas") {
+      const estados = url.searchParams.get("estados")?.split(",") ?? [];
+      return responder(
+        estados.length
+          ? control.tareas.filter((tarea) => estados.includes(tarea.estado))
+          : control.tareas,
+      );
+    }
+    if (camino === "/api/v1/instancias") {
+      const estado = url.searchParams.get("estado");
+      return responder(
+        estado
+          ? control.instancias.filter((instancia) => instancia.estado === estado)
+          : control.instancias,
+      );
+    }
     if (camino === "/api/v1/federacion/oauth/proveedores")
       return responder([]);
     if (peticion.method() === "POST") {
@@ -274,7 +302,7 @@ export async function ingresar(pagina: Page, tenant: string) {
   await pagina.getByLabel("Clave").fill("clave-controlada");
   await pagina.getByLabel("Clave").press("Enter");
   await expect(
-    pagina.getByRole("heading", { name: "Resumen operativo" }),
+    pagina.getByRole("heading", { name: "Mi trabajo" }),
   ).toBeVisible();
 }
 
