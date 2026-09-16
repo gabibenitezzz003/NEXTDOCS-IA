@@ -50,7 +50,7 @@ test("P0-02 recorrido punta a punta: entrar, subir, clasificar, corregir, resolv
   await registrar(page, "ingreso");
 
   await ingresar(page, "A");
-  await expect(page.getByRole("heading", { name: "Resumen operativo" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mi trabajo" })).toBeVisible();
   await registrar(page, "resumen");
 
   await navegar(page, "Documentos");

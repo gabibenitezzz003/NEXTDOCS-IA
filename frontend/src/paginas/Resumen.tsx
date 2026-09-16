@@ -11,13 +11,18 @@ import { CabeceraTarjeta, Metrica, Tarjeta } from "../componentes/Interfaz";
 import { Columnas } from "../componentes/Graficos";
 import { IconoDerecha, IconoReloj } from "../componentes/Iconos";
 import { InsigniaEstado, InsigniaSeveridad } from "../componentes/Insignias";
-import { obtenerResumen } from "../api/documentos";
+import { obtenerResumen, listarDocumentos } from "../api/documentos";
 import { listarExcepciones } from "../api/excepciones";
+import { listarTareas, listarInstancias } from "../api/procesos";
+import type { TareaProceso } from "../api/procesos";
 import { mensajeDeError } from "../api/cliente";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 import { formatearNumero } from "../i18n";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
+import { formatearFecha } from "./Documentos";
+import { textoTipoTarea } from "../componentes/TarjetaTarea";
+import { Pastilla } from "../componentes/Interfaz";
 import type { EstadoDocumento } from "../tipos/api";
 
 const TECNICAS = ["profundidadCola", "profundidadReintento"];
@@ -33,7 +38,7 @@ const GRILLA_OPERACION =
   "mt-espacio-6 grid min-w-0 items-start gap-espacio-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]";
 
 export function Resumen() {
-  const { tienePermiso } = useSesion();
+  const { tienePermiso, sesion } = useSesion();
   const { t } = useIdioma();
 
   const resumen = useQuery({ queryKey: ["resumen"], queryFn: obtenerResumen });
@@ -42,6 +47,44 @@ export function Resumen() {
     queryFn: () => listarExcepciones("ABIERTA", 0, 5),
     enabled: tienePermiso("excepciones.leer"),
   });
+  const tareasPendientes = useQuery({
+    queryKey: ["tareas", "pendientes"],
+    queryFn: () => listarTareas(["PENDIENTE", "VENCIDA"]),
+  });
+  const tareasCompletadas = useQuery({
+    queryKey: ["tareas", "recientes"],
+    queryFn: () => listarTareas(["COMPLETADA"]),
+  });
+  const bloqueadas = useQuery({
+    queryKey: ["instancias", "BLOQUEADA"],
+    queryFn: () => listarInstancias("BLOQUEADA"),
+  });
+  const observados = useQuery({
+    queryKey: ["documentos", "observados"],
+    queryFn: () => listarDocumentos({ estados: ["OBSERVADO"], tamano: 1 }),
+  });
+
+  const pendientes = (tareasPendientes.data ?? [])
+    .slice()
+    .sort((una, otra) => {
+      const vencida = (item: TareaProceso) =>
+        item.vencimiento && new Date(item.vencimiento).getTime() < Date.now()
+          ? 0
+          : 1;
+      const porEstado = vencida(una) - vencida(otra);
+      if (porEstado !== 0) return porEstado;
+      const fecha = (item: TareaProceso) =>
+        item.vencimiento ? new Date(item.vencimiento).getTime() : Infinity;
+      return fecha(una) - fecha(otra);
+    });
+  const recientes = (tareasCompletadas.data ?? [])
+    .slice()
+    .sort(
+      (una, otra) =>
+        new Date(otra.completada ?? 0).getTime() -
+        new Date(una.completada ?? 0).getTime(),
+    )
+    .slice(0, 5);
 
   const datos = resumen.data ?? {};
   const estados = Object.entries(datos).filter(
@@ -72,6 +115,170 @@ export function Resumen() {
       />
 
       <Contenido>
+        <section
+          aria-label={t("resumen.accionRequerida")}
+          className="mb-espacio-6 grid min-w-0 items-start gap-espacio-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]"
+        >
+          <Tarjeta className="rounded-panel!">
+            <CabeceraTarjeta
+              titulo={t("resumen.miTrabajo")}
+              descripcion={t("resumen.miTrabajoDesc")}
+              acciones={
+                <Link
+                  to="/tareas"
+                  className="inline-flex min-h-control-pequeno items-center gap-espacio-1 rounded-control text-pequeno font-semibold text-accion-tonal-texto hover:underline focus-visible:outline-foco"
+                >
+                  {t("comun.verTodas")}
+                  <span aria-hidden="true">
+                    <IconoDerecha tamano={13} />
+                  </span>
+                </Link>
+              }
+            />
+            <div className="mt-espacio-5">
+              {tareasPendientes.isPending ? (
+                <Cargando filas={3} alto="h-16" />
+              ) : tareasPendientes.isError ? (
+                <AvisoLinea>{mensajeDeError(tareasPendientes.error)}</AvisoLinea>
+              ) : !pendientes.length ? (
+                <p
+                  role="status"
+                  className="rounded-control border border-exito-borde bg-exito-tenue p-espacio-4 text-pequeno text-exito-texto"
+                >
+                  {t("resumen.alDia")}
+                </p>
+              ) : (
+                <ul className="divide-y divide-borde">
+                  {pendientes.slice(0, 6).map((tarea) => {
+                    const mia = tarea.asignadoA === sesion?.email;
+                    const vencida =
+                      tarea.vencimiento &&
+                      new Date(tarea.vencimiento).getTime() < Date.now();
+                    return (
+                      <li key={tarea.id} className="py-espacio-3 first:pt-0 last:pb-0">
+                        <div className="flex flex-wrap items-center justify-between gap-espacio-2">
+                          <div className="min-w-0">
+                            <p className="truncate text-pequeno font-semibold text-tinta">
+                              {tarea.nombreNodo?.trim() ||
+                                textoTipoTarea(tarea.tipoNodo, t)}
+                            </p>
+                            <p className="truncate text-micro text-tinta-suave">
+                              {tarea.nombreDefinicion?.trim() ||
+                                tarea.codigoDefinicion ||
+                                ""}
+                              {tarea.asignadoA && !mia
+                                ? ` · ${t("resumen.asignadaA", { actor: tarea.asignadoA })}`
+                                : ""}
+                              {!tarea.asignadoA
+                                ? ` · ${t("resumen.sinAsignar")}`
+                                : ""}
+                            </p>
+                          </div>
+                          {tarea.vencimiento ? (
+                            <Pastilla tono={vencida ? "rojo" : "alerta"}>
+                              {vencida
+                                ? t("resumen.vencidaEl", {
+                                    fecha: formatearFecha(tarea.vencimiento),
+                                  })
+                                : t("resumen.venceEl", {
+                                    fecha: formatearFecha(tarea.vencimiento),
+                                  })}
+                            </Pastilla>
+                          ) : (
+                            <Pastilla tono="neutro">
+                              {t(`estadoTarea.${tarea.estado}`)}
+                            </Pastilla>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </Tarjeta>
+
+          <div className="grid min-w-0 gap-espacio-6">
+            <Tarjeta className="rounded-panel!">
+              <CabeceraTarjeta
+                titulo={t("resumen.atencion")}
+                descripcion={t("resumen.atencionDesc")}
+              />
+              <ul className="mt-espacio-4 divide-y divide-borde">
+                <li>
+                  <Link
+                    to="/operacion"
+                    className="flex items-center justify-between gap-espacio-2 py-espacio-3 text-pequeno transition-colors hover:text-accion-tonal-texto focus-visible:outline-foco"
+                  >
+                    <span className="text-tinta">{t("resumen.procesosBloqueados")}</span>
+                    <Pastilla
+                      tono={bloqueadas.data?.length ? "rojo" : "neutro"}
+                    >
+                      {formatearNumero(bloqueadas.data?.length ?? 0)}
+                    </Pastilla>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/documentos"
+                    className="flex items-center justify-between gap-espacio-2 py-espacio-3 text-pequeno transition-colors hover:text-accion-tonal-texto focus-visible:outline-foco"
+                  >
+                    <span className="text-tinta">
+                      {t("resumen.documentosObservados")}
+                    </span>
+                    <Pastilla
+                      tono={observados.data?.totalElements ? "alerta" : "neutro"}
+                    >
+                      {formatearNumero(observados.data?.totalElements ?? 0)}
+                    </Pastilla>
+                  </Link>
+                </li>
+              </ul>
+            </Tarjeta>
+
+            <Tarjeta className="rounded-panel!">
+              <CabeceraTarjeta
+                titulo={t("resumen.actividadReciente")}
+                descripcion={t("resumen.actividadRecienteDesc")}
+              />
+              <div className="mt-espacio-4">
+                {tareasCompletadas.isPending ? (
+                  <Cargando filas={3} alto="h-10" />
+                ) : !recientes.length ? (
+                  <p className="text-pequeno text-tinta-suave">
+                    {t("resumen.sinActividad")}
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-borde">
+                    {recientes.map((tarea) => (
+                      <li key={tarea.id} className="py-espacio-3 first:pt-0 last:pb-0">
+                        <p className="truncate text-pequeno text-tinta">
+                          {tarea.nombreNodo?.trim() ||
+                            textoTipoTarea(tarea.tipoNodo, t)}
+                          {tarea.decision
+                            ? ` · ${t(`estadoHallazgo.${tarea.decision}`)}`
+                            : ""}
+                        </p>
+                        <p className="truncate text-micro text-tinta-suave">
+                          {tarea.nombreDefinicion?.trim() ||
+                            tarea.codigoDefinicion ||
+                            ""}
+                          {tarea.completadaPor
+                            ? ` · ${tarea.completadaPor}`
+                            : ""}
+                          {tarea.completada
+                            ? ` · ${formatearFecha(tarea.completada)}`
+                            : ""}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </Tarjeta>
+          </div>
+        </section>
+
         {resumen.isPending ? (
           <div role="status" aria-busy="true" aria-atomic="true">
             <span className="sr-only">{t("resumen.cargando")}</span>
