@@ -249,8 +249,11 @@ Requisitos en la instancia (una sola vez): clave de despliegue SSH de sólo lect
 `gabibenitezzz003/nextdocs-workflow` en el usuario `ubuntu` (el `git clone` corre con ella), y
 `NEXTDOCS_JWT_SECRETO` presente en `/etc/nextdocs-ia/nextdocs.env` con el mismo valor que usa
 el core. nginx ya rutea `/api/v1/{procesos,instancias,tareas,kpi-procesos,partners,
-marketplace,supervisora,colaboracion-externa}` a `127.0.0.1:8091` desde
-`infra/nginx/nextdocs-ia.conf`.
+marketplace,supervisora,colaboracion-externa,template-recommendations,
+workflow-instances}` a `127.0.0.1:8091` desde `infra/nginx/nextdocs-ia.conf`.
+Cada ruta nueva del workflow exige sumarla a esa lista y recargar nginx en el
+servidor (`sudo nginx -t && sudo systemctl reload nginx`): el archivo productivo
+vive en `/etc` y no se auto-aplica con el deploy.
 
 Disparadores: cada push a `main` de `gabibenitezzz003/nextdocs-workflow` llama `repository_dispatch`
 (`workflow-actualizado`) sobre este repo vía `.github/workflows/despachar.yml` (secreto
