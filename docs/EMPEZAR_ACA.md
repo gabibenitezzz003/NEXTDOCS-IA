@@ -250,7 +250,7 @@ Y ante la duda, mira el numero: si el total de integracion no es el que esperas,
 
 | Necesitás | Andá a |
 |---|---|
-| Qué está hecho y qué falta, en orden | [`TODO.md`](TODO.md) — **es el plan maestro, 32 tareas en 4 fases** |
+| Qué está hecho y qué falta, en orden | [`TODO_MVP0_COMERCIAL.md`](TODO_MVP0_COMERCIAL.md) — **el plan maestro vigente (rebaseline 06/09/2026)**. [`TODO.md`](TODO.md) queda como registro de las Fases 1–2 ("MVP0 técnico") |
 | Bounded contexts, flujo del documento, decisiones | [`ARQUITECTURA.md`](ARQUITECTURA.md) |
 | Endpoints, permisos, errores, webhooks | [`API.md`](API.md) |
 | Imagen, Compose, CI y recuperación | [`DESPLIEGUE.md`](DESPLIEGUE.md) |
@@ -270,11 +270,16 @@ De la **Fase 2** está todo lo que hoy entra en el producto: portal frontend (15
 Archive & Export Center (19) y dashboard con panel de control (20). Los canales de entrada (17 y 18)
 se sacaron: ver el porqué en `TODO.md`.
 
-**Siguiente (rebaseline 06/09/2026):** el cierre del **MVP0 Comercial**. El plan maestro de
-alcance ahora es `TODO_MVP0_COMERCIAL.md`: Workflow Core, Studio guiado, terceros, IA Supervisora
-v0, biblioteca COMEX y partner foundation. La especificación está en `MVP/`.
+**El plan maestro vigente es `TODO_MVP0_COMERCIAL.md`** (rebaseline 06/09/2026): el MVP0 Comercial
+está cerrado en todo lo que es código — Workflow Core, Studio guiado, terceros y partners,
+marketplace con instalación materializada, IA Supervisora, biblioteca COMEX, recomendador por
+contexto con `POST /workflow-instances` y eventos `task.*`/`workflow.completed` al core. Lo que
+sigue abierto ahí depende de recursos externos (rotación de la clave de Gemini, corpus real del
+cliente, alertas en el Prometheus desplegado, cron de respaldos, credenciales Legale/DocuSign,
+infra de mail) — los pasos exactos están en `RUNBOOK_OPERACION.md` y en el acta de salida
+`verificaciones/e14-acta-salida.md`.
 
-Cada tarea del `TODO.md` trae su criterio de aceptación con el código de QA del N3. No inventes el
+Los criterios de aceptación vienen del N3 de la Base V7 (fuera del repo). No inventes el
 criterio: está escrito.
 
 ---
