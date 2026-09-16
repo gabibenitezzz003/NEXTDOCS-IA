@@ -252,7 +252,12 @@ columna "en el repo" ancla cada ítem al estado actual del código.
 - [ ] **P1-01 · Email process intake** — reactivar el alias dedicado por tenant/proceso para
   COMEX. El código retirado se recupera de git (`0b681d3`, `a50dd7c`); la decisión de retirarlo
   se mantiene para el portal: entra como configuración de tenant, no como sección operativa.
-- [ ] **P1-02 · Firma por adapter** — Legale/Docusign sin acoplar el core (vieja tarea 27).
+- [x] **P1-02 · Firma por adapter** — circuito real implementado: `ConectorFirmaInt` con
+  adapter `DOCUMENSO` (API v2 envelopes), webhook `POST /api/v1/firma/webhook` autenticado
+  por `X-Documenso-Secret` que completa/rechaza la tarea y archiva el PDF firmado en el
+  core (workflow PR #29, monorepo PR #65). Pendiente: credenciales reales de Documenso y
+  aplicar el conf de nginx en el servidor. Legale/Docusign quedan como adapters futuros
+  si un cliente exige firma digital argentina.
 - [ ] **P1-03 · Canvas avanzado** — grafo visual sobre el mismo schema del Studio guiado (vieja
   tarea 26 completa). MVP1.
 
