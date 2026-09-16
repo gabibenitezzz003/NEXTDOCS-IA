@@ -6,6 +6,7 @@ import type {
   TipoNodoProceso,
 } from "../api/procesos";
 import { disponerGrafo } from "../utilidades/disposicionGrafo";
+import { avisosNodo } from "../utilidades/grafoProceso";
 import { Boton, BotonIcono, Selector } from "./Interfaz";
 import {
   IconoAjustar,
@@ -480,6 +481,7 @@ export function CanvasProceso({
               const p = posicion(nodo);
               const color = colorDe(nodo.tipo);
               const activo = seleccionNodo === nodo.id;
+              const conAviso = avisosNodo(nodo).length > 0;
               const destinoConexion =
                 arrastre?.tipo === "conexion" && !deshabilitado
                   ? destinoEn({ x: arrastre.x, y: arrastre.y }, arrastre.origen)
@@ -525,6 +527,26 @@ export function CanvasProceso({
                   >
                     {t(`tipoNodo.${nodo.tipo}`)}
                   </text>
+                  {conAviso ? (
+                    <g className="pointer-events-none">
+                      <circle
+                        cx={ANCHO - 10}
+                        cy={6}
+                        r={9}
+                        fill="var(--color-alerta)"
+                        stroke="var(--color-superficie)"
+                        strokeWidth={1.5}
+                      />
+                      <text
+                        x={ANCHO - 10}
+                        y={10}
+                        textAnchor="middle"
+                        className="fill-[var(--color-superficie)] text-[11px] font-bold"
+                      >
+                        !
+                      </text>
+                    </g>
+                  ) : null}
                   <text
                     x={14}
                     y={42}

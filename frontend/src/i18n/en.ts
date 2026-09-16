@@ -217,6 +217,48 @@ export const en: Diccionario = {
       "On decision steps, the condition distinguishes each output.",
     eliminarPaso: "Delete step",
     eliminarConexion: "Delete connection",
+    duplicarPaso: "Duplicate step",
+    pasoDuplicado: "Step duplicated on the canvas",
+    copia: "(copy)",
+    confirmarEliminarNodo:
+      "Delete this step and its connections? This action cannot be undone.",
+    confirmarEliminarConexion:
+      "Delete this connection? This action cannot be undone.",
+    tipoDocumentoAyuda:
+      "Document catalog code this step requires to be completed.",
+    subprocesoAyuda:
+      "Code of the published process instantiated as a subprocess.",
+    condicionesIa: "Validation conditions",
+    condicionesIaAyuda:
+      "One per line, in key = value format. If any fails, the instance is blocked.",
+    mensajeNotificacion: "Notification message",
+    mensajePlaceholder: "E.g.: Order documentation approved {orden}",
+    duracionHoras: "Duration (hours)",
+    duracionAyuda:
+      "How long the timer waits before continuing. Decimals allowed.",
+    urlApi: "Action URL",
+    metodoApi: "HTTP method",
+    cuerpoApi: "Request body (optional)",
+    cuerpoApiAyuda: "JSON sent in the request. You can use {{datos.key}}.",
+    campoRespuesta: "Field to store the response",
+    campoRespuestaAyuda:
+      "Key inside the instance data where the call result is stored.",
+    expiracionEnlace: "Link expiry (hours)",
+    expiracionEnlaceAyuda:
+      "Validity hours of the secure link the third party receives to complete the task.",
+    decisionAyuda:
+      "The conditions of each output are edited by clicking the connection leaving this step.",
+    avisoCondiciones:
+      "Missing at least one condition: without rules the engine cannot evaluate this step and the instance is blocked.",
+    avisoUrl: "Missing URL: without a target the API action fails at runtime.",
+    avisoMensaje:
+      "Missing message: the notification is recorded empty and communicates nothing.",
+    avisoDuracion:
+      "Missing duration: without a defined time the timer fails at runtime.",
+    avisoSubproceso:
+      "Missing subprocess code: without it the step fails at runtime.",
+    avisoTipoDocumento:
+      "Without a document type the task accepts any document when completed.",
     ayuda:
       "Click a step to configure it, or a connection to edit its condition. Start and End steps are fixed.",
   },
@@ -680,33 +722,13 @@ export const en: Diccionario = {
     borradorVersion: "Draft · version {numero}",
     borradorDesc:
       "Edit the sequence and save the draft before publishing. Workflow validates the route and enabled types.",
-    formaVerRecorrido: "How to view the route",
-    lista: "List",
-    canvas: "Canvas",
     validar: "Validate",
     validacionOk: "The version is valid: it can be published.",
     sinGuardar: "Unsaved",
     versionNoEditable: "This version cannot be edited safely",
-    versionNoEditableDesc:
-      "{bloqueo} The list cannot faithfully represent this route: edit it in the Canvas view.",
     hayCambios:
       "There are unsaved changes. Save the draft before publishing.",
-    catalogoNota:
-      "The MVP0 catalog allows publishing Document request, Form, Human review and Timer. Other types in the selector can be saved as draft, but Workflow prevents publishing them.",
-    edicionBorrador: "Draft editing",
-    secuenciaPasos: "Step sequence",
-    inicio: "Start",
-    fin: "End",
-    pasoN: "Step {numero}: ",
-    subirPaso: "Move step {numero} up: {nombre}",
-    bajarPaso: "Move step {numero} down: {nombre}",
-    quitarPaso: "Remove step {numero}: {nombre}",
-    ocultar: "Hide",
-    configurar: "Configure",
     agregarPaso: "Add step",
-    agregarPasoAyuda:
-      "The new step is appended at the end of the route and opens for you to configure.",
-    elegirTipo: "Choose a step type...",
     guardarBorrador: "Save draft",
     publicarVersion: "Publish version {numero}",
     versionPublicadaTitulo: "Version {numero} published",
@@ -736,7 +758,6 @@ export const en: Diccionario = {
     sinTareasPendientes: "No pending or overdue tasks.",
     enviandoDecision: "Sending decision…",
     cargandoPrueba: "Loading test instance",
-    configuracionPaso: "Step configuration",
     nombreDelPaso: "Step name",
     tipoDocumento: "Document type",
     codigoSubproceso: "Subprocess code",
@@ -752,8 +773,6 @@ export const en: Diccionario = {
     guardadoOk: "The draft steps were saved.",
     publicadoOk: "Version published. New instances use this version.",
     notaNuevaVersion: "Version created from the studio",
-    pasoAgregado:
-      "Step \"{nombre}\" was added at the end. Configure it and save the draft.",
     bloqueoSecuencial:
       "The sequential editor cannot faithfully represent this graph. Editing, saving and publishing are blocked to preserve its information.",
   },

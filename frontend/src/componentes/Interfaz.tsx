@@ -6,6 +6,7 @@ import type {
   ReactElement,
   ReactNode,
   SelectHTMLAttributes,
+  TextareaHTMLAttributes,
 } from "react";
 import { Children, isValidElement, useEffect, useId, useRef, useState } from "react";
 import { IconoCerrar, IconoFlechaAbajo } from "./Iconos";
@@ -307,6 +308,40 @@ export function Campo({
         aria-describedby={descritoPor}
         aria-invalid={error ? true : invalido}
         className={`${CAMPO_BASE} ${className}`}
+      />
+    </MarcoCampo>
+  );
+}
+
+export function AreaTexto({
+  etiqueta,
+  ayuda,
+  error,
+  id,
+  "aria-describedby": descripcion,
+  "aria-invalid": invalido,
+  className = "",
+  ...resto
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & MensajesCampo) {
+  const { identificador, descritoPor } = useDescripcionCampo(
+    id,
+    ayuda,
+    error,
+    descripcion,
+  );
+  return (
+    <MarcoCampo
+      id={identificador}
+      etiqueta={etiqueta}
+      ayuda={ayuda}
+      error={error}
+    >
+      <textarea
+        {...resto}
+        id={identificador}
+        aria-describedby={descritoPor}
+        aria-invalid={error ? true : invalido}
+        className={`${CAMPO_BASE} h-auto min-h-20 py-espacio-2 ${className}`}
       />
     </MarcoCampo>
   );

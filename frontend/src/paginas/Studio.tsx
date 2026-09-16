@@ -1,24 +1,18 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
 import {
+  AreaTexto,
   Boton,
-  BotonIcono,
   CabeceraTarjeta,
   Campo,
-  GrupoSegmentado,
   Pastilla,
   Selector,
   Tarjeta,
 } from "../componentes/Interfaz";
-import {
-  IconoCheck,
-  IconoCerrar,
-  IconoFlechaAbajo,
-  IconoFlechaArriba,
-} from "../componentes/Iconos";
+import { IconoCheck } from "../componentes/Iconos";
 import { formatearFecha } from "./Documentos";
 import {
   actualizarGrafo,
@@ -37,16 +31,13 @@ import {
 import type {
   GrafoProceso,
   InstanciaProceso,
+  NodoProceso,
   Proceso,
-  TipoNodoProceso,
   VersionProceso,
 } from "../api/procesos";
 import {
-  aplicarCambioPaso,
-  comoPaso,
-  inspeccionarGrafo,
-  serializarGrafo,
-  type Paso,
+  aplicarConfiguracion,
+  avisosNodo,
 } from "../utilidades/grafoProceso";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
@@ -55,18 +46,6 @@ import {
   claveArista,
   type SeleccionCanvas,
 } from "../componentes/CanvasProceso";
-
-const TIPOS_PASO: TipoNodoProceso[] = [
-  "SOLICITUD_DOCUMENTO",
-  "FORMULARIO",
-  "VALIDACION_IA",
-  "REVISION_HUMANA",
-  "TAREA_EXTERNA",
-  "NOTIFICACION",
-  "TEMPORIZADOR",
-  "ACCION_API",
-  "SUBPROCESO",
-];
 
 export function Studio() {
   const { t } = useIdioma();
@@ -431,19 +410,14 @@ function EstudioProceso({
   alVolver: () => void;
   alAbrirInstancia: (instanciaId: string) => void;
 }) {
-  const idEstudio = useId();
   const { sesion } = useSesion();
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [grafoTrabajo, setGrafoTrabajo] = useState<GrafoProceso | null>(null);
-  const [expandido, setExpandido] = useState<string | null>(null);
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [detalles, setDetalles] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [pasoAgregado, setPasoAgregado] = useState<string | null>(null);
-  const [tipoNuevoPaso, setTipoNuevoPaso] = useState("");
-  const [vistaRecorrido, setVistaRecorrido] = useState<"lista" | "canvas">("canvas");
   const [seleccion, setSeleccion] = useState<SeleccionCanvas | null>(null);
 
   const consulta = useQuery({
@@ -464,11 +438,6 @@ function EstudioProceso({
     versionId: string;
     grafo: GrafoProceso;
   } | null>(null);
-  const analisisTrabajo = grafoTrabajo ? inspeccionarGrafo(grafoTrabajo) : null;
-  const pasos = analisisTrabajo?.pasos ?? [];
-  const bloqueoLista = analisisTrabajo?.bloqueo
-    ? t(analisisTrabajo.bloqueo)
-    : null;
   const baseLista = !!borrador && base?.versionId === borrador.id;
   const hayCambios =
     baseLista &&
@@ -532,16 +501,8 @@ function EstudioProceso({
       const grafo = structuredClone(borrador.grafo);
       setBase({ versionId: borrador.id, grafo });
       setGrafoTrabajo(structuredClone(grafo));
-      if (inspeccionarGrafo(grafo).bloqueo) setVistaRecorrido("canvas");
     }
   }, [borrador]);
-
-  useEffect(() => {
-    if (!pasoAgregado) return;
-    const elemento = document.getElementById("paso-" + pasoAgregado);
-    elemento?.scrollIntoView({ block: "center", behavior: "smooth" });
-    setPasoAgregado(null);
-  }, [pasoAgregado]);
 
   const refrescar = () =>
     clienteConsultas.invalidateQueries({ queryKey: ["proceso", procesoId] });
@@ -696,57 +657,54 @@ function EstudioProceso({
     guardar.isPending ||
     publicar.isPending;
 
-  function aplicarPasos(nuevos: Paso[]) {
-    setGrafoTrabajo((actual) =>
-      actual ? serializarGrafo(actual, nuevos) : actual,
-    );
-  }
-
-  function agregarPaso(tipo: TipoNodoProceso) {
-    const nombre = t(`tipoPaso.${tipo}`);
-    const paso: Paso = {
-      id:
-        "paso-" +
-        (pasos.length + 1) +
-        "-" +
-        Math.random().toString(36).slice(2, 6),
-      tipo,
-      nombre,
-    };
-    aplicarPasos([...pasos, paso]);
-    setExpandido(paso.id);
-    setPasoAgregado(paso.id);
-    setAviso(t("procesos.pasoAgregado", { nombre }));
-  }
-
-  function mover(id: string, desplazamiento: -1 | 1) {
-    const copia = [...pasos];
-    const indice = copia.findIndex((paso) => paso.id === id);
-    const destino = indice + desplazamiento;
-    if (indice < 0 || destino < 0 || destino >= copia.length) return;
-    [copia[indice], copia[destino]] = [copia[destino], copia[indice]];
-    aplicarPasos(copia);
-  }
-
-  function editarNodo(id: string, cambio: Partial<Paso>) {
+  function editarNodo(id: string, siguiente: NodoProceso) {
     setGrafoTrabajo((actual) =>
       actual
         ? {
             ...actual,
             nodos: actual.nodos.map((nodo) =>
-              nodo.id === id ? aplicarCambioPaso(nodo, cambio) : nodo,
+              nodo.id === id ? siguiente : nodo,
             ),
           }
         : actual,
     );
   }
 
+  function duplicarNodo(id: string) {
+    setGrafoTrabajo((actual) => {
+      const original = actual?.nodos.find((nodo) => nodo.id === id);
+      if (!actual || !original) return actual;
+      const copia: NodoProceso = {
+        ...structuredClone(original),
+        id:
+          "paso-" +
+          Math.random().toString(36).slice(2, 8) +
+          Date.now().toString(36),
+        nombre: `${original.nombre ?? original.tipo} ${t("canvas.copia")}`,
+      };
+      const posicion = copia.configuracion?.posicion as
+        | { x?: number; y?: number }
+        | undefined;
+      if (posicion) {
+        copia.configuracion = {
+          ...copia.configuracion,
+          posicion: { x: (posicion.x ?? 0) + 40, y: (posicion.y ?? 0) + 80 },
+        };
+      }
+      return { ...actual, nodos: [...actual.nodos, copia] };
+    });
+    setAviso(t("canvas.pasoDuplicado"));
+  }
+
   function eliminarNodo(id: string) {
+    const nodo = grafoTrabajo?.nodos.find((actual) => actual.id === id);
+    if (!nodo) return;
+    if (!window.confirm(t("canvas.confirmarEliminarNodo"))) return;
     setGrafoTrabajo((actual) =>
       actual
         ? {
             ...actual,
-            nodos: actual.nodos.filter((nodo) => nodo.id !== id),
+            nodos: actual.nodos.filter((actual2) => actual2.id !== id),
             aristas: actual.aristas.filter(
               (arista) => arista.origen !== id && arista.destino !== id,
             ),
@@ -772,6 +730,7 @@ function EstudioProceso({
   }
 
   function eliminarArista(clave: string) {
+    if (!window.confirm(t("canvas.confirmarEliminarConexion"))) return;
     setGrafoTrabajo((actual) =>
       actual
         ? {
@@ -786,7 +745,7 @@ function EstudioProceso({
   }
 
   useEffect(() => {
-    if (vistaRecorrido !== "canvas" || !seleccion || editandoBloqueado) return;
+    if (!seleccion || editandoBloqueado) return;
     const alTecla = (evento: KeyboardEvent) => {
       if (evento.key !== "Delete" && evento.key !== "Backspace") return;
       const destino = evento.target as HTMLElement | null;
@@ -810,7 +769,7 @@ function EstudioProceso({
     };
     window.addEventListener("keydown", alTecla);
     return () => window.removeEventListener("keydown", alTecla);
-  }, [vistaRecorrido, seleccion, editandoBloqueado, grafoTrabajo]);
+  }, [seleccion, editandoBloqueado, grafoTrabajo]);
 
   if (consulta.isPending) {
     return (
@@ -958,22 +917,11 @@ function EstudioProceso({
               })}
               descripcion={t("procesos.borradorDesc")}
               acciones={
-                <div className="flex flex-wrap items-center gap-espacio-2">
-                  <GrupoSegmentado
-                    etiqueta={t("procesos.formaVerRecorrido")}
-                    valor={vistaRecorrido}
-                    alCambiar={setVistaRecorrido}
-                    opciones={[
-                      { valor: "lista", texto: t("procesos.lista") },
-                      { valor: "canvas", texto: t("procesos.canvas") },
-                    ]}
-                  />
-                  <Pastilla tono={hayCambios ? "alerta" : "neutro"}>
-                    {hayCambios
-                      ? t("procesos.sinGuardar")
-                      : t("procesos.borradorEtiqueta")}
-                  </Pastilla>
-                </div>
+                <Pastilla tono={hayCambios ? "alerta" : "neutro"}>
+                  {hayCambios
+                    ? t("procesos.sinGuardar")
+                    : t("procesos.borradorEtiqueta")}
+                </Pastilla>
               }
             />
             {conflicto ? (
@@ -984,17 +932,7 @@ function EstudioProceso({
                 />
               </div>
             ) : null}
-            {bloqueoLista && vistaRecorrido === "lista" ? (
-              <div className="mt-espacio-4">
-                <ErrorPanel
-                  titulo={t("procesos.versionNoEditable")}
-                  mensaje={t("procesos.versionNoEditableDesc", {
-                    bloqueo: bloqueoLista,
-                  })}
-                />
-              </div>
-            ) : null}
-            {vistaRecorrido === "canvas" && grafoTrabajo ? (
+            {grafoTrabajo ? (
               <div className="mt-espacio-5 grid items-start gap-espacio-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
                 <CanvasProceso
                   grafo={grafoTrabajo}
@@ -1007,6 +945,7 @@ function EstudioProceso({
                   seleccion={seleccion}
                   grafo={grafoTrabajo}
                   alCambiarNodo={editarNodo}
+                  alDuplicarNodo={duplicarNodo}
                   alEliminarNodo={eliminarNodo}
                   alCambiarArista={editarArista}
                   alEliminarArista={eliminarArista}
@@ -1022,175 +961,11 @@ function EstudioProceso({
                 {t("procesos.hayCambios")}
               </p>
             ) : null}
-            <p
-              role="note"
-              className="mb-espacio-5 mt-espacio-4 text-pequeno text-tinta-suave"
-            >
-              {t("procesos.catalogoNota")}
-            </p>
-            <fieldset
-              disabled={editandoBloqueado || !!bloqueoLista}
-              className={`min-w-0 ${vistaRecorrido === "canvas" ? "hidden" : ""}`}
-            >
-              <legend className="sr-only">{t("procesos.edicionBorrador")}</legend>
-              {!bloqueoLista ? (
-                <ol
-                  aria-label={t("procesos.secuenciaPasos")}
-                  className="mt-espacio-4 [&>li+li]:before:mx-auto [&>li+li]:before:block [&>li+li]:before:h-espacio-5 [&>li+li]:before:w-px [&>li+li]:before:bg-violeta-borde"
-                >
-                  <PasoFijo etiqueta={t("procesos.inicio")} />
-                  {pasos.map((paso, indice) => (
-                    <li key={paso.id} id={"paso-" + paso.id}>
-                      <Tarjeta
-                        padding="p-0"
-                        className={
-                          expandido === paso.id ? "border-violeta" : ""
-                        }
-                      >
-                        <div className="flex flex-wrap items-center gap-espacio-3 p-espacio-4">
-                          <span
-                            aria-hidden="true"
-                            className="flex size-control-pequeno shrink-0 items-center justify-center rounded-control bg-violeta-tenue text-pequeno font-semibold tabular-nums text-accion-tonal-texto"
-                          >
-                            {String(indice + 1).padStart(2, "0")}
-                          </span>
-                          <div className="min-w-0 flex-1 basis-40">
-                            <p className="break-words text-micro font-semibold tracking-wide text-tinta-suave">
-                              {t(`tipoNodo.${paso.tipo}`)}
-                            </p>
-                            <h3
-                              id={`${idEstudio}-paso-${paso.id}`}
-                              className="mt-espacio-1 break-words font-titulo text-titulo-panel text-tinta"
-                            >
-                              <span className="sr-only">
-                                {t("procesos.pasoN", { numero: indice + 1 })}
-                              </span>
-                              {paso.nombre || t(`tipoNodo.${paso.tipo}`)}
-                            </h3>
-                          </div>
-                          <div className="flex w-full flex-wrap items-center justify-between gap-espacio-2 sm:w-auto">
-                            <span className="flex gap-espacio-1">
-                              <BotonIcono
-                                variante="fantasma"
-                                tamano="sm"
-                                aria-label={t("procesos.subirPaso", {
-                                  numero: indice + 1,
-                                  nombre: paso.nombre,
-                                })}
-                                disabled={indice === 0}
-                                onClick={() => mover(paso.id, -1)}
-                              >
-                                <IconoFlechaArriba tamano={14} />
-                              </BotonIcono>
-                              <BotonIcono
-                                variante="fantasma"
-                                tamano="sm"
-                                aria-label={t("procesos.bajarPaso", {
-                                  numero: indice + 1,
-                                  nombre: paso.nombre,
-                                })}
-                                disabled={indice === pasos.length - 1}
-                                onClick={() => mover(paso.id, 1)}
-                              >
-                                <IconoFlechaAbajo tamano={14} />
-                              </BotonIcono>
-                              <BotonIcono
-                                variante="fantasma"
-                                tamano="sm"
-                                aria-label={t("procesos.quitarPaso", {
-                                  numero: indice + 1,
-                                  nombre: paso.nombre,
-                                })}
-                                onClick={() =>
-                                  aplicarPasos(
-                                    pasos.filter((otro) => otro.id !== paso.id),
-                                  )
-                                }
-                                className="text-rojo-alto"
-                              >
-                                <IconoCerrar tamano={14} />
-                              </BotonIcono>
-                            </span>
-                            <Boton
-                              variante="fantasma"
-                              tamano="sm"
-                              aria-expanded={expandido === paso.id}
-                              aria-controls={
-                                expandido === paso.id
-                                  ? `${idEstudio}-configuracion-${paso.id}`
-                                  : undefined
-                              }
-                              onClick={() =>
-                                setExpandido(
-                                  expandido === paso.id ? null : paso.id,
-                                )
-                              }
-                            >
-                              {expandido === paso.id
-                                ? t("procesos.ocultar")
-                                : t("procesos.configurar")}
-                            </Boton>
-                          </div>
-                        </div>
-                        {expandido === paso.id ? (
-                          <div
-                            id={`${idEstudio}-configuracion-${paso.id}`}
-                            role="region"
-                            aria-labelledby={`${idEstudio}-paso-${paso.id}`}
-                          >
-                            <ConfiguracionPaso
-                              paso={paso}
-                              alCambiar={(cambio) =>
-                                aplicarPasos(
-                                  pasos.map((otro) =>
-                                    otro.id === paso.id
-                                      ? { ...otro, ...cambio }
-                                      : otro,
-                                  ),
-                                )
-                              }
-                            />
-                          </div>
-                        ) : null}
-                      </Tarjeta>
-                    </li>
-                  ))}
-                  <PasoFijo etiqueta={t("procesos.fin")} />
-                </ol>
-              ) : null}
-              <div className="mt-espacio-6 grid gap-espacio-5 border-t border-borde pt-espacio-5">
-                <Selector
-                  etiqueta={t("procesos.agregarPaso")}
-                  ayuda={t("procesos.agregarPasoAyuda")}
-                  disabled={editandoBloqueado}
-                  value={tipoNuevoPaso}
-                  onChange={(evento) => {
-                    const elegido = evento.target.value;
-                    setTipoNuevoPaso(elegido);
-                    if (elegido) {
-                      agregarPaso(elegido as TipoNodoProceso);
-                      setTipoNuevoPaso("");
-                    }
-                  }}
-                  className="w-full sm:max-w-sm"
-                >
-                  <option value="">{t("procesos.elegirTipo")}</option>
-                  {TIPOS_PASO.map((opcion) => (
-                    <option key={opcion} value={opcion}>
-                      {t(`tipoPaso.${opcion}`)}
-                    </option>
-                  ))}
-                </Selector>
-              </div>
-            </fieldset>
             <div className="mt-espacio-6 grid gap-espacio-3 border-t border-borde pt-espacio-5 sm:flex sm:justify-end">
               <Boton
                 variante="secundario"
                 cargando={guardar.isPending}
-                disabled={
-                  editandoBloqueado ||
-                  (vistaRecorrido === "lista" && !!bloqueoLista)
-                }
+                disabled={editandoBloqueado}
                 onClick={() => guardar.mutate()}
               >
                 {t("procesos.guardarBorrador")}
@@ -1254,7 +1029,11 @@ function EstudioProceso({
                   {t("procesos.pasosDelRecorrido")}
                 </dt>
                 <dd className="mt-espacio-1 text-pequeno text-tinta tabular-nums">
-                  {inspeccionarGrafo(publicada.grafo).pasos.length}
+                  {
+                    (publicada.grafo.nodos ?? []).filter(
+                      (nodo) => nodo.tipo !== "INICIO" && nodo.tipo !== "FIN",
+                    ).length
+                  }
                 </dd>
               </div>
               <div>
@@ -1304,98 +1083,193 @@ function EstudioProceso({
   );
 }
 
-function PasoFijo({ etiqueta }: { etiqueta: string }) {
-  return (
-    <li>
-      <div className="flex items-center justify-center gap-espacio-3 rounded-control border border-dashed border-borde-fuerte bg-lienzo px-espacio-4 py-espacio-3">
-        <span
-          aria-hidden="true"
-          className="size-espacio-2 rounded-insignia bg-grafito"
-        />
-        <span className="text-micro font-semibold uppercase tracking-wider text-tinta-media">
-          {etiqueta}
-        </span>
-      </div>
-    </li>
-  );
-}
+const TIPOS_CON_RESPONSABLE = new Set([
+  "SOLICITUD_DOCUMENTO",
+  "FORMULARIO",
+  "VALIDACION_IA",
+  "REVISION_HUMANA",
+  "TAREA_EXTERNA",
+]);
 
-function ConfiguracionPaso({
-  paso,
+const TIPOS_CON_SLA = new Set([
+  ...TIPOS_CON_RESPONSABLE,
+  "TEMPORIZADOR",
+]);
+
+function ConfiguracionNodo({
+  nodo,
   alCambiar,
 }: {
-  paso: Paso;
-  alCambiar: (cambio: Partial<Paso>) => void;
+  nodo: NodoProceso;
+  alCambiar: (siguiente: NodoProceso) => void;
 }) {
   const { t } = useIdioma();
+  const configuracion = nodo.configuracion ?? {};
+  const texto = (clave: string) =>
+    typeof configuracion[clave] === "string"
+      ? (configuracion[clave] as string)
+      : "";
+  const numero = (clave: string) =>
+    typeof configuracion[clave] === "number"
+      ? (configuracion[clave] as number)
+      : "";
+  const cambiar = (clave: string, valor: unknown) =>
+    alCambiar(aplicarConfiguracion(nodo, clave, valor));
+
   return (
-    <div className="rounded-b-tarjeta border-t border-violeta-borde bg-lienzo p-espacio-4 sm:p-espacio-5">
-      <p className="mb-espacio-4 text-pequeno font-semibold text-tinta">
-        {t("procesos.configuracionPaso")}
-      </p>
-      <div className="grid gap-espacio-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-espacio-4">
+      <Campo
+        etiqueta={t("procesos.nombreDelPaso")}
+        value={nodo.nombre ?? ""}
+        onChange={(evento) =>
+          alCambiar({ ...nodo, nombre: evento.target.value })
+        }
+      />
+      {nodo.tipo === "SOLICITUD_DOCUMENTO" ? (
         <Campo
-          etiqueta={t("procesos.nombreDelPaso")}
-          value={paso.nombre}
-          onChange={(evento) => alCambiar({ nombre: evento.target.value })}
+          etiqueta={t("procesos.tipoDocumento")}
+          placeholder="FACTURA_COMERCIAL"
+          ayuda={t("canvas.tipoDocumentoAyuda")}
+          value={texto("tipoDocumento")}
+          onChange={(evento) => cambiar("tipoDocumento", evento.target.value)}
         />
-        {paso.tipo === "SOLICITUD_DOCUMENTO" ? (
+      ) : null}
+      {nodo.tipo === "SUBPROCESO" ? (
+        <Campo
+          etiqueta={t("procesos.codigoSubproceso")}
+          placeholder="COMEX-OV-DG"
+          ayuda={t("canvas.subprocesoAyuda")}
+          value={texto("subprocesoCodigo")}
+          onChange={(evento) =>
+            cambiar("subprocesoCodigo", evento.target.value.toUpperCase())
+          }
+        />
+      ) : null}
+      {nodo.tipo === "VALIDACION_IA" ? (
+        <AreaTexto
+          etiqueta={t("canvas.condicionesIa")}
+          placeholder={"monto_total > 0\nmoneda = USD"}
+          ayuda={t("canvas.condicionesIaAyuda")}
+          rows={3}
+          value={(Array.isArray(configuracion.condiciones)
+            ? (configuracion.condiciones as unknown[]).map(String).join("\n")
+            : texto("condicion"))}
+          onChange={(evento) =>
+            cambiar(
+              "condiciones",
+              evento.target.value
+                .split("\n")
+                .map((linea) => linea.trim())
+                .filter(Boolean),
+            )
+          }
+        />
+      ) : null}
+      {nodo.tipo === "NOTIFICACION" ? (
+        <AreaTexto
+          etiqueta={t("canvas.mensajeNotificacion")}
+          placeholder={t("canvas.mensajePlaceholder")}
+          rows={3}
+          value={texto("mensaje")}
+          onChange={(evento) => cambiar("mensaje", evento.target.value)}
+        />
+      ) : null}
+      {nodo.tipo === "TEMPORIZADOR" ? (
+        <Campo
+          etiqueta={t("canvas.duracionHoras")}
+          type="number"
+          min={0}
+          step="0.25"
+          ayuda={t("canvas.duracionAyuda")}
+          value={numero("horas")}
+          onChange={(evento) =>
+            cambiar(
+              "horas",
+              evento.target.value ? Number(evento.target.value) : undefined,
+            )
+          }
+        />
+      ) : null}
+      {nodo.tipo === "ACCION_API" ? (
+        <>
           <Campo
-            etiqueta={t("procesos.tipoDocumento")}
-            placeholder="FACTURA_COMERCIAL"
-            value={paso.tipoDocumento ?? ""}
+            etiqueta={t("canvas.urlApi")}
+            placeholder="https://erp.example.com/api/ordenes"
+            value={texto("url")}
+            onChange={(evento) => cambiar("url", evento.target.value)}
+          />
+          <Selector
+            etiqueta={t("canvas.metodoApi")}
+            value={texto("metodo") || "POST"}
+            onChange={(evento) => cambiar("metodo", evento.target.value)}
+          >
+            {["GET", "POST", "PUT", "PATCH", "DELETE"].map((metodo) => (
+              <option key={metodo} value={metodo}>
+                {metodo}
+              </option>
+            ))}
+          </Selector>
+          <AreaTexto
+            etiqueta={t("canvas.cuerpoApi")}
+            placeholder='{"orden": "{{datos.orden}}"}'
+            ayuda={t("canvas.cuerpoApiAyuda")}
+            rows={3}
+            value={texto("cuerpo")}
+            onChange={(evento) => cambiar("cuerpo", evento.target.value)}
+          />
+          <Campo
+            etiqueta={t("canvas.campoRespuesta")}
+            placeholder="respuesta.erp"
+            ayuda={t("canvas.campoRespuestaAyuda")}
+            value={texto("campoRespuesta")}
             onChange={(evento) =>
-              alCambiar({ tipoDocumento: evento.target.value })
+              cambiar("campoRespuesta", evento.target.value)
             }
           />
-        ) : null}
-        {paso.tipo === "SUBPROCESO" ? (
-          <Campo
-            etiqueta={t("procesos.codigoSubproceso")}
-            placeholder="COMEX-OV-DG"
-            value={paso.subprocesoCodigo ?? ""}
-            onChange={(evento) =>
-              alCambiar({ subprocesoCodigo: evento.target.value.toUpperCase() })
-            }
-          />
-        ) : null}
-        {[
-          "SOLICITUD_DOCUMENTO",
-          "FORMULARIO",
-          "VALIDACION_IA",
-          "REVISION_HUMANA",
-          "TAREA_EXTERNA",
-        ].includes(paso.tipo) ? (
-          <Campo
-            etiqueta={t("procesos.responsablePaso")}
-            placeholder={t("procesos.responsablePlaceholder")}
-            value={paso.asignadoA ?? ""}
-            onChange={(evento) => alCambiar({ asignadoA: evento.target.value })}
-          />
-        ) : null}
-        {[
-          "SOLICITUD_DOCUMENTO",
-          "FORMULARIO",
-          "VALIDACION_IA",
-          "REVISION_HUMANA",
-          "TAREA_EXTERNA",
-          "TEMPORIZADOR",
-        ].includes(paso.tipo) ? (
-          <Campo
-            etiqueta={t("procesos.slaHoras")}
-            type="number"
-            min={1}
-            value={paso.slaHoras ?? ""}
-            onChange={(evento) =>
-              alCambiar({
-                slaHoras: evento.target.value
-                  ? Number(evento.target.value)
-                  : undefined,
-              })
-            }
-          />
-        ) : null}
-      </div>
+        </>
+      ) : null}
+      {nodo.tipo === "TAREA_EXTERNA" ? (
+        <Campo
+          etiqueta={t("canvas.expiracionEnlace")}
+          type="number"
+          min={1}
+          ayuda={t("canvas.expiracionEnlaceAyuda")}
+          value={numero("expiracionEnlaceHoras")}
+          onChange={(evento) =>
+            cambiar(
+              "expiracionEnlaceHoras",
+              evento.target.value ? Number(evento.target.value) : undefined,
+            )
+          }
+        />
+      ) : null}
+      {nodo.tipo === "DECISION" ? (
+        <p role="note" className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave">
+          {t("canvas.decisionAyuda")}
+        </p>
+      ) : null}
+      {TIPOS_CON_RESPONSABLE.has(nodo.tipo) ? (
+        <Campo
+          etiqueta={t("procesos.responsablePaso")}
+          placeholder={t("procesos.responsablePlaceholder")}
+          value={texto("asignadoA")}
+          onChange={(evento) => cambiar("asignadoA", evento.target.value)}
+        />
+      ) : null}
+      {TIPOS_CON_SLA.has(nodo.tipo) ? (
+        <Campo
+          etiqueta={t("procesos.slaHoras")}
+          type="number"
+          min={1}
+          value={numero("slaHoras")}
+          onChange={(evento) =>
+            cambiar(
+              "slaHoras",
+              evento.target.value ? Number(evento.target.value) : undefined,
+            )
+          }
+        />
+      ) : null}
     </div>
   );
 }
@@ -1620,6 +1494,7 @@ function PanelSeleccion({
   seleccion,
   grafo,
   alCambiarNodo,
+  alDuplicarNodo,
   alEliminarNodo,
   alCambiarArista,
   alEliminarArista,
@@ -1627,7 +1502,8 @@ function PanelSeleccion({
 }: {
   seleccion: SeleccionCanvas | null;
   grafo: GrafoProceso;
-  alCambiarNodo: (id: string, cambio: Partial<Paso>) => void;
+  alCambiarNodo: (id: string, siguiente: NodoProceso) => void;
+  alDuplicarNodo: (id: string) => void;
   alEliminarNodo: (id: string) => void;
   alCambiarArista: (clave: string, condicion?: string) => void;
   alEliminarArista: (clave: string) => void;
@@ -1648,6 +1524,7 @@ function PanelSeleccion({
 
   if (nodo) {
     const extremo = nodo.tipo === "INICIO" || nodo.tipo === "FIN";
+    const avisos = avisosNodo(nodo);
     return (
       <Tarjeta padding="p-0" className="overflow-hidden">
         <div className="p-espacio-4 sm:p-espacio-5">
@@ -1655,15 +1532,36 @@ function PanelSeleccion({
             titulo={t("canvas.propiedadesPaso")}
             descripcion={t(`tipoNodo.${nodo.tipo}`)}
           />
+          {avisos.length ? (
+            <ul
+              role="alert"
+              className="mt-espacio-4 space-y-espacio-1 rounded-control border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-alerta-texto"
+            >
+              {avisos.map((aviso) => (
+                <li key={aviso}>{t(aviso)}</li>
+              ))}
+            </ul>
+          ) : null}
         </div>
-        <fieldset disabled={deshabilitado} className="min-w-0">
-          <ConfiguracionPaso
-            paso={comoPaso(nodo)}
-            alCambiar={(cambio) => alCambiarNodo(nodo.id, cambio)}
+        <fieldset
+          disabled={deshabilitado}
+          className="min-w-0 border-t border-borde p-espacio-4 sm:p-espacio-5"
+        >
+          <ConfiguracionNodo
+            nodo={nodo}
+            alCambiar={(siguiente) => alCambiarNodo(nodo.id, siguiente)}
           />
         </fieldset>
         {!extremo ? (
-          <div className="border-t border-borde p-espacio-4">
+          <div className="flex flex-wrap gap-espacio-2 border-t border-borde p-espacio-4">
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              disabled={deshabilitado}
+              onClick={() => alDuplicarNodo(nodo.id)}
+            >
+              {t("canvas.duplicarPaso")}
+            </Boton>
             <Boton
               variante="peligro"
               tamano="sm"
