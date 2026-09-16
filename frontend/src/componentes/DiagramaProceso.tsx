@@ -16,6 +16,12 @@ function colorDe(tipo: TipoNodoProceso): { relleno: string; borde: string } {
   if (tipo === "DECISION") {
     return { relleno: "var(--color-alerta-tenue)", borde: "var(--color-alerta-borde)" };
   }
+  if (tipo === "PARALELO" || tipo === "UNION") {
+    return { relleno: "var(--color-informacion-tenue)", borde: "var(--color-informacion-borde)" };
+  }
+  if (tipo === "FIRMA") {
+    return { relleno: "var(--color-exito-tenue)", borde: "var(--color-exito-borde)" };
+  }
   if (tipo === "REVISION_HUMANA" || tipo === "TAREA_EXTERNA") {
     return { relleno: "var(--color-violeta-tenue)", borde: "var(--color-violeta-borde)" };
   }

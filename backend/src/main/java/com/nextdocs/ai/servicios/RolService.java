@@ -135,6 +135,10 @@ public class RolService {
 			if (!validos.contains(limpio)) {
 				throw new ValidacionException("El permiso " + permiso + " no existe");
 			}
+			if (Permiso.INTEGRACIONES_ESCRIBIR.equals(limpio)) {
+				throw new ValidacionException("El permiso " + limpio
+						+ " es un alcance de cuentas de servicio y no se asigna a roles");
+			}
 			resultado.add(limpio);
 		}
 		if (resultado.isEmpty()) {

@@ -32,6 +32,8 @@ public final class Permiso {
 
 	public static final String TENANT_ADMINISTRAR = "tenant.administrar";
 
+	public static final String INTEGRACIONES_ESCRIBIR = "integraciones.escribir";
+
 	public static final String CODIGO_ROL_ADMINISTRADOR = "ADMINISTRADOR";
 
 	public static final String CODIGO_ROL_OPERADOR = "OPERADOR";
@@ -46,7 +48,14 @@ public final class Permiso {
 	public static Set<String> todos() {
 		return new LinkedHashSet<>(List.of(DOCUMENTOS_LEER, DOCUMENTOS_ESCRIBIR, DOCUMENTOS_REVISAR,
 				DOCUMENTOS_ELIMINAR, DOCUMENTOS_EXPORTAR, PLANTILLAS_LEER, PLANTILLAS_ESCRIBIR, PLANTILLAS_PUBLICAR, EXCEPCIONES_LEER,
-				EXCEPCIONES_GESTIONAR, GOBERNANZA_LEER, GOBERNANZA_ADMINISTRAR, TENANT_ADMINISTRAR));
+				EXCEPCIONES_GESTIONAR, GOBERNANZA_LEER, GOBERNANZA_ADMINISTRAR, TENANT_ADMINISTRAR,
+				INTEGRACIONES_ESCRIBIR));
+	}
+
+	public static Set<String> deAdministrador() {
+		Set<String> permisos = todos();
+		permisos.remove(INTEGRACIONES_ESCRIBIR);
+		return permisos;
 	}
 
 	public static Set<String> deOperador() {

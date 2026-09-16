@@ -103,3 +103,60 @@ test("tarea ya completada muestra la respuesta registrada", async ({ page }) => 
   await expect(page.getByText("Este enlace ya fue utilizado.")).toBeVisible();
   await expect(page.getByText(/Respuesta registrada/)).toBeVisible();
 });
+
+test("portal externo con documentos exige adjuntar para aprobar", async ({
+  page,
+}) => {
+  const control = { completadas: [] as unknown[], subidas: [] as string[] };
+  await page.route("**/api/v1/colaboracion-externa/enlaces/**", async (ruta) => {
+    const peticion = ruta.request();
+    const camino = new URL(peticion.url()).pathname;
+    if (camino.endsWith("/documentos")) {
+      control.subidas.push(peticion.headers()["content-type"] ?? "");
+      return ruta.fulfill({
+        status: 201,
+        json: { id: "doc-77", nombre: "factura.pdf", estado: "RECIBIDO" },
+      });
+    }
+    if (peticion.method() === "GET") {
+      return ruta.fulfill({
+        status: 200,
+        json: {
+          ...ENLACE_ACTIVO,
+          documentosEsperados: ["FACTURA_COMERCIAL"],
+        },
+      });
+    }
+    if (peticion.method() === "POST") {
+      control.completadas.push(peticion.postDataJSON());
+      return ruta.fulfill({
+        status: 200,
+        json: { id: "tarea", estado: "COMPLETADA" },
+      });
+    }
+    return ruta.fulfill({ status: 404, json: { mensaje: "No" } });
+  });
+  await page.goto("/externo/token-de-prueba");
+
+  await expect(page.getByText("Documentos solicitados")).toBeVisible();
+  await expect(page.getByText("FACTURA_COMERCIAL")).toBeVisible();
+
+  await page.getByRole("button", { name: "Aprobado", exact: true }).click();
+  const confirmar = page.getByRole("button", { name: "Confirmar" });
+  await expect(confirmar).toBeDisabled();
+
+  await page.locator('input[type="file"]').setInputFiles({
+    name: "factura.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("pdf"),
+  });
+  await expect(page.getByText("factura.pdf")).toBeVisible();
+  await expect(confirmar).toBeEnabled();
+  await confirmar.click();
+  await expect(page.getByText("Respuesta enviada")).toBeVisible();
+  expect(control.subidas).toHaveLength(1);
+  expect(control.completadas[0]).toMatchObject({
+    decision: "APROBADO",
+    datos: { documentoId: "doc-77" },
+  });
+});

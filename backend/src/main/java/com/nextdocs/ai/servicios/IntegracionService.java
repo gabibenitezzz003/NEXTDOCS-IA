@@ -24,6 +24,7 @@ import com.nextdocs.ai.enumeraciones.TipoEventoCanonico;
 import com.nextdocs.ai.exceptions.EntidadNoEncontradaException;
 import com.nextdocs.ai.exceptions.ValidacionException;
 import com.nextdocs.ai.modelos.EntregaWebhookModel;
+import com.nextdocs.ai.modelos.EventoServicioReqModel;
 import com.nextdocs.ai.modelos.SaludIntegracionModel;
 import com.nextdocs.ai.modelos.SuscripcionWebhookCreadaModel;
 import com.nextdocs.ai.modelos.SuscripcionWebhookModel;
@@ -192,6 +193,22 @@ public class IntegracionService {
 				suscripcion.getId(), Map.of("entregaId", entrega.getId(), "estado", entrega.getEstado().name(),
 						"codigoRespuesta", entrega.getCodigoRespuesta()));
 		return integracionConverter.aModelo(entrega, evento);
+	}
+
+	@Transactional
+	public Map<String, Object> publicarEventoServicio(String tenantId, EventoServicioReqModel datos) {
+		TipoEventoCanonico tipo = TipoEventoCanonico.desde(datos.getTipoEvento());
+		if (tipo == null || !tipo.getClave().startsWith("process.")) {
+			throw new ValidacionException(
+					"El tipo de evento " + datos.getTipoEvento() + " no es un evento de proceso admitido");
+		}
+		EventoSalida evento = eventoSalidaService.publicar(tenantId, tipo,
+				datos.getTipoAgregado() == null ? "InstanciaProceso" : datos.getTipoAgregado(),
+				datos.getIdAgregado(), datos.getCarga() == null ? Map.of() : datos.getCarga());
+		auditoriaService.registrarConDetalle(tenantId, AccionAuditoria.EVENTO_SERVICIO_PUBLICADO,
+				"EventoSalida", evento.getId(),
+				Map.of("tipoEvento", tipo.getClave(), "idAgregado", String.valueOf(datos.getIdAgregado())));
+		return Map.of("id", evento.getId(), "tipoEvento", tipo.getClave(), "estado", evento.getEstado().name());
 	}
 
 	@Transactional(readOnly = true)

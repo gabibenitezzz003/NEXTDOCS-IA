@@ -18,7 +18,7 @@ Consecuencias concretas en el código:
 | Las referencias externas son opacas | `ReferenciaExterna` (`origen`/`tipoObjeto`/`idObjeto`/`tenantOrigen`) embebida en `Documento` y `CandidatoAsociacion` |
 | El tenant es propio, no el de Follow | `Tenant`, `Usuario`, `Rol`, `CuentaServicio` viven en la base de NEXT DOC AI |
 | Cambiar de proveedor de IA no cambia el contrato | `ProveedorDocumentalIaInt` devuelve siempre `ResultadoExtraccionModel` |
-| Apagar el Workflow no rompe nada | La Etapa 2 todavía no existe; el núcleo documental no la referencia |
+| Apagar el Workflow no rompe nada | El workflow es un microservicio aparte; el core no lo referencia. La comunicación es unidireccional workflow → core por `X-Clave-Servicio` |
 
 ---
 
@@ -42,7 +42,7 @@ que impidan extraer servicios cuando el volumen lo justifique"*.
 | Event / Integration Hub | `EventoSalidaService`, `EntregaWebhookService`, `IntegracionService`, `DespachadorEventosService` | ✅ |
 | Observability / Cost | `ObservabilidadService`, `PoliticaCostoTenant`, métricas Micrometer por tenant y proveedor | ✅ |
 | Follow Connector | `FollowConnector`, `FollowCliente` | ✅ |
-| Workflow Definition/Runtime | — | ❌ Etapa 2 |
+| Workflow Definition/Runtime | Microservicio separado `workflow/` (puerto 8091): `EjecutorProcesoService`, `DefinicionProcesoService`, `ColaboracionExternaService`, `DisparadorProcesoService`, `SimuladorGrafoService` | ✅ |
 
 ---
 
@@ -153,6 +153,7 @@ devuelve 0 documentos.
 | Webhooks | Firma HMAC-SHA256 del cuerpo en `X-Nextdocs-Firma`. El secreto se muestra una sola vez. Las URLs deben ser HTTPS y no pueden apuntar a redes internas, salvo `nextdocs.webhooks.permitirLocalhost` para desarrollo. Tras `umbralPausa` fallos consecutivos la suscripcion se pausa sola |
 | Trazabilidad | `correlacionId` en el MDC, en la respuesta, en cada evento y en cada registro de auditoría |
 | Exportación de auditoría | CSV con neutralización de fórmulas, tope de 50 000 eventos y la propia exportación auditada |
+| Llamadas del workflow | Sólo `X-Clave-Servicio` del tenant con alcances mínimos: `documentos.leer`/`documentos.escribir` (resolver y subir documentos) e `integraciones.escribir` (publicar `process.notification` hacia webhooks). Los enlaces externos del portal `/externo/{token}` nunca tocan el core directamente: el workflow hace de proxy |
 
 ---
 

@@ -283,6 +283,8 @@ export const es = {
       "Nombre del evento que instancia el proceso publicado (ej.: documento.recibido).",
     tipoDocumentoFirmaAyuda:
       "Código del catálogo documental que el firmante debe entregar firmado.",
+    tipoDocumentoExternoAyuda:
+      "Opcional: si lo defines, el tercero deberá adjuntar el documento por el enlace seguro para aprobar.",
     ayuda:
       "Tocá un paso para configurarlo, o una conexión para editar su condición. Los pasos Inicio y Fin son fijos.",
   },
@@ -568,6 +570,9 @@ export const es = {
     cerrada: "Esta tarea ya no está disponible para responder.",
     respuestaRegistrada: "Respuesta registrada: {decision}",
     elegiste: "Vas a responder: {decision}",
+    documentosTitulo: "Documentos solicitados",
+    documentosSubir: "Adjuntar documento",
+    documentosSubiendo: "Subiendo documento…",
     observaciones: "Observaciones",
     observacionesPlaceholder:
       "Comentarios para la organización (opcional)",

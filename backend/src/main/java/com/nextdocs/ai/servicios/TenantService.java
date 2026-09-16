@@ -150,7 +150,7 @@ public class TenantService {
 
 	private List<Rol> crearRolesPredefinidos(Tenant tenant) {
 		Rol administrador = construirRol(tenant, Permiso.CODIGO_ROL_ADMINISTRADOR, "Administrador",
-				Permiso.todos());
+				Permiso.deAdministrador());
 		Rol operador = construirRol(tenant, Permiso.CODIGO_ROL_OPERADOR, "Operador", Permiso.deOperador());
 		Rol revisor = construirRol(tenant, Permiso.CODIGO_ROL_REVISOR, "Revisor", Permiso.deRevisor());
 		Rol auditor = construirRol(tenant, Permiso.CODIGO_ROL_AUDITOR, "Auditor", Permiso.deAuditor());

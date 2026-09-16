@@ -138,3 +138,89 @@ test("una instancia completada sin eventos pinta todo el recorrido", async ({
   ).toBeVisible();
   await expect(page.locator('svg g[opacity="0.45"]')).toHaveCount(0);
 });
+
+test("el detalle pinta dos ramas en curso a la vez dentro de un paralelo", async ({
+  page,
+}) => {
+  const control = await preparar(page);
+  control.instancia.tareas = [
+    {
+      id: "t1",
+      instanciaId: "instancia-1",
+      nodoId: "rama-legal",
+      tipoNodo: "REVISION_HUMANA",
+      estado: "PENDIENTE",
+      asignadoA: "legal@prueba.test",
+    },
+    {
+      id: "t2",
+      instanciaId: "instancia-1",
+      nodoId: "rama-finanzas",
+      tipoNodo: "REVISION_HUMANA",
+      estado: "PENDIENTE",
+      asignadoA: "finanzas@prueba.test",
+    },
+  ];
+  control.instancia.eventos = [
+    { id: "e1", accion: "INSTANCIA_INICIADA" },
+    { id: "e2", nodoId: "entrada", accion: "NODO_INGRESADO" },
+    { id: "e3", nodoId: "division", accion: "PARALELO_LANZADO" },
+  ];
+  await page.route("**/api/v1/procesos/proceso", async (ruta) => {
+    await ruta.fulfill({
+      status: 200,
+      json: {
+        id: "proceso",
+        codigo: "PRUEBA",
+        familia: "Pruebas",
+        nombre: "Proceso controlado",
+        versiones: [
+          {
+            id: "publicada",
+            definicionId: "proceso",
+            codigoDefinicion: "PRUEBA",
+            numero: 7,
+            estado: "PUBLICADA",
+            grafo: {
+              nodos: [
+                { id: "entrada", tipo: "INICIO", nombre: "Entrada" },
+                { id: "division", tipo: "PARALELO", nombre: "Dividir" },
+                { id: "rama-legal", tipo: "REVISION_HUMANA", nombre: "Legal" },
+                { id: "rama-finanzas", tipo: "REVISION_HUMANA", nombre: "Finanzas" },
+                { id: "union", tipo: "UNION", nombre: "Unir" },
+                { id: "salida", tipo: "FIN", nombre: "Salida" },
+              ],
+              aristas: [
+                { origen: "entrada", destino: "division" },
+                { origen: "division", destino: "rama-legal" },
+                { origen: "division", destino: "rama-finanzas" },
+                { origen: "rama-legal", destino: "union" },
+                { origen: "rama-finanzas", destino: "union" },
+                { origen: "union", destino: "salida" },
+              ],
+            },
+          },
+        ],
+      },
+    });
+  });
+  await page.goto("/operacion/instancias/instancia-1");
+
+  const diagrama = page.getByRole("img", { name: /Diagrama del recorrido/ });
+  await expect(diagrama).toBeVisible();
+  await expect(diagrama.getByText(/Paralelo/)).toBeVisible();
+  await expect(diagrama.getByText(/Unión/)).toBeVisible();
+
+  await expect(
+    diagrama.locator('g[opacity="0.45"]', { hasText: "Legal" }),
+  ).toHaveCount(0);
+  await expect(
+    diagrama.locator('g[opacity="0.45"]', { hasText: "Finanzas" }),
+  ).toHaveCount(0);
+  await expect(
+    diagrama.locator('g[opacity="0.45"]', { hasText: "Unir" }),
+  ).toHaveCount(1);
+  await expect(
+    diagrama.locator('g[opacity="0.45"]', { hasText: "Salida" }),
+  ).toHaveCount(1);
+});
