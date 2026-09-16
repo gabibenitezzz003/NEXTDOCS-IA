@@ -201,6 +201,10 @@ export const pt: Diccionario = {
       "Arraste os passos para posicioná-los; arraste do ponto violeta de um passo até outro para conectá-los.",
     ariaRecorrido: "Canvas do percurso: {cantidad} passos",
     pasos: "{cantidad} passos",
+    vacio:
+      "O canvas está vazio. Comece com o percurso mínimo ou adicione etapas com o seletor acima.",
+    vacioLectura: "Esta versão ainda não tem etapas.",
+    empezar: "Começar com Início → Fim",
     alejar: "Afastar",
     acercar: "Aproximar",
     ajustar: "Recentrar o percurso",
@@ -493,12 +497,12 @@ export const pt: Diccionario = {
   tareas: {
     titulo: "Tarefas",
     descripcion:
-      "Tudo o que os processos pedem para você fazer, em uma única caixa de entrada.",
+      "O que as execuções em andamento pedem para você fazer. Concluir uma tarefa faz o processo avançar em Operação.",
   },
   operacion: {
     titulo: "Operação de processos",
     descripcion:
-      "Processos em execução: instâncias ativas, indicadores e o detalhe de cada uma.",
+      "Execuções dos processos publicados no Workflow: instâncias ativas, indicadores e a etapa em que cada uma está.",
     indicadores: "Indicadores",
     indicadoresDesc: "Como está o motor de processos na janela escolhida.",
     ventanaIndicadores: "Janela dos indicadores",
@@ -622,6 +626,7 @@ export const pt: Diccionario = {
     FORMULARIO: "Formulário",
     VALIDACION_IA: "Validar com IA",
     REVISION_HUMANA: "Revisão humana",
+    DECISION: "Decisão",
     TAREA_EXTERNA: "Tarefa externa",
     NOTIFICACION: "Notificar",
     TEMPORIZADOR: "Aguardar (temporizador)",
@@ -631,11 +636,11 @@ export const pt: Diccionario = {
   studio: {
     titulo: "Workflow",
     descripcion:
-      "Desenhe processos no canvas, publique versões e teste-os em execução.",
+      "Desenhe os processos no canvas: cada versão publicada executa em Operação e gera o trabalho que aparece em Tarefas.",
   },
   procesos: {
     bibliotecaDesc:
-      "Biblioteca de definições do espaço de trabalho. Abra o Studio para configurar os passos de cada processo e publicar uma versão.",
+      "Biblioteca de processos do espaço de trabalho. Abra um para desenhar seus passos no canvas e publicar uma versão.",
     nuevoProceso: "Novo processo",
     nuevoProcesoTitulo: "Novo processo",
     nuevoProcesoDesc:

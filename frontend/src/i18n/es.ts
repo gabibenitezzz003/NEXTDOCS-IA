@@ -199,6 +199,10 @@ export const es = {
       "Arrastrá los pasos para ubicarlos; tirá del punto violeta de un paso hasta otro para conectarlos.",
     ariaRecorrido: "Canvas del recorrido: {cantidad} pasos",
     pasos: "{cantidad} pasos",
+    vacio:
+      "El canvas está vacío. Empezá con el recorrido mínimo o agregá pasos con el selector de arriba.",
+    vacioLectura: "Esta versión no tiene pasos todavía.",
+    empezar: "Empezar con Inicio → Fin",
     alejar: "Alejar",
     acercar: "Acercar",
     ajustar: "Recentrar el recorrido",
@@ -491,12 +495,12 @@ export const es = {
   tareas: {
     titulo: "Tareas",
     descripcion:
-      "Todo lo que los procesos te piden hacer, en una sola bandeja.",
+      "Lo que las ejecuciones en curso te piden hacer. Completar una tarea hace avanzar el proceso en Operación.",
   },
   operacion: {
     titulo: "Operación de procesos",
     descripcion:
-      "Procesos en ejecución: instancias activas, indicadores y detalle de cada una.",
+      "Ejecuciones de los procesos publicados en Workflow: instancias activas, indicadores y el paso en que va cada una.",
     indicadores: "Indicadores",
     indicadoresDesc: "Cómo viene el motor de procesos en la ventana elegida.",
     ventanaIndicadores: "Ventana de los indicadores",
@@ -620,6 +624,7 @@ export const es = {
     FORMULARIO: "Formulario",
     VALIDACION_IA: "Validar con IA",
     REVISION_HUMANA: "Revisión humana",
+    DECISION: "Decisión",
     TAREA_EXTERNA: "Tarea externa",
     NOTIFICACION: "Notificar",
     TEMPORIZADOR: "Esperar (temporizador)",
@@ -629,11 +634,11 @@ export const es = {
   studio: {
     titulo: "Workflow",
     descripcion:
-      "Diseñá procesos en el canvas, publicá versiones y probalos en ejecución.",
+      "Diseñá los procesos en el canvas: cada versión publicada se ejecuta en Operación y genera el trabajo que aparece en Tareas.",
   },
   procesos: {
     bibliotecaDesc:
-      "Biblioteca de definiciones del espacio de trabajo. Abrí el Studio para configurar los pasos de cada proceso y publicar una versión.",
+      "Biblioteca de procesos del espacio de trabajo. Abrí uno para dibujar sus pasos en el canvas y publicar una versión.",
     nuevoProceso: "Nuevo proceso",
     nuevoProcesoTitulo: "Nuevo proceso",
     nuevoProcesoDesc:

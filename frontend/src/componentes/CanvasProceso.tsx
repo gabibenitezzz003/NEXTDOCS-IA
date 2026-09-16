@@ -6,7 +6,7 @@ import type {
   TipoNodoProceso,
 } from "../api/procesos";
 import { disponerGrafo } from "../utilidades/disposicionGrafo";
-import { BotonIcono, Selector } from "./Interfaz";
+import { Boton, BotonIcono, Selector } from "./Interfaz";
 import {
   IconoAjustar,
   IconoCheck,
@@ -256,15 +256,22 @@ export function CanvasProceso({
     setArrastre({ ...arrastre, x: punto.x, y: punto.y });
   }
 
+  function destinoEn(punto: { x: number; y: number }, origen: string) {
+    return grafo.nodos.find((nodo) => {
+      if (nodo.tipo === "INICIO" || nodo.id === origen) return false;
+      const p = posicion(nodo);
+      return (
+        punto.x >= p.x - 20 &&
+        punto.x <= p.x + ANCHO + 20 &&
+        punto.y >= p.y - 20 &&
+        punto.y <= p.y + ALTO + 20
+      );
+    });
+  }
+
   function alPointerUp(evento: React.PointerEvent<SVGSVGElement>) {
     if (arrastre?.tipo === "conexion" && !deshabilitado) {
-      const punto = mundoDe(evento);
-      const destino = grafo.nodos.find((nodo) => {
-        if (nodo.tipo === "INICIO" || nodo.id === arrastre.origen) return false;
-        const p = posicion(nodo);
-        const distancia = Math.hypot(punto.x - p.x, punto.y - (p.y + ALTO / 2));
-        return distancia < 30;
-      });
+      const destino = destinoEn(mundoDe(evento), arrastre.origen);
       if (destino) conectar(arrastre.origen, destino.id);
     }
     setArrastre(null);
@@ -284,6 +291,26 @@ export function CanvasProceso({
         x: px - ((px - actual.x) / actual.k) * k,
         y: py - ((py - actual.y) / actual.k) * k,
       };
+    });
+  }
+
+  function sembrarExtremos() {
+    const inicio: NodoProceso = {
+      id: "inicio",
+      tipo: "INICIO",
+      nombre: t("tipoNodo.INICIO"),
+      configuracion: { posicion: { x: 80, y: 120 } },
+    };
+    const fin: NodoProceso = {
+      id: "fin",
+      tipo: "FIN",
+      nombre: t("tipoNodo.FIN"),
+      configuracion: { posicion: { x: 480, y: 120 } },
+    };
+    alCambiar({
+      ...grafo,
+      nodos: [inicio, fin],
+      aristas: [...grafo.aristas, { origen: "inicio", destino: "fin" }],
     });
   }
 
@@ -453,6 +480,11 @@ export function CanvasProceso({
               const p = posicion(nodo);
               const color = colorDe(nodo.tipo);
               const activo = seleccionNodo === nodo.id;
+              const destinoConexion =
+                arrastre?.tipo === "conexion" && !deshabilitado
+                  ? destinoEn({ x: arrastre.x, y: arrastre.y }, arrastre.origen)
+                      ?.id === nodo.id
+                  : false;
               return (
                 <g
                   key={nodo.id}
@@ -477,8 +509,13 @@ export function CanvasProceso({
                     height={ALTO}
                     rx={12}
                     fill={color.relleno}
-                    stroke={activo ? "var(--color-violeta)" : color.borde}
-                    strokeWidth={activo ? 2.5 : 1.5}
+                    stroke={
+                      activo || destinoConexion
+                        ? "var(--color-violeta)"
+                        : color.borde
+                    }
+                    strokeWidth={activo ? 2.5 : destinoConexion ? 3 : 1.5}
+                    strokeDasharray={destinoConexion ? "6 4" : undefined}
                   />
                   <text
                     x={14}
@@ -551,6 +588,22 @@ export function CanvasProceso({
             })}
           </g>
         </svg>
+        {grafo.nodos.length === 0 ? (
+          <div className="absolute inset-0 grid place-items-center bg-lienzo/80 p-espacio-6 text-center">
+            <div className="space-y-espacio-3">
+              <p className="text-pequeno text-tinta-suave">
+                {soloLectura
+                  ? t("canvas.vacioLectura")
+                  : t("canvas.vacio")}
+              </p>
+              {!soloLectura && !deshabilitado ? (
+                <Boton variante="primario" onClick={sembrarExtremos}>
+                  {t("canvas.empezar")}
+                </Boton>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
         <div className="absolute bottom-espacio-3 right-espacio-3 flex gap-espacio-1 rounded-panel border border-borde bg-superficie p-espacio-1 shadow-panel">
           <BotonIcono
             variante="fantasma"
