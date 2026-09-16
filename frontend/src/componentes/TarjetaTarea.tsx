@@ -28,6 +28,7 @@ const TIPOS_TAREA_CONOCIDOS = new Set([
   "TAREA_EXTERNA",
   "TEMPORIZADOR",
   "SUBPROCESO",
+  "FIRMA",
 ]);
 
 type Traductor = (ruta: string, params?: Record<string, string | number>) => string;
@@ -67,11 +68,13 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
   const [error, setError] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
 
+  const exigeDocumento =
+    tarea.tipoNodo === "SOLICITUD_DOCUMENTO" || tarea.tipoNodo === "FIRMA";
   const consultaDocumentos = useQuery({
     queryKey: ["documentos", "entregables"],
     queryFn: () =>
       listarDocumentos({ tamano: 50, orden: "alta,desc", soloRaiz: true }),
-    enabled: abierta && tarea.tipoNodo === "SOLICITUD_DOCUMENTO",
+    enabled: abierta && exigeDocumento,
     staleTime: 30_000,
   });
   const documentos = consultaDocumentos.data?.content ?? [];
@@ -79,7 +82,7 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
   const completar = useMutation({
     mutationFn: () => {
       const datos: Record<string, unknown> = {};
-      if (tarea.tipoNodo === "SOLICITUD_DOCUMENTO" && documentoId.trim()) {
+      if (exigeDocumento && documentoId.trim()) {
         datos.documentoId = documentoId.trim();
       }
       if (
@@ -256,10 +259,18 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
 
       {abierta ? (
         <div className="mt-espacio-4 space-y-espacio-3 border-t border-borde pt-espacio-4">
-          {tarea.tipoNodo === "SOLICITUD_DOCUMENTO" ? (
+          {exigeDocumento ? (
             <Selector
-              etiqueta={t("operacion.documentoEntregado")}
-              ayuda={t("operacion.documentoEntregadoAyuda")}
+              etiqueta={
+                tarea.tipoNodo === "FIRMA"
+                  ? t("operacion.documentoFirmado")
+                  : t("operacion.documentoEntregado")
+              }
+              ayuda={
+                tarea.tipoNodo === "FIRMA"
+                  ? t("operacion.documentoFirmadoAyuda")
+                  : t("operacion.documentoEntregadoAyuda")
+              }
               value={documentoId}
               onChange={(evento) => setDocumentoId(evento.target.value)}
             >
@@ -313,7 +324,7 @@ export function TarjetaTarea({ tarea, conInstancia = false }: { tarea: TareaProc
               disabled={
                 completar.isPending ||
                 (decision === "RECHAZADO" && !motivo.trim()) ||
-                (tarea.tipoNodo === "SOLICITUD_DOCUMENTO" && !documentoId.trim())
+                (exigeDocumento && !documentoId.trim())
               }
               onClick={() => completar.mutate()}
             >

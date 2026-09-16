@@ -219,6 +219,44 @@ export function IconoTareas(props: PropsIcono) {
   );
 }
 
+export function IconoBifurcar(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <circle cx="5" cy="12" r="2.2" />
+      <circle cx="19" cy="5" r="2.2" />
+      <circle cx="19" cy="12" r="2.2" />
+      <circle cx="19" cy="19" r="2.2" />
+      <path d="M7.2 11.2 16.8 5.8" />
+      <path d="M7.2 12h9.6" />
+      <path d="M7.2 12.8 16.8 18.2" />
+    </Base>
+  );
+}
+
+export function IconoUnir(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <circle cx="5" cy="5" r="2.2" />
+      <circle cx="5" cy="12" r="2.2" />
+      <circle cx="5" cy="19" r="2.2" />
+      <circle cx="19" cy="12" r="2.2" />
+      <path d="M7.2 5.8 16.8 11.2" />
+      <path d="M7.2 12h9.6" />
+      <path d="M7.2 18.2 16.8 12.8" />
+    </Base>
+  );
+}
+
+export function IconoFirma(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M4 18c2-6 4-9 5-9s.5 4-1 6c-1.4 1.8-3.4 3-4 3z" />
+      <path d="M9.5 15c1.8-.8 3.5-1 4.5-1s2 .5 6-.5" />
+      <path d="M4 21h16" />
+    </Base>
+  );
+}
+
 export function IconoOperacion(props: PropsIcono) {
   return (
     <Base {...props}>

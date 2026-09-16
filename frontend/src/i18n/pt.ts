@@ -173,6 +173,9 @@ export const pt: Diccionario = {
     TEMPORIZADOR: "Espera",
     ACCION_API: "Ação de API",
     SUBPROCESO: "Subprocesso",
+    PARALELO: "Paralelo",
+    UNION: "União",
+    FIRMA: "Assinatura",
   },
   insignias: {
     confianzaLectura: "Confiança de leitura",
@@ -262,6 +265,26 @@ export const pt: Diccionario = {
       "Falta o código do subproceso: sem ele o passo falha na execução.",
     avisoTipoDocumento:
       "Sem tipo documental a tarefa aceita qualquer documento ao ser concluída.",
+    avisoParalelo:
+      "A bifurcação precisa de pelo menos duas saídas: com uma só não há paralelismo.",
+    avisoUnionEntradas:
+      "A união precisa de pelo menos duas entradas: com uma só não sincroniza nada.",
+    avisoUnionSalida:
+      "A união deve continuar por uma única saída.",
+    avisoProgramado:
+      "O intervalo programado deve ser um número de minutos maior que zero.",
+    paraleloAyuda:
+      "Divide a execução em ramos simultâneos: cada conexão de saída inicia um ramo com suas próprias tarefas. Os ramos se reencontram em um passo de união.",
+    unionAyuda:
+      "Espera todos os ramos chegarem antes de continuar. Conecte aqui os ramos que saíram do passo paralelo.",
+    programadoMinutos: "Executar a cada (minutos)",
+    programadoMinutosAyuda:
+      "Se a versão publicada tiver intervalo, o processo se instancia sozinho de forma periódica.",
+    eventoInicio: "Evento que dispara o processo",
+    eventoInicioAyuda:
+      "Nome do evento que instancia o processo publicado (ex.: documento.recibido).",
+    tipoDocumentoFirmaAyuda:
+      "Código do catálogo documental que o signatário deve entregar assinado.",
     ayuda:
       "Toque em um passo para configurá-lo, ou em uma conexão para editar sua condição. Os passos Início e Fim são fixos.",
   },
@@ -582,6 +605,7 @@ export const pt: Diccionario = {
     TAREA_EXTERNA: "Tarefa externa",
     TEMPORIZADOR: "Espera (temporizador)",
     SUBPROCESO: "Subprocesso",
+    FIRMA: "Assinatura de documento",
   },
   tareas: {
     titulo: "Tarefas",
@@ -706,6 +730,9 @@ export const pt: Diccionario = {
     documentoEntregado: "Documento entregue",
     documentoEntregadoAyuda:
       "Escolha o documento que você já subiu à bandeja documental.",
+    documentoFirmado: "Documento a assinar",
+    documentoFirmadoAyuda:
+      "Escolha o documento assinado que você já subiu à bandeja documental.",
     documentosCargando: "Carregando documentos…",
     documentoElegir: "Escolha um documento",
     documentoSinNombre: "documento sem nome",
@@ -728,6 +755,9 @@ export const pt: Diccionario = {
     TEMPORIZADOR: "Aguardar (temporizador)",
     ACCION_API: "Ação de API",
     SUBPROCESO: "Subprocesso",
+    PARALELO: "Dividir em paralelo",
+    UNION: "Unir ramos",
+    FIRMA: "Assinar documento",
   },
   studio: {
     titulo: "Workflow",
@@ -781,6 +811,18 @@ export const pt: Diccionario = {
       "Edite a sequência e salve o rascunho antes de publicar. O Workflow valida o percurso e os tipos habilitados.",
     validar: "Validar",
     validacionOk: "A versão é válida: pode ser publicada.",
+    simular: "Simular",
+    simulacionTitulo: "Simulação do percurso",
+    simulacionDesc:
+      "Percorre o grafo em memória com dados de exemplo: não cria instâncias nem tarefas reais.",
+    simulacionDatos: "Dados de exemplo (JSON)",
+    simulacionDatosAyuda:
+      "As decisões e validações são avaliadas contra estes dados.",
+    simulacionDatosInvalidos: "Os dados de exemplo devem ser um JSON válido.",
+    ejecutarSimulacion: "Executar simulação",
+    simulacionTerminada: "O percurso chegou ao fim",
+    simulacionIncompleta: "O percurso não chegou ao fim",
+    simulacionPasos: "{cantidad} passos percorridos",
     sinGuardar: "Não salvo",
     versionNoEditable: "Esta versión não pode ser editada com segurança",
     hayCambios:

@@ -173,6 +173,9 @@ export const en: Diccionario = {
     TEMPORIZADOR: "Wait",
     ACCION_API: "API action",
     SUBPROCESO: "Subprocess",
+    PARALELO: "Parallel",
+    UNION: "Join",
+    FIRMA: "Signature",
   },
   insignias: {
     confianzaLectura: "Reading confidence",
@@ -261,6 +264,25 @@ export const en: Diccionario = {
       "Missing subprocess code: without it the step fails at runtime.",
     avisoTipoDocumento:
       "Without a document type the task accepts any document when completed.",
+    avisoParalelo:
+      "The fork needs at least two outgoing connections: with only one there is no parallelism.",
+    avisoUnionEntradas:
+      "The join needs at least two incoming connections: with only one it synchronizes nothing.",
+    avisoUnionSalida: "The join must continue through a single outgoing connection.",
+    avisoProgramado:
+      "The scheduled interval must be a number of minutes greater than zero.",
+    paraleloAyuda:
+      "Splits execution into simultaneous branches: each outgoing connection starts a branch with its own tasks. Branches meet again at a join step.",
+    unionAyuda:
+      "Waits for every branch to arrive before continuing. Connect the branches that left the parallel step here.",
+    programadoMinutos: "Run every (minutes)",
+    programadoMinutosAyuda:
+      "If the published version has an interval, the process instantiates itself periodically.",
+    eventoInicio: "Event that triggers the process",
+    eventoInicioAyuda:
+      "Name of the event that instantiates the published process (e.g.: documento.recibido).",
+    tipoDocumentoFirmaAyuda:
+      "Document catalog code that the signer must deliver signed.",
     ayuda:
       "Click a step to configure it, or a connection to edit its condition. Start and End steps are fixed.",
   },
@@ -581,6 +603,7 @@ export const en: Diccionario = {
     TAREA_EXTERNA: "External task",
     TEMPORIZADOR: "Wait (timer)",
     SUBPROCESO: "Subprocess",
+    FIRMA: "Document signature",
   },
   tareas: {
     titulo: "Tasks",
@@ -703,6 +726,9 @@ export const en: Diccionario = {
     documentoEntregado: "Delivered document",
     documentoEntregadoAyuda:
       "Pick the document you already uploaded to the document inbox.",
+    documentoFirmado: "Document to sign",
+    documentoFirmadoAyuda:
+      "Pick the signed document you already uploaded to the document inbox.",
     documentosCargando: "Loading documents…",
     documentoElegir: "Choose a document",
     documentoSinNombre: "unnamed document",
@@ -725,6 +751,9 @@ export const en: Diccionario = {
     TEMPORIZADOR: "Wait (timer)",
     ACCION_API: "API action",
     SUBPROCESO: "Subprocess",
+    PARALELO: "Split in parallel",
+    UNION: "Join branches",
+    FIRMA: "Sign document",
   },
   studio: {
     titulo: "Workflow",
@@ -778,6 +807,18 @@ export const en: Diccionario = {
       "Edit the sequence and save the draft before publishing. Workflow validates the route and enabled types.",
     validar: "Validate",
     validacionOk: "The version is valid: it can be published.",
+    simular: "Simulate",
+    simulacionTitulo: "Route simulation",
+    simulacionDesc:
+      "Walks the graph in memory with sample data: it creates no real instances or tasks.",
+    simulacionDatos: "Sample data (JSON)",
+    simulacionDatosAyuda:
+      "Decisions and validations are evaluated against this data.",
+    simulacionDatosInvalidos: "Sample data must be valid JSON.",
+    ejecutarSimulacion: "Run simulation",
+    simulacionTerminada: "The route reached the end",
+    simulacionIncompleta: "The route did not reach the end",
+    simulacionPasos: "{cantidad} steps visited",
     sinGuardar: "Unsaved",
     versionNoEditable: "This version cannot be edited safely",
     hayCambios:
