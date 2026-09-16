@@ -175,6 +175,55 @@ services:
         max-size: "20m"
         max-file: "5"
 
+
+  documental-api:
+    image: nextdocs-documental:1.0.3
+    container_name: nextdocs-ia-documental-api
+    restart: unless-stopped
+    command: ["node", "apps/api/dist/principal.js"]
+    environment:
+      NODE_ENV: production
+      POSTGRES_URL: ${NEXTDOCS_DOCUMENTAL_BD_URL}
+      POSTGRES_SSL: "true"
+      REDIS_URL: redis://redis:6379
+      ALMACENAMIENTO_REGION: ${NEXTDOCS_S3_REGION}
+      ALMACENAMIENTO_BALDE: ${NEXTDOCS_S3_BUCKET_DOCUMENTOS}
+      ALMACENAMIENTO_PREFIJO: documental/
+      API_PUERTO: "4000"
+      API_URL: http://documental-api:4000
+      API_ORIGENES: http://documental-api:4000
+      PROVEEDOR_IA: gemini
+      GOOGLE_API_KEY: ${NEXTDOCS_GEMINI_CLAVE}
+      GEMINI_MODELO: gemini-3.6-flash
+      CORREO_ANFITRION: ""
+      ARCA_ENTORNO: homologacion
+    ports:
+      - "127.0.0.1:4002:4000"
+    networks:
+      - nextdocs-interno
+
+  documental-worker:
+    image: nextdocs-documental:1.0.3
+    container_name: nextdocs-ia-documental-worker
+    restart: unless-stopped
+    command: ["node", "apps/worker/dist/principal.js"]
+    environment:
+      NODE_ENV: production
+      POSTGRES_URL: ${NEXTDOCS_DOCUMENTAL_BD_URL}
+      POSTGRES_SSL: "true"
+      REDIS_URL: redis://redis:6379
+      ALMACENAMIENTO_REGION: ${NEXTDOCS_S3_REGION}
+      ALMACENAMIENTO_BALDE: ${NEXTDOCS_S3_BUCKET_DOCUMENTOS}
+      ALMACENAMIENTO_PREFIJO: documental/
+      PROVEEDOR_IA: gemini
+      GOOGLE_API_KEY: ${NEXTDOCS_GEMINI_CLAVE}
+      GEMINI_MODELO: gemini-3.6-flash
+      CORREO_ANFITRION: ""
+      ARCA_ENTORNO: homologacion
+      WORKER_CONCURRENCIA: "2"
+    networks:
+      - nextdocs-interno
+
 networks:
   nextdocs-interno:
     driver: bridge

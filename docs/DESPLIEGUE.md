@@ -313,6 +313,36 @@ Disparadores: cada push a `main` de `gabibenitezzz003/nextdocs-workflow` llama `
 `NEXTDOCS_DISPATCH_TOKEN` en ese repo), y el deploy normal del core también sincroniza el
 workflow si cambió — un merge del core que no toca el workflow no lo rebuildeará.
 
+#### Motor documental (nextdocs-documental)
+
+Fork de `docvance-ai` en `gabibenitezzz003/nextdocs-documental`: mismo pipeline
+(catálogo → extracción → emparejamiento → decisión) pero con código propio para evolucionar
+sin tocar DocVance ni ia-docs de Follow. Corre como dos contenedores en producción:
+
+- `documental-api` (puerto interno `4002→4000`) y `documental-worker` (misma imagen
+  `nextdocs-documental:1.x`, comando `node apps/worker/dist/principal.js`). El deploy
+  manual de imagen hoy es `docker build` local + `docker save | ssh docker load`.
+- Base `nextdocs_documental` en el mismo RDS con usuario dedicado; `POSTGRES_SSL=true`
+  es obligatorio (RDS rechaza conexiones sin TLS). Migraciones:
+  `docker compose run --rm --no-deps documental-api node packages/db/dist/migrar.js`.
+- Almacenamiento: el **mismo bucket** `NEXTDOCS_S3_BUCKET_DOCUMENTOS` con prefijo
+  `documental/` (`ALMACENAMIENTO_PREFIJO`) y la cadena de credenciales AWS del rol de la
+  instancia — sin endpoint ni claves cuando `ALMACENAMIENTO_ENDPOINT` está vacío.
+- Redis compartido con el core: BullMQ nombra las claves por cola
+  (`nextdocs-documental-procesamiento`), sin colisión.
+- Alta de un inquilino (por tenant del core):
+  `docker compose run --rm --no-deps -e ALTA_INQUILINO_ID=<uuidTenantCore>
+   -e ALTA_INQUILINO_NOMBRE="<nombre>" -e NEXTDOCS_DOCUMENTAL_API_KEY=<ndk_...>
+   documental-api node packages/db/dist/alta-inquilino.js` — crea el inquilino con las
+  11 plantillas base y la clave (huella SHA-256). El inquilino Diagnostico
+  (`40ec8745-84d2-4c81-a7f4-4839e0606270`) ya existe con este mismo ID del core.
+- `PROVEEDOR_IA=gemini` con `GOOGLE_API_KEY` y `GEMINI_MODELO=gemini-3.6-flash`
+  (el modelo `gemini-2.0-flash` que traía el .env.ejemplo está retirado por Google).
+- Correo deshabilitado en producción (`CORREO_ANFITRION` vacío): la bandeja de salida
+  no despacha e-mails. ARCA queda en `homologacion` sin certificado — sin efecto.
+- La API es interna: escucha sólo en `127.0.0.1:4002` y `nextdocs-interno`, autenticación
+  por `Authorization: Bearer ndk_*` (huella SHA-256 en `clave_api`).
+
 ### HTTPS
 
 Pendiente hasta que `demo.mynextpipe.com` apunte a `3.213.58.243` por DNS: `certbot --nginx`
