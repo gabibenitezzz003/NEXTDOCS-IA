@@ -16,6 +16,7 @@ import { IconoFlechaAbajo, IconoDerecha } from "../../componentes/Iconos";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
 import { enPorcentaje, fusionarCatalogoPlantillas } from "../dominio";
 import { EtiquetaSeveridadMotor } from "./EtiquetaEstadoMotor";
+import { ContenidoTiposPropuestos } from "../../paginas/TiposPropuestos";
 
 function Interruptor({
   marcado,
@@ -458,6 +459,21 @@ export function PlantillasDocumentales() {
           />
         ))
       )}
+
+      <section
+        aria-label={t("documental.plantillas.detectados")}
+        className="rounded-panel border border-borde bg-lienzo p-espacio-4"
+      >
+        <h3 className="text-pequeno font-bold text-tinta">
+          {t("documental.plantillas.detectados")}
+        </h3>
+        <p className="mt-espacio-1 text-micro text-tinta-suave">
+          {t("documental.plantillas.detectadosDesc")}
+        </p>
+        <div className="mt-espacio-4">
+          <ContenidoTiposPropuestos />
+        </div>
+      </section>
 
       {faltantes.length ? (
         <Tarjeta padding="p-0">

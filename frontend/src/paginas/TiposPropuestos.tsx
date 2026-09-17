@@ -15,7 +15,7 @@ import {
   listarTiposPropuestos,
 } from "../api/tiposPropuestos";
 import { mensajeDeError } from "../api/cliente";
-import { formatearFecha } from "./Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 import { useSesion } from "../contextos/ProveedorSesion";
 import type { EstadoTipoPropuesto, TipoPropuesto } from "../tipos/api";
@@ -40,6 +40,21 @@ const FILTROS: { valor: EstadoTipoPropuesto; texto: string }[] = [
 ];
 
 export function TiposPropuestos() {
+  const { t } = useIdioma();
+  return (
+    <>
+      <Encabezado
+        titulo={t("tiposPropuestos.titulo")}
+        descripcion={t("tiposPropuestos.descripcion")}
+      />
+      <Contenido>
+        <ContenidoTiposPropuestos />
+      </Contenido>
+    </>
+  );
+}
+
+export function ContenidoTiposPropuestos() {
   const { tienePermiso } = useSesion();
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
@@ -82,11 +97,6 @@ export function TiposPropuestos() {
 
   return (
     <>
-      <Encabezado
-        titulo={t("tiposPropuestos.titulo")}
-        descripcion={t("tiposPropuestos.descripcion")}
-      />
-      <Contenido>
         <div className="mb-espacio-5 flex flex-wrap items-center justify-between gap-espacio-3">
           <GrupoSegmentado
             etiqueta={t("tiposPropuestos.grupoEstado")}
@@ -174,7 +184,6 @@ export function TiposPropuestos() {
             ))}
           </ul>
         )}
-      </Contenido>
     </>
   );
 }

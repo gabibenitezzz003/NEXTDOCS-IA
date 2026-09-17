@@ -22,7 +22,7 @@ import {
 } from "../api/procesos";
 import type { OrganizacionPartner } from "../api/procesos";
 import { mensajeDeError } from "../api/cliente";
-import { formatearFecha } from "./Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 import type { Tono } from "../componentes/Interfaz";
 

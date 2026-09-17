@@ -3,17 +3,13 @@ import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Disposicion } from "./componentes/Disposicion";
 import { Ingresar } from "./paginas/Ingresar";
 import { Resumen } from "./paginas/Resumen";
-import { Panel } from "./paginas/Panel";
-import { Documentos } from "./paginas/Documentos";
 
 const Documental = lazy(() =>
   import("./paginas/Documental").then((modulo) => ({
     default: modulo.Documental,
   })),
 );
-import { Excepciones } from "./paginas/Excepciones";
 import { Equipo } from "./paginas/Equipo";
-import { TiposPropuestos } from "./paginas/TiposPropuestos";
 import { Tareas } from "./paginas/Tareas";
 import { Operacion } from "./paginas/Operacion";
 import { Studio } from "./paginas/Studio";
@@ -70,8 +66,14 @@ export function Aplicacion() {
       <Route path="/ingresar" element={<Navigate to="/resumen" replace />} />
       <Route element={<Disposicion />}>
         <Route path="/resumen" element={<Resumen />} />
-        <Route path="/panel" element={<Panel />} />
-        <Route path="/documentos" element={<Documentos />} />
+        <Route
+          path="/panel"
+          element={<Navigate to="/documental/tablero" replace />}
+        />
+        <Route
+          path="/documentos"
+          element={<Navigate to="/documental/documentos" replace />}
+        />
         <Route
           path="/documental"
           element={
@@ -88,9 +90,15 @@ export function Aplicacion() {
             </Suspense>
           }
         />
-        <Route path="/excepciones" element={<Excepciones />} />
+        <Route
+          path="/excepciones"
+          element={<Navigate to="/documental/excepciones" replace />}
+        />
         <Route path="/equipo" element={<Equipo />} />
-        <Route path="/tipos-propuestos" element={<TiposPropuestos />} />
+        <Route
+          path="/tipos-propuestos"
+          element={<Navigate to="/documental/plantillas" replace />}
+        />
         <Route path="/tareas" element={<Tareas />} />
         <Route path="/operacion" element={<Operacion />} />
         <Route path="/operacion/instancias/:instanciaId" element={<Operacion />} />

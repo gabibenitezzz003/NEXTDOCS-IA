@@ -22,7 +22,7 @@ import {
 import { TarjetaTarea } from "../componentes/TarjetaTarea";
 import { DiagramaProceso } from "../componentes/DiagramaProceso";
 import type { EstadoNodoEjecucion } from "../componentes/DiagramaProceso";
-import { formatearFecha } from "./Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 import {
   INDICADOR_CUELLOS,
   cancelarInstancia,

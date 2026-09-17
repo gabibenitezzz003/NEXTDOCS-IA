@@ -33,16 +33,20 @@ const VisorInteligente = lazy(() =>
 const SECCIONES = [
   { id: "bandeja", etiqueta: "documental.tab.bandeja", icono: IconoResumen },
   {
-    id: "vencimientos",
-    etiqueta: "documental.tab.vencimientos",
-    icono: IconoReloj,
-  },
-  {
     id: "excepciones",
     etiqueta: "documental.tab.excepciones",
     icono: IconoExcepciones,
   },
-  { id: "tablero", etiqueta: "documental.tab.tablero", icono: IconoPanel },
+  {
+    id: "documentos",
+    etiqueta: "documental.tab.documentos",
+    icono: IconoDocumentos,
+  },
+  {
+    id: "vencimientos",
+    etiqueta: "documental.tab.vencimientos",
+    icono: IconoReloj,
+  },
   {
     id: "distribucion",
     etiqueta: "documental.tab.distribucion",
@@ -50,15 +54,11 @@ const SECCIONES = [
       <IconoDistribuir eje="x" {...props} />
     ),
   },
+  { id: "tablero", etiqueta: "documental.tab.tablero", icono: IconoPanel },
   {
     id: "plantillas",
     etiqueta: "documental.tab.plantillas",
     icono: IconoAjustar,
-  },
-  {
-    id: "documentos",
-    etiqueta: "documental.tab.documentos",
-    icono: IconoDocumentos,
   },
 ] as const;
 
@@ -155,6 +155,10 @@ export function Documental() {
               );
             })}
           </div>
+
+          <p className="text-micro text-tinta-suave">
+            {t(`documental.tabDesc.${activa}`)}
+          </p>
         </>
       ) : null}
 

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Boton, Campo, Pastilla, Selector, Tarjeta } from "./Interfaz";
-import { formatearFecha } from "../paginas/Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 import {
   completarTarea,
   listarEnlacesExternos,

@@ -67,10 +67,10 @@ export const es = {
     menuUsuario: "Menú de usuario",
     menuUsuarioNombre: "Menú de usuario: {nombre}",
     opcionesUsuario: "Opciones de usuario",
-    grupoOperacion: "Operación",
-    grupoProcesos: "Procesos",
-    grupoAnalisis: "Análisis",
-    grupoConfiguracion: "Configuración",
+    grupoHoy: "Hoy",
+    grupoDocumentos: "Documentos",
+    grupoAutomatizacion: "Automatización",
+    grupoOrganizacion: "Organización",
     navResumen: "Mi trabajo",
     navDocumentos: "Documentos",
     navDocumental: "Inteligencia documental",
@@ -381,7 +381,7 @@ export const es = {
     pasoSubir: "Subí tu primer documento",
     pasoSubirDesc:
       "Arrastrá una factura, remito o cualquier PDF: el sistema lo clasifica y lee sus datos solo.",
-    pasoSubirAccion: "Ir a la bandeja",
+    pasoSubirAccion: "Ir a Entrada",
     pasoTipos: "Revisá los tipos de documento",
     pasoTiposDesc:
       "Cada tipo define qué datos se leen y cuándo un documento se aprueba solo. Ya vienen los más comunes.",
@@ -405,12 +405,12 @@ export const es = {
     actividadReciente: "Actividad reciente",
     actividadRecienteDesc: "Últimas tareas completadas en los procesos.",
     sinActividad: "Todavía no hay actividad registrada.",
-    verPanel: "Ver panel de control",
+    verPanel: "Ver tablero",
     cargando: "Cargando resumen operativo",
     errorContexto: "No se pudo cargar el resumen",
     indicadores: "Indicadores documentales",
     documentosTotales: "Documentos totales",
-    enCola: "en cola de extracción del servicio",
+    enCola: "procesándose ahora",
     requierenRevision: "Requieren revisión",
     aprobados: "Aprobados",
     recibidos: "Recibidos",
@@ -1247,13 +1247,29 @@ export const es = {
       COMERCIAL: "Comercial",
     },
     tab: {
-      bandeja: "Bandeja",
+      bandeja: "Entrada",
       vencimientos: "Vencimientos",
-      excepciones: "Excepciones",
+      excepciones: "Revisar",
       tablero: "Tablero",
       distribucion: "Distribución",
       plantillas: "Tipos de documento",
-      documentos: "Documentos",
+      documentos: "Archivo",
+    },
+    tabDesc: {
+      bandeja:
+        "Acá entran los documentos: subilos o llegan por los canales configurados. El sistema los clasifica y lee sus datos.",
+      excepciones:
+        "Lo que el sistema no pudo resolver solo: revisalo, corregí los datos y aprobá o rechazá.",
+      documentos:
+        "Todos los documentos ya procesados, organizados por tipo.",
+      vencimientos:
+        "Documentos con fecha de vencimiento próxima o ya vencida.",
+      distribucion:
+        "A quién se envían los documentos listos y el historial de envíos.",
+      tablero:
+        "Cómo viene la operatoria documental: volúmenes, estados y calidad de lectura.",
+      plantillas:
+        "Qué es cada tipo de documento: qué datos lee el sistema y cuándo puede aprobar solo.",
     },
     kpi: {
       volumen: "Volumen",
@@ -1405,6 +1421,9 @@ export const es = {
       vacioDetalle:
         "Activá un tipo del catálogo de abajo — ya vienen listos los más comunes (facturas, remitos, DNI).",
       catalogo: "Catálogo — activá los tipos que usa tu empresa",
+      detectados: "Detectados por el sistema",
+      detectadosDesc:
+        "Cuando un documento no encaja con ningún tipo conocido, el sistema propone uno nuevo con los campos que encontró. Aprobalo para sumarlo al catálogo o descartalo.",
       instalar: "Activar",
       instalada: "Tipo de documento activado.",
       guardar: "Guardar ajustes",

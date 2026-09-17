@@ -4,11 +4,9 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Isotipo, Logotipo } from "./Marca";
 import { Boton, BotonIcono } from "./Interfaz";
 import {
-  IconoInfo,
   IconoInteligencia,
   IconoMarketplace,
   IconoOperacion,
-  IconoPanel,
   IconoPartner,
   IconoProceso,
   IconoResumen,
@@ -33,19 +31,13 @@ interface EntradaNavegacion {
 
 const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
   {
-    titulo: "disposicion.grupoOperacion",
+    titulo: "disposicion.grupoHoy",
     entradas: [
       {
         a: "/resumen",
         texto: "disposicion.navResumen",
         permiso: "documentos.leer",
         icono: IconoResumen,
-      },
-      {
-        a: "/documental",
-        texto: "disposicion.navDocumental",
-        permiso: "documentos.leer",
-        icono: IconoInteligencia,
       },
       {
         a: "/tareas",
@@ -62,18 +54,18 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
     ],
   },
   {
-    titulo: "disposicion.grupoAnalisis",
+    titulo: "disposicion.grupoDocumentos",
     entradas: [
       {
-        a: "/panel",
-        texto: "disposicion.navPanel",
+        a: "/documental",
+        texto: "disposicion.navDocumental",
         permiso: "documentos.leer",
-        icono: IconoPanel,
+        icono: IconoInteligencia,
       },
     ],
   },
   {
-    titulo: "disposicion.grupoConfiguracion",
+    titulo: "disposicion.grupoAutomatizacion",
     entradas: [
       {
         a: "/workflow",
@@ -82,22 +74,21 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         icono: IconoProceso,
       },
       {
-        a: "/equipo",
-        texto: "disposicion.navEquipo",
-        permiso: "tenant.administrar",
-        icono: IconoUsuario,
-      },
-      {
         a: "/supervisora",
         texto: "disposicion.navSupervisora",
         permiso: "tenant.administrar",
         icono: IconoSupervisora,
       },
+    ],
+  },
+  {
+    titulo: "disposicion.grupoOrganizacion",
+    entradas: [
       {
-        a: "/tipos-propuestos",
-        texto: "disposicion.navTiposNuevos",
+        a: "/equipo",
+        texto: "disposicion.navEquipo",
         permiso: "tenant.administrar",
-        icono: IconoInfo,
+        icono: IconoUsuario,
       },
       {
         a: "/partners",

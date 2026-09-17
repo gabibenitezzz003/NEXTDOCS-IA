@@ -13,7 +13,7 @@ import {
   Tarjeta,
 } from "../componentes/Interfaz";
 import { IconoCheck } from "../componentes/Iconos";
-import { formatearFecha } from "./Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 import {
   actualizarGrafo,
   actualizarProceso,

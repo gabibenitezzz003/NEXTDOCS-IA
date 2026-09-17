@@ -69,10 +69,10 @@ export const pt: Diccionario = {
     menuUsuario: "Menu do usuário",
     menuUsuarioNombre: "Menu do usuário: {nombre}",
     opcionesUsuario: "Opções do usuário",
-    grupoOperacion: "Operação",
-    grupoProcesos: "Processos",
-    grupoAnalisis: "Análise",
-    grupoConfiguracion: "Configuração",
+    grupoHoy: "Hoje",
+    grupoDocumentos: "Documentos",
+    grupoAutomatizacion: "Automação",
+    grupoOrganizacion: "Organização",
     navResumen: "Meu trabalho",
     navDocumentos: "Documentos",
     navDocumental: "Inteligência documental",
@@ -384,7 +384,7 @@ export const pt: Diccionario = {
     pasoSubir: "Envie seu primeiro documento",
     pasoSubirDesc:
       "Arraste uma fatura, recibo ou qualquer PDF: o sistema classifica e lê os dados sozinho.",
-    pasoSubirAccion: "Ir para a bandeja",
+    pasoSubirAccion: "Ir para Entrada",
     pasoTipos: "Revise os tipos de documento",
     pasoTiposDesc:
       "Cada tipo define quais dados são lidos e quando um documento pode ser aprovado sozinho. Os mais comuns já vêm prontos.",
@@ -409,12 +409,12 @@ export const pt: Diccionario = {
     actividadReciente: "Atividade recente",
     actividadRecienteDesc: "Últimas tarefas concluídas nos processos.",
     sinActividad: "Ainda não há atividade registrada.",
-    verPanel: "Ver painel de controle",
+    verPanel: "Ver painel",
     cargando: "Carregando resumo operacional",
     errorContexto: "Não foi possível carregar o resumo",
     indicadores: "Indicadores documentais",
     documentosTotales: "Documentos totais",
-    enCola: "na fila de extração do serviço",
+    enCola: "processando agora",
     requierenRevision: "Requerem revisão",
     aprobados: "Aprovados",
     recibidos: "Recebidos",
@@ -1248,13 +1248,29 @@ export const pt: Diccionario = {
       COMERCIAL: "Comercial",
     },
     tab: {
-      bandeja: "Caixa de entrada",
+      bandeja: "Entrada",
       vencimientos: "Vencimentos",
-      excepciones: "Exceções",
+      excepciones: "Revisar",
       tablero: "Painel",
       distribucion: "Distribuição",
       plantillas: "Tipos de documento",
-      documentos: "Documentos",
+      documentos: "Arquivo",
+    },
+    tabDesc: {
+      bandeja:
+        "Onde os documentos entram: envie-os ou eles chegam pelos canais configurados. O sistema os classifica e lê seus dados.",
+      excepciones:
+        "O que o sistema não conseguiu resolver sozinho: revise, corrija os dados, aprove ou rejeite.",
+      documentos:
+        "Todos os documentos já processados, organizados por tipo.",
+      vencimientos:
+        "Documentos com data de vencimento próxima ou já vencida.",
+      distribucion:
+        "Para quem os documentos prontos são enviados e o histórico de envios.",
+      tablero:
+        "Como está a operação documental: volumes, estados e qualidade de leitura.",
+      plantillas:
+        "O que é cada tipo de documento: quais dados o sistema lê e quando pode aprovar sozinho.",
     },
     kpi: {
       volumen: "Volume",
@@ -1406,6 +1422,9 @@ export const pt: Diccionario = {
       vacioDetalle:
         "Ative um tipo do catálogo abaixo — os mais comuns (faturas, recibos, documentos de identidade) já vêm prontos.",
       catalogo: "Catálogo — ative os tipos que sua empresa usa",
+      detectados: "Detectados pelo sistema",
+      detectadosDesc:
+        "Quando um documento não corresponde a nenhum tipo conhecido, o sistema propõe um novo com os campos que encontrou. Aprove para adicioná-lo ao catálogo ou descarte-o.",
       instalar: "Ativar",
       instalada: "Tipo de documento ativado.",
       guardar: "Salvar ajustes",

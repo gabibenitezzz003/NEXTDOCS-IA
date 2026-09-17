@@ -18,7 +18,7 @@ import {
   subirDocumentoEnlaceExterno,
   mensajeDeError,
 } from "../api/procesos";
-import { formatearFecha } from "./Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 
 type TonoPastilla = "neutro" | "exito" | "rojo" | "alerta" | "informacion";
 

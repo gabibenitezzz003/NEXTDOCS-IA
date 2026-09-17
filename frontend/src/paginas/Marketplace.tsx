@@ -24,7 +24,7 @@ import {
 } from "../api/procesos";
 import type { PublicacionMarketplace } from "../api/procesos";
 import { mensajeDeError } from "../api/cliente";
-import { formatearFecha } from "./Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 
 type Seccion = "catalogo" | "instalaciones" | "publicaciones";

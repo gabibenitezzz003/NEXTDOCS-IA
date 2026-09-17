@@ -69,10 +69,10 @@ export const en: Diccionario = {
     menuUsuario: "User menu",
     menuUsuarioNombre: "User menu: {nombre}",
     opcionesUsuario: "User options",
-    grupoOperacion: "Operations",
-    grupoProcesos: "Processes",
-    grupoAnalisis: "Analytics",
-    grupoConfiguracion: "Settings",
+    grupoHoy: "Today",
+    grupoDocumentos: "Documents",
+    grupoAutomatizacion: "Automation",
+    grupoOrganizacion: "Organization",
     navResumen: "My work",
     navDocumentos: "Documents",
     navDocumental: "Document intelligence",
@@ -384,7 +384,7 @@ export const en: Diccionario = {
     pasoSubir: "Upload your first document",
     pasoSubirDesc:
       "Drop an invoice, receipt or any PDF: the system classifies it and reads its data automatically.",
-    pasoSubirAccion: "Go to inbox",
+    pasoSubirAccion: "Go to Incoming",
     pasoTipos: "Review document types",
     pasoTiposDesc:
       "Each type defines which data is read and when a document can be auto-approved. The most common ones are already included.",
@@ -413,7 +413,7 @@ export const en: Diccionario = {
     errorContexto: "Could not load the overview",
     indicadores: "Document indicators",
     documentosTotales: "Total documents",
-    enCola: "in the service extraction queue",
+    enCola: "processing now",
     requierenRevision: "Require review",
     aprobados: "Approved",
     recibidos: "Received",
@@ -1243,13 +1243,27 @@ export const en: Diccionario = {
       COMERCIAL: "Commercial",
     },
     tab: {
-      bandeja: "Inbox",
+      bandeja: "Incoming",
       vencimientos: "Expirations",
-      excepciones: "Exceptions",
+      excepciones: "Review",
       tablero: "Dashboard",
       distribucion: "Distribution",
       plantillas: "Document types",
-      documentos: "Documents",
+      documentos: "Archive",
+    },
+    tabDesc: {
+      bandeja:
+        "Where documents enter: upload them or they arrive through the configured channels. The system classifies them and reads their data.",
+      excepciones:
+        "What the system could not resolve on its own: review it, fix the data, approve or reject.",
+      documentos: "Every processed document, organized by type.",
+      vencimientos: "Documents with an upcoming or past due date.",
+      distribucion:
+        "Who finished documents are sent to and the delivery history.",
+      tablero:
+        "How document operations are doing: volumes, statuses and reading quality.",
+      plantillas:
+        "What each document type is: which data the system reads and when it can self-approve.",
     },
     kpi: {
       volumen: "Volume",
@@ -1401,6 +1415,9 @@ export const en: Diccionario = {
       vacioDetalle:
         "Activate a type from the catalog below — the most common ones (invoices, receipts, IDs) are ready to use.",
       catalogo: "Catalog — activate the types your company uses",
+      detectados: "Detected by the system",
+      detectadosDesc:
+        "When a document doesn't match any known type, the system proposes a new one with the fields it found. Approve it to add it to the catalog or discard it.",
       instalar: "Activate",
       instalada: "Document type activated.",
       guardar: "Save settings",

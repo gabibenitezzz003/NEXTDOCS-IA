@@ -10,9 +10,13 @@ import {
 import { CabeceraTarjeta, Metrica, Tarjeta } from "../componentes/Interfaz";
 import { Columnas } from "../componentes/Graficos";
 import { IconoDerecha, IconoReloj } from "../componentes/Iconos";
-import { InsigniaEstado, InsigniaSeveridad } from "../componentes/Insignias";
-import { obtenerResumen, listarDocumentos } from "../api/documentos";
-import { listarExcepciones } from "../api/excepciones";
+import { InsigniaEstado } from "../componentes/Insignias";
+import {
+  obtenerResumenDocumental,
+  obtenerExcepcionesMotor,
+} from "../api/documental";
+import { motivoHumano } from "../documental/dominio";
+import { EtiquetaSeveridadMotor } from "../documental/componentes/EtiquetaEstadoMotor";
 import { listarTareas, listarInstancias } from "../api/procesos";
 import type { TareaProceso } from "../api/procesos";
 import { mensajeDeError } from "../api/cliente";
@@ -20,7 +24,7 @@ import { useIdioma } from "../contextos/ProveedorIdioma";
 import { formatearNumero } from "../i18n";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { ESTADOS_DOCUMENTALES } from "../utilidades/estadosDocumento";
-import { formatearFecha } from "./Documentos";
+import { formatearFecha } from "../utilidades/fechas";
 import { textoTipoTarea } from "../componentes/TarjetaTarea";
 import { Pastilla } from "../componentes/Interfaz";
 import type { EstadoDocumento } from "../tipos/api";
@@ -41,10 +45,13 @@ export function Resumen() {
   const { tienePermiso, sesion } = useSesion();
   const { t } = useIdioma();
 
-  const resumen = useQuery({ queryKey: ["resumen"], queryFn: obtenerResumen });
+  const resumen = useQuery({
+    queryKey: ["resumenDocumental"],
+    queryFn: obtenerResumenDocumental,
+  });
   const excepciones = useQuery({
-    queryKey: ["excepciones", "ABIERTA", 0, 5],
-    queryFn: () => listarExcepciones("ABIERTA", 0, 5),
+    queryKey: ["excepcionesMotor", "ABIERTA", 5],
+    queryFn: () => obtenerExcepcionesMotor({ estado: "ABIERTA", limite: 5 }),
     enabled: tienePermiso("excepciones.leer"),
   });
   const tareasPendientes = useQuery({
@@ -58,10 +65,6 @@ export function Resumen() {
   const bloqueadas = useQuery({
     queryKey: ["instancias", "BLOQUEADA"],
     queryFn: () => listarInstancias("BLOQUEADA"),
-  });
-  const observados = useQuery({
-    queryKey: ["documentos", "observados"],
-    queryFn: () => listarDocumentos({ estados: ["OBSERVADO"], tamano: 1 }),
   });
 
   const pendientes = (tareasPendientes.data ?? [])
@@ -94,7 +97,8 @@ export function Resumen() {
     (suma, [, valor]) => suma + Number(valor ?? 0),
     0,
   );
-  const enCola = Number(datos.profundidadCola ?? 0);
+  const enCola = Number(datos.PROCESANDO ?? 0);
+  const observadosCantidad = Number(datos.OBSERVADO ?? 0);
 
   return (
     <>
@@ -103,7 +107,7 @@ export function Resumen() {
         descripcion={t("resumen.descripcion")}
         acciones={
           <Link
-            to="/panel"
+            to="/documental/tablero"
             className="inline-flex min-h-control-mediano items-center gap-espacio-2 rounded-control border border-borde bg-superficie px-espacio-4 text-pequeno font-semibold text-tinta transition-colors hover:bg-lienzo focus-visible:outline-foco"
           >
             {t("resumen.verPanel")}
@@ -252,16 +256,14 @@ export function Resumen() {
                 </li>
                 <li>
                   <Link
-                    to="/documentos"
+                    to="/documental/excepciones"
                     className="flex items-center justify-between gap-espacio-2 py-espacio-3 text-pequeno transition-colors hover:text-accion-tonal-texto focus-visible:outline-foco"
                   >
                     <span className="text-tinta">
                       {t("resumen.documentosObservados")}
                     </span>
-                    <Pastilla
-                      tono={observados.data?.totalElements ? "alerta" : "neutro"}
-                    >
-                      {formatearNumero(observados.data?.totalElements ?? 0)}
+                    <Pastilla tono={observadosCantidad ? "alerta" : "neutro"}>
+                      {formatearNumero(observadosCantidad)}
                     </Pastilla>
                   </Link>
                 </li>
@@ -459,7 +461,7 @@ export function Resumen() {
                   acciones={
                     tienePermiso("excepciones.leer") ? (
                       <Link
-                        to="/excepciones"
+                        to="/documental/excepciones"
                         className="inline-flex min-h-control-pequeno items-center gap-espacio-1 rounded-control text-pequeno font-semibold text-accion-tonal-texto hover:underline focus-visible:outline-foco"
                       >
                         {t("comun.verTodas")}
@@ -484,7 +486,7 @@ export function Resumen() {
           error={excepciones.error}
                       reintentar={() => excepciones.refetch()}
                     />
-                  ) : !excepciones.data?.content.length ? (
+                  ) : !excepciones.data?.length ? (
                     <p
                       role="status"
                       aria-atomic="true"
@@ -494,21 +496,21 @@ export function Resumen() {
                     </p>
                   ) : (
                     <ul className="divide-y divide-borde">
-                      {excepciones.data.content.map((excepcion) => (
+                      {excepciones.data.map((excepcion) => (
                         <li
                           key={excepcion.id}
                           className="py-espacio-4 first:pt-0 last:pb-0"
                         >
                           <div className="flex flex-wrap items-start justify-between gap-espacio-2">
-                            <InsigniaSeveridad
+                            <EtiquetaSeveridadMotor
                               severidad={excepcion.severidad}
                             />
                             <span className="min-w-0 text-micro uppercase tracking-wide text-tinta-suave [overflow-wrap:anywhere]">
-                              {excepcion.tipo}
+                              {motivoHumano(excepcion.codigo_motivo, t)}
                             </span>
                           </div>
                           <p className="mt-espacio-2 text-pequeno text-tinta-media [overflow-wrap:anywhere]">
-                            {excepcion.detalle}
+                            {excepcion.nombre_archivo}
                           </p>
                         </li>
                       ))}
