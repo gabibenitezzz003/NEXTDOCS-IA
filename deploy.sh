@@ -1293,7 +1293,10 @@ desplegar() {
         fi
 
         if [ "$estado_commit" = "$objetivo" ]; then
-            log "El commit objetivo ya esta desplegado. Nada que hacer."
+            log "El commit del core ya esta desplegado; se verifican solo los servicios satelite."
+            sincronizar_arbol "$objetivo" "$descartar_locales" || return 1
+            desplegar_workflow || return 1
+            desplegar_documental || return 1
             return 0
         fi
 
