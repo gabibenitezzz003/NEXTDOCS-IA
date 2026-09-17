@@ -309,7 +309,7 @@ function Navegacion({
                     title={texto}
                     onClick={alNavegar}
                     className={({ isActive }) =>
-                      `flex min-h-control-mediano items-center gap-espacio-2 rounded-control px-espacio-2 py-espacio-2 text-pequeno transition-colors focus-visible:outline-violeta-claro ${compactable ? "justify-center xl:justify-start" : ""} ${isActive ? "bg-accion-primaria font-semibold text-blanco" : "text-texto-navegacion-secundario hover:bg-superficie-navegacion-activa hover:text-blanco"}`
+                      `flex min-h-control-mediano items-center gap-espacio-2 rounded-control px-espacio-2 py-espacio-2 text-pequeno transition-colors focus-visible:outline-violeta-claro ${compactable ? "justify-center xl:justify-start" : ""} ${isActive ? "degradado-marca font-semibold text-blanco shadow-resplandor-marca" : "text-texto-navegacion-secundario hover:bg-superficie-navegacion-activa hover:text-blanco"}`
                     }
                   >
                     <span aria-hidden="true" className="shrink-0">

@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import {
   AvisoLinea,
@@ -36,6 +36,18 @@ const DESTACADOS: { clave: EstadoDocumento; etiqueta: string }[] = [
   { clave: "RECIBIDO", etiqueta: "resumen.recibidos" },
   { clave: "RECHAZADO", etiqueta: "resumen.rechazados" },
 ];
+const DESTINO_METRICA: Record<EstadoDocumento | "TOTAL", string> = {
+  TOTAL: "/documental/entrada",
+  RECIBIDO: "/documental/entrada",
+  PROCESANDO: "/documental/entrada",
+  EXTRAIDO: "/documental/entrada",
+  VALIDADO: "/documental/entrada",
+  OBSERVADO: "/documental/excepciones",
+  APROBADO: "/documental/archivo",
+  RECHAZADO: "/documental/archivo",
+  CERRADO: "/documental/archivo",
+  DIVIDIDO: "/documental/archivo",
+};
 const GRILLA_METRICAS =
   "grid min-w-0 gap-espacio-4 sm:grid-cols-2 xl:grid-cols-5";
 const GRILLA_OPERACION =
@@ -44,6 +56,7 @@ const GRILLA_OPERACION =
 export function Resumen() {
   const { tienePermiso, sesion } = useSesion();
   const { t } = useIdioma();
+  const navegar = useNavigate();
 
   const resumen = useQuery({
     queryKey: ["resumenDocumental"],
@@ -350,7 +363,11 @@ export function Resumen() {
             >
               <Tarjeta
                 padding="p-espacio-4"
-                className="min-h-36 rounded-metrica! sm:col-span-2 xl:col-span-1"
+                className="min-h-36 cursor-pointer rounded-metrica! transition-transform hover:-translate-y-0.5 hover:shadow-elevado sm:col-span-2 xl:col-span-1"
+                onClick={() => navegar(DESTINO_METRICA.TOTAL)}
+                role="link"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === "Enter" && navegar(DESTINO_METRICA.TOTAL)}
               >
                 <Metrica
                   etiqueta={t("resumen.documentosTotales")}
@@ -376,7 +393,13 @@ export function Resumen() {
                   <Tarjeta
                     key={destacado.clave}
                     padding="p-espacio-4"
-                    className={`min-h-36 rounded-metrica! ${destacado.clave === "OBSERVADO" ? "border-alerta-borde! bg-alerta-tenue!" : ""}`}
+                    className={`min-h-36 cursor-pointer rounded-metrica! transition-transform hover:-translate-y-0.5 hover:shadow-elevado ${destacado.clave === "OBSERVADO" ? "border-alerta-borde! bg-alerta-tenue!" : ""}`}
+                    onClick={() => navegar(DESTINO_METRICA[destacado.clave])}
+                    role="link"
+                    tabIndex={0}
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && navegar(DESTINO_METRICA[destacado.clave])
+                    }
                   >
                     <Metrica
                       etiqueta={t(destacado.etiqueta)}

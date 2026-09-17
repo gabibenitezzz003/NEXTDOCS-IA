@@ -82,38 +82,67 @@ function posicionDe(nodo: NodoProceso): { x: number; y: number } | null {
   return null;
 }
 
-function colorDe(tipo: TipoNodoProceso): { relleno: string; borde: string } {
+interface ColorNodo {
+  relleno: string;
+  borde: string;
+  acento: string;
+  chipFondo: string;
+  chipTexto: string;
+}
+
+function colorDe(tipo: TipoNodoProceso): ColorNodo {
   if (tipo === "INICIO" || tipo === "FIN") {
     return {
-      relleno: "var(--color-lienzo)",
-      borde: "var(--color-borde-fuerte)",
+      relleno: "var(--color-violeta-tenue)",
+      borde: "var(--color-violeta-borde)",
+      acento: "var(--color-violeta)",
+      chipFondo: "var(--color-violeta)",
+      chipTexto: "text-blanco",
     };
   }
   if (tipo === "DECISION") {
     return {
-      relleno: "var(--color-alerta-tenue)",
+      relleno: "var(--color-superficie)",
       borde: "var(--color-alerta-borde)",
+      acento: "var(--color-alerta-texto)",
+      chipFondo: "var(--color-alerta-tenue)",
+      chipTexto: "text-alerta-texto",
     };
   }
   if (tipo === "PARALELO" || tipo === "UNION") {
     return {
-      relleno: "var(--color-informacion-tenue)",
+      relleno: "var(--color-superficie)",
       borde: "var(--color-informacion-borde)",
+      acento: "var(--color-informacion)",
+      chipFondo: "var(--color-informacion-tenue)",
+      chipTexto: "text-informacion",
     };
   }
   if (tipo === "FIRMA") {
     return {
-      relleno: "var(--color-exito-tenue)",
+      relleno: "var(--color-superficie)",
       borde: "var(--color-exito-borde)",
+      acento: "var(--color-exito-texto)",
+      chipFondo: "var(--color-exito-tenue)",
+      chipTexto: "text-exito-texto",
     };
   }
   if (tipo === "REVISION_HUMANA" || tipo === "TAREA_EXTERNA") {
     return {
-      relleno: "var(--color-violeta-tenue)",
+      relleno: "var(--color-superficie)",
       borde: "var(--color-violeta-borde)",
+      acento: "var(--color-violeta)",
+      chipFondo: "var(--color-violeta-tenue)",
+      chipTexto: "text-accion-tonal-texto",
     };
   }
-  return { relleno: "var(--color-superficie)", borde: "var(--color-borde)" };
+  return {
+    relleno: "var(--color-superficie)",
+    borde: "var(--color-borde)",
+    acento: "var(--color-tinta-suave)",
+    chipFondo: "var(--color-neutro-tenue)",
+    chipTexto: "text-tinta-media",
+  };
 }
 
 const TIPOS_CANVAS: TipoNodoProceso[] = [
@@ -282,9 +311,11 @@ export function CanvasProceso({
       }),
     );
     let { x, y } = { x: centro.x - ANCHO / 2, y: centro.y - ALTO / 2 };
+    let paso = 0;
     while (ocupadas.has(`${Math.round(x / 40)}:${Math.round(y / 40)}`)) {
-      x += GRID;
-      y += GRID;
+      paso += 1;
+      x = centro.x - ANCHO / 2 + paso * (GRID * 2);
+      y = centro.y - ALTO / 2 + paso * (ALTO + GRID);
     }
     const nodo: NodoProceso = {
       id: "nodo-" + Math.random().toString(36).slice(2, 9),
@@ -854,6 +885,47 @@ export function CanvasProceso({
             >
               <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--color-borde-fuerte)" />
             </marker>
+            <marker
+              id="canvas-flecha-activa"
+              viewBox="0 0 8 8"
+              refX="7"
+              refY="4"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--color-violeta)" />
+            </marker>
+            <filter
+              id="canvas-sombra-nodo"
+              x="-20%"
+              y="-20%"
+              width="140%"
+              height="160%"
+            >
+              <feDropShadow
+                dx="0"
+                dy="3"
+                stdDeviation="5"
+                floodColor="#1c1444"
+                floodOpacity="0.14"
+              />
+            </filter>
+            <filter
+              id="canvas-sombra-activa"
+              x="-25%"
+              y="-25%"
+              width="150%"
+              height="170%"
+            >
+              <feDropShadow
+                dx="0"
+                dy="4"
+                stdDeviation="7"
+                floodColor="#6c36ff"
+                floodOpacity="0.35"
+              />
+            </filter>
           </defs>
           <g transform={`translate(${vista.x} ${vista.y}) scale(${vista.k})`}>
             <rect
@@ -900,8 +972,13 @@ export function CanvasProceso({
                         ? "var(--color-violeta)"
                         : "var(--color-borde-fuerte)"
                     }
-                    strokeWidth={activa ? 2.5 : 1.5}
-                    markerEnd="url(#canvas-flecha)"
+                    strokeWidth={activa ? 2.5 : 1.75}
+                    strokeLinecap="round"
+                    markerEnd={
+                      activa
+                        ? "url(#canvas-flecha-activa)"
+                        : "url(#canvas-flecha)"
+                    }
                     className="pointer-events-none"
                   />
                   {arista.condicion ? (
@@ -1002,11 +1079,25 @@ export function CanvasProceso({
                         ? "var(--color-violeta)"
                         : color.borde
                     }
-                    strokeWidth={activo ? 2.5 : destinoConexion ? 3 : 1.5}
+                    strokeWidth={activo ? 2.5 : destinoConexion ? 3 : 1.25}
                     strokeDasharray={destinoConexion ? "6 4" : undefined}
+                    filter={
+                      activo
+                        ? "url(#canvas-sombra-activa)"
+                        : "url(#canvas-sombra-nodo)"
+                    }
+                  />
+                  <rect
+                    x={1.5}
+                    y={10}
+                    width={4}
+                    height={ALTO - 20}
+                    rx={2}
+                    fill={color.acento}
+                    className="pointer-events-none"
                   />
                   <text
-                    x={14}
+                    x={16}
                     y={20}
                     className="fill-[var(--color-tinta-suave)] text-[9px] uppercase"
                     style={{ letterSpacing: "0.4px" }}
@@ -1046,9 +1137,8 @@ export function CanvasProceso({
                     cx={ANCHO - 24}
                     cy={ALTO / 2}
                     r={14}
-                    fill="var(--color-superficie)"
-                    stroke={color.borde}
-                    strokeWidth={1}
+                    fill={color.chipFondo}
+                    stroke="none"
                   />
                   <IconoNodo
                     tipo={nodo.tipo}
@@ -1056,7 +1146,7 @@ export function CanvasProceso({
                     y={ALTO / 2 - 10}
                     width={20}
                     height={20}
-                    className="text-tinta-media pointer-events-none"
+                    className={`${color.chipTexto} pointer-events-none`}
                   />
                   {nodo.tipo !== "INICIO" ? (
                     <circle

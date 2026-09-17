@@ -880,8 +880,9 @@ export const pt: Diccionario = {
   },
   procesos: {
     bibliotecaDesc:
-      "Biblioteca de processos do espaço de trabalho. Abra um para desenhar seus passos no canvas e publicar uma versão.",
+      "Seus processos. Toque em Novo processo e desenhe as etapas direto no canvas; cada versão publicada é executada em Operação.",
     nuevoProceso: "Novo processo",
+    procesoNuevo: "Processo novo",
     nuevoProcesoTitulo: "Novo processo",
     nuevoProcesoDesc: "Crie uma definição com sua primeira versão em rascunho.",
     codigo: "Código",
@@ -892,7 +893,7 @@ export const pt: Diccionario = {
     crear: "Criar",
     sinDefiniciones: "Ainda não há definições de processo",
     sinDefinicionesDetalle:
-      "Use Novo processo para criar um rascunho e configurar sua sequência de passos.",
+      "Toque em Novo processo: o canvas abre com o percurso inicial para você desenhar as etapas. Depois pode renomeá-lo em Dados.",
     listaDefiniciones: "Definições de processo",
     creadoEl: "Criado em {fecha}",
     cerrar: "Fechar",

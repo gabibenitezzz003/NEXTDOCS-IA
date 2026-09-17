@@ -877,8 +877,9 @@ export const es = {
   },
   procesos: {
     bibliotecaDesc:
-      "Biblioteca de procesos del espacio de trabajo. Abrí uno para dibujar sus pasos en el canvas y publicar una versión.",
+      "Tus procesos. Tocá Nuevo proceso y dibujá los pasos directo en el canvas; cada versión publicada se ejecuta en Operación.",
     nuevoProceso: "Nuevo proceso",
+    procesoNuevo: "Proceso nuevo",
     nuevoProcesoTitulo: "Nuevo proceso",
     nuevoProcesoDesc: "Creá una definición con su primera versión en borrador.",
     codigo: "Código",
@@ -889,7 +890,7 @@ export const es = {
     crear: "Crear",
     sinDefiniciones: "Todavía no hay definiciones de proceso",
     sinDefinicionesDetalle:
-      "Usá Nuevo proceso para crear un borrador y configurar su secuencia de pasos.",
+      "Tocá Nuevo proceso: se abre el canvas con el recorrido inicial para que dibujes los pasos. Después podés renombrarlo desde Datos.",
     listaDefiniciones: "Definiciones de proceso",
     creadoEl: "Creado el {fecha}",
     cerrar: "Cerrar",

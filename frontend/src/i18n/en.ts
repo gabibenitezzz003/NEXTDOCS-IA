@@ -876,8 +876,9 @@ export const en: Diccionario = {
   },
   procesos: {
     bibliotecaDesc:
-      "Workspace process library. Open one to draw its steps on the canvas and publish a version.",
+      "Your processes. Hit New process and draw the steps right on the canvas; every published version runs in Operations.",
     nuevoProceso: "New process",
+    procesoNuevo: "New process",
     nuevoProcesoTitulo: "New process",
     nuevoProcesoDesc: "Create a definition with its first version in draft.",
     codigo: "Code",
@@ -888,7 +889,7 @@ export const en: Diccionario = {
     crear: "Create",
     sinDefiniciones: "There are no process definitions yet",
     sinDefinicionesDetalle:
-      "Use New process to create a draft and configure its step sequence.",
+      "Hit New process: the canvas opens with the starting path so you can draw the steps. You can rename it later from Details.",
     listaDefiniciones: "Process definitions",
     creadoEl: "Created on {fecha}",
     cerrar: "Close",

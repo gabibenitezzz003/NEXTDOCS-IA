@@ -1,14 +1,69 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
   obtenerExcepcionesMotor,
   obtenerResumenDocumental,
   obtenerVencimientos,
 } from "../../api/documental";
-import { Tarjeta } from "../../componentes/Interfaz";
 import { CargandoTarjetas } from "../../componentes/Estados";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
 import { horasRestantes } from "../dominio";
+import {
+  IconoCheck,
+  IconoDocumentos,
+  IconoExcepciones,
+  IconoInteligencia,
+  IconoReloj,
+} from "../../componentes/Iconos";
+import type { ComponentType, ReactNode } from "react";
+
+const TONOS_CHIP: Record<string, string> = {
+  violeta: "bg-violeta-tenue text-accion-tonal-texto",
+  exito: "bg-exito-tenue text-exito-texto",
+  alerta: "bg-alerta-tenue text-alerta-texto",
+  rojo: "bg-rojo-tenue text-rojo-alto",
+  informacion: "bg-informacion-tenue text-informacion",
+};
+
+function TarjetaIndicador({
+  titulo,
+  icono: Icono,
+  tono,
+  destino,
+  children,
+  extra,
+}: {
+  titulo: string;
+  icono: ComponentType<{ tamano?: number }>;
+  tono: keyof typeof TONOS_CHIP;
+  destino: string;
+  children: ReactNode;
+  extra?: ReactNode;
+}) {
+  const navegar = useNavigate();
+  return (
+    <button
+      type="button"
+      onClick={() => navegar(destino)}
+      className="elevar group min-w-0 rounded-metrica border border-borde bg-superficie p-espacio-4 text-left relieve focus-visible:outline-foco"
+    >
+      <div className="flex items-center justify-between gap-espacio-2">
+        <p className="text-micro font-bold uppercase tracking-wider text-tinta-suave">
+          {titulo}
+        </p>
+        <span
+          aria-hidden="true"
+          className={`inline-flex size-espacio-8 shrink-0 items-center justify-center rounded-control ${TONOS_CHIP[tono]}`}
+        >
+          <Icono tamano={16} />
+        </span>
+      </div>
+      <div className="mt-espacio-3">{children}</div>
+      {extra}
+    </button>
+  );
+}
 
 function Dato({
   valor,
@@ -21,11 +76,11 @@ function Dato({
 }) {
   return (
     <div>
-      <p className="text-micro uppercase tracking-wider text-tinta-suave">
-        {etiqueta}
-      </p>
-      <p className={`mt-espacio-1 text-metrica-compacta font-semibold ${tono}`}>
+      <p className={`cifra text-metrica-compacta font-semibold ${tono}`}>
         {valor}
+      </p>
+      <p className="mt-espacio-1 text-micro uppercase tracking-wider text-tinta-suave">
+        {etiqueta}
       </p>
     </div>
   );
@@ -107,11 +162,13 @@ export function IndicadoresDocumental() {
       className="grid grid-cols-2 gap-espacio-3 lg:grid-cols-5"
       data-testid="documental-indicadores"
     >
-      <Tarjeta padding="p-espacio-4">
-        <p className="text-micro font-bold uppercase tracking-wider text-tinta-suave">
-          {t("documental.kpi.volumen")}
-        </p>
-        <div className="mt-espacio-3 flex items-end justify-between gap-espacio-3">
+      <TarjetaIndicador
+        titulo={t("documental.kpi.volumen")}
+        icono={IconoDocumentos}
+        tono="violeta"
+        destino="/documental/bandeja"
+      >
+        <div className="flex items-end justify-between gap-espacio-3">
           <Dato valor={calculado.total} etiqueta={t("documental.kpi.total")} />
           <Dato
             valor={calculado.enCurso}
@@ -119,13 +176,25 @@ export function IndicadoresDocumental() {
             tono={calculado.enCurso ? "text-informacion" : "text-tinta-suave"}
           />
         </div>
-      </Tarjeta>
+      </TarjetaIndicador>
 
-      <Tarjeta padding="p-espacio-4">
-        <p className="text-micro font-bold uppercase tracking-wider text-tinta-suave">
-          {t("documental.kpi.automatizacion")}
-        </p>
-        <div className="mt-espacio-3 flex items-end justify-between gap-espacio-3">
+      <TarjetaIndicador
+        titulo={t("documental.kpi.automatizacion")}
+        icono={IconoInteligencia}
+        tono="exito"
+        destino="/documental/tablero"
+        extra={
+          calculado.automatizacion === null ? undefined : (
+            <div className="mt-espacio-3 h-espacio-2 overflow-hidden rounded-insignia bg-lienzo shadow-hundido">
+              <div
+                className="barra-progreso h-full rounded-insignia bg-exito"
+                style={{ width: `${calculado.automatizacion}%` }}
+              />
+            </div>
+          )
+        }
+      >
+        <div className="flex items-end justify-between gap-espacio-3">
           <Dato
             valor={
               calculado.automatizacion === null
@@ -140,21 +209,15 @@ export function IndicadoresDocumental() {
             etiqueta={t("documental.kpi.aprobados")}
           />
         </div>
-        {calculado.automatizacion === null ? null : (
-          <div className="mt-espacio-3 h-espacio-2 overflow-hidden rounded-insignia bg-lienzo">
-            <div
-              className="h-full rounded-insignia bg-exito transition-[width] duration-200 motion-reduce:transition-none"
-              style={{ width: `${calculado.automatizacion}%` }}
-            />
-          </div>
-        )}
-      </Tarjeta>
+      </TarjetaIndicador>
 
-      <Tarjeta padding="p-espacio-4">
-        <p className="text-micro font-bold uppercase tracking-wider text-tinta-suave">
-          {t("documental.kpi.excepciones")}
-        </p>
-        <div className="mt-espacio-3 flex items-end justify-between gap-espacio-3">
+      <TarjetaIndicador
+        titulo={t("documental.kpi.excepciones")}
+        icono={IconoExcepciones}
+        tono="alerta"
+        destino="/documental/excepciones"
+      >
+        <div className="flex items-end justify-between gap-espacio-3">
           <Dato
             valor={calculado.abiertas}
             etiqueta={t("documental.kpi.abiertas")}
@@ -166,13 +229,15 @@ export function IndicadoresDocumental() {
             tono={calculado.vencidas ? "text-rojo-alto" : "text-tinta-suave"}
           />
         </div>
-      </Tarjeta>
+      </TarjetaIndicador>
 
-      <Tarjeta padding="p-espacio-4">
-        <p className="text-micro font-bold uppercase tracking-wider text-tinta-suave">
-          {t("documental.kpi.vigencias")}
-        </p>
-        <div className="mt-espacio-3 flex items-end justify-between gap-espacio-3">
+      <TarjetaIndicador
+        titulo={t("documental.kpi.vigencias")}
+        icono={IconoReloj}
+        tono="rojo"
+        destino="/documental/vencimientos"
+      >
+        <div className="flex items-end justify-between gap-espacio-3">
           <Dato
             valor={porVencer.VENCIDO || 0}
             etiqueta={t("documental.vencimientos.VENCIDO")}
@@ -186,13 +251,15 @@ export function IndicadoresDocumental() {
             }
           />
         </div>
-      </Tarjeta>
+      </TarjetaIndicador>
 
-      <Tarjeta padding="p-espacio-4">
-        <p className="text-micro font-bold uppercase tracking-wider text-tinta-suave">
-          {t("documental.kpi.resolucion")}
-        </p>
-        <div className="mt-espacio-3 flex items-end justify-between gap-espacio-3">
+      <TarjetaIndicador
+        titulo={t("documental.kpi.resolucion")}
+        icono={IconoCheck}
+        tono="informacion"
+        destino="/documental/excepciones"
+      >
+        <div className="flex items-end justify-between gap-espacio-3">
           <Dato
             valor={calculado.observados}
             etiqueta={t("documental.kpi.observados")}
@@ -201,7 +268,7 @@ export function IndicadoresDocumental() {
             }
           />
         </div>
-      </Tarjeta>
+      </TarjetaIndicador>
     </div>
   );
 }

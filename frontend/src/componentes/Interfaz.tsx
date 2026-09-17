@@ -1,6 +1,7 @@
 import type {
   ButtonHTMLAttributes,
   CSSProperties,
+  HTMLAttributes,
   InputHTMLAttributes,
   KeyboardEvent,
   ReactElement,
@@ -48,13 +49,14 @@ export function Tarjeta({
   padding = "p-espacio-5",
   indice,
   interactiva = false,
+  ...resto
 }: {
   children: ReactNode;
   className?: string;
   padding?: string;
   indice?: number;
   interactiva?: boolean;
-}) {
+} & Omit<HTMLAttributes<HTMLElement>, "className" | "children">) {
   const cascada =
     indice == null
       ? undefined
@@ -62,9 +64,10 @@ export function Tarjeta({
   return (
     <section
       style={cascada}
-      className={`relative min-w-0 rounded-tarjeta border border-borde bg-superficie shadow-superficie ${
+      className={`relative min-w-0 rounded-tarjeta border border-borde bg-superficie relieve ${
         indice == null ? "" : "subir"
       } ${interactiva ? "transition-shadow hover:border-borde-fuerte hover:shadow-superficie-elevada motion-reduce:transition-none" : ""} ${padding} ${className}`}
+      {...resto}
     >
       {children}
     </section>
@@ -128,7 +131,7 @@ export type VarianteBoton = "primario" | "secundario" | "fantasma" | "peligro";
 
 const VARIANTE_BOTON: Record<VarianteBoton, string> = {
   primario:
-    "bg-accion-primaria text-blanco enabled:hover:bg-accion-primaria-activa enabled:active:bg-accion-primaria-presionada",
+    "degradado-marca text-blanco shadow-violeta enabled:hover:shadow-violeta-alto enabled:hover:brightness-110 enabled:active:brightness-95",
   secundario:
     "border border-borde bg-superficie text-tinta enabled:hover:border-borde-fuerte enabled:hover:bg-lienzo enabled:active:bg-borde",
   fantasma:

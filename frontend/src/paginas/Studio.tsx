@@ -79,11 +79,6 @@ export function Studio() {
 function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
-  const [creando, setCreando] = useState(false);
-  const [codigo, setCodigo] = useState("");
-  const [familia, setFamilia] = useState("");
-  const [nombre, setNombre] = useState("");
-  const [sla, setSla] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
 
@@ -96,11 +91,6 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
     mutationFn: crearProceso,
     onSuccess: (proceso) => {
       setError(null);
-      setCreando(false);
-      setCodigo("");
-      setFamilia("");
-      setNombre("");
-      setSla("");
       clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
       alAbrir(proceso.id);
     },
@@ -116,12 +106,18 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
           {t("procesos.bibliotecaDesc")}
         </p>
         <Boton
-          variante={creando ? "secundario" : "primario"}
-          aria-expanded={creando}
-          aria-controls={creando ? "crear-proceso" : undefined}
-          onClick={() => setCreando((valor) => !valor)}
+          variante="primario"
+          cargando={crear.isPending}
+          disabled={crear.isPending}
+          onClick={() =>
+            crear.mutate({
+              codigo: `PROC-${Date.now().toString(36).toUpperCase()}`,
+              familia: "GENERAL",
+              nombre: t("procesos.procesoNuevo"),
+            })
+          }
         >
-          {creando ? t("comun.cancelar") : t("procesos.nuevoProceso")}
+          {t("procesos.nuevoProceso")}
         </Boton>
       </div>
       {error ? (
@@ -131,71 +127,6 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
         >
           {error}
         </div>
-      ) : null}
-
-      {creando ? (
-        <Tarjeta className="mb-espacio-6">
-          <div id="crear-proceso">
-            <CabeceraTarjeta
-              titulo={t("procesos.nuevoProcesoTitulo")}
-              descripcion={t("procesos.nuevoProcesoDesc")}
-            />
-            <div className="mt-espacio-5 grid gap-espacio-4 md:grid-cols-2 xl:grid-cols-4">
-              <Campo
-                etiqueta={t("procesos.codigo")}
-                placeholder="COMEX-EX-MAR-FCL"
-                value={codigo}
-                onChange={(evento) =>
-                  setCodigo(evento.target.value.toUpperCase())
-                }
-              />
-              <Campo
-                etiqueta={t("procesos.familia")}
-                placeholder="COMEX"
-                value={familia}
-                onChange={(evento) => setFamilia(evento.target.value)}
-              />
-              <Campo
-                etiqueta={t("procesos.nombre")}
-                placeholder="Exportacion maritima FCL"
-                value={nombre}
-                onChange={(evento) => setNombre(evento.target.value)}
-              />
-              <Campo
-                etiqueta={t("procesos.slaPlantilla")}
-                type="number"
-                min="0.01"
-                step="0.25"
-                placeholder="24"
-                value={sla}
-                onChange={(evento) => setSla(evento.target.value)}
-                ayuda={t("procesos.slaAyuda")}
-              />
-            </div>
-            <div className="mt-4 flex justify-end">
-              <Boton
-                variante="primario"
-                cargando={crear.isPending}
-                disabled={
-                  crear.isPending ||
-                  !codigo.trim() ||
-                  !familia.trim() ||
-                  !nombre.trim()
-                }
-                onClick={() =>
-                  crear.mutate({
-                    codigo: codigo.trim(),
-                    familia: familia.trim(),
-                    nombre: nombre.trim(),
-                    slaHoras: slaNumerico(sla),
-                  })
-                }
-              >
-                {t("procesos.crear")}
-              </Boton>
-            </div>
-          </div>
-        </Tarjeta>
       ) : null}
 
       {consulta.isPending ? (
@@ -491,6 +422,7 @@ function EstudioProceso({
   }
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
   const [simulacionAbierta, setSimulacionAbierta] = useState(false);
+  const [editandoDatos, setEditandoDatos] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detalles, setDetalles] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -938,6 +870,13 @@ function EstudioProceso({
             <Boton variante="fantasma" onClick={volver}>
               {t("procesos.volver")}
             </Boton>
+            <Boton
+              variante="secundario"
+              aria-expanded={editandoDatos}
+              onClick={() => setEditandoDatos((valor) => !valor)}
+            >
+              {t("procesos.editar")}
+            </Boton>
             {publicada ? (
               <Boton
                 variante="secundario"
@@ -952,6 +891,18 @@ function EstudioProceso({
         }
       />
       <Contenido>
+        {editandoDatos ? (
+          <Tarjeta className="mb-espacio-6">
+            <CabeceraTarjeta titulo={t("procesos.editar")} />
+            <EditorProceso
+              proceso={proceso}
+              alCerrar={() => {
+                setEditandoDatos(false);
+                refrescar();
+              }}
+            />
+          </Tarjeta>
+        ) : null}
         {publicada ? (
           <p
             role="note"
