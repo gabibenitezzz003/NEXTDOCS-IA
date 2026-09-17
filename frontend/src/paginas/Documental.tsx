@@ -119,7 +119,7 @@ export function Documental() {
     >
       {!documentoAbierto ? (
         <>
-          <IndicadoresDocumental />
+          {activa !== "tablero" ? <IndicadoresDocumental /> : null}
 
           <div
             role="tablist"

@@ -1,10 +1,16 @@
+import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { Disposicion } from "./componentes/Disposicion";
 import { Ingresar } from "./paginas/Ingresar";
 import { Resumen } from "./paginas/Resumen";
 import { Panel } from "./paginas/Panel";
 import { Documentos } from "./paginas/Documentos";
-import { Documental } from "./paginas/Documental";
+
+const Documental = lazy(() =>
+  import("./paginas/Documental").then((modulo) => ({
+    default: modulo.Documental,
+  })),
+);
 import { Excepciones } from "./paginas/Excepciones";
 import { TiposPropuestos } from "./paginas/TiposPropuestos";
 import { Tareas } from "./paginas/Tareas";
@@ -65,8 +71,22 @@ export function Aplicacion() {
         <Route path="/resumen" element={<Resumen />} />
         <Route path="/panel" element={<Panel />} />
         <Route path="/documentos" element={<Documentos />} />
-        <Route path="/documental" element={<Documental />} />
-        <Route path="/documental/:seccion" element={<Documental />} />
+        <Route
+          path="/documental"
+          element={
+            <Suspense fallback={null}>
+              <Documental />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/documental/:seccion"
+          element={
+            <Suspense fallback={null}>
+              <Documental />
+            </Suspense>
+          }
+        />
         <Route path="/excepciones" element={<Excepciones />} />
         <Route path="/tipos-propuestos" element={<TiposPropuestos />} />
         <Route path="/tareas" element={<Tareas />} />

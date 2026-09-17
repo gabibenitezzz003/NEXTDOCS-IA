@@ -536,3 +536,20 @@ export function IconoMicrosoft({ tamano = 18, ...resto }: PropsIcono) {
     </svg>
   );
 }
+
+export function IconoCarpeta(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+    </Base>
+  );
+}
+
+export function IconoCorreo(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </Base>
+  );
+}

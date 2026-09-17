@@ -1,56 +1,325 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  obtenerBandeja,
   obtenerEventos,
   obtenerExcepcionesMotor,
   obtenerResumenDocumental,
+  type DocumentoMotor,
   type EstadoDocumentoMotor,
 } from "../../api/documental";
 import { mensajeDeError } from "../../api/cliente";
 import { Tarjeta, CabeceraTarjeta } from "../../componentes/Interfaz";
 import { Cargando, ErrorPanel } from "../../componentes/Estados";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
-import { ESTADOS_DOCUMENTO, comoFecha, motivoHumano } from "../dominio";
+import { comoFecha, motivoHumano } from "../dominio";
 
-const TONOS_BARRA: Record<EstadoDocumentoMotor, string> = {
-  RECIBIDO: "bg-tinta-tenue",
-  PROCESANDO: "bg-informacion",
-  EXTRAIDO: "bg-violeta",
-  VALIDADO: "bg-exito",
-  OBSERVADO: "bg-alerta",
-  APROBADO: "bg-exito",
-  RECHAZADO: "bg-rojo-alto",
-  CERRADO: "bg-grafito",
+const COLORES_ESTADO: Record<EstadoDocumentoMotor, string> = {
+  RECIBIDO: "#98a2b3",
+  PROCESANDO: "#0ea5e9",
+  EXTRAIDO: "#7b4dff",
+  VALIDADO: "#8b5cf6",
+  OBSERVADO: "#f59e0b",
+  APROBADO: "#10b981",
+  RECHAZADO: "#ef4444",
+  CERRADO: "#475569",
 };
 
-function Embudo({ porEstado }: { porEstado: Record<string, number> }) {
-  const { t } = useIdioma();
-  const maximo = Math.max(
-    1,
-    ...ESTADOS_DOCUMENTO.map((estado) => Number(porEstado[estado] || 0)),
+const ORDEN_ESTADOS: EstadoDocumentoMotor[] = [
+  "RECIBIDO",
+  "PROCESANDO",
+  "EXTRAIDO",
+  "VALIDADO",
+  "OBSERVADO",
+  "APROBADO",
+  "RECHAZADO",
+  "CERRADO",
+];
+
+const ESTILO_TOOLTIP = {
+  backgroundColor: "var(--color-superficie, #ffffff)",
+  border: "1px solid var(--color-borde, #e2e7ef)",
+  borderRadius: "10px",
+  fontSize: "12px",
+  boxShadow: "0 8px 24px rgba(13,15,18,.12)",
+};
+
+function TarjetaKpi({
+  etiqueta,
+  valor,
+  detalle,
+  tono,
+  gradiente,
+}: {
+  etiqueta: string;
+  valor: string | number;
+  detalle: string;
+  tono: string;
+  gradiente: string;
+}) {
+  return (
+    <div
+      className="relative overflow-hidden rounded-tarjeta border border-borde p-espacio-4"
+      style={{ background: gradiente }}
+    >
+      <div
+        className="absolute -right-6 -top-6 size-24 rounded-full opacity-20"
+        style={{ background: tono }}
+      />
+      <p className="text-micro font-bold uppercase tracking-wider opacity-80"
+         style={{ color: tono }}>
+        {etiqueta}
+      </p>
+      <p className="mt-espacio-2 text-4xl font-bold tracking-tight"
+         style={{ color: tono }}>
+        {valor}
+      </p>
+      <p className="mt-espacio-1 text-micro font-medium opacity-70"
+         style={{ color: tono }}>
+        {detalle}
+      </p>
+    </div>
   );
+}
+
+function DistribucionEstados({ porEstado }: { porEstado: Record<string, number> }) {
+  const { t } = useIdioma();
+
+  const datos = ORDEN_ESTADOS.map((estado) => ({
+    nombre: t(`documental.estado.${estado}`),
+    valor: Number(porEstado[estado] || 0),
+    color: COLORES_ESTADO[estado],
+  })).filter((item) => item.valor > 0);
+
+  const total = datos.reduce((suma, item) => suma + item.valor, 0);
+
+  if (!total) {
+    return (
+      <p className="py-espacio-6 text-center text-pequeno text-tinta-suave">
+        {t("documental.tablero.sinDatos")}
+      </p>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-espacio-2">
-      {ESTADOS_DOCUMENTO.map((estado) => {
-        const cantidad = Number(porEstado[estado] || 0);
-        return (
-          <div key={estado} className="flex items-center gap-espacio-3">
-            <span className="w-24 text-micro font-semibold uppercase text-tinta-suave">
-              {t(`documental.estado.${estado}`)}
+    <div className="flex flex-col items-center gap-espacio-4 lg:flex-row">
+      <div className="relative h-56 w-56 shrink-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={datos}
+              dataKey="valor"
+              nameKey="nombre"
+              cx="50%"
+              cy="50%"
+              innerRadius={62}
+              outerRadius={95}
+              paddingAngle={3}
+              cornerRadius={5}
+              strokeWidth={0}
+              animationBegin={100}
+              animationDuration={900}
+            >
+              {datos.map((item) => (
+                <Cell key={item.nombre} fill={item.color} />
+              ))}
+            </Pie>
+            <Tooltip contentStyle={ESTILO_TOOLTIP} />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center">
+          <div className="text-center">
+            <p className="text-3xl font-bold text-tinta">{total}</p>
+            <p className="text-micro font-semibold uppercase tracking-wider text-tinta-suave">
+              {t("documental.kpi.total")}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="grid w-full grid-cols-2 gap-x-espacio-4 gap-y-espacio-2">
+        {datos.map((item) => (
+          <div key={item.nombre} className="flex items-center gap-espacio-2">
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ background: item.color }}
+            />
+            <span className="min-w-0 flex-1 truncate text-micro text-tinta-suave">
+              {item.nombre}
             </span>
-            <div className="h-3.5 flex-1 overflow-hidden rounded-insignia bg-lienzo">
-              <div
-                className={`h-full rounded-insignia transition-[width] duration-200 motion-reduce:transition-none ${TONOS_BARRA[estado]}`}
-                style={{ width: `${(cantidad / maximo) * 100}%` }}
-              />
-            </div>
-            <span className="w-8 text-right text-pequeno font-semibold text-tinta">
-              {cantidad}
+            <span className="text-pequeno font-bold text-tinta">
+              {item.valor}
             </span>
           </div>
-        );
-      })}
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function VolumenPorDia({ documentos }: { documentos: DocumentoMotor[] }) {
+  const { t, idioma } = useIdioma();
+
+  const datos = useMemo(() => {
+    const porDia = new Map<string, number>();
+    documentos.forEach((documento) => {
+      const dia = documento.creado_en.slice(0, 10);
+      porDia.set(dia, (porDia.get(dia) || 0) + 1);
+    });
+    return [...porDia.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-14)
+      .map(([dia, cantidad]) => ({
+        dia: new Date(`${dia}T12:00:00`).toLocaleDateString(
+          idioma === "en" ? "en-US" : idioma === "pt" ? "pt-BR" : "es-AR",
+          { day: "numeric", month: "short" },
+        ),
+        cantidad,
+      }));
+  }, [documentos, idioma]);
+
+  if (datos.length < 2) {
+    return (
+      <p className="py-espacio-6 text-center text-pequeno text-tinta-suave">
+        {t("documental.tablero.sinDatos")}
+      </p>
+    );
+  }
+
+  return (
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={datos} margin={{ top: 8, right: 8, left: -18, bottom: 0 }}>
+          <defs>
+            <linearGradient id="gradVolumen" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#6c36ff" stopOpacity={0.35} />
+              <stop offset="100%" stopColor="#6c36ff" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde, #e2e7ef)" vertical={false} />
+          <XAxis
+            dataKey="dia"
+            tick={{ fontSize: 11, fill: "var(--color-tinta-suave, #667085)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            allowDecimals={false}
+            tick={{ fontSize: 11, fill: "var(--color-tinta-suave, #667085)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip contentStyle={ESTILO_TOOLTIP} />
+          <Area
+            type="monotone"
+            dataKey="cantidad"
+            name={t("documental.kpi.total")}
+            stroke="#6c36ff"
+            strokeWidth={2.5}
+            fill="url(#gradVolumen)"
+            animationDuration={1000}
+            dot={{ r: 3, fill: "#6c36ff", strokeWidth: 0 }}
+            activeDot={{ r: 5, fill: "#6c36ff" }}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function ConfianzaPromedio({ documentos }: { documentos: DocumentoMotor[] }) {
+  const { t } = useIdioma();
+
+  const datos = useMemo(() => {
+    const porTipo = new Map<string, { total: number; cantidad: number }>();
+    documentos.forEach((documento) => {
+      if (documento.confianza === null) return;
+      const tipo = documento.plantilla_codigo || "—";
+      const acc = porTipo.get(tipo) || { total: 0, cantidad: 0 };
+      acc.total += documento.confianza;
+      acc.cantidad += 1;
+      porTipo.set(tipo, acc);
+    });
+    return [...porTipo.entries()]
+      .map(([tipo, acc]) => ({
+        tipo,
+        confianza: Math.round((acc.total / acc.cantidad) * 100),
+      }))
+      .sort((a, b) => b.confianza - a.confianza)
+      .slice(0, 8);
+  }, [documentos]);
+
+  if (!datos.length) {
+    return (
+      <p className="py-espacio-6 text-center text-pequeno text-tinta-suave">
+        {t("documental.tablero.sinDatos")}
+      </p>
+    );
+  }
+
+  return (
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart
+          data={datos}
+          layout="vertical"
+          margin={{ top: 4, right: 12, left: 8, bottom: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde, #e2e7ef)" horizontal={false} />
+          <XAxis
+            type="number"
+            domain={[0, 100]}
+            tick={{ fontSize: 11, fill: "var(--color-tinta-suave, #667085)" }}
+            axisLine={false}
+            tickLine={false}
+            unit="%"
+          />
+          <YAxis
+            type="category"
+            dataKey="tipo"
+            width={110}
+            tick={{ fontSize: 11, fill: "var(--color-tinta, #111827)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip
+            contentStyle={ESTILO_TOOLTIP}
+            formatter={(valor) => [`${valor}%`, t("documental.bandeja.colConfianza")]}
+          />
+          <Bar
+            dataKey="confianza"
+            radius={[0, 6, 6, 0]}
+            animationDuration={900}
+            barSize={16}
+          >
+            {datos.map((item) => (
+              <Cell
+                key={item.tipo}
+                fill={
+                  item.confianza >= 80
+                    ? "#10b981"
+                    : item.confianza >= 50
+                      ? "#f59e0b"
+                      : "#ef4444"
+                }
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -64,7 +333,7 @@ function TopMotivos() {
     refetchInterval: 30000,
   });
 
-  const conteo = useMemo(() => {
+  const datos = useMemo(() => {
     const acumulado = new Map<string, number>();
     (excepciones.data || []).forEach((excepcion) => {
       acumulado.set(
@@ -72,37 +341,55 @@ function TopMotivos() {
         (acumulado.get(excepcion.codigo_motivo) || 0) + 1,
       );
     });
-    return [...acumulado.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
-  }, [excepciones.data]);
+    return [...acumulado.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([motivo, cantidad]) => ({
+        motivo: motivoHumano(motivo, t),
+        cantidad,
+      }));
+  }, [excepciones.data, t]);
 
-  if (!conteo.length) {
+  if (!datos.length) {
     return (
-      <p className="text-pequeno text-tinta-suave">
+      <p className="py-espacio-6 text-center text-pequeno text-tinta-suave">
         {t("documental.tablero.sinExcepciones")}
       </p>
     );
   }
 
-  const maximo = conteo[0][1];
-
   return (
-    <div className="flex flex-col gap-espacio-2">
-      {conteo.map(([motivo, cantidad]) => (
-        <div key={motivo} className="flex items-center gap-espacio-3">
-          <span className="w-40 truncate text-micro font-semibold uppercase text-tinta-suave">
-            {motivoHumano(motivo, t)}
-          </span>
-          <div className="h-3.5 w-32 overflow-hidden rounded-insignia bg-lienzo">
-            <div
-              className="h-full rounded-insignia bg-alerta transition-[width] duration-200 motion-reduce:transition-none"
-              style={{ width: `${(cantidad / maximo) * 100}%` }}
-            />
-          </div>
-          <span className="text-pequeno font-semibold text-tinta">
-            {cantidad}
-          </span>
-        </div>
-      ))}
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={datos} margin={{ top: 8, right: 8, left: -18, bottom: 40 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-borde, #e2e7ef)" vertical={false} />
+          <XAxis
+            dataKey="motivo"
+            interval={0}
+            angle={-25}
+            textAnchor="end"
+            height={60}
+            tick={{ fontSize: 10, fill: "var(--color-tinta-suave, #667085)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            allowDecimals={false}
+            tick={{ fontSize: 11, fill: "var(--color-tinta-suave, #667085)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <Tooltip contentStyle={ESTILO_TOOLTIP} />
+          <Bar dataKey="cantidad" radius={[6, 6, 0, 0]} animationDuration={900} barSize={30}>
+            {datos.map((item, indice) => (
+              <Cell
+                key={item.motivo}
+                fill={["#f59e0b", "#6c36ff", "#0ea5e9", "#ef4444", "#10b981", "#8b5cf6"][indice % 6]}
+              />
+            ))}
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
     </div>
   );
 }
@@ -113,6 +400,13 @@ export function TableroDocumental() {
   const resumen = useQuery({
     queryKey: ["documental-resumen"],
     queryFn: obtenerResumenDocumental,
+    staleTime: 15000,
+    refetchInterval: 30000,
+  });
+
+  const bandeja = useQuery({
+    queryKey: ["documental-bandeja-tablero"],
+    queryFn: () => obtenerBandeja({ limite: 200 }),
     staleTime: 15000,
     refetchInterval: 30000,
   });
@@ -136,28 +430,92 @@ export function TableroDocumental() {
   }
 
   const porEstado = resumen.data || {};
+  const documentos = bandeja.data?.documentos || [];
   const pendientes = (eventos.data || []).slice(0, 10);
+
+  const total = Object.values(porEstado).reduce(
+    (suma, n) => suma + Number(n || 0),
+    0,
+  );
+  const aprobados = Number(porEstado.APROBADO || 0);
+  const observados = Number(porEstado.OBSERVADO || 0);
+  const enCurso =
+    Number(porEstado.RECIBIDO || 0) +
+    Number(porEstado.PROCESANDO || 0) +
+    Number(porEstado.EXTRAIDO || 0) +
+    Number(porEstado.VALIDADO || 0);
+  const resueltos = aprobados + observados + Number(porEstado.RECHAZADO || 0);
+  const automatizacion = resueltos
+    ? Math.round((aprobados / resueltos) * 100)
+    : null;
 
   return (
     <div
-      className="grid grid-cols-1 gap-espacio-4 overflow-auto lg:grid-cols-2"
+      className="flex flex-col gap-espacio-4 overflow-auto"
       data-testid="documental-tablero"
     >
-      <Tarjeta>
-        <CabeceraTarjeta titulo={t("documental.tablero.embudo")} />
-        <div className="mt-espacio-4">
-          <Embudo porEstado={porEstado} />
-        </div>
-      </Tarjeta>
+      <div className="grid grid-cols-2 gap-espacio-3 lg:grid-cols-4">
+        <TarjetaKpi
+          etiqueta={t("documental.kpi.total")}
+          valor={total}
+          detalle={`${enCurso} ${t("documental.kpi.enCurso").toLowerCase()}`}
+          tono="#6c36ff"
+          gradiente="linear-gradient(135deg, #f4f0ff 0%, #ffffff 100%)"
+        />
+        <TarjetaKpi
+          etiqueta={t("documental.estado.APROBADO")}
+          valor={aprobados}
+          detalle={total ? `${Math.round((aprobados / total) * 100)}% ${t("documental.tablero.delTotal")}` : "—"}
+          tono="#059669"
+          gradiente="linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%)"
+        />
+        <TarjetaKpi
+          etiqueta={t("documental.estado.OBSERVADO")}
+          valor={observados}
+          detalle={t("documental.kpi.observados")}
+          tono="#d97706"
+          gradiente="linear-gradient(135deg, #fffbeb 0%, #ffffff 100%)"
+        />
+        <TarjetaKpi
+          etiqueta={t("documental.kpi.automatizacion")}
+          valor={automatizacion === null ? "—" : `${automatizacion}%`}
+          detalle={t("documental.kpi.sinTocar")}
+          tono="#0ea5e9"
+          gradiente="linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%)"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-espacio-4 lg:grid-cols-2">
+        <Tarjeta>
+          <CabeceraTarjeta titulo={t("documental.tablero.embudo")} />
+          <div className="mt-espacio-4">
+            <DistribucionEstados porEstado={porEstado} />
+          </div>
+        </Tarjeta>
+
+        <Tarjeta>
+          <CabeceraTarjeta titulo={t("documental.tablero.volumenDia")} />
+          <div className="mt-espacio-4">
+            <VolumenPorDia documentos={documentos} />
+          </div>
+        </Tarjeta>
+
+        <Tarjeta>
+          <CabeceraTarjeta titulo={t("documental.tablero.confianzaTipo")} />
+          <div className="mt-espacio-4">
+            <ConfianzaPromedio documentos={documentos} />
+          </div>
+        </Tarjeta>
+
+        <Tarjeta>
+          <CabeceraTarjeta titulo={t("documental.tablero.topMotivos")} />
+          <div className="mt-espacio-4">
+            <TopMotivos />
+          </div>
+        </Tarjeta>
+      </div>
 
       <Tarjeta>
-        <CabeceraTarjeta titulo={t("documental.tablero.topMotivos")} />
-        <div className="mt-espacio-4">
-          <TopMotivos />
-        </div>
-      </Tarjeta>
-
-      <Tarjeta className="lg:col-span-2">
         <CabeceraTarjeta titulo={t("documental.tablero.eventosPendientes")} />
         <div className="mt-espacio-4 flex flex-col">
           {pendientes.length ? (

@@ -16,9 +16,9 @@ import { BarraConfianza } from "../../componentes/Insignias";
 import {
   IconoCheck,
   IconoCerrar,
+  IconoCorreo,
   IconoIzquierda,
   IconoRecargar,
-  IconoEnlaceExterno,
 } from "../../componentes/Iconos";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
 import { comoFecha, presenciaDeCampo, textoDeValor } from "../dominio";
@@ -200,6 +200,8 @@ export function VisorInteligente({
   const [pestana, setPestana] = useState<PestanaVisor>("campos");
   const [motivo, setMotivo] = useState("");
   const [correoDestino, setCorreoDestino] = useState("");
+  const [correoAbierto, setCorreoAbierto] = useState(false);
+  const [enviandoCorreo, setEnviandoCorreo] = useState(false);
   const [aviso, setAviso] = useState<{
     tono: "ok" | "error";
     texto: string;
@@ -244,12 +246,16 @@ export function VisorInteligente({
   };
 
   const mandarPorCorreo = async () => {
+    setEnviandoCorreo(true);
     try {
       await enviarDocumento(documentoId, correoDestino);
       setAviso({ tono: "ok", texto: t("documental.visor.correoEncolado") });
       setCorreoDestino("");
+      setCorreoAbierto(false);
     } catch (error) {
       setAviso({ tono: "error", texto: mensajeDeError(error) });
+    } finally {
+      setEnviandoCorreo(false);
     }
   };
 
@@ -368,25 +374,73 @@ export function VisorInteligente({
         ) : null}
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-espacio-2">
-          <div className="flex items-center gap-espacio-1">
-            <input
-              type="email"
-              aria-label={t("documental.visor.enviarA")}
-              placeholder={t("documental.visor.enviarA")}
-              value={correoDestino}
-              onChange={(evento) => setCorreoDestino(evento.target.value)}
-              className="h-control-pequeno w-44 rounded-control border border-borde bg-superficie px-espacio-3 text-pequeno text-tinta focus-visible:outline-foco"
-            />
+          <div className="relative">
             <Boton
               variante="secundario"
               tamano="sm"
-              disabled={!correoDestino.includes("@")}
-              onClick={() => void mandarPorCorreo()}
+              onClick={() => setCorreoAbierto((previo) => !previo)}
               data-testid="documental-enviar"
+              aria-expanded={correoAbierto}
             >
-              <IconoEnlaceExterno />
+              <IconoCorreo />
               {t("documental.visor.enviar")}
             </Boton>
+
+            {correoAbierto ? (
+              <div className="absolute right-0 top-full z-30 mt-espacio-2 w-80 rounded-tarjeta border border-borde bg-superficie p-espacio-4 shadow-[0_16px_40px_rgba(13,15,18,.18)]">
+                <div className="flex items-center gap-espacio-2">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-control bg-violeta-tenue text-violeta">
+                    <IconoCorreo tamano={18} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-pequeno font-bold text-tinta">
+                      {t("documental.visor.enviarTitulo")}
+                    </p>
+                    <p className="truncate text-micro text-tinta-suave">
+                      {documento.nombre_archivo}
+                    </p>
+                  </div>
+                </div>
+
+                <label className="mt-espacio-3 block">
+                  <span className="mb-espacio-1 block text-micro font-semibold uppercase tracking-wider text-tinta-suave">
+                    {t("documental.visor.enviarA")}
+                  </span>
+                  <input
+                    type="email"
+                    autoFocus
+                    placeholder="nombre@empresa.com"
+                    value={correoDestino}
+                    onChange={(evento) => setCorreoDestino(evento.target.value)}
+                    onKeyDown={(evento) => {
+                      if (evento.key === "Enter" && correoDestino.includes("@")) {
+                        void mandarPorCorreo();
+                      }
+                      if (evento.key === "Escape") setCorreoAbierto(false);
+                    }}
+                    className="h-control w-full rounded-control border border-borde bg-superficie px-espacio-3 text-pequeno text-tinta focus-visible:outline-foco"
+                  />
+                </label>
+
+                <p className="mt-espacio-2 text-micro leading-relaxed text-tinta-suave">
+                  {t("documental.visor.enviarAyuda")}
+                </p>
+
+                <Boton
+                  variante="primario"
+                  tamano="sm"
+                  className="mt-espacio-3 w-full"
+                  disabled={!correoDestino.includes("@")}
+                  cargando={enviandoCorreo}
+                  onClick={() => void mandarPorCorreo()}
+                >
+                  <IconoCorreo />
+                  {enviandoCorreo
+                    ? t("documental.visor.enviando")
+                    : t("documental.visor.enviarAhora")}
+                </Boton>
+              </div>
+            ) : null}
           </div>
 
           {!cerrado ? (

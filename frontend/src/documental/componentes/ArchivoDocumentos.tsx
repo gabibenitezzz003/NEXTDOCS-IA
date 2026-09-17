@@ -12,13 +12,30 @@ import { Cargando, ErrorPanel, Vacio } from "../../componentes/Estados";
 import { BarraConfianza } from "../../componentes/Insignias";
 import {
   IconoBuscar,
-  IconoDocumentos,
+  IconoCarpeta,
   IconoRecargar,
 } from "../../componentes/Iconos";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
 import { comoFecha, fusionarCatalogoPlantillas } from "../dominio";
 import type { PlantillaCatalogo } from "../../api/documental";
 import { EtiquetaEstadoMotor } from "./EtiquetaEstadoMotor";
+
+const TONOS_CARPETA = [
+  { fondo: "bg-violeta-tenue", texto: "text-violeta", activo: "bg-violeta" },
+  { fondo: "bg-emerald-50", texto: "text-emerald-600", activo: "bg-emerald-600" },
+  { fondo: "bg-sky-50", texto: "text-sky-600", activo: "bg-sky-600" },
+  { fondo: "bg-amber-50", texto: "text-amber-600", activo: "bg-amber-600" },
+  { fondo: "bg-rose-50", texto: "text-rose-600", activo: "bg-rose-600" },
+  { fondo: "bg-indigo-50", texto: "text-indigo-600", activo: "bg-indigo-600" },
+  { fondo: "bg-teal-50", texto: "text-teal-600", activo: "bg-teal-600" },
+  { fondo: "bg-orange-50", texto: "text-orange-600", activo: "bg-orange-600" },
+];
+
+const tonoCarpeta = (codigo: string) => {
+  let hash = 0;
+  for (const letra of codigo) hash = (hash * 31 + letra.charCodeAt(0)) >>> 0;
+  return TONOS_CARPETA[hash % TONOS_CARPETA.length];
+};
 
 const sinDivididos = (documentos: DocumentoMotor[]) =>
   (documentos || []).filter(
@@ -121,32 +138,41 @@ export function ArchivoDocumentos({
         {catalogo.isLoading ? (
           <Cargando />
         ) : (
-          carpetas.map((carpeta: PlantillaCatalogo) => (
-            <button
-              key={carpeta.codigo}
-              type="button"
-              onClick={() => elegirCarpeta(carpeta.codigo)}
-              aria-pressed={carpeta.codigo === codigoCarpeta}
-              className={`flex w-full items-center gap-espacio-3 rounded-control px-espacio-3 py-espacio-2 text-left transition-colors focus-visible:outline-foco ${
-                carpeta.codigo === codigoCarpeta
-                  ? "bg-violeta-tenue"
-                  : "hover:bg-lienzo"
-              }`}
-              data-testid={`documental-carpeta-${carpeta.codigo}`}
-            >
-              <span className="grid size-8 shrink-0 place-items-center rounded-control bg-accion-tonal text-accion-tonal-texto">
-                <IconoDocumentos />
-              </span>
-              <span className="min-w-0">
-                <span className="block truncate text-pequeno font-semibold text-tinta">
-                  {carpeta.nombre}
+          carpetas.map((carpeta: PlantillaCatalogo) => {
+            const tono = tonoCarpeta(carpeta.codigo);
+            const activa = carpeta.codigo === codigoCarpeta;
+            return (
+              <button
+                key={carpeta.codigo}
+                type="button"
+                onClick={() => elegirCarpeta(carpeta.codigo)}
+                aria-pressed={activa}
+                className={`flex w-full items-center gap-espacio-3 rounded-control px-espacio-3 py-espacio-2 text-left transition-colors focus-visible:outline-foco ${
+                  activa ? "bg-violeta-tenue" : "hover:bg-lienzo"
+                }`}
+                data-testid={`documental-carpeta-${carpeta.codigo}`}
+              >
+                <span
+                  className={`grid size-8 shrink-0 place-items-center rounded-control ${
+                    activa ? `${tono.activo} text-white` : `${tono.fondo} ${tono.texto}`
+                  }`}
+                >
+                  <IconoCarpeta />
                 </span>
-                <span className="block truncate text-micro text-tinta-suave">
-                  {carpeta.codigo}
+                <span className="min-w-0">
+                  <span
+                    className="block truncate text-pequeno font-semibold text-tinta"
+                    title={carpeta.nombre}
+                  >
+                    {carpeta.nombre}
+                  </span>
+                  <span className="block truncate text-micro text-tinta-suave">
+                    {carpeta.codigo}
+                  </span>
                 </span>
-              </span>
-            </button>
-          ))
+              </button>
+            );
+          })
         )}
       </Tarjeta>
 
