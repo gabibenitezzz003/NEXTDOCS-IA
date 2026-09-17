@@ -360,6 +360,18 @@ export function IconoCopiar(props: PropsIcono) {
   );
 }
 
+export function IconoEliminar(props: PropsIcono) {
+  return (
+    <Base {...props}>
+      <path d="M4 7h16" />
+      <path d="M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      <path d="M6.5 7l1 13h9l1-13" />
+      <path d="M10 11v5" />
+      <path d="M14 11v5" />
+    </Base>
+  );
+}
+
 export function IconoDeshacer(props: PropsIcono) {
   return (
     <Base {...props}>

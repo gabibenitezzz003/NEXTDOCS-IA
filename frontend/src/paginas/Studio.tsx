@@ -1016,6 +1016,9 @@ function EstudioProceso({
                   alRehacer={rehacer}
                   puedeDeshacer={historial.deshacer > 0}
                   puedeRehacer={historial.rehacer > 0}
+                  alDuplicarNodo={duplicarNodo}
+                  alEliminarNodo={eliminarNodo}
+                  alEliminarArista={eliminarArista}
                 />
                 <PanelSeleccion
                   seleccion={seleccion}

@@ -12,8 +12,10 @@ import {
   IconoAjustar,
   IconoBifurcar,
   IconoCheck,
+  IconoCopiar,
   IconoDeshacer,
   IconoDocumentos,
+  IconoEliminar,
   IconoFirma,
   IconoInfo,
   IconoMas,
@@ -216,6 +218,9 @@ export function CanvasProceso({
   alRehacer,
   puedeDeshacer = false,
   puedeRehacer = false,
+  alDuplicarNodo,
+  alEliminarNodo,
+  alEliminarArista,
 }: {
   grafo: GrafoProceso;
   alCambiar: (grafo: GrafoProceso, continuo?: boolean) => void;
@@ -227,6 +232,9 @@ export function CanvasProceso({
   alRehacer?: () => void;
   puedeDeshacer?: boolean;
   puedeRehacer?: boolean;
+  alDuplicarNodo?: (id: string) => void;
+  alEliminarNodo?: (id: string) => void;
+  alEliminarArista?: (clave: string) => void;
 }) {
   const { t } = useIdioma();
   const svgRef = useRef<SVGSVGElement>(null);
@@ -584,6 +592,29 @@ export function CanvasProceso({
       ? new Set(seleccion.ids ?? [])
       : new Set(seleccion?.tipo === "nodo" ? [seleccion.id] : []);
   const seleccionNodo = seleccion?.tipo === "nodo" ? seleccion.id : null;
+  const nodoMarcado = seleccionNodo
+    ? grafo.nodos.find((nodo) => nodo.id === seleccionNodo)
+    : null;
+  const posicionBarra = nodoMarcado ? posicion(nodoMarcado) : null;
+  const esExtremoFijo =
+    nodoMarcado?.tipo === "INICIO" || nodoMarcado?.tipo === "FIN";
+  const aristaMarcada = seleccionArista
+    ? grafo.aristas.find((arista) => claveArista(arista) === seleccionArista)
+    : null;
+  const origenMarcado = aristaMarcada
+    ? grafo.nodos.find((nodo) => nodo.id === aristaMarcada.origen)
+    : null;
+  const destinoMarcado = aristaMarcada
+    ? grafo.nodos.find((nodo) => nodo.id === aristaMarcada.destino)
+    : null;
+  const posicionArista =
+    origenMarcado && destinoMarcado
+      ? (() => {
+          const a = posicion(origenMarcado);
+          const b = posicion(destinoMarcado);
+          return { x: (a.x + ANCHO + b.x) / 2, y: (a.y + b.y) / 2 + ALTO / 2 };
+        })()
+      : null;
 
   function marcar(ids: string[]) {
     const limpios = [...new Set(ids)].filter((id) =>
@@ -1320,6 +1351,59 @@ export function CanvasProceso({
               );
             })()}
           </svg>
+        ) : null}
+        {aristaMarcada && posicionArista && !deshabilitado && !soloLectura ? (
+          <div
+            className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center rounded-control border border-borde bg-superficie p-espacio-1 shadow-elevado"
+            style={{
+              left: posicionArista.x * vista.k + vista.x,
+              top: posicionArista.y * vista.k + vista.y,
+            }}
+            onPointerDown={(evento) => evento.stopPropagation()}
+          >
+            <BotonIcono
+              variante="fantasma"
+              tamano="sm"
+              aria-label={t("canvas.eliminarConexion")}
+              title={t("canvas.eliminarConexion")}
+              disabled={!alEliminarArista}
+              onClick={() => alEliminarArista?.(seleccionArista!)}
+            >
+              <IconoEliminar tamano={14} />
+            </BotonIcono>
+          </div>
+        ) : null}
+        {nodoMarcado && posicionBarra && !deshabilitado && !soloLectura ? (
+          <div
+            className="absolute z-10 flex -translate-x-1/2 -translate-y-full items-center gap-espacio-1 rounded-control border border-borde bg-superficie p-espacio-1 shadow-elevado"
+            style={{
+              left:
+                posicionBarra.x * vista.k + vista.x + (ANCHO * vista.k) / 2,
+              top: posicionBarra.y * vista.k + vista.y - 8,
+            }}
+            onPointerDown={(evento) => evento.stopPropagation()}
+          >
+            <BotonIcono
+              variante="fantasma"
+              tamano="sm"
+              aria-label={t("canvas.duplicarPaso")}
+              title={t("canvas.duplicarPaso")}
+              disabled={!alDuplicarNodo || esExtremoFijo}
+              onClick={() => alDuplicarNodo?.(nodoMarcado.id)}
+            >
+              <IconoCopiar tamano={14} />
+            </BotonIcono>
+            <BotonIcono
+              variante="fantasma"
+              tamano="sm"
+              aria-label={t("canvas.eliminarPaso")}
+              title={t("canvas.eliminarPaso")}
+              disabled={!alEliminarNodo || esExtremoFijo}
+              onClick={() => alEliminarNodo?.(nodoMarcado.id)}
+            >
+              <IconoEliminar tamano={14} />
+            </BotonIcono>
+          </div>
         ) : null}
         <div className="absolute bottom-espacio-3 right-espacio-3 flex gap-espacio-1 rounded-panel border border-borde bg-superficie p-espacio-1 shadow-panel">
           <BotonIcono
