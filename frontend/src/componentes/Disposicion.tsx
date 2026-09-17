@@ -4,7 +4,6 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Isotipo, Logotipo } from "./Marca";
 import { Boton, BotonIcono } from "./Interfaz";
 import {
-  IconoDocumentos,
   IconoExcepciones,
   IconoInfo,
   IconoInteligencia,
@@ -41,12 +40,6 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         texto: "disposicion.navResumen",
         permiso: "documentos.leer",
         icono: IconoResumen,
-      },
-      {
-        a: "/documentos",
-        texto: "disposicion.navDocumentos",
-        permiso: "documentos.leer",
-        icono: IconoDocumentos,
       },
       {
         a: "/documental",

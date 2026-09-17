@@ -77,7 +77,8 @@ export function CentroExcepcionesDocumental({
   const excepciones = useQuery({
     queryKey: ["documental-excepciones", filtros],
     queryFn: () => obtenerExcepcionesMotor(filtros),
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
     placeholderData: (previo) => previo,
   });
 
@@ -108,39 +109,44 @@ export function CentroExcepcionesDocumental({
       className="flex h-full flex-col gap-espacio-4"
       data-testid="documental-excepciones"
     >
-      <div className="flex flex-wrap items-center gap-espacio-3">
-        <Selector
-          etiqueta={t("documental.excepciones.colEstado")}
-          value={estado}
-          onChange={(evento) => setEstado(evento.target.value)}
-          className="min-w-44"
-        >
-          <option value="ABIERTA">
-            {t("documental.estadoExcepcion.ABIERTA")}
-          </option>
-          <option value="RESUELTA">
-            {t("documental.estadoExcepcion.RESUELTA")}
-          </option>
-          <option value="DESCARTADA">
-            {t("documental.estadoExcepcion.DESCARTADA")}
-          </option>
-          <option value="ESCALADA">
-            {t("documental.estadoExcepcion.ESCALADA")}
-          </option>
-          <option value="">{t("documental.bandeja.todos")}</option>
-        </Selector>
-      </div>
-
       {aviso ? (
         <p
           role="status"
-          className={`text-pequeno font-semibold ${aviso.tono === "ok" ? "text-exito-texto" : "text-rojo-alto"}`}
+          className={`rounded-control px-espacio-3 py-espacio-2 text-pequeno font-semibold ${
+            aviso.tono === "ok"
+              ? "bg-exito-tenue text-exito-texto"
+              : "bg-rojo-tenue text-rojo-alto"
+          }`}
         >
           {aviso.texto}
         </p>
       ) : null}
 
-      <Tarjeta className="min-h-0 flex-1 overflow-auto" padding="p-0">
+      <Tarjeta className="flex min-h-0 flex-1 flex-col" padding="p-0">
+        <div className="flex flex-wrap items-end gap-espacio-3 border-b border-borde px-espacio-4 py-espacio-3">
+          <Selector
+            etiqueta={t("documental.excepciones.colEstado")}
+            value={estado}
+            onChange={(evento) => setEstado(evento.target.value)}
+            className="w-44"
+          >
+            <option value="ABIERTA">
+              {t("documental.estadoExcepcion.ABIERTA")}
+            </option>
+            <option value="RESUELTA">
+              {t("documental.estadoExcepcion.RESUELTA")}
+            </option>
+            <option value="DESCARTADA">
+              {t("documental.estadoExcepcion.DESCARTADA")}
+            </option>
+            <option value="ESCALADA">
+              {t("documental.estadoExcepcion.ESCALADA")}
+            </option>
+            <option value="">{t("documental.bandeja.todos")}</option>
+          </Selector>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto">
         {excepciones.isError ? (
           <div className="p-espacio-4">
             <ErrorPanel
@@ -158,7 +164,7 @@ export function CentroExcepcionesDocumental({
           />
         ) : (
           <table className="w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="border-b border-borde bg-lienzo">
                 {[
                   "colMotivo",
@@ -233,6 +239,7 @@ export function CentroExcepcionesDocumental({
             </tbody>
           </table>
         )}
+        </div>
       </Tarjeta>
 
       {enResolucion ? (

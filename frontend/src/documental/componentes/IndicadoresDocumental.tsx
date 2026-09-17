@@ -37,17 +37,20 @@ export function IndicadoresDocumental() {
   const resumen = useQuery({
     queryKey: ["documental-resumen"],
     queryFn: obtenerResumenDocumental,
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
   });
   const excepciones = useQuery({
     queryKey: ["documental-excepciones", { estado: "ABIERTA", limite: 200 }],
     queryFn: () => obtenerExcepcionesMotor({ estado: "ABIERTA", limite: 200 }),
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
   });
   const vencimientos = useQuery({
     queryKey: ["documental-vencimientos", { dias: 30, limite: 200 }],
     queryFn: () => obtenerVencimientos({ dias: 30, limite: 200 }),
-    refetchInterval: 15000,
+    staleTime: 30000,
+    refetchInterval: 60000,
   });
 
   const cargando = resumen.isLoading || excepciones.isLoading;

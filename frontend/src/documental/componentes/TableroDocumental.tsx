@@ -60,7 +60,8 @@ function TopMotivos() {
   const excepciones = useQuery({
     queryKey: ["documental-excepciones", { estado: "ABIERTA", limite: 200 }],
     queryFn: () => obtenerExcepcionesMotor({ estado: "ABIERTA", limite: 200 }),
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
   });
 
   const conteo = useMemo(() => {
@@ -112,13 +113,15 @@ export function TableroDocumental() {
   const resumen = useQuery({
     queryKey: ["documental-resumen"],
     queryFn: obtenerResumenDocumental,
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
   });
 
   const eventos = useQuery({
     queryKey: ["documental-eventos", "PENDIENTE"],
     queryFn: () => obtenerEventos({ estado: "PENDIENTE", limite: 50 }),
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
   });
 
   if (resumen.isLoading) return <Cargando />;

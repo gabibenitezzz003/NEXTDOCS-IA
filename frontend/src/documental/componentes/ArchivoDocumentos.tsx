@@ -67,7 +67,8 @@ export function ArchivoDocumentos({
         limite: 100,
       }),
     enabled: Boolean(codigoCarpeta),
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
   });
 
   const paginaDeEstaCarpeta = consulta.data !== undefined;

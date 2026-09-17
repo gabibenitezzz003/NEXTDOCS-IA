@@ -42,7 +42,8 @@ export function PanelDistribucion() {
   const pendientes = useQuery({
     queryKey: ["documental-envios", "PENDIENTE"],
     queryFn: () => obtenerEnvios({ estado: "PENDIENTE", limite: 50 }),
-    refetchInterval: 10000,
+    staleTime: 10000,
+    refetchInterval: 30000,
   });
 
   const [abierto, setAbierto] = useState(false);

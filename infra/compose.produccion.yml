@@ -177,7 +177,7 @@ services:
 
 
   documental-api:
-    image: nextdocs-documental:1.0.3
+    image: nextdocs-documental:1.0.4
     container_name: nextdocs-ia-documental-api
     restart: unless-stopped
     command: ["node", "apps/api/dist/principal.js"]
@@ -195,7 +195,12 @@ services:
       PROVEEDOR_IA: gemini
       GOOGLE_API_KEY: ${NEXTDOCS_GEMINI_CLAVE}
       GEMINI_MODELO: gemini-3.6-flash
-      CORREO_ANFITRION: ""
+      CORREO_ANFITRION: ${NEXTDOCS_CORREO_ANFITRION:-}
+      CORREO_PUERTO: ${NEXTDOCS_CORREO_PUERTO:-587}
+      CORREO_SEGURO: ${NEXTDOCS_CORREO_SEGURO:-false}
+      CORREO_USUARIO: ${NEXTDOCS_CORREO_USUARIO:-}
+      CORREO_CLAVE: ${NEXTDOCS_CORREO_CLAVE:-}
+      CORREO_REMITENTE: ${NEXTDOCS_CORREO_REMITENTE:-}
       ARCA_ENTORNO: homologacion
     ports:
       - "127.0.0.1:4002:4000"
@@ -203,7 +208,7 @@ services:
       - nextdocs-interno
 
   documental-worker:
-    image: nextdocs-documental:1.0.3
+    image: nextdocs-documental:1.0.4
     container_name: nextdocs-ia-documental-worker
     restart: unless-stopped
     command: ["node", "apps/worker/dist/principal.js"]
@@ -218,7 +223,13 @@ services:
       PROVEEDOR_IA: gemini
       GOOGLE_API_KEY: ${NEXTDOCS_GEMINI_CLAVE}
       GEMINI_MODELO: gemini-3.6-flash
-      CORREO_ANFITRION: ""
+      CORREO_ANFITRION: ${NEXTDOCS_CORREO_ANFITRION:-}
+      CORREO_PUERTO: ${NEXTDOCS_CORREO_PUERTO:-587}
+      CORREO_SEGURO: ${NEXTDOCS_CORREO_SEGURO:-false}
+      CORREO_USUARIO: ${NEXTDOCS_CORREO_USUARIO:-}
+      CORREO_CLAVE: ${NEXTDOCS_CORREO_CLAVE:-}
+      CORREO_REMITENTE: ${NEXTDOCS_CORREO_REMITENTE:-}
+      NEXTDOCS_URL_PUBLICA: ${NEXTDOCS_URL_PUBLICA:-https://nextdocsia.fenixgroup.tech}
       ARCA_ENTORNO: homologacion
       WORKER_CONCURRENCIA: "2"
     networks:

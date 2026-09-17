@@ -74,7 +74,8 @@ export function PanelVencimientos({
   const consulta = useQuery({
     queryKey: ["documental-vencimientos", filtros],
     queryFn: () => obtenerVencimientos(filtros),
-    refetchInterval: 15000,
+    staleTime: 15000,
+    refetchInterval: 30000,
     placeholderData: (previo) => previo,
   });
 
@@ -125,36 +126,37 @@ export function PanelVencimientos({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-espacio-3">
-        <Selector
-          etiqueta={t("documental.vencimientos.colFamilia")}
-          value={familia}
-          onChange={(evento) => setFamilia(evento.target.value)}
-          className="min-w-44"
-        >
-          <option value="">{t("documental.bandeja.todos")}</option>
-          {FAMILIAS.map((item) => (
-            <option key={item} value={item}>
-              {t(`documental.familia.${item}`)}
-            </option>
-          ))}
-        </Selector>
+      <Tarjeta className="flex min-h-0 flex-1 flex-col" padding="p-0">
+        <div className="flex flex-wrap items-end gap-espacio-3 border-b border-borde px-espacio-4 py-espacio-3">
+          <Selector
+            etiqueta={t("documental.vencimientos.colFamilia")}
+            value={familia}
+            onChange={(evento) => setFamilia(evento.target.value)}
+            className="w-44"
+          >
+            <option value="">{t("documental.bandeja.todos")}</option>
+            {FAMILIAS.map((item) => (
+              <option key={item} value={item}>
+                {t(`documental.familia.${item}`)}
+              </option>
+            ))}
+          </Selector>
 
-        <Selector
-          etiqueta={t("documental.vencimientos.horizonte")}
-          value={String(dias)}
-          onChange={(evento) => setDias(Number(evento.target.value))}
-          className="min-w-36"
-        >
-          {[15, 30, 60, 90].map((item) => (
-            <option key={item} value={item}>
-              {t("documental.vencimientos.enDias", { valor: item })}
-            </option>
-          ))}
-        </Selector>
-      </div>
+          <Selector
+            etiqueta={t("documental.vencimientos.horizonte")}
+            value={String(dias)}
+            onChange={(evento) => setDias(Number(evento.target.value))}
+            className="w-36"
+          >
+            {[15, 30, 60, 90].map((item) => (
+              <option key={item} value={item}>
+                {t("documental.vencimientos.enDias", { valor: item })}
+              </option>
+            ))}
+          </Selector>
+        </div>
 
-      <Tarjeta className="min-h-0 flex-1 overflow-auto" padding="p-0">
+        <div className="min-h-0 flex-1 overflow-auto">
         {consulta.isError ? (
           <div className="p-espacio-4">
             <ErrorPanel
@@ -172,7 +174,7 @@ export function PanelVencimientos({
           />
         ) : (
           <table className="w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="border-b border-borde bg-lienzo">
                 {[
                   "colDocumento",
@@ -258,6 +260,7 @@ export function PanelVencimientos({
             </tbody>
           </table>
         )}
+        </div>
       </Tarjeta>
     </div>
   );

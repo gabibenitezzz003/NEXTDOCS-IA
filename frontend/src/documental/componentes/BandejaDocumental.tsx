@@ -64,9 +64,10 @@ export function BandejaDocumental({
     refetchInterval: (consultaActiva) => {
       const documentos = consultaActiva.state.data?.documentos || [];
       return documentos.some((d) => ESTADOS_EN_CURSO.includes(d.estado))
-        ? 3000
-        : 15000;
+        ? 2500
+        : 30000;
     },
+    staleTime: 5000,
     placeholderData: (previo) => previo,
   });
 
@@ -118,61 +119,68 @@ export function BandejaDocumental({
       className="flex h-full flex-col gap-espacio-4"
       data-testid="documental-bandeja"
     >
-      <div className="flex flex-wrap items-center gap-espacio-3">
-        <Selector
-          etiqueta={t("documental.bandeja.colEstado")}
-          value={estado}
-          onChange={(evento) => setEstado(evento.target.value)}
-          className="min-w-44"
-        >
-          <option value="">{t("documental.bandeja.todos")}</option>
-          {ESTADOS_DOCUMENTO.map((item) => (
-            <option key={item} value={item}>
-              {t(`documental.estado.${item}`)}
-            </option>
-          ))}
-        </Selector>
-
-        <Campo
-          etiqueta={t("documental.bandeja.colTipo")}
-          value={plantilla}
-          onChange={(evento) => setPlantilla(evento.target.value.toUpperCase())}
-          className="min-w-40"
-          placeholder={t("documental.bandeja.filtroPlantillaPlaceholder")}
-        />
-
-        <div className="flex-1" />
-
-        <input
-          ref={entradaArchivo}
-          type="file"
-          accept=".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff"
-          hidden
-          onChange={subir}
-        />
-
-        <Boton
-          variante="primario"
-          cargando={subiendo}
-          onClick={() => entradaArchivo.current?.click()}
-        >
-          <IconoSubir />
-          {subiendo
-            ? t("documental.bandeja.subiendo")
-            : t("documental.bandeja.cargar")}
-        </Boton>
-      </div>
-
       {aviso ? (
         <p
           role="status"
-          className={`text-pequeno font-semibold ${aviso.tono === "ok" ? "text-exito-texto" : "text-rojo-alto"}`}
+          className={`rounded-control px-espacio-3 py-espacio-2 text-pequeno font-semibold ${
+            aviso.tono === "ok"
+              ? "bg-exito-tenue text-exito-texto"
+              : "bg-rojo-tenue text-rojo-alto"
+          }`}
         >
           {aviso.texto}
         </p>
       ) : null}
 
-      <Tarjeta className="min-h-0 flex-1 overflow-auto" padding="p-0">
+      <Tarjeta className="flex min-h-0 flex-1 flex-col" padding="p-0">
+        <div className="flex flex-wrap items-end gap-espacio-3 border-b border-borde px-espacio-4 py-espacio-3">
+          <Selector
+            etiqueta={t("documental.bandeja.colEstado")}
+            value={estado}
+            onChange={(evento) => setEstado(evento.target.value)}
+            className="w-44"
+          >
+            <option value="">{t("documental.bandeja.todos")}</option>
+            {ESTADOS_DOCUMENTO.map((item) => (
+              <option key={item} value={item}>
+                {t(`documental.estado.${item}`)}
+              </option>
+            ))}
+          </Selector>
+
+          <Campo
+            etiqueta={t("documental.bandeja.colTipo")}
+            value={plantilla}
+            onChange={(evento) =>
+              setPlantilla(evento.target.value.toUpperCase())
+            }
+            className="w-40"
+            placeholder={t("documental.bandeja.filtroPlantillaPlaceholder")}
+          />
+
+          <div className="flex-1" />
+
+          <input
+            ref={entradaArchivo}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png,.webp,.tif,.tiff"
+            hidden
+            onChange={subir}
+          />
+
+          <Boton
+            variante="primario"
+            cargando={subiendo}
+            onClick={() => entradaArchivo.current?.click()}
+          >
+            <IconoSubir />
+            {subiendo
+              ? t("documental.bandeja.subiendo")
+              : t("documental.bandeja.cargar")}
+          </Boton>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto">
         {bandeja.isError ? (
           <div className="p-espacio-4">
             <ErrorPanel
@@ -190,7 +198,7 @@ export function BandejaDocumental({
           />
         ) : (
           <table className="w-full border-collapse">
-            <thead>
+            <thead className="sticky top-0 z-10">
               <tr className="border-b border-borde bg-lienzo">
                 <th className="px-espacio-4 py-espacio-3 text-left text-micro font-bold uppercase tracking-wider text-tinta-suave">
                   {t("documental.bandeja.colDocumento")}
@@ -328,6 +336,7 @@ export function BandejaDocumental({
             </tbody>
           </table>
         )}
+        </div>
       </Tarjeta>
     </div>
   );

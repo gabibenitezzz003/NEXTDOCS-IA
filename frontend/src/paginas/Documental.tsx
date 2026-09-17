@@ -124,27 +124,33 @@ export function Documental() {
           <div
             role="tablist"
             aria-label={t("documental.titulo")}
-            className="flex gap-espacio-1 overflow-x-auto rounded-control bg-lienzo p-espacio-1"
+            className="flex overflow-x-auto border-b border-borde"
             data-testid="documental-tabs"
           >
             {SECCIONES.map((item) => {
               const Icono = item.icono;
+              const activo = activa === item.id;
               return (
                 <button
                   key={item.id}
                   type="button"
                   role="tab"
-                  aria-selected={activa === item.id}
+                  aria-selected={activo}
                   onClick={() => cambiarSeccion(item.id)}
                   data-testid={`documental-tab-${item.id}`}
-                  className={`inline-flex min-h-control-pequeno shrink-0 items-center gap-espacio-2 rounded-control px-espacio-3 text-pequeno font-semibold transition-colors focus-visible:outline-foco ${
-                    activa === item.id
-                      ? "bg-superficie text-tinta shadow-plano"
+                  className={`relative inline-flex shrink-0 items-center gap-espacio-2 px-espacio-4 py-espacio-3 text-pequeno font-semibold transition-colors focus-visible:outline-foco ${
+                    activo
+                      ? "text-accion"
                       : "text-tinta-suave hover:text-tinta"
                   }`}
                 >
                   <Icono tamano={16} />
                   {t(item.etiqueta)}
+                  <span
+                    className={`absolute inset-x-espacio-2 -bottom-px h-0.5 rounded-insignia bg-accion transition-opacity ${
+                      activo ? "opacity-100" : "opacity-0"
+                    }`}
+                  />
                 </button>
               );
             })}

@@ -367,62 +367,64 @@ export function VisorInteligente({
           </span>
         ) : null}
 
-        <div className="flex-1" />
-
-        <div className="flex items-center gap-espacio-1">
-          <input
-            type="email"
-            aria-label={t("documental.visor.enviarA")}
-            placeholder={t("documental.visor.enviarA")}
-            value={correoDestino}
-            onChange={(evento) => setCorreoDestino(evento.target.value)}
-            className="h-control-pequeno w-44 rounded-control border border-borde bg-superficie px-espacio-3 text-pequeno text-tinta focus-visible:outline-foco"
-          />
-          <BotonIcono
-            tamano="sm"
-            disabled={!correoDestino.includes("@")}
-            aria-label={t("documental.visor.enviar")}
-            onClick={() => void mandarPorCorreo()}
-          >
-            <IconoEnlaceExterno />
-          </BotonIcono>
-        </div>
-
-        {!cerrado ? (
-          <>
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-espacio-2">
+          <div className="flex items-center gap-espacio-1">
             <input
-              aria-label={t("documental.visor.motivoOpcional")}
-              placeholder={t("documental.visor.motivoOpcional")}
-              value={motivo}
-              onChange={(evento) => setMotivo(evento.target.value)}
+              type="email"
+              aria-label={t("documental.visor.enviarA")}
+              placeholder={t("documental.visor.enviarA")}
+              value={correoDestino}
+              onChange={(evento) => setCorreoDestino(evento.target.value)}
               className="h-control-pequeno w-44 rounded-control border border-borde bg-superficie px-espacio-3 text-pequeno text-tinta focus-visible:outline-foco"
             />
             <Boton
               variante="secundario"
               tamano="sm"
-              onClick={() => void reprocesar()}
+              disabled={!correoDestino.includes("@")}
+              onClick={() => void mandarPorCorreo()}
+              data-testid="documental-enviar"
             >
-              <IconoRecargar />
-              {t("documental.visor.reprocesar")}
+              <IconoEnlaceExterno />
+              {t("documental.visor.enviar")}
             </Boton>
-            <Boton
-              variante="peligro"
-              tamano="sm"
-              onClick={() => void decidir("RECHAZAR")}
-              data-testid="documental-rechazar"
-            >
-              {t("documental.visor.rechazar")}
-            </Boton>
-            <Boton
-              variante="primario"
-              tamano="sm"
-              onClick={() => void decidir("APROBAR")}
-              data-testid="documental-aprobar"
-            >
-              {t("documental.visor.aprobar")}
-            </Boton>
-          </>
-        ) : null}
+          </div>
+
+          {!cerrado ? (
+            <>
+              <input
+                aria-label={t("documental.visor.motivoOpcional")}
+                placeholder={t("documental.visor.motivoOpcional")}
+                value={motivo}
+                onChange={(evento) => setMotivo(evento.target.value)}
+                className="h-control-pequeno w-40 rounded-control border border-borde bg-superficie px-espacio-3 text-pequeno text-tinta focus-visible:outline-foco"
+              />
+              <Boton
+                variante="secundario"
+                tamano="sm"
+                onClick={() => void reprocesar()}
+              >
+                <IconoRecargar />
+                {t("documental.visor.reprocesar")}
+              </Boton>
+              <Boton
+                variante="peligro"
+                tamano="sm"
+                onClick={() => void decidir("RECHAZAR")}
+                data-testid="documental-rechazar"
+              >
+                {t("documental.visor.rechazar")}
+              </Boton>
+              <Boton
+                variante="primario"
+                tamano="sm"
+                onClick={() => void decidir("APROBAR")}
+                data-testid="documental-aprobar"
+              >
+                {t("documental.visor.aprobar")}
+              </Boton>
+            </>
+          ) : null}
+        </div>
       </div>
 
       {aviso ? (
