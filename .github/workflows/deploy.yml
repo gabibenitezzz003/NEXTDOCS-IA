@@ -6,7 +6,7 @@ on:
     types: [completed]
     branches: [main]
   repository_dispatch:
-    types: [workflow-actualizado]
+    types: [workflow-actualizado, documental-actualizado]
   workflow_dispatch:
     inputs:
       ref:

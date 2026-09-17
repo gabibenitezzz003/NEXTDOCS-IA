@@ -178,10 +178,21 @@ services:
 
 
   documental-api:
-    image: nextdocs-documental:1.0.5
+    build:
+      context: /opt/nextdocs-ia/documental
+      dockerfile: Dockerfile
+    image: nextdocs-documental:prod
     container_name: nextdocs-ia-documental-api
     restart: unless-stopped
     command: ["node", "apps/api/dist/principal.js"]
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -qO /dev/null http://127.0.0.1:4000/salud || exit 1
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
     environment:
       NODE_ENV: production
       POSTGRES_URL: ${NEXTDOCS_DOCUMENTAL_BD_URL}
@@ -210,10 +221,21 @@ services:
       - nextdocs-interno
 
   documental-worker:
-    image: nextdocs-documental:1.0.5
+    build:
+      context: /opt/nextdocs-ia/documental
+      dockerfile: Dockerfile
+    image: nextdocs-documental:prod
     container_name: nextdocs-ia-documental-worker
     restart: unless-stopped
     command: ["node", "apps/worker/dist/principal.js"]
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - ps -eo args | grep -q "[a]pps/worker/dist/principal.js"
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
     environment:
       NODE_ENV: production
       POSTGRES_URL: ${NEXTDOCS_DOCUMENTAL_BD_URL}

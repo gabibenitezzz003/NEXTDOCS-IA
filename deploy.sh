@@ -12,6 +12,12 @@ WORKFLOW_STATE_FILE="$STATE_DIR/deployed_workflow_commit"
 WORKFLOW_CONTAINER="nextdocs-ia-workflow"
 WORKFLOW_SERVICE="workflow"
 WORKFLOW_REPO_URL="${NEXTDOCS_WORKFLOW_REPO_URL:-git@github-workflow:gabibenitezzz003/nextdocs-workflow.git}"
+DOCUMENTAL_STATE_FILE="$STATE_DIR/deployed_documental_commit"
+DOCUMENTAL_SERVICE="documental-api"
+DOCUMENTAL_CONTAINERS="nextdocs-ia-documental-api nextdocs-ia-documental-worker"
+DOCUMENTAL_REPO_URL="${NEXTDOCS_DOCUMENTAL_REPO_URL:-git@github-documental:gabibenitezzz003/nextdocs-documental.git}"
+DOCUMENTAL_IMAGEN="nextdocs-documental:prod"
+BACKUP_DOCUMENTAL_TAG="nextdocs-documental-backup"
 LOCK_FILE="$STATE_DIR/deploy.lock"
 WEB_ROOT="/var/www/nextdocs-ia"
 WEB_BACKUP="/var/www/nextdocs-ia.prev"
@@ -1115,6 +1121,110 @@ rollback_workflow() {
     return 1
 }
 
+documental_presente() {
+    compose_prod config --services 2>/dev/null | grep -qx "$DOCUMENTAL_SERVICE"
+}
+
+sincronizar_repo_documental() {
+    local dir="$ROOT_DIR/../documental"
+
+    if [ ! -d "$dir/.git" ]; then
+        log "Clonando el repositorio documental en $dir."
+        git clone "$DOCUMENTAL_REPO_URL" "$dir" || {
+            log "No se pudo clonar $DOCUMENTAL_REPO_URL."
+            return 1
+        }
+    fi
+
+    git -C "$dir" fetch --quiet origin main \
+        && git -C "$dir" checkout --quiet --detach origin/main \
+        || { log "No se pudo sincronizar el repositorio documental."; return 1; }
+
+    git -C "$dir" rev-parse HEAD
+}
+
+desplegar_documental() {
+    if ! documental_presente; then
+        return 0
+    fi
+
+    local commit_documental
+    commit_documental="$(sincronizar_repo_documental)" || return 1
+
+    local estado_documental=""
+    if sudo test -f "$DOCUMENTAL_STATE_FILE" 2>/dev/null; then
+        estado_documental="$(sudo cat "$DOCUMENTAL_STATE_FILE" | head -n 1 | tr -d '[:space:]')"
+    fi
+
+    if [ "$estado_documental" = "$commit_documental" ] \
+        && sudo docker inspect "nextdocs-ia-documental-api" >/dev/null 2>&1; then
+        log "Documental ya esta en $commit_documental. Sin cambios."
+        return 0
+    fi
+
+    local imagen_anterior=""
+
+    if sudo docker image inspect "$DOCUMENTAL_IMAGEN" >/dev/null 2>&1; then
+        imagen_anterior="$(sudo docker image inspect --format '{{.Id}}' "$DOCUMENTAL_IMAGEN")"
+        sudo docker tag "$imagen_anterior" "$BACKUP_DOCUMENTAL_TAG" >/dev/null
+        log "Imagen anterior del motor documental preservada como $BACKUP_DOCUMENTAL_TAG ($imagen_anterior)"
+    fi
+
+    log "Construyendo la imagen del motor documental ($commit_documental)."
+    if ! sudo docker build -t "$DOCUMENTAL_IMAGEN" "$ROOT_DIR/../documental"; then
+        log "La construccion de la imagen del motor documental fallo; los contenedores no se tocaron."
+        return 1
+    fi
+
+    log "Recreando los servicios documentales."
+    if ! compose_prod up -d --no-deps --force-recreate documental-api documental-worker; then
+        log "No se pudieron recrear los servicios documentales."
+        rollback_documental "$imagen_anterior"
+        return 1
+    fi
+
+    local contenedor
+    for contenedor in $DOCUMENTAL_CONTAINERS; do
+        if ! esperar_saludable "$contenedor"; then
+            log "El contenedor $contenedor no quedo saludable; volviendo a la imagen anterior."
+            rollback_documental "$imagen_anterior"
+            return 1
+        fi
+    done
+
+    printf '%s\n' "$commit_documental" | sudo tee "$DOCUMENTAL_STATE_FILE" >/dev/null
+    log "Motor documental desplegado en $commit_documental."
+    return 0
+}
+
+rollback_documental() {
+    local imagen_anterior="$1"
+
+    if [ -z "$imagen_anterior" ]; then
+        log "No habia imagen anterior del motor documental; deteniendo los servicios fallidos."
+        compose_prod stop documental-api documental-worker >/dev/null 2>&1 || true
+        return 1
+    fi
+
+    if ! sudo docker tag "$imagen_anterior" "$DOCUMENTAL_IMAGEN"; then
+        log "No se pudo retaguear la imagen anterior del motor documental."
+        return 1
+    fi
+
+    if ! compose_prod up -d --no-deps --force-recreate documental-api documental-worker; then
+        log "El rollback documental no pudo recrear los servicios."
+        return 1
+    fi
+
+    if esperar_saludable "nextdocs-ia-documental-api" 180; then
+        log "Rollback documental completado: la version anterior volvio a quedar saludable."
+        return 0
+    fi
+
+    log "El rollback documental tampoco quedo saludable. Intervencion manual requerida."
+    return 1
+}
+
 registrar_estado() {
     local objetivo="$1"
     printf '%s\n' "$objetivo" | sudo tee "$STATE_FILE" >/dev/null
@@ -1217,6 +1327,10 @@ desplegar() {
 
     if [ "$fallo" -eq 0 ]; then
         desplegar_workflow || fallo=1
+    fi
+
+    if [ "$fallo" -eq 0 ]; then
+        desplegar_documental || fallo=1
     fi
 
     if [ "$fallo" -ne 0 ]; then
