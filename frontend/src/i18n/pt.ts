@@ -315,7 +315,11 @@ export const pt: Diccionario = {
     confirmarEliminarConexion:
       "Excluir esta conexão? Esta ação não pode ser desfeita.",
     tipoDocumentoAyuda:
-      "Código do catálogo documental que este passo exige para ser concluído.",
+      "Tipo do catálogo documental que este passo exige para ser concluído.",
+    tipoDocumentoCualquiera: "Qualquer tipo (sem filtro)",
+    tipoDocumentoCatalogoVacio:
+      "Ainda não há tipos documentais instalados no catálogo.",
+    tipoDocumentoIrCatalogo: "Gerenciar o catálogo",
     subprocesoAyuda:
       "Código do processo publicado instanciado como subproceso.",
     condicionesIa: "Condições de validação",

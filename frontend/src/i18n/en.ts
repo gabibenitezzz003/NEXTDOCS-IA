@@ -315,7 +315,11 @@ export const en: Diccionario = {
     confirmarEliminarConexion:
       "Delete this connection? This action cannot be undone.",
     tipoDocumentoAyuda:
-      "Document catalog code this step requires to be completed.",
+      "Document catalog type this step requires to be completed.",
+    tipoDocumentoCualquiera: "Any type (no filter)",
+    tipoDocumentoCatalogoVacio:
+      "No document types installed in the catalog yet.",
+    tipoDocumentoIrCatalogo: "Manage the catalog",
     subprocesoAyuda:
       "Code of the published process instantiated as a subprocess.",
     condicionesIa: "Validation conditions",

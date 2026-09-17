@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
@@ -37,6 +37,7 @@ import type {
   SimulacionResultado,
   VersionProceso,
 } from "../api/procesos";
+import { obtenerPlantillasMotor } from "../api/documental";
 import { aplicarConfiguracion, avisosNodo } from "../utilidades/grafoProceso";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
@@ -1246,22 +1247,26 @@ function ConfiguracionNodo({
             etiqueta={t("canvas.eventoInicio")}
             placeholder="documento.recibido"
             ayuda={t("canvas.eventoInicioAyuda")}
+            list="eventos-documentales"
             value={texto("evento")}
             onChange={(evento) => cambiar("evento", evento.target.value)}
           />
+          <datalist id="eventos-documentales">
+            {EVENTOS_DOCUMENTALES.map((evento) => (
+              <option key={evento} value={evento} />
+            ))}
+          </datalist>
         </>
       ) : null}
       {nodo.tipo === "SOLICITUD_DOCUMENTO" || nodo.tipo === "FIRMA" ? (
-        <Campo
-          etiqueta={t("procesos.tipoDocumento")}
-          placeholder="FACTURA_COMERCIAL"
+        <SelectorTipoDocumento
+          valor={texto("tipoDocumento")}
           ayuda={
             nodo.tipo === "FIRMA"
               ? t("canvas.tipoDocumentoFirmaAyuda")
               : t("canvas.tipoDocumentoAyuda")
           }
-          value={texto("tipoDocumento")}
-          onChange={(evento) => cambiar("tipoDocumento", evento.target.value)}
+          alCambiar={(valor) => cambiar("tipoDocumento", valor)}
         />
       ) : null}
       {nodo.tipo === "PARALELO" ? (
@@ -1391,12 +1396,10 @@ function ConfiguracionNodo({
               )
             }
           />
-          <Campo
-            etiqueta={t("procesos.tipoDocumento")}
-            placeholder="FACTURA_COMERCIAL"
+          <SelectorTipoDocumento
+            valor={texto("tipoDocumento")}
             ayuda={t("canvas.tipoDocumentoExternoAyuda")}
-            value={texto("tipoDocumento")}
-            onChange={(evento) => cambiar("tipoDocumento", evento.target.value)}
+            alCambiar={(valor) => cambiar("tipoDocumento", valor)}
           />
         </>
       ) : null}
@@ -1429,6 +1432,70 @@ function ConfiguracionNodo({
             )
           }
         />
+      ) : null}
+    </div>
+  );
+}
+
+const EVENTOS_DOCUMENTALES = [
+  "documento.recibido",
+  "documento.dividido",
+  "documento.clasificado",
+  "documento.extraido",
+  "documento.emparejado",
+  "documento.validado",
+  "documento.observado",
+  "documento.aprobado",
+  "documento.rechazado",
+];
+
+function SelectorTipoDocumento({
+  valor,
+  ayuda,
+  alCambiar,
+}: {
+  valor: string;
+  ayuda: string;
+  alCambiar: (valor: string | undefined) => void;
+}) {
+  const { t } = useIdioma();
+  const consulta = useQuery({
+    queryKey: ["plantillas-motor"],
+    queryFn: obtenerPlantillasMotor,
+    staleTime: 60_000,
+  });
+  const plantillas = consulta.data ?? [];
+  const valorConocido =
+    !valor || plantillas.some((plantilla) => plantilla.codigo === valor);
+
+  return (
+    <div className="grid gap-espacio-2">
+      <Selector
+        etiqueta={t("procesos.tipoDocumento")}
+        ayuda={ayuda}
+        value={valor}
+        onChange={(evento) =>
+          alCambiar(evento.target.value || undefined)
+        }
+      >
+        <option value="">{t("canvas.tipoDocumentoCualquiera")}</option>
+        {plantillas.map((plantilla) => (
+          <option key={plantilla.codigo} value={plantilla.codigo}>
+            {`${plantilla.nombre} · ${plantilla.codigo}`}
+          </option>
+        ))}
+        {valorConocido ? null : <option value={valor}>{valor}</option>}
+      </Selector>
+      {consulta.isSuccess && plantillas.length === 0 ? (
+        <p className="text-pequeno text-tinta-suave">
+          {t("canvas.tipoDocumentoCatalogoVacio")}{" "}
+          <Link
+            to="/documental/plantillas"
+            className="font-medium text-marca hover:underline"
+          >
+            {t("canvas.tipoDocumentoIrCatalogo")}
+          </Link>
+        </p>
       ) : null}
     </div>
   );

@@ -312,7 +312,11 @@ export const es = {
     confirmarEliminarConexion:
       "¿Eliminar esta conexión? Esta acción no se puede deshacer.",
     tipoDocumentoAyuda:
-      "Código del catálogo documental que este paso exige al completarse.",
+      "Tipo del catálogo documental que este paso exige al completarse.",
+    tipoDocumentoCualquiera: "Cualquier tipo (sin filtro)",
+    tipoDocumentoCatalogoVacio:
+      "Todavía no hay tipos documentales instalados en el catálogo.",
+    tipoDocumentoIrCatalogo: "Gestionar el catálogo",
     subprocesoAyuda:
       "Código del proceso publicado que se instancia como subproceso.",
     condicionesIa: "Condiciones de validación",
