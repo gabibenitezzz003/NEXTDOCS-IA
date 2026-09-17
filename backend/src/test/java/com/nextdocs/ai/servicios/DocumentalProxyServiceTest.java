@@ -3,6 +3,7 @@ package com.nextdocs.ai.servicios;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
@@ -47,6 +48,8 @@ class DocumentalProxyServiceTest {
 
 	private ConfiguracionConectorRepository repositorio;
 
+	private ProvisionadorDocumentalService provisionador;
+
 	@BeforeEach
 	void levantarDocumentalFalso() throws IOException {
 		ultimaRuta = new AtomicReference<>();
@@ -71,7 +74,8 @@ class DocumentalProxyServiceTest {
 		servidor.start();
 
 		repositorio = mock(ConfiguracionConectorRepository.class);
-		servicio = new DocumentalProxyService(repositorio);
+		provisionador = mock(ProvisionadorDocumentalService.class);
+		servicio = new DocumentalProxyService(repositorio, provisionador);
 	}
 
 	@AfterEach
@@ -128,6 +132,7 @@ class DocumentalProxyServiceTest {
 				() -> servicio.reenviar(TENANT, "GET", "/documentos", null, null, null, null))
 						.isInstanceOf(ConectorNoDisponibleException.class);
 		assertThat(servicio.habilitado(TENANT)).isFalse();
+		verify(provisionador).provisionar(TENANT);
 	}
 
 	@Test

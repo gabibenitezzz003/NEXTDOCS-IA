@@ -30,10 +30,14 @@ public class DocumentalProxyService {
 
 	private final ConfiguracionConectorRepository configuracionConectorRepository;
 
+	private final ProvisionadorDocumentalService provisionadorDocumentalService;
+
 	private final HttpClient clienteHttp;
 
-	public DocumentalProxyService(ConfiguracionConectorRepository configuracionConectorRepository) {
+	public DocumentalProxyService(ConfiguracionConectorRepository configuracionConectorRepository,
+			ProvisionadorDocumentalService provisionadorDocumentalService) {
 		this.configuracionConectorRepository = configuracionConectorRepository;
+		this.provisionadorDocumentalService = provisionadorDocumentalService;
 		this.clienteHttp = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
 	}
 
@@ -47,8 +51,7 @@ public class DocumentalProxyService {
 		ConfiguracionConector configuracion = configuracionConectorRepository
 				.buscarPorCodigo(tenantId, CODIGO_CONECTOR)
 				.filter(ConfiguracionConector::isActivo)
-				.orElseThrow(() -> new ConectorNoDisponibleException(CODIGO_CONECTOR,
-						"El tenant no tiene configurado el motor documental", false));
+				.orElseGet(() -> recuperarConfiguracion(tenantId));
 
 		String destino = normalizar(configuracion.getUrlBase()) + "/api/v1" + subruta
 				+ (consulta == null || consulta.isBlank() ? "" : "?" + consulta);
@@ -80,6 +83,14 @@ public class DocumentalProxyService {
 			throw new ConectorNoDisponibleException(CODIGO_CONECTOR,
 					"La llamada al motor documental fue interrumpida", true);
 		}
+	}
+
+	private ConfiguracionConector recuperarConfiguracion(String tenantId) {
+		provisionadorDocumentalService.provisionar(tenantId);
+		return configuracionConectorRepository.buscarPorCodigo(tenantId, CODIGO_CONECTOR)
+				.filter(ConfiguracionConector::isActivo)
+				.orElseThrow(() -> new ConectorNoDisponibleException(CODIGO_CONECTOR,
+						"El tenant no tiene configurado el motor documental", false));
 	}
 
 	private void agregarAutenticacion(HttpRequest.Builder constructor, ConfiguracionConector configuracion) {

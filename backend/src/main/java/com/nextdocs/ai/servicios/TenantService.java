@@ -48,12 +48,15 @@ public class TenantService {
 
 	private final SembradorCatalogoService sembradorCatalogoService;
 
+	private final ProvisionadorDocumentalService provisionadorDocumentalService;
+
 	private final AdministracionConverter administracionConverter;
 
 	public TenantService(TenantRepository tenantRepository, RolRepository rolRepository,
 			UsuarioRepository usuarioRepository, ArchivoDocumentoRepository archivoDocumentoRepository,
 			PasswordEncoder codificadorClave, AuditoriaService auditoriaService,
 			SembradorCatalogoService sembradorCatalogoService,
+			ProvisionadorDocumentalService provisionadorDocumentalService,
 			AdministracionConverter administracionConverter) {
 		this.tenantRepository = tenantRepository;
 		this.rolRepository = rolRepository;
@@ -62,6 +65,7 @@ public class TenantService {
 		this.codificadorClave = codificadorClave;
 		this.auditoriaService = auditoriaService;
 		this.sembradorCatalogoService = sembradorCatalogoService;
+		this.provisionadorDocumentalService = provisionadorDocumentalService;
 		this.administracionConverter = administracionConverter;
 	}
 
@@ -101,6 +105,7 @@ public class TenantService {
 
 		crearRolesPredefinidos(tenant);
 		sembradorCatalogoService.sembrarSiCorresponde(tenant);
+		provisionadorDocumentalService.provisionar(tenant);
 		auditoriaService.registrar(tenant.getId(), AccionAuditoria.TENANT_CREADO, ENTIDAD, tenant.getId());
 		return tenant;
 	}

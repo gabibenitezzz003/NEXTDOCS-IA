@@ -176,6 +176,11 @@ nextdocs:
     retrasoInicialMilisegundos: 60000
   catalogo:
     sembrarTenantsNuevos: ${NEXTDOCS_CATALOGO_SEMBRAR:true}
+  documental:
+    urlBase: ${NEXTDOCS_DOCUMENTAL_URL_BASE:}
+    claveAdmin: ${NEXTDOCS_DOCUMENTAL_CLAVE_ADMIN:}
+    tiempoEsperaMilisegundos: ${NEXTDOCS_DOCUMENTAL_TIMEOUT_MS:8000}
+    enfriamientoFalloSegundos: 60
   clasificacion:
     activa: ${NEXTDOCS_CLASIFICACION_ACTIVA:true}
     confianzaMinima: ${NEXTDOCS_CLASIFICACION_CONFIANZA_MINIMA:0.60}
