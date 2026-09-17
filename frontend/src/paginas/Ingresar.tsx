@@ -99,7 +99,9 @@ export function Ingresar() {
   const navegar = useNavigate();
   const [parametros, fijarParametros] = useSearchParams();
   const [modo, setModo] = useState<"ingresar" | "registro">("ingresar");
-  const [codigoTenant, setCodigoTenant] = useState("demo");
+  const [codigoTenant, setCodigoTenant] = useState(
+    () => localStorage.getItem("nextdocs.ultimoTenant") ?? "",
+  );
   const [email, setEmail] = useState("");
   const [clave, setClave] = useState("");
   const [nombreOrganizacion, setNombreOrganizacion] = useState("");
@@ -176,8 +178,10 @@ export function Ingresar() {
           emailAdministrador: email.trim(),
           claveAdministrador: clave,
         });
+        localStorage.setItem("nextdocs.ultimoTenant", codigoOrganizacion.trim());
       } else {
         await ingresar(codigoTenant.trim(), email.trim(), clave);
+        localStorage.setItem("nextdocs.ultimoTenant", codigoTenant.trim());
       }
       navegar("/resumen");
     } catch (fallo) {
@@ -343,12 +347,13 @@ export function Ingresar() {
               ) : (
                 <Campo
                   etiqueta={t("ingresar.organizacion")}
+                  ayuda={t("ingresar.organizacionAyuda")}
                   value={codigoTenant}
                   onChange={(evento) => setCodigoTenant(evento.target.value)}
                   required
                   disabled={enviando}
                   autoComplete="off"
-                  placeholder="demo"
+                  placeholder={t("ingresar.organizacionPlaceholder")}
                 />
               )}
               <Campo

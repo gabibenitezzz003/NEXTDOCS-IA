@@ -4,7 +4,6 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Isotipo, Logotipo } from "./Marca";
 import { Boton, BotonIcono } from "./Interfaz";
 import {
-  IconoExcepciones,
   IconoInfo,
   IconoInteligencia,
   IconoMarketplace,
@@ -16,6 +15,7 @@ import {
   IconoSalir,
   IconoSupervisora,
   IconoTareas,
+  IconoUsuario,
   IconoCerrar,
   IconoFiltro,
 } from "./Iconos";
@@ -48,12 +48,6 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         icono: IconoInteligencia,
       },
       {
-        a: "/excepciones",
-        texto: "disposicion.navExcepciones",
-        permiso: "excepciones.leer",
-        icono: IconoExcepciones,
-      },
-      {
         a: "/tareas",
         texto: "disposicion.navTareas",
         permiso: "documentos.leer",
@@ -64,35 +58,6 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         texto: "disposicion.navOperacion",
         permiso: "documentos.leer",
         icono: IconoOperacion,
-      },
-    ],
-  },
-  {
-    titulo: "disposicion.grupoProcesos",
-    entradas: [
-      {
-        a: "/workflow",
-        texto: "disposicion.navStudio",
-        permiso: "tenant.administrar",
-        icono: IconoProceso,
-      },
-      {
-        a: "/supervisora",
-        texto: "disposicion.navSupervisora",
-        permiso: "tenant.administrar",
-        icono: IconoSupervisora,
-      },
-      {
-        a: "/partners",
-        texto: "disposicion.navPartners",
-        permiso: "tenant.administrar",
-        icono: IconoPartner,
-      },
-      {
-        a: "/marketplace",
-        texto: "disposicion.navMarketplace",
-        permiso: "tenant.administrar",
-        icono: IconoMarketplace,
       },
     ],
   },
@@ -111,10 +76,40 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
     titulo: "disposicion.grupoConfiguracion",
     entradas: [
       {
+        a: "/workflow",
+        texto: "disposicion.navStudio",
+        permiso: "tenant.administrar",
+        icono: IconoProceso,
+      },
+      {
+        a: "/equipo",
+        texto: "disposicion.navEquipo",
+        permiso: "tenant.administrar",
+        icono: IconoUsuario,
+      },
+      {
+        a: "/supervisora",
+        texto: "disposicion.navSupervisora",
+        permiso: "tenant.administrar",
+        icono: IconoSupervisora,
+      },
+      {
         a: "/tipos-propuestos",
         texto: "disposicion.navTiposNuevos",
         permiso: "tenant.administrar",
         icono: IconoInfo,
+      },
+      {
+        a: "/partners",
+        texto: "disposicion.navPartners",
+        permiso: "tenant.administrar",
+        icono: IconoPartner,
+      },
+      {
+        a: "/marketplace",
+        texto: "disposicion.navMarketplace",
+        permiso: "tenant.administrar",
+        icono: IconoMarketplace,
       },
     ],
   },

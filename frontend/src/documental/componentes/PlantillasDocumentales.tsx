@@ -206,7 +206,9 @@ function PlantillaFila({
               : "bg-exito-tenue text-exito-texto ring-1 ring-inset ring-exito-borde"
           }`}
         >
-          {plantilla.estado}
+          {deprecada
+            ? t("documental.plantillas.estadoInactiva")
+            : t("documental.plantillas.estadoActiva")}
         </span>
         <span className="hidden text-micro text-tinta-suave sm:inline">
           {t("documental.plantillas.aprobaSolo")}{" "}
@@ -316,6 +318,9 @@ function PlantillaFila({
                 {t("documental.plantillas.umbralCampo")}
               </p>
             </div>
+            <p className="mb-espacio-2 text-micro text-tinta-suave">
+              {t("documental.plantillas.leyendaCampos")}
+            </p>
             <div>
               {borrador.campos.map((campo) => (
                 <CampoPlantillaFila

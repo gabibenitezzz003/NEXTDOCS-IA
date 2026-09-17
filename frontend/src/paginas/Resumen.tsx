@@ -115,6 +115,38 @@ export function Resumen() {
       />
 
       <Contenido>
+        {!resumen.isPending && !resumen.isError && totalDocumentos === 0 ? (
+          <Tarjeta className="mb-espacio-6 rounded-panel! border-violeta-borde! bg-violeta-tenue!">
+            <CabeceraTarjeta
+              titulo={t("resumen.bienvenida")}
+              descripcion={t("resumen.bienvenidaDesc")}
+            />
+            <ol className="mt-espacio-5 grid min-w-0 gap-espacio-4 md:grid-cols-3">
+              <PasoInicio
+                numero={1}
+                titulo={t("resumen.pasoSubir")}
+                detalle={t("resumen.pasoSubirDesc")}
+                destino="/documental/bandeja"
+                accion={t("resumen.pasoSubirAccion")}
+              />
+              <PasoInicio
+                numero={2}
+                titulo={t("resumen.pasoTipos")}
+                detalle={t("resumen.pasoTiposDesc")}
+                destino="/documental/plantillas"
+                accion={t("resumen.pasoTiposAccion")}
+              />
+              <PasoInicio
+                numero={3}
+                titulo={t("resumen.pasoEquipo")}
+                detalle={t("resumen.pasoEquipoDesc")}
+                destino="/equipo"
+                accion={t("resumen.pasoEquipoAccion")}
+                soloAdmin
+              />
+            </ol>
+          </Tarjeta>
+        ) : null}
         <section
           aria-label={t("resumen.accionRequerida")}
           className="mb-espacio-6 grid min-w-0 items-start gap-espacio-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]"
@@ -501,4 +533,50 @@ function porcentaje(
     return t("resumen.ceroDelTotal");
   }
   return t("resumen.delTotal", { porcentaje: Math.round((parte / total) * 100) });
+}
+
+function PasoInicio({
+  numero,
+  titulo,
+  detalle,
+  destino,
+  accion,
+  soloAdmin,
+}: {
+  numero: number;
+  titulo: string;
+  detalle: string;
+  destino: string;
+  accion: string;
+  soloAdmin?: boolean;
+}) {
+  const { tienePermiso } = useSesion();
+  if (soloAdmin && !tienePermiso("tenant.administrar")) {
+    return null;
+  }
+  return (
+    <li className="flex min-w-0 flex-col rounded-control border border-violeta-borde bg-superficie p-espacio-4">
+      <div className="flex items-center gap-espacio-2">
+        <span
+          aria-hidden="true"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accion-tonal-fondo text-pequeno font-semibold text-accion-tonal-texto"
+        >
+          {numero}
+        </span>
+        <p className="text-pequeno font-semibold text-tinta">{titulo}</p>
+      </div>
+      <p className="mt-espacio-2 flex-1 text-micro text-tinta-suave">
+        {detalle}
+      </p>
+      <Link
+        to={destino}
+        className="mt-espacio-3 inline-flex items-center gap-espacio-1 text-pequeno font-semibold text-accion-tonal-texto hover:underline focus-visible:outline-foco"
+      >
+        {accion}
+        <span aria-hidden="true">
+          <IconoDerecha tamano={13} />
+        </span>
+      </Link>
+    </li>
+  );
 }

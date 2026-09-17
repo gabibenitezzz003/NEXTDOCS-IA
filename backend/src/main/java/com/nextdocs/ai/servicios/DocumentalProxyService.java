@@ -8,6 +8,8 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.nextdocs.ai.entidades.ConfiguracionConector;
 import com.nextdocs.ai.enumeraciones.TipoAutenticacionConector;
@@ -34,6 +36,8 @@ public class DocumentalProxyService {
 
 	private final HttpClient clienteHttp;
 
+	private final Map<String, Object> cerrojos = new ConcurrentHashMap<>();
+
 	public DocumentalProxyService(ConfiguracionConectorRepository configuracionConectorRepository,
 			ProvisionadorDocumentalService provisionadorDocumentalService) {
 		this.configuracionConectorRepository = configuracionConectorRepository;
@@ -42,16 +46,14 @@ public class DocumentalProxyService {
 	}
 
 	public boolean habilitado(String tenantId) {
-		return configuracionConectorRepository.buscarPorCodigo(tenantId, CODIGO_CONECTOR)
-				.map(ConfiguracionConector::isActivo).orElse(false);
+		return buscarActivo(tenantId).isPresent() || recuperar(tenantId).isPresent();
 	}
 
 	public HttpResponse<byte[]> reenviar(String tenantId, String metodo, String subruta, String consulta,
 			byte[] cuerpo, String tipoContenido, String claveIdempotencia) {
-		ConfiguracionConector configuracion = configuracionConectorRepository
-				.buscarPorCodigo(tenantId, CODIGO_CONECTOR)
-				.filter(ConfiguracionConector::isActivo)
-				.orElseGet(() -> recuperarConfiguracion(tenantId));
+		ConfiguracionConector configuracion = buscarActivo(tenantId)
+				.orElseGet(() -> recuperar(tenantId).orElseThrow(() -> new ConectorNoDisponibleException(
+						CODIGO_CONECTOR, "El tenant no tiene configurado el motor documental", false)));
 
 		String destino = normalizar(configuracion.getUrlBase()) + "/api/v1" + subruta
 				+ (consulta == null || consulta.isBlank() ? "" : "?" + consulta);
@@ -85,12 +87,21 @@ public class DocumentalProxyService {
 		}
 	}
 
-	private ConfiguracionConector recuperarConfiguracion(String tenantId) {
-		provisionadorDocumentalService.provisionar(tenantId);
+	private Optional<ConfiguracionConector> buscarActivo(String tenantId) {
 		return configuracionConectorRepository.buscarPorCodigo(tenantId, CODIGO_CONECTOR)
-				.filter(ConfiguracionConector::isActivo)
-				.orElseThrow(() -> new ConectorNoDisponibleException(CODIGO_CONECTOR,
-						"El tenant no tiene configurado el motor documental", false));
+				.filter(ConfiguracionConector::isActivo);
+	}
+
+	private Optional<ConfiguracionConector> recuperar(String tenantId) {
+		Object cerrojo = cerrojos.computeIfAbsent(tenantId, clave -> new Object());
+		synchronized (cerrojo) {
+			Optional<ConfiguracionConector> activo = buscarActivo(tenantId);
+			if (activo.isPresent()) {
+				return activo;
+			}
+			provisionadorDocumentalService.provisionar(tenantId);
+			return buscarActivo(tenantId);
+		}
 	}
 
 	private void agregarAutenticacion(HttpRequest.Builder constructor, ConfiguracionConector configuracion) {

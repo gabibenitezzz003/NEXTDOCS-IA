@@ -258,7 +258,7 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
                         : t("procesos.editar")}
                     </Boton>
                     <Boton
-                      variante="secundario"
+                      variante="primario"
                       onClick={() => alAbrir(proceso.id)}
                     >
                       {t("procesos.abrirEstudio")}

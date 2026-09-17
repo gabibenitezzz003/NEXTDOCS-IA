@@ -2,6 +2,7 @@ package com.nextdocs.ai.servicios;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -132,7 +133,7 @@ class DocumentalProxyServiceTest {
 				() -> servicio.reenviar(TENANT, "GET", "/documentos", null, null, null, null))
 						.isInstanceOf(ConectorNoDisponibleException.class);
 		assertThat(servicio.habilitado(TENANT)).isFalse();
-		verify(provisionador).provisionar(TENANT);
+		verify(provisionador, atLeastOnce()).provisionar(TENANT);
 	}
 
 	@Test

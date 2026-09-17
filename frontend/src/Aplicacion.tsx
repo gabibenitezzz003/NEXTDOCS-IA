@@ -12,6 +12,7 @@ const Documental = lazy(() =>
   })),
 );
 import { Excepciones } from "./paginas/Excepciones";
+import { Equipo } from "./paginas/Equipo";
 import { TiposPropuestos } from "./paginas/TiposPropuestos";
 import { Tareas } from "./paginas/Tareas";
 import { Operacion } from "./paginas/Operacion";
@@ -88,6 +89,7 @@ export function Aplicacion() {
           }
         />
         <Route path="/excepciones" element={<Excepciones />} />
+        <Route path="/equipo" element={<Equipo />} />
         <Route path="/tipos-propuestos" element={<TiposPropuestos />} />
         <Route path="/tareas" element={<Tareas />} />
         <Route path="/operacion" element={<Operacion />} />
