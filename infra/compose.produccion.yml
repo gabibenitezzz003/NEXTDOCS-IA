@@ -177,7 +177,7 @@ services:
 
 
   documental-api:
-    image: nextdocs-documental:1.0.4
+    image: nextdocs-documental:1.0.5
     container_name: nextdocs-ia-documental-api
     restart: unless-stopped
     command: ["node", "apps/api/dist/principal.js"]
@@ -209,7 +209,7 @@ services:
       - nextdocs-interno
 
   documental-worker:
-    image: nextdocs-documental:1.0.4
+    image: nextdocs-documental:1.0.5
     container_name: nextdocs-ia-documental-worker
     restart: unless-stopped
     command: ["node", "apps/worker/dist/principal.js"]
