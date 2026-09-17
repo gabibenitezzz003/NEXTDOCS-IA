@@ -51,6 +51,11 @@ public class ProvisionadorDocumentalService {
 
 	private final Map<String, Instant> ultimoFallo = new ConcurrentHashMap<>();
 
+	private final Map<String, Instant> ultimoFalloSuscripcion = new ConcurrentHashMap<>();
+
+	private final java.util.Set<String> suscripcionAsegurada = java.util.concurrent.ConcurrentHashMap
+			.newKeySet();
+
 	public ProvisionadorDocumentalService(PropiedadesDocumental propiedades,
 			ConfiguracionConectorRepository configuracionConectorRepository, TenantRepository tenantRepository,
 			AuditoriaService auditoriaService, ObjectMapper json) {
@@ -67,6 +72,7 @@ public class ProvisionadorDocumentalService {
 		Optional<ConfiguracionConector> existente = configuracionConectorRepository
 				.buscarPorCodigo(tenantId, DocumentalProxyService.CODIGO_CONECTOR);
 		if (existente.filter(ConfiguracionConector::isActivo).isPresent()) {
+			asegurarSuscripcionEventos(tenantId);
 			return true;
 		}
 		if (!propiedades.provisionHabilitada() || enEnfriamiento(tenantId)) {
@@ -106,8 +112,65 @@ public class ProvisionadorDocumentalService {
 		ultimoFallo.remove(tenant.getId());
 		guardarConector(tenant, existente, clave);
 		registrarAuditoria(tenant.getId(), AccionAuditoria.CONECTOR_PROVISIONADO);
+		asegurarSuscripcionEventos(tenant.getId());
 		log.info("motor documental provisionado para tenant {}", tenant.getCodigo());
 		return true;
+	}
+
+	public void asegurarSuscripcionEventos(String tenantId) {
+		configuracionConectorRepository.buscarPorCodigo(tenantId, DocumentalProxyService.CODIGO_CONECTOR)
+				.filter(ConfiguracionConector::isActivo)
+				.ifPresent(conector -> asegurarSuscripcionEventos(tenantId, conector));
+	}
+
+	public void asegurarSuscripcionEventos(String tenantId, ConfiguracionConector conector) {
+		if (tenantId == null || suscripcionAsegurada.contains(tenantId)) {
+			return;
+		}
+		if (!propiedades.eventosHabilitados()) {
+			suscripcionAsegurada.add(tenantId);
+			return;
+		}
+		Instant fallo = ultimoFalloSuscripcion.get(tenantId);
+		if (fallo != null
+				&& Instant.now().isBefore(fallo.plusSeconds(propiedades.getEnfriamientoFalloSegundos()))) {
+			return;
+		}
+		String claveApi = ResolvedorSecreto.resolver(conector.getReferenciaSecreto()).orElse(null);
+		if (claveApi == null || claveApi.isBlank()) {
+			ultimoFalloSuscripcion.put(tenantId, Instant.now());
+			log.warn("suscripcion de eventos omitida para tenant {}: credencial del motor no resoluble",
+					tenantId);
+			return;
+		}
+		try {
+			String destino = normalizar(propiedades.getUrlBase()) + "/api/v1/admin/suscripciones";
+			String cuerpo = json.writeValueAsString(Map.of("claveApi", claveApi, "url",
+					normalizar(propiedades.getEventosUrlWorkflow()) + "/" + tenantId, "secreto",
+					propiedades.getEventosSecreto()));
+			HttpRequest pedido = HttpRequest.newBuilder(URI.create(destino))
+					.timeout(Duration.ofMillis(propiedades.getTiempoEsperaMilisegundos()))
+					.header("Content-Type", "application/json")
+					.header("Accept", "application/json")
+					.header("Authorization", "Bearer " + propiedades.getClaveAdmin())
+					.POST(HttpRequest.BodyPublishers.ofString(cuerpo))
+					.build();
+			HttpResponse<String> respuesta = clienteHttp.send(pedido, HttpResponse.BodyHandlers.ofString());
+			if (respuesta.statusCode() < 200 || respuesta.statusCode() >= 300) {
+				throw new IOException("el motor respondio " + respuesta.statusCode());
+			}
+			suscripcionAsegurada.add(tenantId);
+			ultimoFalloSuscripcion.remove(tenantId);
+			log.info("suscripcion de eventos documentales asegurada para tenant {}", tenantId);
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			ultimoFalloSuscripcion.put(tenantId, Instant.now());
+			log.warn("suscripcion de eventos interrumpida para tenant {}", tenantId);
+		} catch (Exception e) {
+			ultimoFalloSuscripcion.put(tenantId, Instant.now());
+			log.warn("suscripcion de eventos documentales fallida para tenant {}: {}", tenantId,
+					e.getMessage());
+		}
 	}
 
 	private String solicitarAltaRemota(Tenant tenant) throws IOException, InterruptedException {

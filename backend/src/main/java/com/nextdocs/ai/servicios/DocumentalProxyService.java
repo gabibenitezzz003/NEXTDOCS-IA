@@ -46,7 +46,12 @@ public class DocumentalProxyService {
 	}
 
 	public boolean habilitado(String tenantId) {
-		return buscarActivo(tenantId).isPresent() || recuperar(tenantId).isPresent();
+		Optional<ConfiguracionConector> activo = buscarActivo(tenantId);
+		if (activo.isPresent()) {
+			provisionadorDocumentalService.asegurarSuscripcionEventos(tenantId);
+			return true;
+		}
+		return recuperar(tenantId).isPresent();
 	}
 
 	public HttpResponse<byte[]> reenviar(String tenantId, String metodo, String subruta, String consulta,
@@ -54,6 +59,7 @@ public class DocumentalProxyService {
 		ConfiguracionConector configuracion = buscarActivo(tenantId)
 				.orElseGet(() -> recuperar(tenantId).orElseThrow(() -> new ConectorNoDisponibleException(
 						CODIGO_CONECTOR, "El tenant no tiene configurado el motor documental", false)));
+		provisionadorDocumentalService.asegurarSuscripcionEventos(tenantId);
 
 		String destino = normalizar(configuracion.getUrlBase()) + "/api/v1" + subruta
 				+ (consulta == null || consulta.isBlank() ? "" : "?" + consulta);

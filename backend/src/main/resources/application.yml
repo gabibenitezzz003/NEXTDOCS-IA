@@ -181,6 +181,8 @@ nextdocs:
     claveAdmin: ${NEXTDOCS_DOCUMENTAL_CLAVE_ADMIN:}
     tiempoEsperaMilisegundos: ${NEXTDOCS_DOCUMENTAL_TIMEOUT_MS:8000}
     enfriamientoFalloSegundos: 60
+    eventosUrlWorkflow: ${NEXTDOCS_DOCUMENTAL_EVENTOS_URL_WORKFLOW:}
+    eventosSecreto: ${NEXTDOCS_DOCUMENTAL_EVENTOS_SECRETO:}
   clasificacion:
     activa: ${NEXTDOCS_CLASIFICACION_ACTIVA:true}
     confianzaMinima: ${NEXTDOCS_CLASIFICACION_CONFIANZA_MINIMA:0.60}
