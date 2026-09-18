@@ -22,6 +22,8 @@ public enum TipoEventoCanonico {
 	EXPORTACION_VENCIDA("export.expired"),
 	ALMACENAMIENTO_EN_UMBRAL("storage.threshold"),
 	PROCESO_NOTIFICACION("process.notification"),
+	PROCESO_TAREA_COMPLETADA("process.task_completed"),
+	PROCESO_COMPLETADO("process.workflow_completed"),
 	WEBHOOK_PRUEBA("webhook.test");
 
 	private final String clave;
