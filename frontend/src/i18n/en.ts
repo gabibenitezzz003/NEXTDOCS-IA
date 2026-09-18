@@ -885,6 +885,27 @@ export const en: Diccionario = {
     procesoNuevo: "New process",
     nuevoProcesoTitulo: "New process",
     nuevoProcesoDesc: "Create a definition with its first version in draft.",
+    hazloConIa: "Build it with AI",
+    iaTitulo: "Generate process with AI",
+    iaDesc:
+      "Describe the process or attach a manual or procedure: AI builds the workflow draft for you to review and edit before publishing.",
+    iaDescripcion: "Process description",
+    iaDescripcionAyuda:
+      "Tell the steps, who is involved, which documents are required, and what can fail or go back.",
+    iaDescripcionPh:
+      "E.g.: When a carrier invoice is approved, amounts are checked against the settlement; on differences it goes back to re-settlement…",
+    iaAdjunto: "Manual or procedure (optional)",
+    iaAdjuntoAyuda: "PDF, TXT or MD up to 10 MB.",
+    iaAdjuntoListo: "Attached: {nombre}",
+    iaGenerar: "Generate draft",
+    iaGenerando:
+      "AI is building the workflow draft; it may take up to a minute…",
+    iaError: "The process could not be generated",
+    iaArchivoInvalido: "Attach a PDF, TXT or MD up to 10 MB.",
+    iaListo:
+      "AI-generated draft — review it before publishing. {detalle}",
+    iaListoSinAdvertencias:
+      "AI-generated draft — review it before publishing.",
     codigo: "Code",
     familia: "Family",
     nombre: "Name",

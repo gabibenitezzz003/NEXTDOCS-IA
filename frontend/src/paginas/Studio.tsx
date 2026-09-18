@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
@@ -19,6 +19,7 @@ import {
   actualizarProceso,
   completarTarea,
   crearProceso,
+  generarProcesoConIa,
   iniciarInstancia,
   listarProcesos,
   mensajeDeError,
@@ -71,17 +72,28 @@ export function Studio() {
         descripcion={t("studio.descripcion")}
       />
       <Contenido>
-        <ListaProcesos alAbrir={(id) => navegar(`/studio/${id}`)} />
+        <ListaProcesos
+          alAbrir={(id, advertencias) =>
+            navegar(`/studio/${id}`, {
+              state: advertencias?.length ? { advertencias } : undefined,
+            })
+          }
+        />
       </Contenido>
     </>
   );
 }
 
-function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
+function ListaProcesos({
+  alAbrir,
+}: {
+  alAbrir: (id: string, advertencias?: string[]) => void;
+}) {
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
+  const [iaAbierta, setIaAbierta] = useState(false);
 
   const consulta = useQuery({
     queryKey: ["procesos"],
@@ -106,21 +118,41 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
         <p className="max-w-xl text-pequeno text-tinta-suave">
           {t("procesos.bibliotecaDesc")}
         </p>
-        <Boton
-          variante="primario"
-          cargando={crear.isPending}
-          disabled={crear.isPending}
-          onClick={() =>
-            crear.mutate({
-              codigo: `PROC-${Date.now().toString(36).toUpperCase()}`,
-              familia: "GENERAL",
-              nombre: t("procesos.procesoNuevo"),
-            })
-          }
-        >
-          {t("procesos.nuevoProceso")}
-        </Boton>
+        <div className="flex items-center gap-espacio-2">
+          <Boton
+            variante="secundario"
+            aria-expanded={iaAbierta}
+            onClick={() => setIaAbierta((actual) => !actual)}
+          >
+            {t("procesos.hazloConIa")}
+          </Boton>
+          <Boton
+            variante="primario"
+            cargando={crear.isPending}
+            disabled={crear.isPending}
+            onClick={() =>
+              crear.mutate({
+                codigo: `PROC-${Date.now().toString(36).toUpperCase()}`,
+                familia: "GENERAL",
+                nombre: t("procesos.procesoNuevo"),
+              })
+            }
+          >
+            {t("procesos.nuevoProceso")}
+          </Boton>
+        </div>
       </div>
+      {iaAbierta ? (
+        <Tarjeta className="mb-espacio-4">
+          <PanelGeneracionIa
+            alGenerado={(proceso, advertencias) => {
+              clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
+              alAbrir(proceso.id, advertencias);
+            }}
+            alCerrar={() => setIaAbierta(false)}
+          />
+        </Tarjeta>
+      ) : null}
       {error ? (
         <div
           role="alert"
@@ -208,6 +240,139 @@ function ListaProcesos({ alAbrir }: { alAbrir: (id: string) => void }) {
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+const MIME_ADJUNTO_IA: Record<string, string> = {
+  pdf: "application/pdf",
+  txt: "text/plain",
+  md: "text/markdown",
+};
+
+const MAXIMO_ADJUNTO_IA_MB = 10;
+
+function PanelGeneracionIa({
+  alGenerado,
+  alCerrar,
+}: {
+  alGenerado: (proceso: Proceso, advertencias: string[]) => void;
+  alCerrar: () => void;
+}) {
+  const { t } = useIdioma();
+  const [descripcion, setDescripcion] = useState("");
+  const [archivo, setArchivo] = useState<{
+    nombre: string;
+    tipoMime: string;
+    base64: string;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function leerArchivo(seleccionado: File) {
+    const extension = seleccionado.name.split(".").pop()?.toLowerCase() ?? "";
+    const tipoMime = MIME_ADJUNTO_IA[extension];
+    if (!tipoMime || seleccionado.size > MAXIMO_ADJUNTO_IA_MB * 1024 * 1024) {
+      setError(t("procesos.iaArchivoInvalido"));
+      return;
+    }
+    const lector = new FileReader();
+    lector.onload = () => {
+      const resultado = String(lector.result ?? "");
+      const base64 = resultado.slice(resultado.indexOf(",") + 1);
+      setArchivo({
+        nombre: seleccionado.name,
+        tipoMime,
+        base64,
+      });
+      setError(null);
+    };
+    lector.onerror = () => setError(t("procesos.iaError"));
+    lector.readAsDataURL(seleccionado);
+  }
+
+  const generar = useMutation({
+    mutationFn: () =>
+      generarProcesoConIa({
+        descripcion: descripcion.trim() || undefined,
+        contenidoBase64: archivo?.base64,
+        tipoMime: archivo?.tipoMime,
+        nombreArchivo: archivo?.nombre,
+      }),
+    onSuccess: (resultado) => {
+      setError(null);
+      alGenerado(resultado.definicion, resultado.advertencias ?? []);
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  const habilitado =
+    !generar.isPending && (descripcion.trim().length > 0 || archivo !== null);
+
+  return (
+    <div>
+      <CabeceraTarjeta
+        titulo={t("procesos.iaTitulo")}
+        descripcion={t("procesos.iaDesc")}
+      />
+      {error ? (
+        <div
+          role="alert"
+          className="mb-espacio-3 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-3 py-espacio-2 text-pequeno text-rojo-alto"
+        >
+          {error}
+        </div>
+      ) : null}
+      <div className="grid gap-espacio-4">
+        <AreaTexto
+          etiqueta={t("procesos.iaDescripcion")}
+          ayuda={t("procesos.iaDescripcionAyuda")}
+          rows={5}
+          value={descripcion}
+          onChange={(evento) => setDescripcion(evento.target.value)}
+          placeholder={t("procesos.iaDescripcionPh")}
+        />
+        <label className="block">
+          <span className="mb-espacio-1 block text-pequeno font-semibold text-tinta">
+            {t("procesos.iaAdjunto")}
+          </span>
+          <input
+            type="file"
+            accept=".pdf,.txt,.md"
+            className="block w-full text-pequeno text-tinta-suave file:mr-espacio-3 file:rounded-control file:border file:border-borde file:bg-superficie file:px-espacio-3 file:py-espacio-2 file:text-pequeno file:font-semibold file:text-tinta hover:file:border-borde-fuerte"
+            onChange={(evento) => {
+              const seleccionado = evento.target.files?.[0];
+              if (seleccionado) leerArchivo(seleccionado);
+            }}
+          />
+          <span className="mt-espacio-1 block text-pequeno text-tinta-suave">
+            {archivo
+              ? t("procesos.iaAdjuntoListo", { nombre: archivo.nombre })
+              : t("procesos.iaAdjuntoAyuda")}
+          </span>
+        </label>
+      </div>
+      <div className="mt-espacio-4 flex items-center justify-end gap-espacio-2">
+        {generar.isPending ? (
+          <p className="mr-auto text-pequeno text-tinta-suave">
+            {t("procesos.iaGenerando")}
+          </p>
+        ) : null}
+        <Boton
+          variante="secundario"
+          onClick={alCerrar}
+          disabled={generar.isPending}
+        >
+          {t("comun.cancelar")}
+        </Boton>
+        <Boton
+          variante="primario"
+          cargando={generar.isPending}
+          disabled={!habilitado}
+          onClick={() => generar.mutate()}
+        >
+          {t("procesos.iaGenerar")}
+        </Boton>
+      </div>
     </div>
   );
 }
@@ -427,6 +592,17 @@ function EstudioProceso({
   const [error, setError] = useState<string | null>(null);
   const [detalles, setDetalles] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
+  const ubicacion = useLocation();
+
+  useEffect(() => {
+    const advertencias = (ubicacion.state as { advertencias?: string[] } | null)
+      ?.advertencias;
+    if (advertencias?.length) {
+      setAviso(t("procesos.iaListo", { detalle: advertencias.join(" · ") }));
+    } else if (ubicacion.state) {
+      setAviso(t("procesos.iaListoSinAdvertencias"));
+    }
+  }, []);
   const [seleccion, setSeleccion] = useState<SeleccionCanvas | null>(null);
 
   const consulta = useQuery({

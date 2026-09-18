@@ -249,6 +249,29 @@ export async function crearProceso(requerimiento: NuevoProceso): Promise<Proceso
   return data;
 }
 
+export interface GeneracionProcesoReq {
+  descripcion?: string;
+  contenidoBase64?: string;
+  tipoMime?: string;
+  nombreArchivo?: string;
+}
+
+export interface GeneracionProcesoRes {
+  definicion: Proceso;
+  advertencias: string[];
+  intentos: number;
+}
+
+export async function generarProcesoConIa(
+  requerimiento: GeneracionProcesoReq,
+): Promise<GeneracionProcesoRes> {
+  const { data } = await clienteProcesos.post<GeneracionProcesoRes>(
+    "/procesos/generar",
+    requerimiento,
+  );
+  return data;
+}
+
 export async function obtenerProceso(definicionId: string): Promise<Proceso> {
   const { data } = await clienteProcesos.get<Proceso>(`/procesos/${definicionId}`);
   return data;

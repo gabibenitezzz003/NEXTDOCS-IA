@@ -889,6 +889,27 @@ export const pt: Diccionario = {
     procesoNuevo: "Processo novo",
     nuevoProcesoTitulo: "Novo processo",
     nuevoProcesoDesc: "Crie uma definição com sua primeira versão em rascunho.",
+    hazloConIa: "Faça com IA",
+    iaTitulo: "Gerar processo com IA",
+    iaDesc:
+      "Descreva o processo ou anexe um manual ou procedimento: a IA monta o rascunho do workflow para revisar e editar antes de publicar.",
+    iaDescripcion: "Descrição do processo",
+    iaDescripcionAyuda:
+      "Conte os passos, quem participa, quais documentos são pedidos e o que pode falhar ou voltar.",
+    iaDescripcionPh:
+      "Ex.: Quando uma fatura de transportista é aprovada, os valores são conferidos com a liquidação; em divergências volta à reliquidação…",
+    iaAdjunto: "Manual ou procedimento (opcional)",
+    iaAdjuntoAyuda: "PDF, TXT ou MD de até 10 MB.",
+    iaAdjuntoListo: "Anexo: {nombre}",
+    iaGenerar: "Gerar rascunho",
+    iaGenerando:
+      "A IA está montando o rascunho do workflow; pode levar até um minuto…",
+    iaError: "Não foi possível gerar o processo",
+    iaArchivoInvalido: "Anexe um PDF, TXT ou MD de até 10 MB.",
+    iaListo:
+      "Rascunho gerado por IA — revise antes de publicar. {detalle}",
+    iaListoSinAdvertencias:
+      "Rascunho gerado por IA — revise antes de publicar.",
     codigo: "Código",
     familia: "Família",
     nombre: "Nome",

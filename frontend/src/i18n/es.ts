@@ -886,6 +886,27 @@ export const es = {
     procesoNuevo: "Proceso nuevo",
     nuevoProcesoTitulo: "Nuevo proceso",
     nuevoProcesoDesc: "Creá una definición con su primera versión en borrador.",
+    hazloConIa: "Hazlo con IA",
+    iaTitulo: "Generar proceso con IA",
+    iaDesc:
+      "Describí el proceso o adjuntá un manual o procedimiento: la IA arma el borrador del workflow para revisar y editar antes de publicar.",
+    iaDescripcion: "Descripción del proceso",
+    iaDescripcionAyuda:
+      "Contá los pasos, quién interviene, qué documentos se piden y qué puede fallar o volver atrás.",
+    iaDescripcionPh:
+      "Ej.: Cuando se aprueba una factura de transportista, se controla contra la liquidación; si hay diferencias vuelve a reliquidación…",
+    iaAdjunto: "Manual o procedimiento (opcional)",
+    iaAdjuntoAyuda: "PDF, TXT o MD de hasta 10 MB.",
+    iaAdjuntoListo: "Adjunto: {nombre}",
+    iaGenerar: "Generar borrador",
+    iaGenerando:
+      "La IA está armando el borrador del workflow; puede tardar hasta un minuto…",
+    iaError: "No se pudo generar el proceso",
+    iaArchivoInvalido: "Adjuntá un PDF, TXT o MD de hasta 10 MB.",
+    iaListo:
+      "Borrador generado por IA — revisalo antes de publicar. {detalle}",
+    iaListoSinAdvertencias:
+      "Borrador generado por IA — revisalo antes de publicar.",
     codigo: "Código",
     familia: "Familia",
     nombre: "Nombre",
