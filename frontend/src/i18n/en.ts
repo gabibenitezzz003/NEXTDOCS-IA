@@ -906,6 +906,30 @@ export const en: Diccionario = {
       "AI-generated draft — review it before publishing. {detalle}",
     iaListoSinAdvertencias:
       "AI-generated draft — review it before publishing.",
+    nuevoManual: "From scratch",
+    nuevoManualDesc:
+      "Empty canvas with start and end to draw the steps by hand.",
+    nuevoIaDesc:
+      "Describe the process or upload a manual: AI builds the draft to review.",
+    iaChatSaludo:
+      "Tell me how the process works and I'll build the draft. You can attach a manual (PDF, TXT or MD) with the clip.",
+    iaChatSaludoRefinar:
+      "Ask for changes to the draft or attach another document: I update the graph keeping what is already there.",
+    iaChatPh: "Describe how the process works…",
+    iaRefinarPh: "E.g.: add a manager approval before closing…",
+    iaAdjuntar: "Attach manual or document",
+    iaQuitarAdjunto: "Remove attachment",
+    iaCrear: "Create",
+    iaEnviar: "Send",
+    iaRespuestaCreada: "Done — I built the draft “{nombre}”.",
+    iaRespuestaActualizada: "I updated the process draft.",
+    iaConAdvertencias: "Warnings: {detalle}",
+    iaFallo: "I could not process the request: {detalle}",
+    iaRefinar: "Refine with AI",
+    iaRefinarDesc:
+      "Ask for changes in natural language or attach a document: AI updates the draft graph.",
+    iaRefinarBloqueado: "Save the canvas changes before refining with AI.",
+    iaRefinarSinBorrador: "Only a draft version can be refined.",
     codigo: "Code",
     familia: "Family",
     nombre: "Name",
@@ -1244,6 +1268,7 @@ export const en: Diccionario = {
       OBSERVADO: "Flagged",
       APROBADO: "Approved",
       RECHAZADO: "Rejected",
+      DIVIDIDO: "Split",
       CERRADO: "Closed",
       VENCIDO: "Expired",
       POR_VENCER: "Expiring soon",
@@ -1324,6 +1349,9 @@ export const en: Diccionario = {
       reencolado: "Document re-queued for reprocessing.",
       abrir: "Open document",
       reprocesar: "Reprocess",
+      rechazar: "Discard document",
+      motivoRechazo: "Discard reason (optional)",
+      rechazado: "Document discarded.",
       sinClasificar: "Unclassified",
       sinAsociar: "Not linked",
       vacio: "No documents",

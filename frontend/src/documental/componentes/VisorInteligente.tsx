@@ -21,7 +21,14 @@ import {
   IconoRecargar,
 } from "../../componentes/Iconos";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
-import { comoFecha, presenciaDeCampo, textoDeValor } from "../dominio";
+import {
+  ESTADOS_APROBABLES,
+  ESTADOS_RECHAZABLES,
+  ESTADOS_REPROCESABLES,
+  comoFecha,
+  presenciaDeCampo,
+  textoDeValor,
+} from "../dominio";
 import {
   EtiquetaEstadoMotor,
   EtiquetaSeveridadMotor,
@@ -325,8 +332,10 @@ export function VisorInteligente({
     return <Vacio titulo={t("documental.visor.noEncontrado")} />;
   }
 
-  const cerrado =
-    documento.estado === "APROBADO" || documento.estado === "RECHAZADO";
+  const puedeReprocesar = ESTADOS_REPROCESABLES.includes(documento.estado);
+  const puedeRechazar = ESTADOS_RECHAZABLES.includes(documento.estado);
+  const puedeAprobar = ESTADOS_APROBABLES.includes(documento.estado);
+  const hayAcciones = puedeReprocesar || puedeRechazar || puedeAprobar;
 
   const pestanas: { id: PestanaVisor; etiqueta: string }[] = [
     { id: "campos", etiqueta: t("documental.visor.campos") },
@@ -443,7 +452,7 @@ export function VisorInteligente({
             ) : null}
           </div>
 
-          {!cerrado ? (
+          {hayAcciones ? (
             <>
               <input
                 aria-label={t("documental.visor.motivoOpcional")}
@@ -452,30 +461,36 @@ export function VisorInteligente({
                 onChange={(evento) => setMotivo(evento.target.value)}
                 className="h-control-pequeno w-40 rounded-control border border-borde bg-superficie px-espacio-3 text-pequeno text-tinta focus-visible:outline-foco"
               />
-              <Boton
-                variante="secundario"
-                tamano="sm"
-                onClick={() => void reprocesar()}
-              >
-                <IconoRecargar />
-                {t("documental.visor.reprocesar")}
-              </Boton>
-              <Boton
-                variante="peligro"
-                tamano="sm"
-                onClick={() => void decidir("RECHAZAR")}
-                data-testid="documental-rechazar"
-              >
-                {t("documental.visor.rechazar")}
-              </Boton>
-              <Boton
-                variante="primario"
-                tamano="sm"
-                onClick={() => void decidir("APROBAR")}
-                data-testid="documental-aprobar"
-              >
-                {t("documental.visor.aprobar")}
-              </Boton>
+              {puedeReprocesar ? (
+                <Boton
+                  variante="secundario"
+                  tamano="sm"
+                  onClick={() => void reprocesar()}
+                >
+                  <IconoRecargar />
+                  {t("documental.visor.reprocesar")}
+                </Boton>
+              ) : null}
+              {puedeRechazar ? (
+                <Boton
+                  variante="peligro"
+                  tamano="sm"
+                  onClick={() => void decidir("RECHAZAR")}
+                  data-testid="documental-rechazar"
+                >
+                  {t("documental.visor.rechazar")}
+                </Boton>
+              ) : null}
+              {puedeAprobar ? (
+                <Boton
+                  variante="primario"
+                  tamano="sm"
+                  onClick={() => void decidir("APROBAR")}
+                  data-testid="documental-aprobar"
+                >
+                  {t("documental.visor.aprobar")}
+                </Boton>
+              ) : null}
             </>
           ) : null}
         </div>
@@ -652,7 +667,7 @@ export function VisorInteligente({
                           {candidato.metodo} · {candidato.estado}
                         </p>
                       </div>
-                      {!cerrado ? (
+                      {puedeRechazar ? (
                         <Boton
                           tamano="sm"
                           onClick={() => void asociar(candidato.id)}

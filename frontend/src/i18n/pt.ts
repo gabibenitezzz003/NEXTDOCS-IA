@@ -910,6 +910,30 @@ export const pt: Diccionario = {
       "Rascunho gerado por IA — revise antes de publicar. {detalle}",
     iaListoSinAdvertencias:
       "Rascunho gerado por IA — revise antes de publicar.",
+    nuevoManual: "Do zero",
+    nuevoManualDesc:
+      "Canvas vazio com início e fim para desenhar os passos manualmente.",
+    nuevoIaDesc:
+      "Descreva o processo ou anexe um manual: a IA monta o rascunho para revisar.",
+    iaChatSaludo:
+      "Conte como funciona o processo e eu monto o rascunho. Você pode anexar um manual (PDF, TXT ou MD) pelo clipe.",
+    iaChatSaludoRefinar:
+      "Peça mudanças no rascunho ou anexe outro documento: atualizo o grafo mantendo o que já está.",
+    iaChatPh: "Descreva como o processo funciona…",
+    iaRefinarPh: "Ex.: adicione uma aprovação da gerência antes do fechamento…",
+    iaAdjuntar: "Anexar manual ou documento",
+    iaQuitarAdjunto: "Remover anexo",
+    iaCrear: "Criar",
+    iaEnviar: "Enviar",
+    iaRespuestaCreada: "Pronto — montei o rascunho «{nombre}».",
+    iaRespuestaActualizada: "Atualizei o rascunho do processo.",
+    iaConAdvertencias: "Avisos: {detalle}",
+    iaFallo: "Não consegui processar o pedido: {detalle}",
+    iaRefinar: "Refinar com IA",
+    iaRefinarDesc:
+      "Peça mudanças em linguagem natural ou anexe um documento: a IA atualiza o grafo do rascunho.",
+    iaRefinarBloqueado: "Salve as mudanças do canvas antes de refinar com IA.",
+    iaRefinarSinBorrador: "Só é possível refinar uma versão em rascunho.",
     codigo: "Código",
     familia: "Família",
     nombre: "Nome",
@@ -1249,6 +1273,7 @@ export const pt: Diccionario = {
       OBSERVADO: "Observado",
       APROBADO: "Aprovado",
       RECHAZADO: "Rejeitado",
+      DIVIDIDO: "Dividido",
       CERRADO: "Fechado",
       VENCIDO: "Vencido",
       POR_VENCER: "A vencer",
@@ -1331,6 +1356,9 @@ export const pt: Diccionario = {
       reencolado: "Documento reenfileirado para reprocessamento.",
       abrir: "Abrir documento",
       reprocesar: "Reprocessar",
+      rechazar: "Descartar documento",
+      motivoRechazo: "Motivo do descarte (opcional)",
+      rechazado: "Documento descartado.",
       sinClasificar: "Não classificado",
       sinAsociar: "Não vinculado",
       vacio: "Sem documentos",

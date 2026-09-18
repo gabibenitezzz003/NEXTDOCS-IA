@@ -12,6 +12,7 @@ export const ESTADOS_DOCUMENTO: EstadoDocumentoMotor[] = [
   "OBSERVADO",
   "APROBADO",
   "RECHAZADO",
+  "DIVIDIDO",
   "CERRADO",
 ];
 
@@ -20,6 +21,27 @@ export const ESTADOS_EN_CURSO: EstadoDocumentoMotor[] = [
   "PROCESANDO",
   "EXTRAIDO",
   "VALIDADO",
+];
+
+export const ESTADOS_REPROCESABLES: EstadoDocumentoMotor[] = [
+  "RECIBIDO",
+  "PROCESANDO",
+  "OBSERVADO",
+  "DIVIDIDO",
+];
+
+export const ESTADOS_RECHAZABLES: EstadoDocumentoMotor[] = [
+  "RECIBIDO",
+  "PROCESANDO",
+  "EXTRAIDO",
+  "VALIDADO",
+  "OBSERVADO",
+  "DIVIDIDO",
+];
+
+export const ESTADOS_APROBABLES: EstadoDocumentoMotor[] = [
+  "VALIDADO",
+  "OBSERVADO",
 ];
 
 export const FAMILIAS = [

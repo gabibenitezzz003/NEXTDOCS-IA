@@ -36,6 +36,7 @@ const COLORES_ESTADO: Record<EstadoDocumentoMotor, string> = {
   OBSERVADO: "#f59e0b",
   APROBADO: "#10b981",
   RECHAZADO: "#ef4444",
+  DIVIDIDO: "#0ea5e9",
   CERRADO: "#475569",
 };
 
@@ -47,6 +48,7 @@ const ORDEN_ESTADOS: EstadoDocumentoMotor[] = [
   "OBSERVADO",
   "APROBADO",
   "RECHAZADO",
+  "DIVIDIDO",
   "CERRADO",
 ];
 

@@ -272,6 +272,17 @@ export async function generarProcesoConIa(
   return data;
 }
 
+export async function refinarProcesoConIa(
+  definicionId: string,
+  requerimiento: GeneracionProcesoReq,
+): Promise<GeneracionProcesoRes> {
+  const { data } = await clienteProcesos.post<GeneracionProcesoRes>(
+    `/procesos/${definicionId}/refinar`,
+    requerimiento,
+  );
+  return data;
+}
+
 export async function obtenerProceso(definicionId: string): Promise<Proceso> {
   const { data } = await clienteProcesos.get<Proceso>(`/procesos/${definicionId}`);
   return data;

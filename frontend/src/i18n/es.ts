@@ -907,6 +907,30 @@ export const es = {
       "Borrador generado por IA — revisalo antes de publicar. {detalle}",
     iaListoSinAdvertencias:
       "Borrador generado por IA — revisalo antes de publicar.",
+    nuevoManual: "Desde cero",
+    nuevoManualDesc:
+      "Canvas vacío con inicio y fin para dibujar los pasos a mano.",
+    nuevoIaDesc:
+      "Describí el proceso o subí un manual: la IA arma el borrador para revisar.",
+    iaChatSaludo:
+      "Contame cómo funciona el proceso y armo el borrador. Podés adjuntar un manual (PDF, TXT o MD) con el clip.",
+    iaChatSaludoRefinar:
+      "Pedí cambios sobre el borrador o adjuntá otro documento: actualizo el grafo manteniendo lo que ya está.",
+    iaChatPh: "Escribí cómo funciona el proceso…",
+    iaRefinarPh: "Ej.: agregá una aprobación de gerencia antes del cierre…",
+    iaAdjuntar: "Adjuntar manual o documento",
+    iaQuitarAdjunto: "Quitar adjunto",
+    iaCrear: "Crear",
+    iaEnviar: "Enviar",
+    iaRespuestaCreada: "Listo — armé el borrador «{nombre}».",
+    iaRespuestaActualizada: "Actualicé el borrador del proceso.",
+    iaConAdvertencias: "Advertencias: {detalle}",
+    iaFallo: "No pude procesar el pedido: {detalle}",
+    iaRefinar: "Refinar con IA",
+    iaRefinarDesc:
+      "Pedí cambios en lenguaje natural o adjuntá un documento: la IA actualiza el grafo del borrador.",
+    iaRefinarBloqueado: "Guardá los cambios del canvas antes de refinar con IA.",
+    iaRefinarSinBorrador: "Solo se puede refinar una versión en borrador.",
     codigo: "Código",
     familia: "Familia",
     nombre: "Nombre",
@@ -1248,6 +1272,7 @@ export const es = {
       OBSERVADO: "Observado",
       APROBADO: "Aprobado",
       RECHAZADO: "Rechazado",
+      DIVIDIDO: "Dividido",
       CERRADO: "Cerrado",
       VENCIDO: "Vencido",
       POR_VENCER: "Por vencer",
@@ -1330,6 +1355,9 @@ export const es = {
       reencolado: "Documento reencolado para reprocesar.",
       abrir: "Abrir documento",
       reprocesar: "Reprocesar",
+      rechazar: "Descartar documento",
+      motivoRechazo: "Motivo del descarte (opcional)",
+      rechazado: "Documento descartado.",
       sinClasificar: "Sin clasificar",
       sinAsociar: "Sin asociar",
       vacio: "No hay documentos",

@@ -6,13 +6,20 @@ import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
 import {
   AreaTexto,
   Boton,
+  BotonIcono,
   CabeceraTarjeta,
   Campo,
+  Panel,
   Pastilla,
   Selector,
   Tarjeta,
 } from "../componentes/Interfaz";
-import { IconoCheck } from "../componentes/Iconos";
+import {
+  IconoAdjuntar,
+  IconoCheck,
+  IconoCerrar,
+  IconoInteligencia,
+} from "../componentes/Iconos";
 import { formatearFecha } from "../utilidades/fechas";
 import {
   actualizarGrafo,
@@ -21,6 +28,7 @@ import {
   crearProceso,
   generarProcesoConIa,
   iniciarInstancia,
+  refinarProcesoConIa,
   listarProcesos,
   mensajeDeError,
   nuevaVersion,
@@ -31,6 +39,8 @@ import {
   validarVersion,
 } from "../api/procesos";
 import type {
+  GeneracionProcesoReq,
+  GeneracionProcesoRes,
   GrafoProceso,
   InstanciaProceso,
   NodoProceso,
@@ -93,7 +103,8 @@ function ListaProcesos({
   const clienteConsultas = useQueryClient();
   const [error, setError] = useState<string | null>(null);
   const [editando, setEditando] = useState<string | null>(null);
-  const [iaAbierta, setIaAbierta] = useState(false);
+  const [nuevoAbierto, setNuevoAbierto] = useState(false);
+  const [modoNuevo, setModoNuevo] = useState<"opciones" | "ia">("opciones");
 
   const consulta = useQuery({
     queryKey: ["procesos"],
@@ -118,40 +129,83 @@ function ListaProcesos({
         <p className="max-w-xl text-pequeno text-tinta-suave">
           {t("procesos.bibliotecaDesc")}
         </p>
-        <div className="flex items-center gap-espacio-2">
-          <Boton
-            variante="secundario"
-            aria-expanded={iaAbierta}
-            onClick={() => setIaAbierta((actual) => !actual)}
-          >
-            {t("procesos.hazloConIa")}
-          </Boton>
-          <Boton
-            variante="primario"
-            cargando={crear.isPending}
-            disabled={crear.isPending}
-            onClick={() =>
-              crear.mutate({
-                codigo: `PROC-${Date.now().toString(36).toUpperCase()}`,
-                familia: "GENERAL",
-                nombre: t("procesos.procesoNuevo"),
-              })
-            }
-          >
-            {t("procesos.nuevoProceso")}
-          </Boton>
-        </div>
+        <Boton
+          variante="primario"
+          cargando={crear.isPending}
+          disabled={crear.isPending}
+          onClick={() => {
+            setModoNuevo("opciones");
+            setNuevoAbierto(true);
+          }}
+        >
+          {t("procesos.nuevoProceso")}
+        </Boton>
       </div>
-      {iaAbierta ? (
-        <Tarjeta className="mb-espacio-4">
-          <PanelGeneracionIa
-            alGenerado={(proceso, advertencias) => {
-              clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
-              alAbrir(proceso.id, advertencias);
-            }}
-            alCerrar={() => setIaAbierta(false)}
-          />
-        </Tarjeta>
+      {nuevoAbierto ? (
+        <Panel
+          titulo={t("procesos.nuevoProcesoTitulo")}
+          descripcion={
+            modoNuevo === "ia"
+              ? t("procesos.iaDesc")
+              : t("procesos.nuevoProcesoDesc")
+          }
+          alCerrar={() => setNuevoAbierto(false)}
+        >
+          {modoNuevo === "opciones" ? (
+            <div className="grid gap-espacio-3">
+              <Boton
+                variante="secundario"
+                className="h-auto justify-start px-espacio-4 py-espacio-4 text-left"
+                onClick={() =>
+                  crear.mutate({
+                    codigo: `PROC-${Date.now().toString(36).toUpperCase()}`,
+                    familia: "GENERAL",
+                    nombre: t("procesos.procesoNuevo"),
+                  })
+                }
+              >
+                <span className="flex flex-col items-start gap-espacio-1">
+                  <span className="font-bold">{t("procesos.nuevoManual")}</span>
+                  <span className="text-micro font-normal text-tinta-suave">
+                    {t("procesos.nuevoManualDesc")}
+                  </span>
+                </span>
+              </Boton>
+              <Boton
+                variante="secundario"
+                className="h-auto justify-start px-espacio-4 py-espacio-4 text-left"
+                onClick={() => setModoNuevo("ia")}
+              >
+                <span className="flex items-start gap-espacio-3">
+                  <span className="mt-espacio-1 text-accion-primaria">
+                    <IconoInteligencia />
+                  </span>
+                  <span className="flex flex-col items-start gap-espacio-1">
+                    <span className="font-bold">
+                      {t("procesos.hazloConIa")}
+                    </span>
+                    <span className="text-micro font-normal text-tinta-suave">
+                      {t("procesos.nuevoIaDesc")}
+                    </span>
+                  </span>
+                </span>
+              </Boton>
+            </div>
+          ) : (
+            <ConversacionIa
+              modo="crear"
+              alEnviar={generarProcesoConIa}
+              alExito={(resultado) => {
+                setNuevoAbierto(false);
+                clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
+                alAbrir(
+                  resultado.definicion.id,
+                  resultado.advertencias ?? [],
+                );
+              }}
+            />
+          )}
+        </Panel>
       ) : null}
       {error ? (
         <div
@@ -252,125 +306,231 @@ const MIME_ADJUNTO_IA: Record<string, string> = {
 
 const MAXIMO_ADJUNTO_IA_MB = 10;
 
-function PanelGeneracionIa({
-  alGenerado,
-  alCerrar,
+type MensajeIa = {
+  rol: "usuario" | "asistente";
+  texto: string;
+  adjunto?: string;
+};
+
+function ConversacionIa({
+  modo,
+  alEnviar,
+  alExito,
+  deshabilitado,
+  ayudaDeshabilitado,
 }: {
-  alGenerado: (proceso: Proceso, advertencias: string[]) => void;
-  alCerrar: () => void;
+  modo: "crear" | "refinar";
+  alEnviar: (req: GeneracionProcesoReq) => Promise<GeneracionProcesoRes>;
+  alExito?: (resultado: GeneracionProcesoRes) => void;
+  deshabilitado?: boolean;
+  ayudaDeshabilitado?: string;
 }) {
   const { t } = useIdioma();
-  const [descripcion, setDescripcion] = useState("");
+  const [mensajes, setMensajes] = useState<MensajeIa[]>([
+    {
+      rol: "asistente",
+      texto:
+        modo === "crear"
+          ? t("procesos.iaChatSaludo")
+          : t("procesos.iaChatSaludoRefinar"),
+    },
+  ]);
+  const [texto, setTexto] = useState("");
   const [archivo, setArchivo] = useState<{
     nombre: string;
     tipoMime: string;
     base64: string;
   } | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const entradaArchivo = useRef<HTMLInputElement>(null);
+  const finMensajes = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    finMensajes.current?.scrollIntoView({ block: "end" });
+  }, [mensajes, enviando]);
 
   function leerArchivo(seleccionado: File) {
     const extension = seleccionado.name.split(".").pop()?.toLowerCase() ?? "";
     const tipoMime = MIME_ADJUNTO_IA[extension];
     if (!tipoMime || seleccionado.size > MAXIMO_ADJUNTO_IA_MB * 1024 * 1024) {
-      setError(t("procesos.iaArchivoInvalido"));
+      setMensajes((prev) => [
+        ...prev,
+        { rol: "asistente", texto: t("procesos.iaArchivoInvalido") },
+      ]);
       return;
     }
     const lector = new FileReader();
     lector.onload = () => {
       const resultado = String(lector.result ?? "");
-      const base64 = resultado.slice(resultado.indexOf(",") + 1);
       setArchivo({
         nombre: seleccionado.name,
         tipoMime,
-        base64,
+        base64: resultado.slice(resultado.indexOf(",") + 1),
       });
-      setError(null);
     };
-    lector.onerror = () => setError(t("procesos.iaError"));
     lector.readAsDataURL(seleccionado);
   }
 
-  const generar = useMutation({
-    mutationFn: () =>
-      generarProcesoConIa({
-        descripcion: descripcion.trim() || undefined,
-        contenidoBase64: archivo?.base64,
-        tipoMime: archivo?.tipoMime,
-        nombreArchivo: archivo?.nombre,
-      }),
-    onSuccess: (resultado) => {
-      setError(null);
-      alGenerado(resultado.definicion, resultado.advertencias ?? []);
-    },
-    onError: (fallo) => setError(mensajeDeError(fallo)),
-  });
+  const enviar = async () => {
+    const instruccion = texto.trim();
+    if (enviando || deshabilitado || (!instruccion && !archivo)) return;
+    const adjunto = archivo;
+    setMensajes((prev) => [
+      ...prev,
+      {
+        rol: "usuario",
+        texto: instruccion,
+        adjunto: adjunto?.nombre,
+      },
+    ]);
+    setTexto("");
+    setArchivo(null);
+    setEnviando(true);
+    try {
+      const resultado = await alEnviar({
+        descripcion: instruccion || undefined,
+        contenidoBase64: adjunto?.base64,
+        tipoMime: adjunto?.tipoMime,
+        nombreArchivo: adjunto?.nombre,
+      });
+      const advertencias = resultado.advertencias ?? [];
+      const respuesta =
+        modo === "crear"
+          ? t("procesos.iaRespuestaCreada", {
+              nombre: resultado.definicion?.nombre ?? "",
+            })
+          : t("procesos.iaRespuestaActualizada");
+      setMensajes((prev) => [
+        ...prev,
+        { rol: "asistente", texto: respuesta },
+        ...(advertencias.length
+          ? [
+              {
+                rol: "asistente" as const,
+                texto: t("procesos.iaConAdvertencias", {
+                  detalle: advertencias.join(" · "),
+                }),
+              },
+            ]
+          : []),
+      ]);
+      alExito?.(resultado);
+    } catch (fallo) {
+      setMensajes((prev) => [
+        ...prev,
+        {
+          rol: "asistente",
+          texto: t("procesos.iaFallo", { detalle: mensajeDeError(fallo) }),
+        },
+      ]);
+    } finally {
+      setEnviando(false);
+    }
+  };
 
-  const habilitado =
-    !generar.isPending && (descripcion.trim().length > 0 || archivo !== null);
+  const puedeEnviar =
+    !enviando && !deshabilitado && (texto.trim().length > 0 || archivo !== null);
 
   return (
-    <div>
-      <CabeceraTarjeta
-        titulo={t("procesos.iaTitulo")}
-        descripcion={t("procesos.iaDesc")}
-      />
-      {error ? (
-        <div
-          role="alert"
-          className="mb-espacio-3 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-3 py-espacio-2 text-pequeno text-rojo-alto"
-        >
-          {error}
+    <div className="flex h-full min-h-0 flex-col gap-espacio-3">
+      <div
+        className="barra-desplazamiento-fina flex min-h-48 flex-1 flex-col gap-espacio-3 overflow-y-auto pr-espacio-1"
+        aria-live="polite"
+      >
+        {mensajes.map((mensaje, indice) => (
+          <div
+            key={indice}
+            className={`max-w-[85%] rounded-panel px-espacio-3 py-espacio-2 text-pequeno ${
+              mensaje.rol === "usuario"
+                ? "self-end bg-accion-tonal text-accion-tonal-texto"
+                : "self-start bg-lienzo text-tinta"
+            }`}
+          >
+            {mensaje.adjunto ? (
+              <p className="mb-espacio-1 flex items-center gap-espacio-1 text-micro font-semibold">
+                <IconoAdjuntar tamano={14} />
+                {mensaje.adjunto}
+              </p>
+            ) : null}
+            <p className="whitespace-pre-wrap break-words">{mensaje.texto}</p>
+          </div>
+        ))}
+        {enviando ? (
+          <div className="self-start rounded-panel bg-lienzo px-espacio-3 py-espacio-2 text-pequeno text-tinta-suave">
+            {t("procesos.iaGenerando")}
+          </div>
+        ) : null}
+        <div ref={finMensajes} />
+      </div>
+
+      {ayudaDeshabilitado && deshabilitado ? (
+        <p className="rounded-control bg-alerta-tenue px-espacio-3 py-espacio-2 text-pequeno text-alerta-texto">
+          {ayudaDeshabilitado}
+        </p>
+      ) : null}
+
+      {archivo ? (
+        <div className="flex items-center gap-espacio-2 self-start rounded-insignia bg-violeta-tenue px-espacio-3 py-espacio-1 text-micro font-semibold text-violeta">
+          <IconoAdjuntar tamano={14} />
+          <span className="max-w-56 truncate">{archivo.nombre}</span>
+          <BotonIcono
+            variante="fantasma"
+            tamano="sm"
+            aria-label={t("procesos.iaQuitarAdjunto")}
+            onClick={() => setArchivo(null)}
+          >
+            <IconoCerrar tamano={12} />
+          </BotonIcono>
         </div>
       ) : null}
-      <div className="grid gap-espacio-4">
-        <AreaTexto
-          etiqueta={t("procesos.iaDescripcion")}
-          ayuda={t("procesos.iaDescripcionAyuda")}
-          rows={5}
-          value={descripcion}
-          onChange={(evento) => setDescripcion(evento.target.value)}
-          placeholder={t("procesos.iaDescripcionPh")}
+
+      <div className="flex items-end gap-espacio-2">
+        <input
+          ref={entradaArchivo}
+          type="file"
+          accept=".pdf,.txt,.md"
+          hidden
+          onChange={(evento) => {
+            const seleccionado = evento.target.files?.[0];
+            evento.target.value = "";
+            if (seleccionado) leerArchivo(seleccionado);
+          }}
         />
-        <label className="block">
-          <span className="mb-espacio-1 block text-pequeno font-semibold text-tinta">
-            {t("procesos.iaAdjunto")}
-          </span>
-          <input
-            type="file"
-            accept=".pdf,.txt,.md"
-            className="block w-full text-pequeno text-tinta-suave file:mr-espacio-3 file:rounded-control file:border file:border-borde file:bg-superficie file:px-espacio-3 file:py-espacio-2 file:text-pequeno file:font-semibold file:text-tinta hover:file:border-borde-fuerte"
-            onChange={(evento) => {
-              const seleccionado = evento.target.files?.[0];
-              if (seleccionado) leerArchivo(seleccionado);
-            }}
-          />
-          <span className="mt-espacio-1 block text-pequeno text-tinta-suave">
-            {archivo
-              ? t("procesos.iaAdjuntoListo", { nombre: archivo.nombre })
-              : t("procesos.iaAdjuntoAyuda")}
-          </span>
-        </label>
-      </div>
-      <div className="mt-espacio-4 flex items-center justify-end gap-espacio-2">
-        {generar.isPending ? (
-          <p className="mr-auto text-pequeno text-tinta-suave">
-            {t("procesos.iaGenerando")}
-          </p>
-        ) : null}
-        <Boton
+        <BotonIcono
           variante="secundario"
-          onClick={alCerrar}
-          disabled={generar.isPending}
+          aria-label={t("procesos.iaAdjuntar")}
+          disabled={enviando || deshabilitado}
+          onClick={() => entradaArchivo.current?.click()}
         >
-          {t("comun.cancelar")}
-        </Boton>
+          <IconoAdjuntar />
+        </BotonIcono>
+        <textarea
+          className="h-control min-h-control flex-1 resize-none rounded-control border border-borde bg-superficie px-espacio-3 py-espacio-2 text-pequeno text-tinta focus-visible:outline-foco"
+          placeholder={
+            modo === "crear"
+              ? t("procesos.iaChatPh")
+              : t("procesos.iaRefinarPh")
+          }
+          value={texto}
+          disabled={enviando || deshabilitado}
+          rows={1}
+          onChange={(evento) => setTexto(evento.target.value)}
+          onKeyDown={(evento) => {
+            if (evento.key === "Enter" && !evento.shiftKey) {
+              evento.preventDefault();
+              void enviar();
+            }
+          }}
+        />
         <Boton
           variante="primario"
-          cargando={generar.isPending}
-          disabled={!habilitado}
-          onClick={() => generar.mutate()}
+          disabled={!puedeEnviar}
+          cargando={enviando}
+          onClick={() => void enviar()}
         >
-          {t("procesos.iaGenerar")}
+          {modo === "crear"
+            ? t("procesos.iaCrear")
+            : t("procesos.iaEnviar")}
         </Boton>
       </div>
     </div>
@@ -589,6 +749,7 @@ function EstudioProceso({
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
   const [simulacionAbierta, setSimulacionAbierta] = useState(false);
   const [editandoDatos, setEditandoDatos] = useState(false);
+  const [chatIaAbierto, setChatIaAbierto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [detalles, setDetalles] = useState<string[]>([]);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -1054,6 +1215,14 @@ function EstudioProceso({
             >
               {t("procesos.editar")}
             </Boton>
+            <Boton
+              variante="secundario"
+              aria-expanded={chatIaAbierto}
+              onClick={() => setChatIaAbierto(true)}
+            >
+              <IconoInteligencia />
+              {t("procesos.iaRefinar")}
+            </Boton>
             {publicada ? (
               <Boton
                 variante="secundario"
@@ -1068,6 +1237,25 @@ function EstudioProceso({
         }
       />
       <Contenido>
+        {chatIaAbierto ? (
+          <Panel
+            titulo={t("procesos.iaRefinar")}
+            descripcion={t("procesos.iaRefinarDesc")}
+            alCerrar={() => setChatIaAbierto(false)}
+          >
+            <ConversacionIa
+              modo="refinar"
+              alEnviar={(req) => refinarProcesoConIa(procesoId, req)}
+              alExito={() => refrescar()}
+              deshabilitado={!borrador || hayCambios}
+              ayudaDeshabilitado={
+                !borrador
+                  ? t("procesos.iaRefinarSinBorrador")
+                  : t("procesos.iaRefinarBloqueado")
+              }
+            />
+          </Panel>
+        ) : null}
         {editandoDatos ? (
           <Tarjeta className="mb-espacio-6">
             <CabeceraTarjeta titulo={t("procesos.editar")} />

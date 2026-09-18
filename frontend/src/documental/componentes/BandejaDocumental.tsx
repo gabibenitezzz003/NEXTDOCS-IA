@@ -4,6 +4,7 @@ import {
   cargarDocumento,
   obtenerBandeja,
   reprocesarDocumento,
+  revisarDocumento,
   type DocumentoMotor,
 } from "../../api/documental";
 import { mensajeDeError } from "../../api/cliente";
@@ -19,6 +20,7 @@ import { BarraConfianza } from "../../componentes/Insignias";
 import {
   IconoBuscar,
   IconoDocumentos,
+  IconoEliminar,
   IconoRecargar,
   IconoSubir,
 } from "../../componentes/Iconos";
@@ -26,6 +28,8 @@ import { useIdioma } from "../../contextos/ProveedorIdioma";
 import {
   ESTADOS_DOCUMENTO,
   ESTADOS_EN_CURSO,
+  ESTADOS_RECHAZABLES,
+  ESTADOS_REPROCESABLES,
   comoFecha,
   leerBase64,
 } from "../dominio";
@@ -108,6 +112,21 @@ export function BandejaDocumental({
     try {
       await reprocesarDocumento(documentoId);
       setAviso({ tono: "ok", texto: t("documental.bandeja.reencolado") });
+      invalidar();
+    } catch (error) {
+      setAviso({ tono: "error", texto: mensajeDeError(error) });
+    }
+  };
+
+  const rechazar = async (documentoId: string) => {
+    const motivo = window.prompt(t("documental.bandeja.motivoRechazo"));
+    if (motivo === null) return;
+    try {
+      await revisarDocumento(documentoId, {
+        decision: "RECHAZAR",
+        motivo: motivo.trim() || null,
+      });
+      setAviso({ tono: "ok", texto: t("documental.bandeja.rechazado") });
       invalidar();
     } catch (error) {
       setAviso({ tono: "error", texto: mensajeDeError(error) });
@@ -316,8 +335,7 @@ export function BandejaDocumental({
                       >
                         <IconoBuscar />
                       </BotonIcono>
-                      {documento.estado === "RECIBIDO" ||
-                      documento.estado === "OBSERVADO" ? (
+                      {ESTADOS_REPROCESABLES.includes(documento.estado) ? (
                         <BotonIcono
                           tamano="sm"
                           aria-label={t("documental.bandeja.reprocesar")}
@@ -327,6 +345,20 @@ export function BandejaDocumental({
                           }}
                         >
                           <IconoRecargar />
+                        </BotonIcono>
+                      ) : null}
+                      {ESTADOS_RECHAZABLES.includes(documento.estado) ? (
+                        <BotonIcono
+                          tamano="sm"
+                          aria-label={t("documental.bandeja.rechazar")}
+                          className="text-rojo-alto hover:bg-rojo-tenue"
+                          data-testid="documental-rechazar-fila"
+                          onClick={(evento) => {
+                            evento.stopPropagation();
+                            void rechazar(documento.id);
+                          }}
+                        >
+                          <IconoEliminar />
                         </BotonIcono>
                       ) : null}
                     </div>

@@ -8,6 +8,7 @@ export type EstadoDocumentoMotor =
   | "OBSERVADO"
   | "APROBADO"
   | "RECHAZADO"
+  | "DIVIDIDO"
   | "CERRADO";
 
 export interface DocumentoMotor {
