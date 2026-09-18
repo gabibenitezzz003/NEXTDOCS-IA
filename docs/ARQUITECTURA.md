@@ -153,7 +153,7 @@ devuelve 0 documentos.
 | Webhooks | Firma HMAC-SHA256 del cuerpo en `X-Nextdocs-Firma`. El secreto se muestra una sola vez. Las URLs deben ser HTTPS y no pueden apuntar a redes internas, salvo `nextdocs.webhooks.permitirLocalhost` para desarrollo. Tras `umbralPausa` fallos consecutivos la suscripcion se pausa sola |
 | Trazabilidad | `correlacionId` en el MDC, en la respuesta, en cada evento y en cada registro de auditoría |
 | Exportación de auditoría | CSV con neutralización de fórmulas, tope de 50 000 eventos y la propia exportación auditada |
-| Llamadas del workflow | Sólo `X-Clave-Servicio` del tenant con alcances mínimos: `documentos.leer`/`documentos.escribir` (resolver y subir documentos) e `integraciones.escribir` (publicar `process.notification` hacia webhooks). Los enlaces externos del portal `/externo/{token}` nunca tocan el core directamente: el workflow hace de proxy |
+| Llamadas del workflow | Sólo `X-Clave-Servicio` del tenant con alcances mínimos: `documentos.leer`/`documentos.escribir` (resolver y subir documentos) e `integraciones.escribir` (publicar `process.*` hacia webhooks: `process.notification`, `process.task_completed`, `process.workflow_completed`). Los enlaces externos del portal `/externo/{token}` nunca tocan el core directamente: el workflow hace de proxy |
 
 ---
 

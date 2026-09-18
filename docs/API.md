@@ -443,8 +443,10 @@ POST /api/v1/integraciones/eventos                          permiso: integracion
 
 `POST /integraciones/eventos` es la puerta de entrada de eventos para servicios: recibe
 `{tipoEvento, tipoAgregado, idAgregado, carga}` y encola un `EventoSalida` que el despachador
-reparte a las suscripciones del tenant con firma HMAC. Sólo admite tipos `process.*` (hoy
-`process.notification`): un servicio no puede falsificar eventos del dominio documental.
+reparte a las suscripciones del tenant con firma HMAC. Sólo admite tipos `process.*`
+(`process.notification`, `process.task_completed`, `process.workflow_completed`): un servicio
+no puede falsificar eventos del dominio documental. El workflow emite `process.task_completed`
+al completar cada tarea y `process.workflow_completed` al cerrar la instancia.
 `integraciones.escribir` es un alcance exclusivo de cuentas de servicio: no entra en ningún rol
 predefinido ni se puede asignar a roles propios, y el endpoint además exige que el actor sea una
 cuenta de servicio — un usuario con el permiso recibe 403.
