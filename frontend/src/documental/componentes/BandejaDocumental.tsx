@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   cargarDocumento,
+  eliminarDocumento,
   obtenerBandeja,
   reprocesarDocumento,
   revisarDocumento,
@@ -19,6 +20,7 @@ import { Cargando, ErrorPanel, Vacio } from "../../componentes/Estados";
 import { BarraConfianza } from "../../componentes/Insignias";
 import {
   IconoBuscar,
+  IconoCerrar,
   IconoDocumentos,
   IconoEliminar,
   IconoRecargar,
@@ -127,6 +129,22 @@ export function BandejaDocumental({
         motivo: motivo.trim() || null,
       });
       setAviso({ tono: "ok", texto: t("documental.bandeja.rechazado") });
+      invalidar();
+    } catch (error) {
+      setAviso({ tono: "error", texto: mensajeDeError(error) });
+    }
+  };
+
+  const eliminar = async (documento: DocumentoMotor) => {
+    const motivo = window.prompt(
+      t("documental.bandeja.motivoEliminar", {
+        nombre: documento.nombre_archivo,
+      }),
+    );
+    if (motivo === null) return;
+    try {
+      await eliminarDocumento(documento.id, motivo.trim() || null);
+      setAviso({ tono: "ok", texto: t("documental.bandeja.eliminado") });
       invalidar();
     } catch (error) {
       setAviso({ tono: "error", texto: mensajeDeError(error) });
@@ -351,16 +369,27 @@ export function BandejaDocumental({
                         <BotonIcono
                           tamano="sm"
                           aria-label={t("documental.bandeja.rechazar")}
-                          className="text-rojo-alto hover:bg-rojo-tenue"
                           data-testid="documental-rechazar-fila"
                           onClick={(evento) => {
                             evento.stopPropagation();
                             void rechazar(documento.id);
                           }}
                         >
-                          <IconoEliminar />
+                          <IconoCerrar />
                         </BotonIcono>
                       ) : null}
+                      <BotonIcono
+                        tamano="sm"
+                        aria-label={t("documental.bandeja.eliminar")}
+                        className="text-rojo-alto hover:bg-rojo-tenue"
+                        data-testid="documental-eliminar-fila"
+                        onClick={(evento) => {
+                          evento.stopPropagation();
+                          void eliminar(documento);
+                        }}
+                      >
+                        <IconoEliminar />
+                      </BotonIcono>
                     </div>
                   </td>
                 </tr>

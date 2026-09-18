@@ -9,6 +9,7 @@ export type EstadoDocumentoMotor =
   | "APROBADO"
   | "RECHAZADO"
   | "DIVIDIDO"
+  | "ELIMINADO"
   | "CERRADO";
 
 export interface DocumentoMotor {
@@ -285,6 +286,15 @@ export async function confirmarEmparejamiento(
 
 export async function reprocesarDocumento(documentoId: string): Promise<void> {
   await cliente.post(`/documental/documentos/${documentoId}/reprocesar`);
+}
+
+export async function eliminarDocumento(
+  documentoId: string,
+  motivo?: string | null,
+): Promise<void> {
+  await cliente.post(`/documental/documentos/${documentoId}/eliminar`, {
+    motivo: motivo ?? null,
+  });
 }
 
 export async function obtenerExcepcionesMotor(filtros: {

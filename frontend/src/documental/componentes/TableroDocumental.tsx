@@ -37,6 +37,7 @@ const COLORES_ESTADO: Record<EstadoDocumentoMotor, string> = {
   APROBADO: "#10b981",
   RECHAZADO: "#ef4444",
   DIVIDIDO: "#0ea5e9",
+  ELIMINADO: "#98a2b3",
   CERRADO: "#475569",
 };
 

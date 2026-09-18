@@ -16,6 +16,7 @@ const TONOS: Record<EstadoDocumentoMotor, string> = {
   RECHAZADO: "bg-rojo-tenue text-rojo-alto ring-1 ring-inset ring-rojo-borde",
   DIVIDIDO:
     "bg-informacion-tenue text-informacion ring-1 ring-inset ring-informacion-borde",
+  ELIMINADO: "bg-lienzo text-tinta-suave ring-1 ring-inset ring-borde",
   CERRADO: "bg-lienzo text-tinta-suave ring-1 ring-inset ring-borde",
 };
 

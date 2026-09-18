@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   confirmarEmparejamiento,
+  eliminarDocumento,
   enviarDocumento,
   obtenerBitacora,
   obtenerFicha,
@@ -17,6 +18,7 @@ import {
   IconoCheck,
   IconoCerrar,
   IconoCorreo,
+  IconoEliminar,
   IconoIzquierda,
   IconoRecargar,
 } from "../../componentes/Iconos";
@@ -336,6 +338,25 @@ export function VisorInteligente({
   const puedeRechazar = ESTADOS_RECHAZABLES.includes(documento.estado);
   const puedeAprobar = ESTADOS_APROBABLES.includes(documento.estado);
   const hayAcciones = puedeReprocesar || puedeRechazar || puedeAprobar;
+  const puedeEliminar = documento.estado !== "ELIMINADO";
+
+  const eliminar = async () => {
+    const motivoEliminar = window.prompt(
+      t("documental.visor.motivoEliminar", {
+        nombre: String(documento.nombre_archivo ?? ""),
+      }),
+    );
+    if (motivoEliminar === null) return;
+    try {
+      await eliminarDocumento(documentoId, motivoEliminar.trim() || null);
+      clienteConsultas.invalidateQueries({
+        queryKey: ["documental-bandeja"],
+      });
+      alVolver();
+    } catch (error) {
+      setAviso({ tono: "error", texto: mensajeDeError(error) });
+    }
+  };
 
   const pestanas: { id: PestanaVisor; etiqueta: string }[] = [
     { id: "campos", etiqueta: t("documental.visor.campos") },
@@ -492,6 +513,17 @@ export function VisorInteligente({
                 </Boton>
               ) : null}
             </>
+          ) : null}
+          {puedeEliminar ? (
+            <Boton
+              variante="peligro"
+              tamano="sm"
+              onClick={() => void eliminar()}
+              data-testid="documental-eliminar"
+            >
+              <IconoEliminar />
+              {t("documental.visor.eliminar")}
+            </Boton>
           ) : null}
         </div>
       </div>

@@ -13,6 +13,7 @@ export const ESTADOS_DOCUMENTO: EstadoDocumentoMotor[] = [
   "APROBADO",
   "RECHAZADO",
   "DIVIDIDO",
+  "ELIMINADO",
   "CERRADO",
 ];
 
