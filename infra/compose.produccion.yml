@@ -214,7 +214,12 @@ services:
       CORREO_CLAVE: ${NEXTDOCS_CORREO_CLAVE:-}
       CORREO_REMITENTE: ${NEXTDOCS_CORREO_REMITENTE:-}
       ADMIN_CLAVE: ${NEXTDOCS_DOCUMENTAL_CLAVE_ADMIN:-}
-      ARCA_ENTORNO: homologacion
+      ARCA_ENTORNO: ${NEXTDOCS_ARCA_ENTORNO:-homologacion}
+      ARCA_CUIT: ${NEXTDOCS_ARCA_CUIT:-}
+      ARCA_CERTIFICADO_RUTA: /run/secretos/arca.crt
+      ARCA_CLAVE_PRIVADA_RUTA: /run/secretos/arca.key
+    volumes:
+      - /etc/nextdocs-ia/secretos:/run/secretos:ro
     ports:
       - "127.0.0.1:4002:4000"
     networks:
@@ -254,8 +259,13 @@ services:
       CORREO_CLAVE: ${NEXTDOCS_CORREO_CLAVE:-}
       CORREO_REMITENTE: ${NEXTDOCS_CORREO_REMITENTE:-}
       NEXTDOCS_URL_PUBLICA: ${NEXTDOCS_URL_PUBLICA:-https://nextdocsia.fenixgroup.tech}
-      ARCA_ENTORNO: homologacion
+      ARCA_ENTORNO: ${NEXTDOCS_ARCA_ENTORNO:-homologacion}
+      ARCA_CUIT: ${NEXTDOCS_ARCA_CUIT:-}
+      ARCA_CERTIFICADO_RUTA: /run/secretos/arca.crt
+      ARCA_CLAVE_PRIVADA_RUTA: /run/secretos/arca.key
       WORKER_CONCURRENCIA: "2"
+    volumes:
+      - /etc/nextdocs-ia/secretos:/run/secretos:ro
     networks:
       - nextdocs-interno
 
