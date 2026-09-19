@@ -1,5 +1,6 @@
 import { useEffect, useState, type ComponentType } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel } from "../componentes/Estados";
 import {
@@ -14,7 +15,9 @@ import {
   IconoCheck,
   IconoCorreo,
   IconoEliminar,
+  IconoGoogle,
   IconoInfo,
+  IconoMicrosoft,
   IconoTelegram,
   IconoWhatsapp,
 } from "../componentes/Iconos";
@@ -22,7 +25,9 @@ import { mensajeDeError } from "../api/cliente";
 import {
   eliminarIntegracion,
   guardarIntegracion,
+  iniciarOauth,
   listarIntegraciones,
+  listarProveedoresOauth,
   probarIntegracion,
   type Integracion,
   type ResultadoPrueba,
@@ -39,10 +44,39 @@ const ICONO_TIPO: Record<TipoIntegracion, ComponentType<{ tamano?: number }>> = 
 
 export function Integraciones() {
   const { t } = useIdioma();
+  const [parametros, setParametros] = useSearchParams();
+  const [avisoConexion] = useState<string | null>(() => {
+    if (!parametros.get("conectado")) {
+      return null;
+    }
+    const proveedor = parametros.get("proveedor");
+    const nombre = proveedor === "google" ? "Gmail" : proveedor === "microsoft" ? "Microsoft 365" : proveedor ?? "";
+    return t("integraciones.oauth.conectada", { nombre });
+  });
+  const [errorConexion] = useState<string | null>(() =>
+    parametros.get("error"),
+  );
+
+  useEffect(() => {
+    if (parametros.get("conectado") || parametros.get("error")) {
+      setParametros({}, { replace: true });
+    }
+  }, [parametros, setParametros]);
+
   const consulta = useQuery({
     queryKey: ["integraciones"],
     queryFn: listarIntegraciones,
   });
+  const consultaOauth = useQuery({
+    queryKey: ["integraciones-oauth"],
+    queryFn: listarProveedoresOauth,
+  });
+
+  const datos = consulta.data ?? [];
+  const correo = datos.find((i) => i.tipo === "CORREO");
+  const telegram = datos.find((i) => i.tipo === "TELEGRAM");
+  const whatsapp = datos.find((i) => i.tipo === "WHATSAPP");
+  const oauthDisponibles = consultaOauth.data ?? [];
 
   return (
     <>
@@ -51,6 +85,23 @@ export function Integraciones() {
         descripcion={t("integraciones.descripcion")}
       />
       <Contenido>
+        {avisoConexion ? (
+          <p
+            role="status"
+            className="mb-espacio-5 flex items-center gap-espacio-2 rounded-panel border border-exito-borde bg-exito-tenue p-espacio-4 text-pequeno font-semibold text-exito-texto"
+          >
+            <IconoCheck tamano={16} />
+            {avisoConexion}
+          </p>
+        ) : null}
+        {errorConexion ? (
+          <p
+            role="alert"
+            className="mb-espacio-5 rounded-panel border border-rojo-borde bg-rojo-tenue p-espacio-4 text-pequeno text-rojo-texto"
+          >
+            {errorConexion}
+          </p>
+        ) : null}
         <div
           role="note"
           className="mb-espacio-5 flex items-start gap-espacio-3 rounded-panel border border-violeta-borde bg-violeta-tenue p-espacio-4 text-pequeno text-tinta"
@@ -70,13 +121,101 @@ export function Integraciones() {
             mensaje={mensajeDeError(consulta.error)}
           />
         ) : (
-          <div className="grid gap-espacio-5 xl:grid-cols-2">
-            {(consulta.data ?? []).map((integracion) => (
-              <TarjetaIntegracion
-                key={integracion.tipo}
-                integracion={integracion}
-              />
-            ))}
+          <div className="flex flex-col gap-espacio-6">
+            <section>
+              <h2 className="mb-espacio-3 text-base font-semibold text-tinta">
+                {t("integraciones.seccion.correo")}
+              </h2>
+              <div className="grid gap-espacio-5 xl:grid-cols-2">
+                <TarjetaOauth
+                  proveedor="google"
+                  disponible={oauthDisponibles.includes("google")}
+                  integracion={correo}
+                  modoEsperado="OAUTH_GOOGLE"
+                  Icono={IconoGoogle}
+                />
+                <TarjetaOauth
+                  proveedor="microsoft"
+                  disponible={oauthDisponibles.includes("microsoft")}
+                  integracion={correo}
+                  modoEsperado="OAUTH_MICROSOFT"
+                  Icono={IconoMicrosoft}
+                />
+                {correo ? (
+                  <TarjetaIntegracion
+                    integracion={correo}
+                    titulo={t("integraciones.nombre.SMTP")}
+                    avisoPrevio={
+                      correo.configurada &&
+                      correo.configuracion?.modo?.startsWith("OAUTH_")
+                        ? t("integraciones.smtpReemplaza", {
+                            cuenta: correo.configuracion?.correo ?? "",
+                          })
+                        : undefined
+                    }
+                  />
+                ) : null}
+              </div>
+            </section>
+            <section>
+              <h2 className="mb-espacio-3 text-base font-semibold text-tinta">
+                {t("integraciones.seccion.mensajeria")}
+              </h2>
+              <div className="grid gap-espacio-5 xl:grid-cols-2">
+                {telegram ? (
+                  <TarjetaIntegracion
+                    integracion={telegram}
+                    guia={[
+                      t("integraciones.guia.telegram.1"),
+                      t("integraciones.guia.telegram.2"),
+                      t("integraciones.guia.telegram.3"),
+                    ]}
+                  />
+                ) : null}
+                {whatsapp ? (
+                  <TarjetaIntegracion
+                    integracion={whatsapp}
+                    guia={[
+                      t("integraciones.guia.whatsapp.1"),
+                      t("integraciones.guia.whatsapp.2"),
+                      t("integraciones.guia.whatsapp.3"),
+                    ]}
+                  />
+                ) : null}
+              </div>
+            </section>
+            <section>
+              <h2 className="mb-espacio-3 text-base font-semibold text-tinta">
+                {t("integraciones.seccion.proximamente")}
+              </h2>
+              <div className="grid gap-espacio-5 xl:grid-cols-2">
+                {["slack", "googledrive"].map((app) => (
+                  <Tarjeta key={app} className="opacity-60">
+                    <div className="flex items-center justify-between gap-espacio-3">
+                      <div className="flex items-center gap-espacio-3">
+                        <span
+                          aria-hidden="true"
+                          className="grid size-espacio-10 shrink-0 place-items-center rounded-insignia bg-tinta-tenue text-tinta-media"
+                        >
+                          <IconoCorreo tamano={22} />
+                        </span>
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-tinta">
+                            {t(`integraciones.catalogo.${app}.nombre`)}
+                          </h3>
+                          <p className="text-micro text-tinta-media">
+                            {t(`integraciones.catalogo.${app}.detalle`)}
+                          </p>
+                        </div>
+                      </div>
+                      <Pastilla tono="neutro">
+                        {t("integraciones.proximamente")}
+                      </Pastilla>
+                    </div>
+                  </Tarjeta>
+                ))}
+              </div>
+            </section>
           </div>
         )}
       </Contenido>
@@ -84,7 +223,203 @@ export function Integraciones() {
   );
 }
 
-function TarjetaIntegracion({ integracion }: { integracion: Integracion }) {
+function TarjetaOauth({
+  proveedor,
+  disponible,
+  integracion,
+  modoEsperado,
+  Icono,
+}: {
+  proveedor: "google" | "microsoft";
+  disponible: boolean;
+  integracion?: Integracion;
+  modoEsperado: string;
+  Icono: ComponentType<{ tamano?: number }>;
+}) {
+  const { t } = useIdioma();
+  const clienteConsultas = useQueryClient();
+  const [destinoPrueba, setDestinoPrueba] = useState("");
+  const [resultado, setResultado] = useState<ResultadoPrueba | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmarBaja, setConfirmarBaja] = useState(false);
+
+  const refrescar = () =>
+    clienteConsultas.invalidateQueries({ queryKey: ["integraciones"] });
+
+  const conectada =
+    integracion?.configurada === true &&
+    integracion.configuracion?.modo === modoEsperado;
+  const cuenta = integracion?.configuracion?.correo;
+  const otraActiva =
+    integracion?.configurada === true &&
+    integracion.configuracion?.modo !== modoEsperado;
+
+  const conectar = useMutation({
+    mutationFn: () => iniciarOauth(proveedor),
+    onSuccess: (url) => {
+      window.location.href = url;
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  const probar = useMutation({
+    mutationFn: () =>
+      probarIntegracion("CORREO", destinoPrueba || undefined),
+    onSuccess: (salida) => {
+      setResultado(salida);
+      if (salida.exitosa) {
+        refrescar();
+      }
+    },
+    onError: (fallo) =>
+      setResultado({ exitosa: false, detalle: mensajeDeError(fallo) }),
+  });
+
+  const desconectar = useMutation({
+    mutationFn: () => eliminarIntegracion("CORREO"),
+    onSuccess: () => {
+      setConfirmarBaja(false);
+      setResultado(null);
+      refrescar();
+    },
+    onError: (fallo) => {
+      setConfirmarBaja(false);
+      setError(mensajeDeError(fallo));
+    },
+  });
+
+  const estado: { texto: string; tono: Tono } = conectada
+    ? integracion?.verificadaEn
+      ? { texto: t("integraciones.verificada"), tono: "exito" }
+      : { texto: t("integraciones.configurada"), tono: "informacion" }
+    : { texto: t("integraciones.sinConfigurar"), tono: "neutro" };
+
+  return (
+    <Tarjeta>
+      <div className="flex items-start justify-between gap-espacio-3">
+        <div className="flex items-center gap-espacio-3">
+          <span
+            aria-hidden="true"
+            className="grid size-espacio-10 shrink-0 place-items-center rounded-insignia bg-violeta-tenue text-violeta"
+          >
+            <Icono tamano={22} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-tinta">
+              {t(`integraciones.catalogo.${proveedor}.nombre`)}
+            </h3>
+            <p className="text-micro text-tinta-media">
+              {t(`integraciones.catalogo.${proveedor}.detalle`)}
+            </p>
+          </div>
+        </div>
+        <Pastilla tono={estado.tono}>{estado.texto}</Pastilla>
+      </div>
+
+      {conectada && cuenta ? (
+        <p className="mt-espacio-3 text-pequeno text-tinta">
+          {t("integraciones.oauth.conectadaComo", { cuenta })}
+        </p>
+      ) : null}
+      {!conectada && otraActiva ? (
+        <p className="mt-espacio-3 text-micro text-tinta-media">
+          {t("integraciones.oauth.otraActiva")}
+        </p>
+      ) : null}
+
+      {conectada ? (
+        <Campo
+          className="mt-espacio-3"
+          etiqueta={t("integraciones.destinoPrueba")}
+          ayuda={t("integraciones.destinoPruebaAyuda")}
+          type="email"
+          value={destinoPrueba}
+          onChange={(e) => setDestinoPrueba(e.target.value)}
+        />
+      ) : null}
+
+      {error ? (
+        <p role="alert" className="mt-espacio-3 text-pequeno text-rojo-alto">
+          {error}
+        </p>
+      ) : null}
+      {resultado ? (
+        <div
+          role="status"
+          className={`mt-espacio-3 rounded-panel border p-espacio-3 text-pequeno ${
+            resultado.exitosa
+              ? "border-exito-borde bg-exito-tenue text-exito-texto"
+              : "border-rojo-borde bg-rojo-tenue text-rojo-texto"
+          }`}
+        >
+          {resultado.detalle}
+        </div>
+      ) : null}
+
+      <div className="mt-espacio-4 flex flex-wrap items-center gap-espacio-2">
+        {conectada ? (
+          <>
+            <Boton
+              type="button"
+              variante="secundario"
+              cargando={probar.isPending}
+              onClick={() => probar.mutate()}
+            >
+              {t("integraciones.probar")}
+            </Boton>
+            <Boton
+              type="button"
+              variante="fantasma"
+              className="text-rojo-alto"
+              onClick={() => setConfirmarBaja(true)}
+            >
+              <IconoEliminar tamano={14} />
+              {t("integraciones.oauth.desconectar")}
+            </Boton>
+          </>
+        ) : disponible ? (
+          <Boton
+            type="button"
+            variante="primario"
+            cargando={conectar.isPending}
+            onClick={() => conectar.mutate()}
+          >
+            {t(`integraciones.oauth.conectar.${proveedor}`)}
+          </Boton>
+        ) : (
+          <p className="text-micro text-tinta-media">
+            {t("integraciones.oauth.noDisponible")}
+          </p>
+        )}
+      </div>
+
+      {confirmarBaja ? (
+        <DialogoConfirmacion
+          titulo={t("integraciones.oauth.desconectarTitulo")}
+          descripcion={t("integraciones.oauth.desconectarConfirmar", {
+            cuenta: cuenta ?? "",
+          })}
+          etiquetaConfirmar={t("integraciones.oauth.desconectar")}
+          cargando={desconectar.isPending}
+          alConfirmar={() => desconectar.mutate()}
+          alCancelar={() => setConfirmarBaja(false)}
+        />
+      ) : null}
+    </Tarjeta>
+  );
+}
+
+function TarjetaIntegracion({
+  integracion,
+  titulo,
+  guia,
+  avisoPrevio,
+}: {
+  integracion: Integracion;
+  titulo?: string;
+  guia?: string[];
+  avisoPrevio?: string;
+}) {
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
   const [valores, setValores] = useState<Record<string, string>>({});
@@ -167,7 +502,7 @@ function TarjetaIntegracion({ integracion }: { integracion: Integracion }) {
           </span>
           <div className="min-w-0">
             <h3 className="text-base font-semibold text-tinta">
-              {t(`integraciones.nombre.${integracion.tipo}`)}
+              {titulo ?? t(`integraciones.nombre.${integracion.tipo}`)}
             </h3>
             <p className="text-micro text-tinta-media">
               {t(`integraciones.detalle.${integracion.tipo}`)}
@@ -176,6 +511,20 @@ function TarjetaIntegracion({ integracion }: { integracion: Integracion }) {
         </div>
         <Pastilla tono={estado.tono}>{estado.texto}</Pastilla>
       </div>
+
+      {avisoPrevio ? (
+        <p className="mt-espacio-3 rounded-panel border border-informacion-borde bg-informacion-tenue p-espacio-3 text-pequeno text-tinta">
+          {avisoPrevio}
+        </p>
+      ) : null}
+
+      {guia ? (
+        <ol className="mt-espacio-3 list-decimal space-y-espacio-1 pl-espacio-5 text-pequeno text-tinta-media">
+          {guia.map((paso, indice) => (
+            <li key={indice}>{paso}</li>
+          ))}
+        </ol>
+      ) : null}
 
       <div className="mt-espacio-4 grid gap-espacio-3 sm:grid-cols-2">
         {integracion.campos.map((campo) =>

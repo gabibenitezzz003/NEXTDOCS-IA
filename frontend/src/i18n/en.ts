@@ -1666,11 +1666,66 @@ export const en: Diccionario = {
       "Email, Telegram and WhatsApp steps use these credentials when running. Values set on a step take precedence. Test each integration before publishing the process.",
     nombre: {
       CORREO: "Email (SMTP)",
+      SMTP: "Other email (SMTP)",
       TELEGRAM: "Telegram",
       WHATSAPP: "WhatsApp Business",
     },
+    seccion: {
+      correo: "Email",
+      mensajeria: "Messaging",
+      proximamente: "More apps",
+    },
+    catalogo: {
+      google: {
+        nombre: "Gmail",
+        detalle: "Send emails with your Google account, no setup needed",
+      },
+      microsoft: {
+        nombre: "Microsoft 365",
+        detalle: "Send emails with your Outlook or Microsoft account",
+      },
+      slack: {
+        nombre: "Slack",
+        detalle: "Messages to your team channels",
+      },
+      googledrive: {
+        nombre: "Google Drive",
+        detalle: "Save and read files in the cloud",
+      },
+    },
+    oauth: {
+      conectar: {
+        google: "Connect with Google",
+        microsoft: "Connect with Microsoft",
+      },
+      conectada: "{nombre} is now connected. You can use it in your processes.",
+      conectadaComo: "Connected as {cuenta}",
+      desconectar: "Disconnect",
+      desconectarTitulo: "Disconnect account",
+      desconectarConfirmar:
+        "Disconnects the account {cuenta}. Email steps will fail until you connect another account or configure SMTP.",
+      noDisponible:
+        "Automatic connection is not enabled on this installation yet.",
+      otraActiva:
+        "Email is already configured through another method; connecting this account replaces it.",
+    },
+    guia: {
+      telegram: {
+        "1": "Open Telegram and search for @BotFather",
+        "2": "Send /newbot, pick a name and username; it gives you a token",
+        "3": "Paste the token below and press Save and Test connection",
+      },
+      whatsapp: {
+        "1": "At developers.facebook.com create an app with the WhatsApp product",
+        "2": "In the API settings copy the permanent token and the phone number ID",
+        "3": "Paste them below and press Save and Test connection",
+      },
+    },
+    smtpReemplaza:
+      "Email is currently sent through the account {cuenta}. Saving this form replaces that connection.",
+    proximamente: "Coming soon",
     detalle: {
-      CORREO: "Email sending from process steps",
+      CORREO: "Manual sending via SMTP server (advanced)",
       TELEGRAM: "Telegram bot for automatic messages",
       WHATSAPP: "WhatsApp Business line (Meta)",
     },

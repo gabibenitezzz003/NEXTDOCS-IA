@@ -1673,11 +1673,66 @@ export const es = {
       "Los pasos de tipo Correo, Telegram y WhatsApp usan estas credenciales al ejecutarse. Si un paso define sus propios datos, esos tienen prioridad. Probá cada integración antes de publicar el proceso.",
     nombre: {
       CORREO: "Correo (SMTP)",
+      SMTP: "Otro correo (SMTP)",
       TELEGRAM: "Telegram",
       WHATSAPP: "WhatsApp Business",
     },
+    seccion: {
+      correo: "Correo",
+      mensajeria: "Mensajería",
+      proximamente: "Más aplicaciones",
+    },
+    catalogo: {
+      google: {
+        nombre: "Gmail",
+        detalle: "Enviá correos con tu cuenta de Google, sin configurar nada",
+      },
+      microsoft: {
+        nombre: "Microsoft 365",
+        detalle: "Enviá correos con tu cuenta de Outlook o Microsoft",
+      },
+      slack: {
+        nombre: "Slack",
+        detalle: "Mensajes a los canales de tu equipo",
+      },
+      googledrive: {
+        nombre: "Google Drive",
+        detalle: "Guardar y leer archivos en la nube",
+      },
+    },
+    oauth: {
+      conectar: {
+        google: "Conectar con Google",
+        microsoft: "Conectar con Microsoft",
+      },
+      conectada: "{nombre} quedó conectada. Ya podés usarla en tus procesos.",
+      conectadaComo: "Conectada como {cuenta}",
+      desconectar: "Desconectar",
+      desconectarTitulo: "Desconectar cuenta",
+      desconectarConfirmar:
+        "Se desconecta la cuenta {cuenta}. Los pasos de correo van a fallar hasta que conectes otra cuenta o cargues SMTP.",
+      noDisponible:
+        "La conexión automática todavía no está habilitada en esta instalación.",
+      otraActiva:
+        "El correo ya está configurado por otro método; conectar esta cuenta lo reemplaza.",
+    },
+    guia: {
+      telegram: {
+        "1": "Abrí Telegram y buscá @BotFather",
+        "2": "Enviá /newbot, elegí nombre y usuario; te devuelve un token",
+        "3": "Pegá el token acá abajo y tocá Guardar y Probar conexión",
+      },
+      whatsapp: {
+        "1": "En developers.facebook.com creá una app con el producto WhatsApp",
+        "2": "En la configuración de la API copiá el token permanente y el ID del número",
+        "3": "Pegalos acá abajo y tocá Guardar y Probar conexión",
+      },
+    },
+    smtpReemplaza:
+      "El correo sale actualmente por la cuenta {cuenta}. Guardar este formulario la reemplaza.",
+    proximamente: "Próximamente",
     detalle: {
-      CORREO: "Envío de correos desde los pasos del proceso",
+      CORREO: "Envío manual por servidor SMTP (avanzado)",
       TELEGRAM: "Bot de Telegram para mensajes automáticos",
       WHATSAPP: "Línea de WhatsApp Business (Meta)",
     },

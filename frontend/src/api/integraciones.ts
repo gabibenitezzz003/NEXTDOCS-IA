@@ -50,3 +50,18 @@ export async function probarIntegracion(
   );
   return data;
 }
+
+export async function listarProveedoresOauth(): Promise<string[]> {
+  const { data } = await clienteProcesos.get<string[]>(
+    "/integraciones/oauth/proveedores",
+  );
+  return data;
+}
+
+export async function iniciarOauth(proveedor: string): Promise<string> {
+  const { data } = await clienteProcesos.post<{ url: string }>(
+    `/integraciones/oauth/${proveedor}/iniciar`,
+    {},
+  );
+  return data.url;
+}
