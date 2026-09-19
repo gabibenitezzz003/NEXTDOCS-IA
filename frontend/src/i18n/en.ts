@@ -7,6 +7,7 @@ export const en: Diccionario = {
     cargandoTarjetas: "Loading cards",
     reintentar: "Retry",
     cancelar: "Cancel",
+    eliminar: "Delete",
     guardar: "Save",
     cerrar: "Close",
     cerrarSesion: "Sign out",
@@ -362,7 +363,7 @@ export const en: Diccionario = {
     avisoUnionEntradas:
       "The join needs at least two incoming connections: with only one it synchronizes nothing.",
     avisoUnionSalida:
-      "The join must continue through a single outgoing connection.",
+      "The join cannot continue through more than one outgoing connection.",
     avisoProgramado:
       "The scheduled interval must be a number of minutes greater than zero.",
     paraleloAyuda:
@@ -380,7 +381,7 @@ export const en: Diccionario = {
     tipoDocumentoExternoAyuda:
       "Optional: if set, the third party must attach the document through the secure link to approve.",
     ayuda:
-      "Click a step to configure it, or a connection to edit its condition. Start and End steps are fixed.",
+      "Click a step to configure it, or a connection to edit its condition. Only the Start step is fixed: the flow ends at the last step of each branch or at an End step.",
     inicioAyuda:
       "Choose how the process starts: on an event (e.g.: document approved), every day at a time, every N minutes, or combined.",
     horaDiaria: "Run every day at",
@@ -907,6 +908,7 @@ export const en: Diccionario = {
     CORREO: "Send email (Gmail)",
     TELEGRAM: "Send Telegram",
     WHATSAPP: "Send WhatsApp",
+    FIN: "End",
   },
   tipoNodoDesc: {
     SOLICITUD_DOCUMENTO: "Requests a document from the user",
@@ -1112,6 +1114,8 @@ export const en: Diccionario = {
     slaHoras: "SLA (hours)",
     advertenciaSalida:
       "There are unsaved changes. Discard them and leave the studio?",
+    salirTitulo: "Leave the studio",
+    salirConfirmar: "Discard and leave",
     conflictoBorrador:
       "The draft changed on the server. Saving and publishing are blocked. Go back to the list and open the studio to load the current version.",
     borradorNoDisponible: "The draft is not available yet",

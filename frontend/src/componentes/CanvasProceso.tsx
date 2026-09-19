@@ -170,7 +170,14 @@ const PALETA_NODOS: { clave: string; tipos: TipoNodoProceso[] }[] = [
   },
   {
     clave: "logica",
-    tipos: ["DECISION", "TEMPORIZADOR", "PARALELO", "UNION", "SUBPROCESO"],
+    tipos: [
+      "DECISION",
+      "TEMPORIZADOR",
+      "PARALELO",
+      "UNION",
+      "SUBPROCESO",
+      "FIN",
+    ],
   },
 ];
 
@@ -496,7 +503,7 @@ export function CanvasProceso({
   function duplicarMarcados() {
     const elegidos = grafo.nodos.filter(
       (nodo) =>
-        marcados.has(nodo.id) && nodo.tipo !== "INICIO" && nodo.tipo !== "FIN",
+        marcados.has(nodo.id) && nodo.tipo !== "INICIO",
     );
     if (!elegidos.length) return;
     const nuevas = new Map<string, string>();
@@ -617,8 +624,7 @@ export function CanvasProceso({
     ? grafo.nodos.find((nodo) => nodo.id === seleccionNodo)
     : null;
   const posicionBarra = nodoMarcado ? posicion(nodoMarcado) : null;
-  const esExtremoFijo =
-    nodoMarcado?.tipo === "INICIO" || nodoMarcado?.tipo === "FIN";
+  const esInicioFijo = nodoMarcado?.tipo === "INICIO";
   const aristaMarcada = seleccionArista
     ? grafo.aristas.find((arista) => claveArista(arista) === seleccionArista)
     : null;
@@ -1499,7 +1505,7 @@ export function CanvasProceso({
               tamano="sm"
               aria-label={t("canvas.duplicarPaso")}
               title={t("canvas.duplicarPaso")}
-              disabled={!alDuplicarNodo || esExtremoFijo}
+              disabled={!alDuplicarNodo || esInicioFijo}
               onClick={() => alDuplicarNodo?.(nodoMarcado.id)}
             >
               <IconoCopiar tamano={14} />
@@ -1509,7 +1515,7 @@ export function CanvasProceso({
               tamano="sm"
               aria-label={t("canvas.eliminarPaso")}
               title={t("canvas.eliminarPaso")}
-              disabled={!alEliminarNodo || esExtremoFijo}
+              disabled={!alEliminarNodo || esInicioFijo}
               onClick={() => alEliminarNodo?.(nodoMarcado.id)}
             >
               <IconoEliminar tamano={14} />

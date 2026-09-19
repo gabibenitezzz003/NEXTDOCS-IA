@@ -7,6 +7,7 @@ export const pt: Diccionario = {
     cargandoTarjetas: "Carregando cartões",
     reintentar: "Tentar novamente",
     cancelar: "Cancelar",
+    eliminar: "Excluir",
     guardar: "Salvar",
     cerrar: "Fechar",
     cerrarSesion: "Sair",
@@ -362,7 +363,7 @@ export const pt: Diccionario = {
       "A bifurcação precisa de pelo menos duas saídas: com uma só não há paralelismo.",
     avisoUnionEntradas:
       "A união precisa de pelo menos duas entradas: com uma só não sincroniza nada.",
-    avisoUnionSalida: "A união deve continuar por uma única saída.",
+    avisoUnionSalida: "A união não pode continuar por mais de uma saída.",
     avisoProgramado:
       "O intervalo programado deve ser um número de minutos maior que zero.",
     paraleloAyuda:
@@ -380,7 +381,7 @@ export const pt: Diccionario = {
     tipoDocumentoExternoAyuda:
       "Opcional: se definido, o terceiro deve anexar o documento pelo link seguro para aprovar.",
     ayuda:
-      "Toque em um passo para configurá-lo, ou em uma conexão para editar sua condição. Os passos Início e Fim são fixos.",
+      "Toque em um passo para configurá-lo, ou em uma conexão para editar sua condição. Apenas o passo Início é fixo: o fluxo termina no último passo de cada ramo ou em um passo Fim.",
     inicioAyuda:
       "Escolha como o processo começa: por um evento (ex.: documento aprovado), todos os dias em um horário, a cada N minutos, ou combinado.",
     horaDiaria: "Executar todos os dias às",
@@ -911,6 +912,7 @@ export const pt: Diccionario = {
     CORREO: "Enviar e-mail (Gmail)",
     TELEGRAM: "Enviar Telegram",
     WHATSAPP: "Enviar WhatsApp",
+    FIN: "Fim",
   },
   tipoNodoDesc: {
     SOLICITUD_DOCUMENTO: "Pede um documento ao usuário",
@@ -1116,6 +1118,8 @@ export const pt: Diccionario = {
     slaHoras: "SLA (horas)",
     advertenciaSalida:
       "Há alterações não salvas. Descartá-las e sair do estúdio?",
+    salirTitulo: "Sair do estúdio",
+    salirConfirmar: "Descartar e sair",
     conflictoBorrador:
       "O rascunho mudou no servidor. Salvar e publicar estão bloqueados. Volte à lista e abra o estúdio para carregar a versão atual.",
     borradorNoDisponible: "O rascunho ainda não está disponível",

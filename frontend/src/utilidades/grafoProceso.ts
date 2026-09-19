@@ -74,7 +74,7 @@ export function avisosNodo(nodo: NodoProceso, grafo?: GrafoProceso): string[] {
           (arista) => arista.origen === nodo.id,
         ).length;
         if (entradas < 2) avisos.push("canvas.avisoUnionEntradas");
-        if (salidas !== 1) avisos.push("canvas.avisoUnionSalida");
+        if (salidas > 1) avisos.push("canvas.avisoUnionSalida");
       }
       break;
     case "INICIO":

@@ -5,6 +5,7 @@ export const es = {
     cargandoTarjetas: "Cargando tarjetas",
     reintentar: "Reintentar",
     cancelar: "Cancelar",
+    eliminar: "Eliminar",
     guardar: "Guardar",
     cerrar: "Cerrar",
     cerrarSesion: "Cerrar sesión",
@@ -359,7 +360,7 @@ export const es = {
       "La bifurcación necesita al menos dos salidas: con una sola no hay paralelismo.",
     avisoUnionEntradas:
       "La unión necesita al menos dos entradas: con una sola no sincroniza nada.",
-    avisoUnionSalida: "La unión debe continuar por una única salida.",
+    avisoUnionSalida: "La unión no puede continuar por más de una salida.",
     avisoProgramado:
       "El intervalo programado debe ser un número de minutos mayor a cero.",
     paraleloAyuda:
@@ -377,7 +378,7 @@ export const es = {
     tipoDocumentoExternoAyuda:
       "Opcional: si lo defines, el tercero deberá adjuntar el documento por el enlace seguro para aprobar.",
     ayuda:
-      "Tocá un paso para configurarlo, o una conexión para editar su condición. Los pasos Inicio y Fin son fijos.",
+      "Tocá un paso para configurarlo, o una conexión para editar su condición. Solo el paso Inicio es fijo: el flujo termina en el último paso de cada rama o en un paso Fin.",
     inicioAyuda:
       "Elegí cómo arranca el proceso: por un evento (ej.: documento aprobado), todos los días a una hora, cada N minutos, o combinado.",
     horaDiaria: "Ejecutar todos los días a las",
@@ -908,6 +909,7 @@ export const es = {
     CORREO: "Enviar correo (Gmail)",
     TELEGRAM: "Enviar Telegram",
     WHATSAPP: "Enviar WhatsApp",
+    FIN: "Fin",
   },
   tipoNodoDesc: {
     SOLICITUD_DOCUMENTO: "Pide un documento al usuario",
@@ -1114,6 +1116,8 @@ export const es = {
     slaHoras: "SLA (horas)",
     advertenciaSalida:
       "Hay cambios sin guardar. ¿Querés descartarlos y salir del estudio?",
+    salirTitulo: "Salir del estudio",
+    salirConfirmar: "Descartar y salir",
     conflictoBorrador:
       "El borrador cambió en el servidor. El guardado y la publicación están bloqueados. Volvé al listado y abrí el estudio para cargar la versión actual.",
     borradorNoDisponible: "El borrador todavía no está disponible",

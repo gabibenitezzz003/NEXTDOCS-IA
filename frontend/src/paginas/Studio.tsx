@@ -9,6 +9,7 @@ import {
   BotonIcono,
   CabeceraTarjeta,
   Campo,
+  DialogoConfirmacion,
   Panel,
   Pastilla,
   Selector,
@@ -767,6 +768,12 @@ function EstudioProceso({
     }
   }, []);
   const [seleccion, setSeleccion] = useState<SeleccionCanvas | null>(null);
+  const [eliminacionPendiente, setEliminacionPendiente] = useState<
+    { tipo: "nodos"; ids: string[] } | { tipo: "arista"; clave: string } | null
+  >(null);
+  const [salidaPendiente, setSalidaPendiente] = useState<
+    { tipo: "enlace"; href: string } | { tipo: "volver" } | null
+  >(null);
 
   const consulta = useQuery({
     queryKey: ["proceso", procesoId],
@@ -817,10 +824,9 @@ function EstudioProceso({
         enlace.origin === window.location.origin
       )
         return;
-      if (!window.confirm(advertenciaSalida)) {
-        evento.preventDefault();
-        evento.stopPropagation();
-      }
+      evento.preventDefault();
+      evento.stopPropagation();
+      setSalidaPendiente({ tipo: "enlace", href: enlace.href });
     };
     window.addEventListener("beforeunload", alDescargar);
     document.addEventListener("click", alNavegar, true);
@@ -831,7 +837,22 @@ function EstudioProceso({
   }, [hayCambios]);
 
   function volver() {
-    if (!hayCambios || window.confirm(advertenciaSalida)) alVolver();
+    if (!hayCambios) {
+      alVolver();
+      return;
+    }
+    setSalidaPendiente({ tipo: "volver" });
+  }
+
+  function confirmarSalida() {
+    if (!salidaPendiente) return;
+    const pendiente = salidaPendiente;
+    setSalidaPendiente(null);
+    if (pendiente.tipo === "enlace") {
+      window.location.href = pendiente.href;
+    } else {
+      alVolver();
+    }
   }
   useEffect(() => {
     if (!borrador) return;
@@ -1100,23 +1121,42 @@ function EstudioProceso({
   function eliminarNodos(ids: string[]) {
     const eliminables = ids.filter((id) => {
       const nodo = grafoTrabajo?.nodos.find((actual) => actual.id === id);
-      return nodo && nodo.tipo !== "INICIO" && nodo.tipo !== "FIN";
+      return nodo && nodo.tipo !== "INICIO";
     });
     if (!eliminables.length) return;
-    if (!window.confirm(t("canvas.confirmarEliminarNodo"))) return;
-    const conjunto = new Set(eliminables);
-    aplicarGrafo((actual) =>
-      actual
-        ? {
-            ...actual,
-            nodos: actual.nodos.filter((nodo) => !conjunto.has(nodo.id)),
-            aristas: actual.aristas.filter(
-              (arista) =>
-                !conjunto.has(arista.origen) && !conjunto.has(arista.destino),
-            ),
-          }
-        : actual,
-    );
+    setEliminacionPendiente({ tipo: "nodos", ids: eliminables });
+  }
+
+  function confirmarEliminacion() {
+    if (!eliminacionPendiente) return;
+    if (eliminacionPendiente.tipo === "nodos") {
+      const conjunto = new Set(eliminacionPendiente.ids);
+      aplicarGrafo((actual) =>
+        actual
+          ? {
+              ...actual,
+              nodos: actual.nodos.filter((nodo) => !conjunto.has(nodo.id)),
+              aristas: actual.aristas.filter(
+                (arista) =>
+                  !conjunto.has(arista.origen) && !conjunto.has(arista.destino),
+              ),
+            }
+          : actual,
+      );
+    } else {
+      const clave = eliminacionPendiente.clave;
+      aplicarGrafo((actual) =>
+        actual
+          ? {
+              ...actual,
+              aristas: actual.aristas.filter(
+                (arista) => claveArista(arista) !== clave,
+              ),
+            }
+          : actual,
+      );
+    }
+    setEliminacionPendiente(null);
     setSeleccion(null);
   }
 
@@ -1136,18 +1176,7 @@ function EstudioProceso({
   }
 
   function eliminarArista(clave: string) {
-    if (!window.confirm(t("canvas.confirmarEliminarConexion"))) return;
-    aplicarGrafo((actual) =>
-      actual
-        ? {
-            ...actual,
-            aristas: actual.aristas.filter(
-              (arista) => claveArista(arista) !== clave,
-            ),
-          }
-        : actual,
-    );
-    setSeleccion(null);
+    setEliminacionPendiente({ tipo: "arista", clave });
   }
 
   useEffect(() => {
@@ -1518,6 +1547,34 @@ function EstudioProceso({
               setSimulacionAbierta(false);
               simular.reset();
             }}
+          />
+        ) : null}
+
+        {eliminacionPendiente ? (
+          <DialogoConfirmacion
+            titulo={t(
+              eliminacionPendiente.tipo === "nodos"
+                ? "canvas.eliminarPaso"
+                : "canvas.eliminarConexion",
+            )}
+            descripcion={t(
+              eliminacionPendiente.tipo === "nodos"
+                ? "canvas.confirmarEliminarNodo"
+                : "canvas.confirmarEliminarConexion",
+            )}
+            etiquetaConfirmar={t("comun.eliminar")}
+            alCancelar={() => setEliminacionPendiente(null)}
+            alConfirmar={confirmarEliminacion}
+          />
+        ) : null}
+
+        {salidaPendiente ? (
+          <DialogoConfirmacion
+            titulo={t("procesos.salirTitulo")}
+            descripcion={advertenciaSalida}
+            etiquetaConfirmar={t("procesos.salirConfirmar")}
+            alCancelar={() => setSalidaPendiente(null)}
+            alConfirmar={confirmarSalida}
           />
         ) : null}
 
@@ -2402,7 +2459,7 @@ function PanelSeleccion({
   }
 
   if (nodo) {
-    const extremo = nodo.tipo === "INICIO" || nodo.tipo === "FIN";
+    const extremo = nodo.tipo === "INICIO";
     const avisos = avisosNodo(nodo, grafo);
     return (
       <Tarjeta padding="p-0" className="overflow-hidden">
