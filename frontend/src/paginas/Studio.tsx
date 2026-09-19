@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
@@ -42,6 +42,7 @@ import type {
   GeneracionProcesoReq,
   GeneracionProcesoRes,
   GrafoProceso,
+  EventoInstancia,
   InstanciaProceso,
   NodoProceso,
   Proceso,
@@ -55,6 +56,7 @@ import { useIdioma } from "../contextos/ProveedorIdioma";
 import {
   CanvasProceso,
   claveArista,
+  type EstadoNodoEjecucion,
   type SeleccionCanvas,
 } from "../componentes/CanvasProceso";
 
@@ -946,7 +948,11 @@ function EstudioProceso({
   });
 
   const probar = useMutation({
-    mutationFn: () => iniciarInstancia(procesoId),
+    mutationFn: () =>
+      iniciarInstancia(procesoId, {
+        versionId: borrador?.id,
+        prueba: true,
+      }),
     onSuccess: (instancia) => {
       setError(null);
       setInstanciaPrueba(instancia.id);
@@ -968,6 +974,36 @@ function EstudioProceso({
         : false,
     refetchIntervalInBackground: false,
   });
+
+  const estadosEjecucion = useMemo(() => {
+    const instancia = consultaInstancia.data;
+    if (!instancia?.eventos?.length) return undefined;
+    const mapa = new Map<string, EstadoNodoEjecucion>();
+    const tipos = new Map(
+      (grafoTrabajo?.nodos ?? []).map((nodo) => [nodo.id, nodo.tipo]),
+    );
+    for (const evento of instancia.eventos) {
+      if (!evento.nodoId) continue;
+      if (evento.accion === "NODO_FALLIDO") {
+        mapa.set(evento.nodoId, "error");
+      } else if (evento.accion === "TAREA_CREADA") {
+        mapa.set(evento.nodoId, "esperando");
+      } else if (evento.accion === "NODO_INGRESADO") {
+        const tipo = tipos.get(evento.nodoId);
+        mapa.set(
+          evento.nodoId,
+          tipo === "INICIO" || tipo === "FIN"
+            ? "ok"
+            : instancia.estado === "ESPERANDO"
+              ? "esperando"
+              : "activo",
+        );
+      } else {
+        mapa.set(evento.nodoId, "ok");
+      }
+    }
+    return mapa.size ? mapa : undefined;
+  }, [consultaInstancia.data, grafoTrabajo]);
 
   const completar = useMutation({
     mutationFn: ({
@@ -1376,6 +1412,7 @@ function EstudioProceso({
                   alCambiar={aplicarGrafo}
                   seleccion={seleccion}
                   alSeleccionar={setSeleccion}
+                  estadosEjecucion={estadosEjecucion}
                   deshabilitado={editandoBloqueado}
                   alDeshacer={deshacer}
                   alRehacer={rehacer}
@@ -1436,6 +1473,20 @@ function EstudioProceso({
                 }}
               >
                 {t("procesos.simular")}
+              </Boton>
+              <Boton
+                variante="secundario"
+                cargando={probar.isPending}
+                disabled={
+                  editandoBloqueado ||
+                  hayCambios ||
+                  !grafoTrabajo ||
+                  probar.isPending
+                }
+                title={hayCambios ? t("procesos.probarGuardarAntes") : undefined}
+                onClick={() => probar.mutate()}
+              >
+                {t("procesos.probarBorrador")}
               </Boton>
               <Boton
                 variante="primario"
@@ -1593,6 +1644,46 @@ function ConfiguracionNodo({
       />
       {nodo.tipo === "INICIO" ? (
         <>
+          <p
+            role="note"
+            className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave"
+          >
+            {t("canvas.inicioAyuda")}
+          </p>
+          <Campo
+            etiqueta={t("canvas.eventoInicio")}
+            placeholder="documento.recibido"
+            ayuda={t("canvas.eventoInicioAyuda")}
+            list="eventos-documentales"
+            value={texto("evento")}
+            onChange={(evento) => cambiar("evento", evento.target.value)}
+          />
+          <datalist id="eventos-documentales">
+            {EVENTOS_DOCUMENTALES.map((evento) => (
+              <option key={evento} value={evento} />
+            ))}
+          </datalist>
+          <Campo
+            etiqueta={t("canvas.horaDiaria")}
+            type="time"
+            ayuda={t("canvas.horaDiariaAyuda")}
+            value={texto("horaDiaria")}
+            onChange={(evento) =>
+              cambiar("horaDiaria", evento.target.value || undefined)
+            }
+          />
+          <Selector
+            etiqueta={t("canvas.zonaHoraria")}
+            ayuda={t("canvas.zonaHorariaAyuda")}
+            value={texto("zonaHoraria") || "America/Argentina/Buenos_Aires"}
+            onChange={(evento) => cambiar("zonaHoraria", evento.target.value)}
+          >
+            {ZONAS_HORARIAS.map((zona) => (
+              <option key={zona} value={zona}>
+                {zona}
+              </option>
+            ))}
+          </Selector>
           <Campo
             etiqueta={t("canvas.programadoMinutos")}
             type="number"
@@ -1607,19 +1698,6 @@ function ConfiguracionNodo({
               )
             }
           />
-          <Campo
-            etiqueta={t("canvas.eventoInicio")}
-            placeholder="documento.recibido"
-            ayuda={t("canvas.eventoInicioAyuda")}
-            list="eventos-documentales"
-            value={texto("evento")}
-            onChange={(evento) => cambiar("evento", evento.target.value)}
-          />
-          <datalist id="eventos-documentales">
-            {EVENTOS_DOCUMENTALES.map((evento) => (
-              <option key={evento} value={evento} />
-            ))}
-          </datalist>
         </>
       ) : null}
       {nodo.tipo === "SOLICITUD_DOCUMENTO" || nodo.tipo === "FIRMA" ? (
@@ -1707,6 +1785,76 @@ function ConfiguracionNodo({
           }
         />
       ) : null}
+      {nodo.tipo === "CORREO" ? (
+        <>
+          <Campo
+            etiqueta={t("canvas.correoPara")}
+            placeholder="{{datos.email}} o joaquin@empresa.com"
+            ayuda={t("canvas.correoParaAyuda")}
+            value={texto("para")}
+            onChange={(evento) => cambiar("para", evento.target.value)}
+          />
+          <Campo
+            etiqueta={t("canvas.correoAsunto")}
+            placeholder={t("canvas.correoAsuntoPlaceholder")}
+            value={texto("asunto")}
+            onChange={(evento) => cambiar("asunto", evento.target.value)}
+          />
+          <AreaTexto
+            etiqueta={t("canvas.correoCuerpo")}
+            placeholder={t("canvas.correoCuerpoPlaceholder")}
+            ayuda={t("canvas.variablesAyuda")}
+            rows={4}
+            value={texto("cuerpo")}
+            onChange={(evento) => cambiar("cuerpo", evento.target.value)}
+          />
+        </>
+      ) : null}
+      {nodo.tipo === "TELEGRAM" ? (
+        <>
+          <Campo
+            etiqueta={t("canvas.telegramChat")}
+            placeholder="-1001234567890"
+            ayuda={t("canvas.telegramChatAyuda")}
+            value={texto("chatId")}
+            onChange={(evento) => cambiar("chatId", evento.target.value)}
+          />
+          <AreaTexto
+            etiqueta={t("canvas.telegramMensaje")}
+            placeholder={t("canvas.telegramMensajePlaceholder")}
+            ayuda={t("canvas.variablesAyuda")}
+            rows={3}
+            value={texto("mensaje")}
+            onChange={(evento) => cambiar("mensaje", evento.target.value)}
+          />
+          <Campo
+            etiqueta={t("canvas.telegramToken")}
+            type="password"
+            ayuda={t("canvas.telegramTokenAyuda")}
+            value={texto("tokenBot")}
+            onChange={(evento) => cambiar("tokenBot", evento.target.value)}
+          />
+        </>
+      ) : null}
+      {nodo.tipo === "WHATSAPP" ? (
+        <>
+          <Campo
+            etiqueta={t("canvas.whatsappPara")}
+            placeholder="{{datos.celular}} o 5491100000000"
+            ayuda={t("canvas.whatsappParaAyuda")}
+            value={texto("para")}
+            onChange={(evento) => cambiar("para", evento.target.value)}
+          />
+          <AreaTexto
+            etiqueta={t("canvas.whatsappMensaje")}
+            placeholder={t("canvas.whatsappMensajePlaceholder")}
+            ayuda={t("canvas.variablesAyuda")}
+            rows={3}
+            value={texto("mensaje")}
+            onChange={(evento) => cambiar("mensaje", evento.target.value)}
+          />
+        </>
+      ) : null}
       {nodo.tipo === "ACCION_API" ? (
         <>
           <Campo
@@ -1726,6 +1874,23 @@ function ConfiguracionNodo({
               </option>
             ))}
           </Selector>
+          <AreaTexto
+            etiqueta={t("canvas.cabecerasApi")}
+            placeholder={"Authorization: Bearer {{datos.token}}\nX-Tenant: {{tenant}}"}
+            ayuda={t("canvas.cabecerasApiAyuda")}
+            rows={2}
+            value={
+              typeof configuracion.cabeceras === "object" &&
+              configuracion.cabeceras !== null
+                ? Object.entries(
+                    configuracion.cabeceras as Record<string, unknown>,
+                  )
+                    .map(([clave, valor]) => `${clave}: ${valor}`)
+                    .join("\n")
+                : texto("cabeceras")
+            }
+            onChange={(evento) => cambiar("cabeceras", evento.target.value)}
+          />
           <AreaTexto
             etiqueta={t("canvas.cuerpoApi")}
             placeholder='{"orden": "{{datos.orden}}"}'
@@ -1801,6 +1966,20 @@ function ConfiguracionNodo({
   );
 }
 
+const ZONAS_HORARIAS = [
+  "America/Argentina/Buenos_Aires",
+  "America/Sao_Paulo",
+  "America/Santiago",
+  "America/Montevideo",
+  "America/Asuncion",
+  "America/Bogota",
+  "America/Lima",
+  "America/Mexico_City",
+  "America/New_York",
+  "Europe/Madrid",
+  "UTC",
+];
+
 const EVENTOS_DOCUMENTALES = [
   "documento.recibido",
   "documento.dividido",
@@ -1861,6 +2040,98 @@ function SelectorTipoDocumento({
           </Link>
         </p>
       ) : null}
+    </div>
+  );
+}
+
+const ACCIONES_NODO_OK = new Set([
+  "TAREA_COMPLETADA",
+  "DECISION_TOMADA",
+  "VALIDACION_IA_EJECUTADA",
+  "NOTIFICACION_ENVIADA",
+  "ACCION_API_EJECUTADA",
+  "CORREO_ENVIADO",
+  "TELEGRAM_ENVIADO",
+  "WHATSAPP_ENVIADO",
+  "PARALELO_LANZADO",
+  "UNION_LIBERADA",
+  "RAMA_FINALIZADA",
+  "FIRMA_REGISTRADA",
+  "FIRMA_SOLICITADA",
+]);
+
+function ResumenEjecucionNodos({ instancia }: { instancia: InstanciaProceso }) {
+  const { t } = useIdioma();
+  const eventos = (instancia.eventos ?? []).filter(
+    (evento) => evento.nodoId,
+  );
+  if (!eventos.length) return null;
+
+  const ultimoPorNodo = new Map<string, EventoInstancia>();
+  const detallesPorNodo = new Map<string, EventoInstancia[]>();
+  for (const evento of eventos) {
+    ultimoPorNodo.set(evento.nodoId!, evento);
+    const lista = detallesPorNodo.get(evento.nodoId!) ?? [];
+    lista.push(evento);
+    detallesPorNodo.set(evento.nodoId!, lista);
+  }
+
+  return (
+    <div className="mt-espacio-4">
+      <h3 className="text-micro font-semibold uppercase tracking-wide text-tinta-suave">
+        {t("procesos.ejecucionPorNodo")}
+      </h3>
+      <ol className="mt-espacio-2 space-y-espacio-2">
+        {[...ultimoPorNodo.entries()].map(([nodoId, evento]) => {
+          const tono =
+            evento.accion === "NODO_FALLIDO"
+              ? "rojo"
+              : evento.accion === "TAREA_CREADA"
+                ? "alerta"
+                : ACCIONES_NODO_OK.has(evento.accion)
+                  ? "exito"
+                  : "violeta";
+          const detalle = detallesPorNodo.get(nodoId) ?? [];
+          const conDetalle = detalle.filter(
+            (entrada) =>
+              entrada.detalle && Object.keys(entrada.detalle).length > 0,
+          );
+          return (
+            <li
+              key={nodoId}
+              className="flex items-start gap-espacio-3 rounded-control border border-borde bg-lienzo p-espacio-3"
+            >
+              <Pastilla tono={tono}>
+                {t(`accionNodo.${evento.accion}`)}
+              </Pastilla>
+              <div className="min-w-0 flex-1">
+                <p className="break-words text-pequeno font-medium text-tinta">
+                  {nodoId}
+                </p>
+                {conDetalle.length ? (
+                  <details className="mt-espacio-1">
+                    <summary className="cursor-pointer text-micro text-tinta-suave">
+                      {t("procesos.ejecucionDetalle")}
+                    </summary>
+                    <pre className="mt-espacio-1 max-h-40 overflow-auto rounded-control bg-superficie p-espacio-2 font-codigo text-codigo text-tinta-suave">
+                      {JSON.stringify(
+                        conDetalle[conDetalle.length - 1].detalle,
+                        null,
+                        2,
+                      )}
+                    </pre>
+                  </details>
+                ) : null}
+              </div>
+              {evento.alta ? (
+                <span className="shrink-0 text-micro tabular-nums text-tinta-suave">
+                  {formatearFecha(evento.alta)}
+                </span>
+              ) : null}
+            </li>
+          );
+        })}
+      </ol>
     </div>
   );
 }
@@ -1932,6 +2203,7 @@ function PanelPrueba({
           {t("procesos.abrirEnInstancias")}
         </Boton>
       </div>
+      <ResumenEjecucionNodos instancia={instancia} />
       {finalizada ? (
         <p
           role="status"

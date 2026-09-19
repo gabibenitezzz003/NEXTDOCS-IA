@@ -20,7 +20,10 @@ export type TipoNodoProceso =
   | "SUBPROCESO"
   | "PARALELO"
   | "UNION"
-  | "FIRMA";
+  | "FIRMA"
+  | "CORREO"
+  | "TELEGRAM"
+  | "WHATSAPP";
 
 export type EstadoVersionProceso = "BORRADOR" | "PUBLICADA" | "ARCHIVADA";
 
@@ -354,8 +357,22 @@ export async function publicarVersion(versionId: string): Promise<VersionProceso
   return data;
 }
 
-export async function iniciarInstancia(definicionId: string): Promise<InstanciaProceso> {
-  const { data } = await clienteProcesos.post<InstanciaProceso>("/instancias", { definicionId });
+export interface InicioInstanciaOpciones {
+  versionId?: string;
+  prueba?: boolean;
+  datos?: Record<string, unknown>;
+  sujetoTipo?: string;
+  sujetoId?: string;
+}
+
+export async function iniciarInstancia(
+  definicionId: string,
+  opciones: InicioInstanciaOpciones = {},
+): Promise<InstanciaProceso> {
+  const { data } = await clienteProcesos.post<InstanciaProceso>("/instancias", {
+    definicionId,
+    ...opciones,
+  });
   return data;
 }
 

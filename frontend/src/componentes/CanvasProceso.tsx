@@ -7,7 +7,7 @@ import type {
 } from "../api/procesos";
 import { disponerGrafo } from "../utilidades/disposicionGrafo";
 import { avisosNodo } from "../utilidades/grafoProceso";
-import { Boton, BotonIcono, Selector } from "./Interfaz";
+import { Boton, BotonIcono } from "./Interfaz";
 import {
   IconoAjustar,
   IconoBifurcar,
@@ -17,6 +17,8 @@ import {
   IconoDocumentos,
   IconoEliminar,
   IconoFirma,
+  IconoGmail,
+  IconoGlobo,
   IconoInfo,
   IconoMas,
   IconoAlinear,
@@ -25,12 +27,13 @@ import {
   IconoOperacion,
   IconoPanel,
   IconoProceso,
-  IconoRecargar,
   IconoRehacer,
   IconoReloj,
   IconoSupervisora,
   IconoTareas,
+  IconoTelegram,
   IconoUnir,
+  IconoWhatsapp,
 } from "./Iconos";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 
@@ -147,21 +150,31 @@ function colorDe(tipo: TipoNodoProceso): ColorNodo {
   };
 }
 
-const TIPOS_CANVAS: TipoNodoProceso[] = [
-  "SOLICITUD_DOCUMENTO",
-  "FORMULARIO",
-  "VALIDACION_IA",
-  "REVISION_HUMANA",
-  "DECISION",
-  "TAREA_EXTERNA",
-  "NOTIFICACION",
-  "TEMPORIZADOR",
-  "ACCION_API",
-  "SUBPROCESO",
-  "PARALELO",
-  "UNION",
-  "FIRMA",
+const PALETA_NODOS: { clave: string; tipos: TipoNodoProceso[] }[] = [
+  {
+    clave: "documentos",
+    tipos: [
+      "SOLICITUD_DOCUMENTO",
+      "FORMULARIO",
+      "VALIDACION_IA",
+      "FIRMA",
+    ],
+  },
+  {
+    clave: "personas",
+    tipos: ["REVISION_HUMANA", "TAREA_EXTERNA", "NOTIFICACION"],
+  },
+  {
+    clave: "integraciones",
+    tipos: ["CORREO", "TELEGRAM", "WHATSAPP", "ACCION_API"],
+  },
+  {
+    clave: "logica",
+    tipos: ["DECISION", "TEMPORIZADOR", "PARALELO", "UNION", "SUBPROCESO"],
+  },
 ];
+
+export type EstadoNodoEjecucion = "ok" | "error" | "esperando" | "activo";
 
 export function claveArista(arista: {
   origen: string;
@@ -195,7 +208,13 @@ function IconoNodo({
     case "TEMPORIZADOR":
       return <IconoReloj {...resto} />;
     case "ACCION_API":
-      return <IconoRecargar {...resto} />;
+      return <IconoGlobo {...resto} />;
+    case "CORREO":
+      return <IconoGmail {...resto} />;
+    case "TELEGRAM":
+      return <IconoTelegram {...resto} />;
+    case "WHATSAPP":
+      return <IconoWhatsapp {...resto} />;
     case "PARALELO":
       return <IconoBifurcar {...resto} />;
     case "UNION":
@@ -221,6 +240,7 @@ export function CanvasProceso({
   alDuplicarNodo,
   alEliminarNodo,
   alEliminarArista,
+  estadosEjecucion,
 }: {
   grafo: GrafoProceso;
   alCambiar: (grafo: GrafoProceso, continuo?: boolean) => void;
@@ -235,12 +255,13 @@ export function CanvasProceso({
   alDuplicarNodo?: (id: string) => void;
   alEliminarNodo?: (id: string) => void;
   alEliminarArista?: (clave: string) => void;
+  estadosEjecucion?: Map<string, EstadoNodoEjecucion>;
 }) {
   const { t } = useIdioma();
   const svgRef = useRef<SVGSVGElement>(null);
   const [vista, setVista] = useState({ x: 40, y: 32, k: 1 });
   const [arrastre, setArrastre] = useState<Arrastre | null>(null);
-  const [tipoNuevo, setTipoNuevo] = useState("");
+  const [paletaAbierta, setPaletaAbierta] = useState(false);
   const [guias, setGuias] = useState<Guias>({});
 
   const automatica = useMemo(() => {
@@ -786,25 +807,61 @@ export function CanvasProceso({
     <div>
       {!soloLectura ? (
         <div className="mb-espacio-3 flex flex-wrap items-center gap-espacio-3">
-          <Selector
-            etiqueta={t("procesos.agregarPaso")}
-            aria-label={t("canvas.agregarNodo")}
-            value={tipoNuevo}
-            disabled={deshabilitado}
-            onChange={(evento) => {
-              const elegido = evento.target.value;
-              setTipoNuevo("");
-              if (elegido) agregarNodo(elegido as TipoNodoProceso);
-            }}
-            className="w-full sm:max-w-xs"
-          >
-            <option value="">{t("canvas.agregarNodo")}</option>
-            {TIPOS_CANVAS.map((tipo) => (
-              <option key={tipo} value={tipo}>
-                {t(`tipoPaso.${tipo}`)}
-              </option>
-            ))}
-          </Selector>
+          <div className="relative">
+            <Boton
+              variante="secundario"
+              tamano="sm"
+              disabled={deshabilitado}
+              aria-expanded={paletaAbierta}
+              onClick={() => setPaletaAbierta((abierta) => !abierta)}
+            >
+              <IconoMas tamano={14} />
+              {t("canvas.agregarNodo")}
+            </Boton>
+            {paletaAbierta ? (
+              <>
+                <div
+                  className="fixed inset-0 z-20"
+                  onClick={() => setPaletaAbierta(false)}
+                />
+                <div className="absolute left-0 top-full z-30 mt-espacio-2 w-72 rounded-panel border border-borde bg-superficie p-espacio-3 shadow-elevado">
+                  {PALETA_NODOS.map((grupo) => (
+                    <div key={grupo.clave} className="mb-espacio-3 last:mb-0">
+                      <p className="mb-espacio-1 text-micro font-semibold uppercase tracking-wide text-tinta-suave">
+                        {t(`paleta.${grupo.clave}`)}
+                      </p>
+                      <ul className="grid gap-espacio-1">
+                        {grupo.tipos.map((tipo) => (
+                          <li key={tipo}>
+                            <button
+                              type="button"
+                              className="flex w-full items-center gap-espacio-2 rounded-control px-espacio-2 py-espacio-1 text-left text-pequeno text-tinta hover:bg-lienzo"
+                              onClick={() => {
+                                setPaletaAbierta(false);
+                                agregarNodo(tipo);
+                              }}
+                            >
+                              <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-superficie">
+                                <IconoNodo tipo={tipo} width={16} height={16} />
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block truncate font-medium">
+                                  {t(`tipoPaso.${tipo}`)}
+                                </span>
+                                <span className="block truncate text-micro text-tinta-suave">
+                                  {t(`tipoNodoDesc.${tipo}`)}
+                                </span>
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
+          </div>
           {alDeshacer && alRehacer ? (
             <div className="flex items-center gap-espacio-1">
               <BotonIcono
@@ -1050,6 +1107,11 @@ export function CanvasProceso({
             {grafo.nodos.map((nodo) => {
               const p = posicion(nodo);
               const color = colorDe(nodo.tipo);
+              const ejecucion = estadosEjecucion?.get(nodo.id);
+              const marca =
+                nodo.tipo === "CORREO" ||
+                nodo.tipo === "TELEGRAM" ||
+                nodo.tipo === "WHATSAPP";
               const activo = seleccionNodo === nodo.id || marcados.has(nodo.id);
               const conAviso = avisosNodo(nodo, grafo).length > 0;
               const destinoConexion =
@@ -1106,12 +1168,26 @@ export function CanvasProceso({
                     rx={12}
                     fill={color.relleno}
                     stroke={
-                      activo || destinoConexion
-                        ? "var(--color-violeta)"
-                        : color.borde
+                      ejecucion === "ok"
+                        ? "var(--color-exito-borde)"
+                        : ejecucion === "error"
+                          ? "var(--color-rojo-borde)"
+                          : ejecucion === "esperando"
+                            ? "var(--color-alerta-borde)"
+                            : activo || destinoConexion
+                              ? "var(--color-violeta)"
+                              : color.borde
                     }
-                    strokeWidth={activo ? 2.5 : destinoConexion ? 3 : 1.25}
-                    strokeDasharray={destinoConexion ? "6 4" : undefined}
+                    strokeWidth={
+                      ejecucion ? 3 : activo ? 2.5 : destinoConexion ? 3 : 1.25
+                    }
+                    strokeDasharray={
+                      ejecucion === "activo"
+                        ? "5 4"
+                        : destinoConexion
+                          ? "6 4"
+                          : undefined
+                    }
                     filter={
                       activo
                         ? "url(#canvas-sombra-activa)"
@@ -1168,8 +1244,9 @@ export function CanvasProceso({
                     cx={ANCHO - 24}
                     cy={ALTO / 2}
                     r={14}
-                    fill={color.chipFondo}
-                    stroke="none"
+                    fill={marca ? "var(--color-superficie)" : color.chipFondo}
+                    stroke={marca ? "var(--color-borde)" : "none"}
+                    strokeWidth={marca ? 1 : 0}
                   />
                   <IconoNodo
                     tipo={nodo.tipo}
@@ -1177,8 +1254,42 @@ export function CanvasProceso({
                     y={ALTO / 2 - 10}
                     width={20}
                     height={20}
-                    className={`${color.chipTexto} pointer-events-none`}
+                    className={`${marca ? "" : color.chipTexto} pointer-events-none`}
                   />
+                  {ejecucion ? (
+                    <g className="pointer-events-none">
+                      <circle
+                        cx={ANCHO - 4}
+                        cy={4}
+                        r={10}
+                        fill={
+                          ejecucion === "ok"
+                            ? "var(--color-exito)"
+                            : ejecucion === "error"
+                              ? "var(--color-rojo)"
+                              : ejecucion === "esperando"
+                                ? "var(--color-alerta)"
+                                : "var(--color-violeta)"
+                        }
+                        stroke="var(--color-superficie)"
+                        strokeWidth={1.5}
+                      />
+                      <text
+                        x={ANCHO - 4}
+                        y={8}
+                        textAnchor="middle"
+                        className="fill-[var(--color-superficie)] text-[11px] font-bold"
+                      >
+                        {ejecucion === "ok"
+                          ? "✓"
+                          : ejecucion === "error"
+                            ? "✗"
+                            : ejecucion === "esperando"
+                              ? "‖"
+                              : "●"}
+                      </text>
+                    </g>
+                  ) : null}
                   {nodo.tipo !== "INICIO" ? (
                     <circle
                       cx={0}
