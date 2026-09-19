@@ -233,6 +233,33 @@ function IconoNodo({
   }
 }
 
+function subtituloInicio(
+  nodo: NodoProceso,
+  t: (ruta: string, params?: Record<string, string | number>) => string,
+): string {
+  const configuracion = nodo.configuracion ?? {};
+  const texto = (clave: string) => {
+    const valor = configuracion[clave];
+    return typeof valor === "string" && valor.trim() ? valor.trim() : undefined;
+  };
+  const evento = texto("evento");
+  const tipo = texto("tipoDocumento");
+  const hora = texto("horaDiaria");
+  const intervalo = configuracion["programadoMinutos"];
+  const partes: string[] = [];
+  if (evento) {
+    partes.push(
+      evento.replace(/^documento\./, "") + (tipo ? ` · ${tipo}` : ""),
+    );
+  }
+  if (hora) partes.push(t("canvas.disparoDiario", { hora }));
+  if (typeof intervalo === "number" && intervalo > 0) {
+    partes.push(t("canvas.disparoIntervalo", { minutos: intervalo }));
+  }
+  const texto2 = partes.length ? partes.join(" · ") : t("canvas.disparoManual");
+  return texto2.length > 30 ? texto2.slice(0, 29) + "…" : texto2;
+}
+
 export function CanvasProceso({
   grafo,
   alCambiar,
@@ -1264,6 +1291,15 @@ export function CanvasProceso({
                       ? (nodo.nombre ?? nodo.tipo).slice(0, 21) + "…"
                       : (nodo.nombre ?? nodo.tipo)}
                   </text>
+                  {nodo.tipo === "INICIO" ? (
+                    <text
+                      x={14}
+                      y={57}
+                      className="fill-[var(--color-tinta-suave)] text-[9px]"
+                    >
+                      {subtituloInicio(nodo, t)}
+                    </text>
+                  ) : null}
                   <circle
                     cx={ANCHO - 24}
                     cy={ALTO / 2}

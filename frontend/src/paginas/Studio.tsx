@@ -54,7 +54,11 @@ import type {
   VersionProceso,
 } from "../api/procesos";
 import { obtenerPlantillasMotor } from "../api/documental";
-import { aplicarConfiguracion, avisosNodo } from "../utilidades/grafoProceso";
+import {
+  aplicarConfiguracion,
+  avisosNodo,
+  disparoDeInicio,
+} from "../utilidades/grafoProceso";
 import { listarIntegraciones } from "../api/integraciones";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
@@ -270,6 +274,7 @@ function ListaProcesos({
                     <p className="mt-espacio-1 break-words text-pequeno text-tinta-suave">
                       {proceso.codigo} · {proceso.familia}
                     </p>
+                    <TextoDisparo proceso={proceso} />
                     {proceso.alta ? (
                       <p className="mt-espacio-2 text-pequeno text-tinta-suave">
                         {t("procesos.creadoEl", {
@@ -702,6 +707,49 @@ function VersionesProceso({ versiones }: { versiones: VersionProceso[] }) {
         <Pastilla tono="neutro">{t("procesos.archivada")}</Pastilla>
       ) : null}
     </div>
+  );
+}
+
+function TextoDisparo({ proceso }: { proceso: Proceso }) {
+  const { t } = useIdioma();
+  const consulta = useQuery({
+    queryKey: ["plantillas-motor"],
+    queryFn: obtenerPlantillasMotor,
+    staleTime: 60_000,
+  });
+  const version =
+    proceso.versiones.find((v) => v.estado === "PUBLICADA") ??
+    proceso.versiones.find((v) => v.estado === "BORRADOR") ??
+    proceso.versiones[0];
+  const disparo = disparoDeInicio(version?.grafo);
+  const nombreTipo = disparo.tipoDocumento
+    ? (consulta.data?.find((p) => p.codigo === disparo.tipoDocumento)?.nombre ??
+      disparo.tipoDocumento)
+    : undefined;
+  const partes: string[] = [];
+  if (disparo.evento) {
+    const claveEvento = `studio.evento.${disparo.evento}`;
+    const amigable = t(claveEvento);
+    const textoEvento = amigable === claveEvento ? disparo.evento : amigable;
+    partes.push(
+      nombreTipo
+        ? t("studio.disparoEventoTipo", { evento: textoEvento, tipo: nombreTipo })
+        : t("studio.disparoEvento", { evento: textoEvento }),
+    );
+  }
+  if (disparo.horaDiaria) {
+    partes.push(t("studio.disparoDiario", { hora: disparo.horaDiaria }));
+  }
+  if (disparo.intervaloMinutos != null) {
+    partes.push(
+      t("studio.disparoIntervalo", { minutos: disparo.intervaloMinutos }),
+    );
+  }
+  const texto = partes.length ? partes.join(" · ") : t("studio.disparoManual");
+  return (
+    <p className="mt-espacio-2 flex items-center gap-espacio-2 text-pequeno text-tinta-media">
+      <Pastilla tono={disparo.evento ? "informacion" : "neutro"}>{texto}</Pastilla>
+    </p>
   );
 }
 
@@ -1838,6 +1886,12 @@ function ConfiguracionNodo({
               <option key={evento} value={evento} />
             ))}
           </datalist>
+          <SelectorTipoDocumento
+            etiqueta={t("canvas.tipoDocumentoInicio")}
+            valor={texto("tipoDocumento")}
+            ayuda={t("canvas.tipoDocumentoInicioAyuda")}
+            alCambiar={(valor) => cambiar("tipoDocumento", valor)}
+          />
           <Campo
             etiqueta={t("canvas.horaDiaria")}
             type="time"
@@ -2185,22 +2239,22 @@ const ZONAS_HORARIAS = [
 const EVENTOS_DOCUMENTALES = [
   "documento.recibido",
   "documento.dividido",
-  "documento.clasificado",
-  "documento.extraido",
-  "documento.emparejado",
-  "documento.validado",
   "documento.observado",
+  "documento.emparejado",
   "documento.aprobado",
   "documento.rechazado",
+  "documento.eliminado",
 ];
 
 function SelectorTipoDocumento({
   valor,
   ayuda,
+  etiqueta,
   alCambiar,
 }: {
   valor: string;
   ayuda: string;
+  etiqueta?: string;
   alCambiar: (valor: string | undefined) => void;
 }) {
   const { t } = useIdioma();
@@ -2216,7 +2270,7 @@ function SelectorTipoDocumento({
   return (
     <div className="grid gap-espacio-2">
       <Selector
-        etiqueta={t("procesos.tipoDocumento")}
+        etiqueta={etiqueta ?? t("procesos.tipoDocumento")}
         ayuda={ayuda}
         value={valor}
         onChange={(evento) =>

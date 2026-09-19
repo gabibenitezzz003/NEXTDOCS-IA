@@ -373,7 +373,13 @@ export const es = {
       "Si la versión publicada tiene intervalo, el proceso se instancia solo de forma periódica.",
     eventoInicio: "Evento que dispara el proceso",
     eventoInicioAyuda:
-      "Nombre del evento que instancia el proceso publicado (ej.: documento.recibido).",
+      "Nombre del evento que instancia el proceso publicado (ej.: documento.aprobado).",
+    tipoDocumentoInicio: "Solo si el documento es de tipo",
+    tipoDocumentoInicioAyuda:
+      "Opcional: el proceso solo arranca cuando el evento es de un documento de este tipo. El tipo se conoce una vez clasificado, así que no aplica a documento.recibido ni documento.dividido.",
+    disparoManual: "manual",
+    disparoDiario: "diario {hora}",
+    disparoIntervalo: "cada {minutos} min",
     tipoDocumentoFirmaAyuda:
       "Código del catálogo documental que el firmante debe entregar firmado.",
     tipoDocumentoExternoAyuda:
@@ -983,6 +989,22 @@ export const es = {
     titulo: "Procesos",
     descripcion:
       "Diseñá los procesos en el canvas: cada versión publicada se ejecuta en Operación y genera el trabajo que aparece en Tareas.",
+    disparoManual: "Arranque manual o por API",
+    disparoEvento: "Arranca cuando {evento}",
+    disparoEventoTipo: "Arranca cuando {evento} de tipo {tipo}",
+    disparoDiario: "Todos los días a las {hora}",
+    disparoIntervalo: "Cada {minutos} min",
+    evento: {
+      documento: {
+        recibido: "llega un documento",
+        dividido: "se divide un documento",
+        observado: "un documento queda observado",
+        emparejado: "un documento se empareja",
+        aprobado: "se aprueba un documento",
+        rechazado: "se rechaza un documento",
+        eliminado: "se elimina un documento",
+      },
+    },
   },
   procesos: {
     bibliotecaDesc:
@@ -1618,6 +1640,11 @@ export const es = {
         "Obligatorio: el dato tiene que aparecer en el documento. Crítico: si falla, el documento queda observado. Confianza mín.: qué tan segura tiene que ser la lectura de ese dato.",
       estadoActiva: "Activa",
       estadoInactiva: "Inactiva",
+      enProcesos: "En procesos",
+      dispara: "Dispara: {proceso}",
+      laPide: "La pide: {proceso}",
+      sinProcesos:
+        "Ningún proceso usa este tipo todavía. En Procesos podés crear uno que arranque cuando llegue o se apruebe un documento así.",
     },
     tablero: {
       embudo: "Distribución por estado",

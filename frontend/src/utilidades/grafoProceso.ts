@@ -1,4 +1,77 @@
-import type { GrafoProceso, NodoProceso } from "../api/procesos";
+import type { GrafoProceso, NodoProceso, Proceso } from "../api/procesos";
+
+export interface DisparoInicio {
+  evento?: string;
+  tipoDocumento?: string;
+  horaDiaria?: string;
+  intervaloMinutos?: number;
+}
+
+export function disparoDeInicio(
+  grafo: GrafoProceso | null | undefined,
+): DisparoInicio {
+  const inicio = grafo?.nodos?.find((nodo) => nodo.tipo === "INICIO");
+  const configuracion = inicio?.configuracion ?? {};
+  const texto = (clave: string) => {
+    const valor = configuracion[clave];
+    return typeof valor === "string" && valor.trim() ? valor.trim() : undefined;
+  };
+  const numero = (clave: string) => {
+    const valor = configuracion[clave];
+    return typeof valor === "number" && Number.isFinite(valor) && valor > 0
+      ? valor
+      : undefined;
+  };
+  return {
+    evento: texto("evento"),
+    tipoDocumento: texto("tipoDocumento"),
+    horaDiaria: texto("horaDiaria"),
+    intervaloMinutos: numero("programadoMinutos"),
+  };
+}
+
+export interface ProcesoReferencia {
+  id: string;
+  nombre: string;
+}
+
+export interface UsoTipoDocumento {
+  dispara: ProcesoReferencia[];
+  pide: ProcesoReferencia[];
+}
+
+const TIPOS_QUE_PIDEN_DOCUMENTO = new Set([
+  "SOLICITUD_DOCUMENTO",
+  "FIRMA",
+  "TAREA_EXTERNA",
+]);
+
+export function usosDeTipoDocumento(
+  procesos: Proceso[],
+  codigoPlantilla: string,
+): UsoTipoDocumento {
+  const dispara = new Map<string, ProcesoReferencia>();
+  const pide = new Map<string, ProcesoReferencia>();
+  for (const proceso of procesos) {
+    const version =
+      proceso.versiones.find((v) => v.estado === "PUBLICADA") ??
+      proceso.versiones.find((v) => v.estado === "BORRADOR") ??
+      proceso.versiones[0];
+    for (const nodo of version?.grafo?.nodos ?? []) {
+      const tipo = nodo.configuracion?.["tipoDocumento"];
+      if (
+        typeof tipo !== "string" ||
+        tipo.trim().toLowerCase() !== codigoPlantilla.trim().toLowerCase()
+      )
+        continue;
+      const referencia = { id: proceso.id, nombre: proceso.nombre };
+      if (nodo.tipo === "INICIO") dispara.set(proceso.id, referencia);
+      else if (TIPOS_QUE_PIDEN_DOCUMENTO.has(nodo.tipo))
+        pide.set(proceso.id, referencia);
+    }
+  }
+  return { dispara: [...dispara.values()], pide: [...pide.values()] };
+}
 
 export function aplicarConfiguracion(
   nodo: NodoProceso,

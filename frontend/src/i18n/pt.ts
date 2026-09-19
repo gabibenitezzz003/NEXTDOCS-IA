@@ -376,7 +376,13 @@ export const pt: Diccionario = {
       "Se a versão publicada tiver intervalo, o processo se instancia sozinho de forma periódica.",
     eventoInicio: "Evento que dispara o processo",
     eventoInicioAyuda:
-      "Nome do evento que instancia o processo publicado (ex.: documento.recibido).",
+      "Nome do evento que instancia o processo publicado (ex.: documento.aprobado).",
+    tipoDocumentoInicio: "Somente se o documento for do tipo",
+    tipoDocumentoInicioAyuda:
+      "Opcional: o processo só inicia quando o evento é de um documento deste tipo. O tipo é conhecido após a classificação, então não se aplica a documento.recibido nem documento.dividido.",
+    disparoManual: "manual",
+    disparoDiario: "diário {hora}",
+    disparoIntervalo: "a cada {minutos} min",
     tipoDocumentoFirmaAyuda:
       "Código do catálogo documental que o signatário deve entregar assinado.",
     tipoDocumentoExternoAyuda:
@@ -983,9 +989,25 @@ export const pt: Diccionario = {
     EVENTO_EXTERNO_FALLIDO: "Evento externo falhou",
   },
   studio: {
-    titulo: "Workflow",
+    titulo: "Processos",
     descripcion:
       "Desenhe os processos no canvas: cada versão publicada executa em Operação e gera o trabalho que aparece em Tarefas.",
+    disparoManual: "Início manual ou por API",
+    disparoEvento: "Inicia quando {evento}",
+    disparoEventoTipo: "Inicia quando {evento} do tipo {tipo}",
+    disparoDiario: "Todos os dias às {hora}",
+    disparoIntervalo: "A cada {minutos} min",
+    evento: {
+      documento: {
+        recibido: "chega um documento",
+        dividido: "um documento é dividido",
+        observado: "um documento fica observado",
+        emparejado: "um documento é vinculado",
+        aprobado: "um documento é aprovado",
+        rechazado: "um documento é rejeitado",
+        eliminado: "um documento é excluído",
+      },
+    },
   },
   procesos: {
     bibliotecaDesc:
@@ -1323,7 +1345,7 @@ export const pt: Diccionario = {
       "Ainda não há delegações de acesso. Crie uma para habilitar um partner sobre um tenant cliente.",
   },
   marketplace: {
-    titulo: "Marketplace",
+    titulo: "Catálogo",
     descripcion:
       "Catálogo de modelos de processo publicados pela comunidade de tenants.",
     grupoSeccion: "Seção",
@@ -1619,6 +1641,11 @@ export const pt: Diccionario = {
         "Obrigatório: o dado precisa aparecer no documento. Crítico: se falhar, o documento fica observado. Confiança mín.: quão segura precisa ser a leitura desse dado.",
       estadoActiva: "Ativo",
       estadoInactiva: "Inativo",
+      enProcesos: "Em processos",
+      dispara: "Dispara: {proceso}",
+      laPide: "Solicitada por: {proceso}",
+      sinProcesos:
+        "Nenhum processo usa este tipo ainda. Em Processos você pode criar um que inicie quando um documento assim chegar ou for aprovado.",
     },
     tablero: {
       embudo: "Distribuição por estado",

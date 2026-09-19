@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ajustarPlantilla,
@@ -10,10 +11,13 @@ import {
   type PlantillaMotor,
 } from "../../api/documental";
 import { mensajeDeError } from "../../api/cliente";
+import { listarProcesos } from "../../api/procesos";
 import { Boton, Campo, Tarjeta } from "../../componentes/Interfaz";
 import { Cargando, ErrorPanel, Vacio } from "../../componentes/Estados";
 import { IconoFlechaAbajo, IconoDerecha } from "../../componentes/Iconos";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
+import { useSesion } from "../../contextos/ProveedorSesion";
+import { usosDeTipoDocumento } from "../../utilidades/grafoProceso";
 import { enPorcentaje, fusionarCatalogoPlantillas } from "../dominio";
 import { EtiquetaSeveridadMotor } from "./EtiquetaEstadoMotor";
 import { ContenidoTiposPropuestos } from "../../paginas/TiposPropuestos";
@@ -100,6 +104,53 @@ function CampoPlantillaFila({
           alCambiar({ umbral: Number(evento.target.value) / 100 })
         }
       />
+    </div>
+  );
+}
+
+function UsosEnProcesos({ codigoPlantilla }: { codigoPlantilla: string }) {
+  const { t } = useIdioma();
+  const { tienePermiso } = useSesion();
+  const consulta = useQuery({
+    queryKey: ["procesos"],
+    queryFn: listarProcesos,
+    staleTime: 60_000,
+    enabled: tienePermiso("tenant.administrar"),
+  });
+  if (!consulta.data) return null;
+  const usos = usosDeTipoDocumento(consulta.data, codigoPlantilla);
+  if (!usos.dispara.length && !usos.pide.length) {
+    return (
+      <p className="text-pequeno text-tinta-suave">
+        {t("documental.plantillas.sinProcesos")}
+      </p>
+    );
+  }
+  return (
+    <div>
+      <p className="mb-espacio-2 text-micro font-semibold text-tinta-media">
+        {t("documental.plantillas.enProcesos")}
+      </p>
+      <div className="flex flex-wrap gap-espacio-2">
+        {usos.dispara.map((proceso) => (
+          <Link
+            key={`dispara-${proceso.id}`}
+            to={`/workflow/${proceso.id}`}
+            className="rounded-insignia bg-informacion-tenue px-espacio-2 py-espacio-1 text-micro font-bold text-tinta-media ring-1 ring-inset ring-informacion-borde hover:underline"
+          >
+            {t("documental.plantillas.dispara", { proceso: proceso.nombre })}
+          </Link>
+        ))}
+        {usos.pide.map((proceso) => (
+          <Link
+            key={`pide-${proceso.id}`}
+            to={`/workflow/${proceso.id}`}
+            className="rounded-insignia bg-accion-tonal px-espacio-2 py-espacio-1 text-micro font-bold text-accion-tonal-texto hover:underline"
+          >
+            {t("documental.plantillas.laPide", { proceso: proceso.nombre })}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
@@ -274,6 +325,8 @@ function PlantillaFila({
                 ))}
               </div>
             ) : null}
+
+            <UsosEnProcesos codigoPlantilla={plantilla.codigo} />
 
             <div className="flex flex-wrap gap-espacio-2">
               <Boton

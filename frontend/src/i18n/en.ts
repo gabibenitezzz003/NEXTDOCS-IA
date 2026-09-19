@@ -376,7 +376,13 @@ export const en: Diccionario = {
       "If the published version has an interval, the process instantiates itself periodically.",
     eventoInicio: "Event that triggers the process",
     eventoInicioAyuda:
-      "Name of the event that instantiates the published process (e.g.: documento.recibido).",
+      "Name of the event that instantiates the published process (e.g.: documento.aprobado).",
+    tipoDocumentoInicio: "Only if the document is of type",
+    tipoDocumentoInicioAyuda:
+      "Optional: the process only starts when the event belongs to a document of this type. The type is known once classified, so it does not apply to documento.recibido or documento.dividido.",
+    disparoManual: "manual",
+    disparoDiario: "daily {hora}",
+    disparoIntervalo: "every {minutos} min",
     tipoDocumentoFirmaAyuda:
       "Document catalog code that the signer must deliver signed.",
     tipoDocumentoExternoAyuda:
@@ -982,6 +988,22 @@ export const en: Diccionario = {
     titulo: "Processes",
     descripcion:
       "Design your processes on the canvas: each published version runs in Operations and generates the work that shows up in Tasks.",
+    disparoManual: "Manual or API start",
+    disparoEvento: "Starts when {evento}",
+    disparoEventoTipo: "Starts when {evento} of type {tipo}",
+    disparoDiario: "Every day at {hora}",
+    disparoIntervalo: "Every {minutos} min",
+    evento: {
+      documento: {
+        recibido: "a document arrives",
+        dividido: "a document is split",
+        observado: "a document is flagged",
+        emparejado: "a document is matched",
+        aprobado: "a document is approved",
+        rechazado: "a document is rejected",
+        eliminado: "a document is deleted",
+      },
+    },
   },
   procesos: {
     bibliotecaDesc:
@@ -1611,6 +1633,11 @@ export const en: Diccionario = {
         "Required: the data must appear in the document. Critical: if it fails, the document is flagged. Min. confidence: how sure the reading of that data must be.",
       estadoActiva: "Active",
       estadoInactiva: "Inactive",
+      enProcesos: "In processes",
+      dispara: "Triggers: {proceso}",
+      laPide: "Requested by: {proceso}",
+      sinProcesos:
+        "No process uses this type yet. In Processes you can create one that starts when a document like this arrives or is approved.",
     },
     tablero: {
       embudo: "Distribution by state",
