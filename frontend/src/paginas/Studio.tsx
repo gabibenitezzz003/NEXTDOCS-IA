@@ -55,6 +55,7 @@ import type {
 } from "../api/procesos";
 import { obtenerPlantillasMotor } from "../api/documental";
 import { aplicarConfiguracion, avisosNodo } from "../utilidades/grafoProceso";
+import { listarIntegraciones } from "../api/integraciones";
 import { useSesion } from "../contextos/ProveedorSesion";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 import {
@@ -1737,6 +1738,56 @@ const TIPOS_CON_RESPONSABLE = new Set([
 
 const TIPOS_CON_SLA = new Set([...TIPOS_CON_RESPONSABLE, "TEMPORIZADOR"]);
 
+function AvisoIntegracion({ nodo }: { nodo: NodoProceso }) {
+  const { t } = useIdioma();
+  const consulta = useQuery({
+    queryKey: ["integraciones"],
+    queryFn: listarIntegraciones,
+  });
+  const integracion = consulta.data?.find((item) => item.tipo === nodo.tipo);
+  const configuracion = nodo.configuracion ?? {};
+  const propia =
+    nodo.tipo === "TELEGRAM"
+      ? Boolean(configuracion["tokenBot"])
+      : nodo.tipo === "WHATSAPP"
+        ? Boolean(configuracion["tokenAcceso"] && configuracion["telefonoId"])
+        : false;
+  if (integracion?.configurada && integracion.habilitada) {
+    return (
+      <p
+        role="note"
+        className="rounded-control border border-exito-borde bg-exito-tenue p-espacio-3 text-pequeno text-exito-texto"
+      >
+        {t("canvas.integracionLista", { nombre: integracion.etiqueta })}
+      </p>
+    );
+  }
+  if (propia) {
+    return (
+      <p
+        role="note"
+        className="rounded-control bg-lienzo p-espacio-3 text-pequeno text-tinta-suave"
+      >
+        {t("canvas.integracionPropia")}
+      </p>
+    );
+  }
+  return (
+    <p
+      role="note"
+      className="rounded-control border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-alerta-texto"
+    >
+      {t("canvas.integracionFalta")}{" "}
+      <Link
+        to="/integraciones"
+        className="font-semibold underline underline-offset-2"
+      >
+        {t("canvas.integracionFaltaEnlace")}
+      </Link>
+    </p>
+  );
+}
+
 function ConfiguracionNodo({
   nodo,
   alCambiar,
@@ -1978,6 +2029,11 @@ function ConfiguracionNodo({
             onChange={(evento) => cambiar("mensaje", evento.target.value)}
           />
         </>
+      ) : null}
+      {nodo.tipo === "CORREO" ||
+      nodo.tipo === "TELEGRAM" ||
+      nodo.tipo === "WHATSAPP" ? (
+        <AvisoIntegracion nodo={nodo} />
       ) : null}
       {nodo.tipo === "CORREO" ||
       nodo.tipo === "TELEGRAM" ||

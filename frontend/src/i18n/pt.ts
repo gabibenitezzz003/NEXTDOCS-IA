@@ -84,6 +84,7 @@ export const pt: Diccionario = {
     navSupervisora: "Regras",
     navPartners: "Partners",
     navMarketplace: "Marketplace",
+    navIntegraciones: "Integrações",
     navPanel: "Indicadores",
     navTiposNuevos: "Tipos detectados",
     navEquipo: "Equipe",
@@ -387,6 +388,13 @@ export const pt: Diccionario = {
     enviarEnPrueba: "Enviar de verdade ao executar o rascunho",
     enviarEnPruebaAyuda:
       "Nas execuções de teste o envio é simulado para não tocar destinatários reais. Ative isto apenas se quiser testar o envio real.",
+    integracionLista:
+      "Este passo usa a integração {nombre} configurada em Integrações.",
+    integracionPropia:
+      "Este passo usa suas próprias credenciais, não a integração da organização.",
+    integracionFalta:
+      "Este passo precisa de credenciais: configure a integração do serviço para que possa ser executado.",
+    integracionFaltaEnlace: "Abrir Integrações",
     horaDiaria: "Executar todos os dias às",
     horaDiariaAyuda:
       "Com a versão publicada, o processo é instanciado sozinho uma vez por dia nesse horário.",
@@ -1623,5 +1631,52 @@ export const pt: Diccionario = {
       cargarMas: "Carregar mais",
       recargar: "Recarregar",
     },
+  },
+  integraciones: {
+    titulo: "Integrações",
+    descripcion:
+      "Conecte os serviços que os passos dos seus processos usam: e-mail SMTP, Telegram e WhatsApp. As credenciais são salvas criptografadas e usadas apenas pela sua organização.",
+    ayuda:
+      "Os passos de Correio, Telegram e WhatsApp usam estas credenciais ao executar. Valores definidos no passo têm prioridade. Teste cada integração antes de publicar o processo.",
+    nombre: {
+      CORREO: "E-mail (SMTP)",
+      TELEGRAM: "Telegram",
+      WHATSAPP: "WhatsApp Business",
+    },
+    detalle: {
+      CORREO: "Envio de e-mails a partir dos passos do processo",
+      TELEGRAM: "Bot do Telegram para mensagens automáticas",
+      WHATSAPP: "Linha do WhatsApp Business (Meta)",
+    },
+    campo: {
+      host: "Servidor SMTP",
+      puerto: "Porta",
+      usuario: "Usuário",
+      clave: "Senha",
+      remitente: "Remetente (opcional)",
+      seguridad: "Segurança",
+      tokenBot: "Token do bot",
+      tokenAcceso: "Token de acesso",
+      telefonoId: "ID do número de telefone",
+      apiVersion: "Versão da API (opcional)",
+    },
+    ninguna: "Nenhuma",
+    habilitada: "Integração habilitada",
+    secretoGuardado: "Já existe um valor salvo; deixe vazio para mantê-lo.",
+    probar: "Testar conexão",
+    destinoPrueba: "Enviar e-mail de teste para (opcional)",
+    destinoPruebaAyuda:
+      "Se você indicar um e-mail, o teste também envia uma mensagem real.",
+    guardada: "Integração salva.",
+    eliminada: "Integração removida.",
+    sinConfigurar: "Não configurada",
+    configurada: "Configurada",
+    deshabilitada: "Desabilitada",
+    verificada: "Verificada",
+    eliminar: "Remover",
+    eliminarTitulo: "Remover integração",
+    eliminarConfirmar:
+      "A configuração de {nombre} é excluída. Os passos que a usam vão falhar até você configurá-la de novo.",
+    errorCarga: "Não foi possível carregar as integrações",
   },
 };

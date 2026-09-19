@@ -16,6 +16,7 @@ import {
   IconoUsuario,
   IconoCerrar,
   IconoFiltro,
+  IconoEnlaceExterno,
 } from "./Iconos";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 import { useSesion } from "../contextos/ProveedorSesion";
@@ -101,6 +102,12 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         texto: "disposicion.navMarketplace",
         permiso: "tenant.administrar",
         icono: IconoMarketplace,
+      },
+      {
+        a: "/integraciones",
+        texto: "disposicion.navIntegraciones",
+        permiso: "tenant.administrar",
+        icono: IconoEnlaceExterno,
       },
     ],
   },

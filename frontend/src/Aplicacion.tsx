@@ -16,6 +16,7 @@ import { Studio } from "./paginas/Studio";
 import { Supervisora } from "./paginas/Supervisora";
 import { Partners } from "./paginas/Partners";
 import { Marketplace } from "./paginas/Marketplace";
+import { Integraciones } from "./paginas/Integraciones";
 import { Externo } from "./paginas/Externo";
 import { useSesion } from "./contextos/ProveedorSesion";
 import { Logotipo } from "./componentes/Marca";
@@ -107,6 +108,7 @@ export function Aplicacion() {
         <Route path="/supervisora" element={<Supervisora />} />
         <Route path="/partners" element={<Partners />} />
         <Route path="/marketplace" element={<Marketplace />} />
+        <Route path="/integraciones" element={<Integraciones />} />
         <Route path="/studio" element={<Navigate to="/workflow" replace />} />
         <Route path="/studio/:procesoId" element={<RedirigirWorkflow />} />
         <Route path="/procesos" element={<Navigate to="/workflow" replace />} />

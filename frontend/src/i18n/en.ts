@@ -84,6 +84,7 @@ export const en: Diccionario = {
     navSupervisora: "Rules",
     navPartners: "Partners",
     navMarketplace: "Marketplace",
+    navIntegraciones: "Integrations",
     navPanel: "Indicators",
     navTiposNuevos: "Detected types",
     navEquipo: "Team",
@@ -387,6 +388,13 @@ export const en: Diccionario = {
     enviarEnPrueba: "Send for real when running the draft",
     enviarEnPruebaAyuda:
       "Sending is simulated in test runs so real recipients are not touched. Enable this only if you want to test the real send.",
+    integracionLista:
+      "This step uses the {nombre} integration configured in Integrations.",
+    integracionPropia:
+      "This step uses its own credentials, not the organization integration.",
+    integracionFalta:
+      "This step needs credentials: set up the service integration so it can run.",
+    integracionFaltaEnlace: "Open Integrations",
     horaDiaria: "Run every day at",
     horaDiariaAyuda:
       "Once published, the process starts itself once a day at this time.",
@@ -1615,5 +1623,52 @@ export const en: Diccionario = {
       cargarMas: "Load more",
       recargar: "Reload",
     },
+  },
+  integraciones: {
+    titulo: "Integrations",
+    descripcion:
+      "Connect the services your process steps use: SMTP email, Telegram and WhatsApp. Credentials are stored encrypted and are only used by your organization.",
+    ayuda:
+      "Email, Telegram and WhatsApp steps use these credentials when running. Values set on a step take precedence. Test each integration before publishing the process.",
+    nombre: {
+      CORREO: "Email (SMTP)",
+      TELEGRAM: "Telegram",
+      WHATSAPP: "WhatsApp Business",
+    },
+    detalle: {
+      CORREO: "Email sending from process steps",
+      TELEGRAM: "Telegram bot for automatic messages",
+      WHATSAPP: "WhatsApp Business line (Meta)",
+    },
+    campo: {
+      host: "SMTP server",
+      puerto: "Port",
+      usuario: "Username",
+      clave: "Password",
+      remitente: "Sender (optional)",
+      seguridad: "Security",
+      tokenBot: "Bot token",
+      tokenAcceso: "Access token",
+      telefonoId: "Phone number ID",
+      apiVersion: "API version (optional)",
+    },
+    ninguna: "None",
+    habilitada: "Integration enabled",
+    secretoGuardado: "A value is already stored; leave it empty to keep it.",
+    probar: "Test connection",
+    destinoPrueba: "Send test email to (optional)",
+    destinoPruebaAyuda:
+      "If you set an address, the test also sends a real message.",
+    guardada: "Integration saved.",
+    eliminada: "Integration removed.",
+    sinConfigurar: "Not configured",
+    configurada: "Configured",
+    deshabilitada: "Disabled",
+    verificada: "Verified",
+    eliminar: "Remove",
+    eliminarTitulo: "Remove integration",
+    eliminarConfirmar:
+      "The {nombre} configuration is deleted. Steps that use it will fail until you set it up again.",
+    errorCarga: "Integrations could not be loaded",
   },
 };
