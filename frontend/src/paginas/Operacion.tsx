@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
@@ -20,6 +20,7 @@ import {
   Tarjeta,
 } from "../componentes/Interfaz";
 import { TarjetaTarea } from "../componentes/TarjetaTarea";
+import { AnilloApilado } from "../componentes/Graficos";
 import { DiagramaProceso } from "../componentes/DiagramaProceso";
 import type { EstadoNodoEjecucion } from "../componentes/DiagramaProceso";
 import { formatearFecha } from "../utilidades/fechas";
@@ -168,6 +169,12 @@ const INDICADORES_FRANJA = [
   "instanciasCompletadas",
 ];
 
+const FILTRO_POR_INDICADOR: Record<string, string> = {
+  procesosActivos: "ACTIVA",
+  tareasPendientes: "ESPERANDO",
+  instanciasCompletadas: "COMPLETADA",
+};
+
 function formatearMinutos(minutos: number): string {
   const total = Math.round(minutos);
   if (total < 60) return `${total} min`;
@@ -188,7 +195,13 @@ function formatearIndicador(indicador: KpiProcesoIndicador): string {
   return `${valor}`;
 }
 
-function FranjaIndicadores({ dias }: { dias: number }) {
+function FranjaIndicadores({
+  dias,
+  alElegir,
+}: {
+  dias: number;
+  alElegir: (estado: string) => void;
+}) {
   const { t } = useIdioma();
   const consulta = useQuery({
     queryKey: ["kpi-procesos", dias],
@@ -224,15 +237,54 @@ function FranjaIndicadores({ dias }: { dias: number }) {
 
   return (
     <div className="grid gap-espacio-4 sm:grid-cols-2 lg:grid-cols-3">
-      {visibles.map((indicador, indice) => (
-        <Tarjeta key={indicador.codigo} indice={indice}>
-          <Metrica
-            etiqueta={indicador.nombre}
-            valor={formatearIndicador(indicador)}
-            detalle={indicador.valor == null ? t("operacion.sinDatosVentana") : indicador.formula}
-          />
-        </Tarjeta>
-      ))}
+      {visibles.map((indicador, indice) => {
+        const destino = FILTRO_POR_INDICADOR[indicador.codigo];
+        return (
+          <Tarjeta
+            key={indicador.codigo}
+            indice={indice}
+            interactiva={Boolean(destino)}
+            role={destino ? "button" : undefined}
+            tabIndex={destino ? 0 : undefined}
+            aria-label={
+              destino
+                ? t("operacion.verIndicador", { nombre: indicador.nombre })
+                : undefined
+            }
+            onClick={destino ? () => alElegir(destino) : undefined}
+            onKeyDown={
+              destino
+                ? (evento) => {
+                    if (evento.key === "Enter" || evento.key === " ") {
+                      evento.preventDefault();
+                      alElegir(destino);
+                    }
+                  }
+                : undefined
+            }
+          >
+            <div className="flex items-start justify-between gap-espacio-3">
+              <Metrica
+                etiqueta={indicador.nombre}
+                valor={formatearIndicador(indicador)}
+                detalle={
+                  indicador.valor == null
+                    ? t("operacion.sinDatosVentana")
+                    : indicador.formula
+                }
+              />
+              {destino ? (
+                <span
+                  aria-hidden="true"
+                  className="mt-espacio-1 text-titulo-panel text-accion-tonal-texto"
+                >
+                  →
+                </span>
+              ) : null}
+            </div>
+          </Tarjeta>
+        );
+      })}
     </div>
   );
 }
@@ -357,12 +409,118 @@ function CuellosDeBotella({ dias }: { dias: number }) {
   );
 }
 
+const ESTADOS_DISTRIBUCION: {
+  estado: EstadoInstanciaProceso;
+  color: string;
+}[] = [
+  { estado: "ACTIVA", color: "#8B5CF6" },
+  { estado: "ESPERANDO", color: "#3B82F6" },
+  { estado: "BLOQUEADA", color: "#F59E0B" },
+  { estado: "COMPLETADA", color: "#22C55E" },
+  { estado: "CANCELADA", color: "#EF4444" },
+];
+
+function DistribucionEstados({
+  estadoActual,
+  alElegir,
+}: {
+  estadoActual: string;
+  alElegir: (estado: string) => void;
+}) {
+  const { t } = useIdioma();
+  const consulta = useQuery({
+    queryKey: ["instancias", "distribucion"],
+    queryFn: () => listarInstancias(),
+    refetchInterval: 15000,
+    placeholderData: (anterior) => anterior,
+  });
+
+  if (consulta.isPending) return <Cargando filas={2} alto="h-10" />;
+  if (consulta.isError) return null;
+
+  const instancias = consulta.data ?? [];
+  const conteo = new Map<EstadoInstanciaProceso, number>();
+  for (const instancia of instancias) {
+    conteo.set(instancia.estado, (conteo.get(instancia.estado) ?? 0) + 1);
+  }
+  const total = instancias.length;
+  if (total === 0) {
+    return (
+      <Vacio
+        titulo={t("operacion.sinDistribucion")}
+        detalle={t("operacion.sinDistribucionDetalle")}
+      />
+    );
+  }
+
+  const enCurso =
+    (conteo.get("ACTIVA") ?? 0) + (conteo.get("ESPERANDO") ?? 0);
+
+  return (
+    <div className="grid min-w-0 items-center gap-espacio-5 sm:grid-cols-[auto_minmax(0,1fr)]">
+      <div className="mx-auto">
+        <AnilloApilado
+          segmentos={ESTADOS_DISTRIBUCION.map((entrada) => ({
+            etiqueta: t(`estadoInstancia.${entrada.estado}`),
+            valor: conteo.get(entrada.estado) ?? 0,
+            color: entrada.color,
+          }))}
+          total={total}
+          etiquetaTotal={t("operacion.enCurso", { cantidad: enCurso })}
+          tamano={168}
+        />
+      </div>
+      <ul className="grid min-w-0 gap-espacio-2">
+        {ESTADOS_DISTRIBUCION.map((entrada) => {
+          const cantidad = conteo.get(entrada.estado) ?? 0;
+          const activo = estadoActual === entrada.estado;
+          return (
+            <li key={entrada.estado}>
+              <button
+                type="button"
+                onClick={() => alElegir(activo ? "" : entrada.estado)}
+                aria-pressed={activo}
+                className={`flex w-full items-center gap-espacio-3 rounded-control border px-espacio-3 py-espacio-2 text-left transition ${
+                  activo
+                    ? "border-accion-primaria bg-violeta-tenue"
+                    : "border-borde bg-superficie hover:border-borde-fuerte"
+                }`}
+              >
+                <span
+                  aria-hidden="true"
+                  className="h-2.5 w-2.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: entrada.color }}
+                />
+                <span className="min-w-0 flex-1 text-pequeno text-tinta">
+                  {t(`estadoInstancia.${entrada.estado}`)}
+                </span>
+                <span className="cifra text-pequeno font-semibold text-tinta">
+                  {cantidad}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function BandejaInstancias({ alAbrir }: { alAbrir: (id: string) => void }) {
   const { t } = useIdioma();
   const [estado, setEstado] = useState<string>("");
   const [definicion, setDefinicion] = useState<string>("");
   const [busqueda, setBusqueda] = useState<string>("");
   const [dias, setDias] = useState<number>(7);
+  const referenciaFiltros = useRef<HTMLDivElement>(null);
+
+  const elegirEstado = (valor: string) => {
+    setEstado(valor);
+    referenciaFiltros.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
 
   const consultaProcesos = useQuery({
     queryKey: ["procesos"],
@@ -409,19 +567,39 @@ export function BandejaInstancias({ alAbrir }: { alAbrir: (id: string) => void }
             }))}
           />
         </div>
-        <FranjaIndicadores dias={dias} />
-        <div className="mt-espacio-6">
-          <h3 className="font-titulo text-titulo-panel text-tinta">
-            {t("operacion.cuellosTitulo")}
-          </h3>
-          <p className="mt-espacio-1 mb-espacio-4 text-pequeno text-tinta-suave">
-            {t("operacion.cuellosDesc")}
-          </p>
-          <CuellosDeBotella dias={dias} />
+        <FranjaIndicadores dias={dias} alElegir={elegirEstado} />
+        <div className="mt-espacio-6 grid min-w-0 gap-espacio-6 xl:grid-cols-2">
+          <section aria-labelledby="titulo-distribucion">
+            <h3
+              id="titulo-distribucion"
+              className="font-titulo text-titulo-panel text-tinta"
+            >
+              {t("operacion.distribucionTitulo")}
+            </h3>
+            <p className="mt-espacio-1 mb-espacio-4 text-pequeno text-tinta-suave">
+              {t("operacion.distribucionDesc")}
+            </p>
+            <DistribucionEstados estadoActual={estado} alElegir={elegirEstado} />
+          </section>
+          <section aria-labelledby="titulo-cuellos">
+            <h3
+              id="titulo-cuellos"
+              className="font-titulo text-titulo-panel text-tinta"
+            >
+              {t("operacion.cuellosTitulo")}
+            </h3>
+            <p className="mt-espacio-1 mb-espacio-4 text-pequeno text-tinta-suave">
+              {t("operacion.cuellosDesc")}
+            </p>
+            <CuellosDeBotella dias={dias} />
+          </section>
         </div>
       </section>
 
-      <div className="mb-espacio-4 grid gap-espacio-4 md:grid-cols-[12rem_minmax(0,1fr)_12rem]">
+      <div
+        ref={referenciaFiltros}
+        className="mb-espacio-4 grid scroll-mt-espacio-6 gap-espacio-4 md:grid-cols-[12rem_minmax(0,1fr)_12rem]"
+      >
         <Selector
           etiqueta={t("operacion.estado")}
           value={estado}

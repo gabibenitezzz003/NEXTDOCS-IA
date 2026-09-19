@@ -789,6 +789,14 @@ export const en: Diccionario = {
       "Executions of published processes: active instances, indicators and the step each one is on.",
     indicadores: "Indicators",
     indicadoresDesc: "How the process engine is doing in the chosen window.",
+    verIndicador: "View instances for {nombre}",
+    distribucionTitulo: "Instance distribution",
+    distribucionDesc:
+      "Every execution by status. Tap a status to filter the list.",
+    enCurso: "{cantidad} running",
+    sinDistribucion: "No executions yet",
+    sinDistribucionDetalle:
+      "Each instance's status appears here as soon as the first one runs.",
     ventanaIndicadores: "Indicator window",
     errorIndicadores: "Could not load the process engine indicators",
     sinIndicadores: "No indicators yet",
@@ -1039,6 +1047,9 @@ export const en: Diccionario = {
       "Empty canvas with start and end to draw the steps by hand.",
     nuevoIaDesc:
       "Describe the process or upload a manual: AI builds the draft to review.",
+    nuevoIaRecomendado: "Recommended",
+    nuevoIaAccion: "Describe the process",
+    nuevoManualAccion: "Open the canvas",
     iaChatSaludo:
       "Tell me how the process works and I'll build the draft. You can attach a manual (PDF, TXT or MD) with the clip.",
     iaChatSaludoRefinar:
@@ -1268,6 +1279,41 @@ export const en: Diccionario = {
       "If it fires, it raises a finding on the instance — or blocks it outright.",
     ejemplo:
       "Example: the rule «confidence is less than 35 → Warn» catches documents the engine read with low certainty. Findings appear inside each instance under Running processes.",
+    arbolTitulo: "Where the supervisor works",
+    arbolDesc:
+      "The real path: the supervisor AI steps in every time a process step completes.",
+    arbolAria:
+      "Diagram: a document enters, the process runs, each completed step triggers the supervisor evaluation, which raises findings or blocks the instance.",
+    arbolEntrada: "A document or case arrives",
+    arbolEntradaDesc: "A process instance starts.",
+    arbolProceso: "The process runs",
+    arbolProcesoDesc: "The instance moves step by step (Running processes).",
+    arbolPaso: "A task completes",
+    arbolPasoDesc: "Each step delivers data to the instance.",
+    arbolSupervisora: "The supervisor evaluates every active rule",
+    arbolSupervisoraDesc:
+      "It compares each rule's watched value against its threshold using the instance's current data.",
+    arbolSigue: "Nothing crosses the threshold",
+    arbolSigueDesc: "The instance keeps running normally.",
+    arbolHallazgo: "A finding is raised",
+    arbolHallazgoDesc:
+      "It is recorded on the instance and warns, requests information, or flags for review.",
+    arbolBloqueo: "If the action is Block, the instance stops",
+    arbolBloqueoDesc:
+      "It moves to BLOCKED until someone resolves the finding.",
+    chatTitulo: "Create the rule by chatting with AI",
+    chatDesc:
+      "Tell it what you want to watch and it drafts the rule ready to create.",
+    chatPlaceholder:
+      "E.g.: warn me if document confidence drops below 35…",
+    chatEnviar: "Send",
+    chatPensando: "The AI is drafting the rule…",
+    chatPropuestaLista: "Here is the rule I propose:",
+    chatCrear: "Create this rule",
+    chatCreada: "Done, the rule is now active. You can see it in the list below.",
+    chatEjemplo1: "Warn me when document confidence drops below 35",
+    chatEjemplo2: "Block the instance if the amount exceeds 100000",
+    chatEjemplo3: "Flag for review when there are more than 3 failed attempts",
     nuevaRegla: "New rule",
     sinReglas: "No rules yet",
     sinReglasDetalle:

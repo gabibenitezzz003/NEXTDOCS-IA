@@ -789,6 +789,14 @@ export const es = {
       "Ejecuciones de los procesos publicados: instancias activas, indicadores y el paso en que va cada una.",
     indicadores: "Indicadores",
     indicadoresDesc: "Cómo viene el motor de procesos en la ventana elegida.",
+    verIndicador: "Ver instancias de {nombre}",
+    distribucionTitulo: "Distribución de instancias",
+    distribucionDesc:
+      "Todas las ejecuciones por estado. Tocá un estado para filtrar la lista.",
+    enCurso: "{cantidad} en curso",
+    sinDistribucion: "Sin ejecuciones todavía",
+    sinDistribucionDetalle:
+      "Acá aparece el estado de cada instancia apenas corra la primera.",
     ventanaIndicadores: "Ventana de los indicadores",
     errorIndicadores: "No se pudo cargar los indicadores del motor de procesos",
     sinIndicadores: "Todavía no hay indicadores",
@@ -1040,6 +1048,9 @@ export const es = {
       "Canvas vacío con inicio y fin para dibujar los pasos a mano.",
     nuevoIaDesc:
       "Describí el proceso o subí un manual: la IA arma el borrador para revisar.",
+    nuevoIaRecomendado: "Recomendado",
+    nuevoIaAccion: "Describir el proceso",
+    nuevoManualAccion: "Abrir el canvas",
     iaChatSaludo:
       "Contame cómo funciona el proceso y armo el borrador. Podés adjuntar un manual (PDF, TXT o MD) con el clip.",
     iaChatSaludoRefinar:
@@ -1272,6 +1283,41 @@ export const es = {
       "Si se dispara, genera un hallazgo en la instancia — o la bloquea directamente.",
     ejemplo:
       "Ejemplo: la regla «confidence es menor que 35 → Advertir» detecta documentos que el motor leyó con poca certeza. Los hallazgos se ven dentro de cada instancia en Procesos en curso.",
+    arbolTitulo: "Dónde trabaja la supervisora",
+    arbolDesc:
+      "El recorrido real: la IA supervisora entra cada vez que se completa un paso del proceso.",
+    arbolAria:
+      "Diagrama: el documento entra, el proceso corre, cada paso completado dispara la evaluación de la supervisora, que genera hallazgos o bloquea la instancia.",
+    arbolEntrada: "Entra un documento o un caso",
+    arbolEntradaDesc: "Arranca una instancia del proceso.",
+    arbolProceso: "El proceso corre",
+    arbolProcesoDesc: "La instancia avanza paso a paso (Procesos en curso).",
+    arbolPaso: "Se completa una tarea",
+    arbolPasoDesc: "Cada paso entrega datos a la instancia.",
+    arbolSupervisora: "La supervisora evalúa todas las reglas activas",
+    arbolSupervisoraDesc:
+      "Compara el dato observado de cada regla contra su umbral, con los datos actuales de la instancia.",
+    arbolSigue: "Nada cruza el umbral",
+    arbolSigueDesc: "La instancia sigue su curso normal.",
+    arbolHallazgo: "Se genera un hallazgo",
+    arbolHallazgoDesc:
+      "Queda registrado en la instancia y avisa, pide información o marca para revisión.",
+    arbolBloqueo: "Si la acción es Bloquear, la instancia se frena",
+    arbolBloqueoDesc:
+      "Pasa a BLOQUEADA hasta que alguien resuelva el hallazgo.",
+    chatTitulo: "Creá la regla hablando con la IA",
+    chatDesc:
+      "Contale qué querés vigilar y te propone la regla lista para crear.",
+    chatPlaceholder:
+      "Ej.: avisame si la confianza del documento baja de 35…",
+    chatEnviar: "Enviar",
+    chatPensando: "La IA está armando la regla…",
+    chatPropuestaLista: "Te propongo esta regla:",
+    chatCrear: "Crear esta regla",
+    chatCreada: "Listo, la regla quedó activa. Ya la ves en la lista de abajo.",
+    chatEjemplo1: "Avisame cuando la confianza del documento baje de 35",
+    chatEjemplo2: "Bloqueá la instancia si el monto supera 100000",
+    chatEjemplo3: "Marcá para revisión cuando haya más de 3 intentos fallidos",
     nuevaRegla: "Nueva regla",
     sinReglas: "Todavia no hay reglas",
     sinReglasDetalle:

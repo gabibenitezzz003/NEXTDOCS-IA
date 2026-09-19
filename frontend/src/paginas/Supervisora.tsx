@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import { Cargando, ErrorPanel, Vacio } from "../componentes/Estados";
@@ -15,6 +15,7 @@ import {
   actualizarRegla,
   crearRegla,
   darDeBajaRegla,
+  generarReglaConIa,
   listarProcesos,
   listarReglas,
   mensajeDeError,
@@ -24,6 +25,7 @@ import type {
   CambiosRegla,
   OperadorRegla,
   Proceso,
+  PropuestaRegla,
   ReglaSupervisora,
   SeveridadRegla,
 } from "../api/procesos";
@@ -105,33 +107,10 @@ function ReglasSupervisora() {
 
   return (
     <div className="grid gap-espacio-4">
-      <Tarjeta className="border-violeta-borde! bg-violeta-tenue!">
-        <CabeceraTarjeta
-          titulo={t("reglasSupervisora.comoFunciona")}
-          descripcion={t("reglasSupervisora.comoFuncionaDesc")}
-        />
-        <ol className="mt-espacio-4 grid min-w-0 gap-espacio-3 sm:grid-cols-3">
-          {[1, 2, 3].map((paso) => (
-            <li
-              key={paso}
-              className="flex min-w-0 items-start gap-espacio-3 rounded-control border border-violeta-borde bg-superficie p-espacio-3"
-            >
-              <span
-                aria-hidden="true"
-                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accion-tonal-fondo text-micro font-semibold text-accion-tonal-texto"
-              >
-                {paso}
-              </span>
-              <p className="min-w-0 text-micro text-tinta-media">
-                {t(`reglasSupervisora.paso${paso}`)}
-              </p>
-            </li>
-          ))}
-        </ol>
-        <p className="mt-espacio-3 text-micro text-tinta-suave">
-          {t("reglasSupervisora.ejemplo")}
-        </p>
-      </Tarjeta>
+      <div className="grid min-w-0 gap-espacio-4 xl:grid-cols-2">
+        <ArbolSupervisora />
+        <ChatSupervisora />
+      </div>
       <Tarjeta>
         <CabeceraTarjeta
           titulo={t("reglasSupervisora.titulo")}
@@ -466,6 +445,283 @@ function FormularioRegla({
         </Boton>
       </div>
     </div>
+  );
+}
+
+function NodoArbol({
+  titulo,
+  detalle,
+  tono = "neutro",
+}: {
+  titulo: string;
+  detalle?: string;
+  tono?: "neutro" | "violeta" | "alerta" | "rojo" | "exito";
+}) {
+  const estilos: Record<string, string> = {
+    neutro: "border-borde bg-superficie",
+    violeta: "border-violeta-borde bg-violeta-tenue",
+    alerta: "border-alerta-borde bg-alerta-tenue",
+    rojo: "border-rojo-borde bg-rojo-tenue",
+    exito: "border-exito-borde bg-exito-tenue",
+  };
+  return (
+    <div className={`rounded-panel border px-espacio-3 py-espacio-2 ${estilos[tono]}`}>
+      <p className="text-pequeno font-semibold text-tinta">{titulo}</p>
+      {detalle ? (
+        <p className="mt-0.5 text-micro text-tinta-suave">{detalle}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function RamaArbol() {
+  return (
+    <div aria-hidden="true" className="flex justify-center py-0.5">
+      <span className="block h-4 w-px bg-borde-fuerte" />
+    </div>
+  );
+}
+
+function ArbolSupervisora() {
+  const { t } = useIdioma();
+  return (
+    <Tarjeta className="border-violeta-borde! bg-violeta-tenue!">
+      <CabeceraTarjeta
+        titulo={t("reglasSupervisora.arbolTitulo")}
+        descripcion={t("reglasSupervisora.arbolDesc")}
+      />
+      <div className="mt-espacio-4" role="img" aria-label={t("reglasSupervisora.arbolAria")}>
+        <NodoArbol
+          titulo={t("reglasSupervisora.arbolEntrada")}
+          detalle={t("reglasSupervisora.arbolEntradaDesc")}
+        />
+        <RamaArbol />
+        <NodoArbol
+          titulo={t("reglasSupervisora.arbolProceso")}
+          detalle={t("reglasSupervisora.arbolProcesoDesc")}
+        />
+        <RamaArbol />
+        <NodoArbol
+          titulo={t("reglasSupervisora.arbolPaso")}
+          detalle={t("reglasSupervisora.arbolPasoDesc")}
+        />
+        <RamaArbol />
+        <div className="rounded-panel border-2 border-accion-primaria bg-superficie p-espacio-3 shadow-sm">
+          <div className="flex items-center gap-espacio-2">
+            <span
+              aria-hidden="true"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-accion-primaria text-pequeno font-bold text-white"
+            >
+              IA
+            </span>
+            <p className="text-pequeno font-bold text-tinta">
+              {t("reglasSupervisora.arbolSupervisora")}
+            </p>
+          </div>
+          <p className="mt-espacio-1 text-micro text-tinta-media">
+            {t("reglasSupervisora.arbolSupervisoraDesc")}
+          </p>
+          <div className="mt-espacio-3 grid grid-cols-[1fr_auto_1fr] items-center gap-espacio-2">
+            <div className="text-center">
+              <div className="rounded-control border border-exito-borde bg-exito-tenue px-espacio-2 py-espacio-1">
+                <p className="text-micro font-semibold text-exito-texto">
+                  {t("reglasSupervisora.arbolSigue")}
+                </p>
+              </div>
+              <p className="mt-1 text-micro text-tinta-suave">
+                {t("reglasSupervisora.arbolSigueDesc")}
+              </p>
+            </div>
+            <span aria-hidden="true" className="text-tinta-suave">
+              ⇄
+            </span>
+            <div className="text-center">
+              <div className="rounded-control border border-alerta-borde bg-alerta-tenue px-espacio-2 py-espacio-1">
+                <p className="text-micro font-semibold text-alerta-texto">
+                  {t("reglasSupervisora.arbolHallazgo")}
+                </p>
+              </div>
+              <p className="mt-1 text-micro text-tinta-suave">
+                {t("reglasSupervisora.arbolHallazgoDesc")}
+              </p>
+            </div>
+          </div>
+        </div>
+        <RamaArbol />
+        <NodoArbol
+          tono="rojo"
+          titulo={t("reglasSupervisora.arbolBloqueo")}
+          detalle={t("reglasSupervisora.arbolBloqueoDesc")}
+        />
+      </div>
+    </Tarjeta>
+  );
+}
+
+function ChatSupervisora() {
+  const { t } = useIdioma();
+  const clienteConsultas = useQueryClient();
+  const [entrada, setEntrada] = useState("");
+  const [conversacion, setConversacion] = useState<
+    { rol: "usuario" | "asistente"; texto: string; propuesta?: PropuestaRegla }[]
+  >([]);
+  const [error, setError] = useState<string | null>(null);
+  const finalRef = useRef<HTMLDivElement>(null);
+
+  const proponer = useMutation({
+    mutationFn: (descripcion: string) => generarReglaConIa({ descripcion }),
+    onSuccess: (propuesta) => {
+      setError(null);
+      setConversacion((prev) => [
+        ...prev,
+        {
+          rol: "asistente",
+          texto:
+            propuesta.explicacion ??
+            t("reglasSupervisora.chatPropuestaLista"),
+          propuesta,
+        },
+      ]);
+      setTimeout(() => finalRef.current?.scrollIntoView({ behavior: "smooth" }), 60);
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  const crear = useMutation({
+    mutationFn: (regla: CambiosRegla) => crearRegla(regla),
+    onSuccess: () => {
+      setConversacion((prev) => [
+        ...prev,
+        { rol: "asistente", texto: t("reglasSupervisora.chatCreada") },
+      ]);
+      clienteConsultas.invalidateQueries({ queryKey: ["reglas-supervisora"] });
+      setTimeout(() => finalRef.current?.scrollIntoView({ behavior: "smooth" }), 60);
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  const enviar = (texto: string) => {
+    const descripcion = texto.trim();
+    if (!descripcion || proponer.isPending) return;
+    setError(null);
+    setConversacion((prev) => [...prev, { rol: "usuario", texto: descripcion }]);
+    setEntrada("");
+    proponer.mutate(descripcion);
+  };
+
+  return (
+    <Tarjeta className="flex min-h-0 flex-col">
+      <CabeceraTarjeta
+        titulo={t("reglasSupervisora.chatTitulo")}
+        descripcion={t("reglasSupervisora.chatDesc")}
+      />
+      <div className="mt-espacio-3 flex min-h-0 flex-1 flex-col gap-espacio-3 overflow-y-auto rounded-panel border border-borde bg-lienzo p-espacio-3" style={{ maxHeight: 380 }}>
+        {conversacion.length === 0 ? (
+          <div className="grid gap-espacio-2">
+            {[1, 2, 3].map((ejemplo) => (
+              <button
+                key={ejemplo}
+                type="button"
+                onClick={() => enviar(t(`reglasSupervisora.chatEjemplo${ejemplo}`))}
+                className="rounded-control border border-borde bg-superficie px-espacio-3 py-espacio-2 text-left text-pequeno text-tinta-media transition hover:border-accion-primaria hover:text-tinta"
+              >
+                {t(`reglasSupervisora.chatEjemplo${ejemplo}`)}
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {conversacion.map((mensaje, indice) => (
+          <div
+            key={indice}
+            className={
+              mensaje.rol === "usuario"
+                ? "ml-8 rounded-panel border border-violeta-borde bg-accion-tonal px-espacio-3 py-espacio-2"
+                : "mr-8 rounded-panel border border-borde bg-superficie px-espacio-3 py-espacio-2"
+            }
+          >
+            <p className="text-pequeno text-tinta">{mensaje.texto}</p>
+            {mensaje.propuesta?.regla ? (
+              <div className="mt-espacio-3 rounded-panel border border-violeta-borde bg-violeta-tenue p-espacio-3">
+                <div className="flex flex-wrap items-center gap-espacio-2">
+                  <Pastilla tono="violeta">{mensaje.propuesta.regla.nombre}</Pastilla>
+                  <Pastilla tono={TONO_SEVERIDAD[mensaje.propuesta.regla.severidad ?? "MEDIA"]}>
+                    {t(`prioridad.${mensaje.propuesta.regla.severidad ?? "MEDIA"}`)}
+                  </Pastilla>
+                </div>
+                <p className="mt-espacio-2 text-pequeno text-tinta-media">
+                  {textoCondicion(
+                    {
+                      id: "",
+                      nombre: mensaje.propuesta.regla.nombre,
+                      tipo: mensaje.propuesta.regla.tipo,
+                      umbral: mensaje.propuesta.regla.umbral,
+                      operador: mensaje.propuesta.regla.operador,
+                    },
+                    t,
+                  )}
+                  {" → "}
+                  {textoAccion(mensaje.propuesta.regla.accion, t)}
+                </p>
+                {(mensaje.propuesta.advertencias ?? []).map((aviso) => (
+                  <p key={aviso} className="mt-espacio-1 text-micro text-alerta-texto">
+                    {aviso}
+                  </p>
+                ))}
+                <div className="mt-espacio-3">
+                  <Boton
+                    variante="primario"
+                    cargando={crear.isPending}
+                    disabled={crear.isPending}
+                    onClick={() => crear.mutate(mensaje.propuesta!.regla!)}
+                  >
+                    {t("reglasSupervisora.chatCrear")}
+                  </Boton>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ))}
+        {proponer.isPending ? (
+          <div className="mr-8 rounded-panel border border-borde bg-superficie px-espacio-3 py-espacio-2">
+            <p className="animate-pulse text-pequeno text-tinta-suave">
+              {t("reglasSupervisora.chatPensando")}
+            </p>
+          </div>
+        ) : null}
+        <div ref={finalRef} />
+      </div>
+      {error ? (
+        <div
+          role="alert"
+          className="mt-espacio-3 rounded-panel border border-rojo-borde bg-rojo-tenue px-espacio-3 py-espacio-2 text-pequeno text-rojo-alto"
+        >
+          {error}
+        </div>
+      ) : null}
+      <form
+        className="mt-espacio-3 flex gap-espacio-2"
+        onSubmit={(evento) => {
+          evento.preventDefault();
+          enviar(entrada);
+        }}
+      >
+        <input
+          type="text"
+          value={entrada}
+          onChange={(evento) => setEntrada(evento.target.value)}
+          placeholder={t("reglasSupervisora.chatPlaceholder")}
+          maxLength={4000}
+          className="min-w-0 flex-1 rounded-control border border-borde bg-superficie px-espacio-3 py-espacio-2 text-pequeno text-tinta outline-none focus:border-accion-primaria"
+        />
+        <Boton
+          variante="primario"
+          type="submit"
+          disabled={proponer.isPending || !entrada.trim()}
+        >
+          {t("reglasSupervisora.chatEnviar")}
+        </Boton>
+      </form>
+    </Tarjeta>
   );
 }
 

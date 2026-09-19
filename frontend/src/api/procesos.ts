@@ -468,6 +468,23 @@ export async function darDeBajaRegla(reglaId: string): Promise<void> {
   await clienteProcesos.delete(`/supervisora/reglas/${reglaId}`);
 }
 
+export interface PropuestaRegla {
+  regla: CambiosRegla;
+  explicacion?: string;
+  advertencias?: string[];
+}
+
+export async function generarReglaConIa(requerimiento: {
+  descripcion: string;
+  plantillaId?: string;
+}): Promise<PropuestaRegla> {
+  const { data } = await clienteProcesos.post<PropuestaRegla>(
+    "/supervisora/reglas/generar",
+    requerimiento,
+  );
+  return data;
+}
+
 export async function listarHallazgos(instanciaId: string): Promise<HallazgoProceso[]> {
   const { data } = await clienteProcesos.get<HallazgoProceso[]>(
     `/supervisora/instancias/${instanciaId}/hallazgos`,

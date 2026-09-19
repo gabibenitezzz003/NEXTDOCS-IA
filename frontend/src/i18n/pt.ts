@@ -791,6 +791,14 @@ export const pt: Diccionario = {
       "Execuções dos processos publicados: instâncias ativas, indicadores e a etapa em que cada uma está.",
     indicadores: "Indicadores",
     indicadoresDesc: "Como está o motor de processos na janela escolhida.",
+    verIndicador: "Ver instâncias de {nombre}",
+    distribucionTitulo: "Distribuição das instâncias",
+    distribucionDesc:
+      "Todas as execuções por estado. Toque num estado para filtrar a lista.",
+    enCurso: "{cantidad} em curso",
+    sinDistribucion: "Ainda sem execuções",
+    sinDistribucionDetalle:
+      "O estado de cada instância aparece aqui assim que a primeira correr.",
     ventanaIndicadores: "Janela dos indicadores",
     errorIndicadores:
       "Não foi possível carregar os indicadores do motor de processos",
@@ -1043,6 +1051,9 @@ export const pt: Diccionario = {
       "Canvas vazio com início e fim para desenhar os passos manualmente.",
     nuevoIaDesc:
       "Descreva o processo ou anexe um manual: a IA monta o rascunho para revisar.",
+    nuevoIaRecomendado: "Recomendado",
+    nuevoIaAccion: "Descrever o processo",
+    nuevoManualAccion: "Abrir o canvas",
     iaChatSaludo:
       "Conte como funciona o processo e eu monto o rascunho. Você pode anexar um manual (PDF, TXT ou MD) pelo clipe.",
     iaChatSaludoRefinar:
@@ -1274,6 +1285,41 @@ export const pt: Diccionario = {
       "Se dispara, gera uma ocorrência na instância — ou a bloqueia diretamente.",
     ejemplo:
       "Exemplo: a regra «confidence é menor que 35 → Avisar» detecta documentos que o motor leu com pouca certeza. As ocorrências aparecem dentro de cada instância em Processos em curso.",
+    arbolTitulo: "Onde a supervisora trabalha",
+    arbolDesc:
+      "O caminho real: a IA supervisora entra toda vez que um passo do processo é concluído.",
+    arbolAria:
+      "Diagrama: um documento entra, o processo corre, cada passo concluído dispara a avaliação da supervisora, que gera ocorrências ou bloqueia a instância.",
+    arbolEntrada: "Chega um documento ou caso",
+    arbolEntradaDesc: "Uma instância do processo começa.",
+    arbolProceso: "O processo corre",
+    arbolProcesoDesc: "A instância avança passo a passo (Processos em curso).",
+    arbolPaso: "Uma tarefa é concluída",
+    arbolPasoDesc: "Cada passo entrega dados à instância.",
+    arbolSupervisora: "A supervisora avalia todas as regras ativas",
+    arbolSupervisoraDesc:
+      "Compara o dado observado de cada regra contra o seu limite com os dados atuais da instância.",
+    arbolSigue: "Nada cruza o limite",
+    arbolSigueDesc: "A instância segue seu curso normal.",
+    arbolHallazgo: "Uma ocorrência é gerada",
+    arbolHallazgoDesc:
+      "Fica registrada na instância e avisa, pede informação ou marca para revisão.",
+    arbolBloqueo: "Se a ação é Bloquear, a instância para",
+    arbolBloqueoDesc:
+      "Passa a BLOQUEADA até que alguém resolva a ocorrência.",
+    chatTitulo: "Crie a regra conversando com a IA",
+    chatDesc:
+      "Conte o que quer vigiar e ela propõe a regra pronta para criar.",
+    chatPlaceholder:
+      "Ex.: me avise se a confiança do documento cair abaixo de 35…",
+    chatEnviar: "Enviar",
+    chatPensando: "A IA está montando a regra…",
+    chatPropuestaLista: "Proponho esta regra:",
+    chatCrear: "Criar esta regra",
+    chatCreada: "Pronto, a regra ficou ativa. Você já a vê na lista abaixo.",
+    chatEjemplo1: "Me avise quando a confiança do documento cair abaixo de 35",
+    chatEjemplo2: "Bloqueie a instância se o valor passar de 100000",
+    chatEjemplo3: "Marque para revisão quando houver mais de 3 tentativas falhas",
     nuevaRegla: "Nova regra",
     sinReglas: "Ainda não há regras",
     sinReglasDetalle:

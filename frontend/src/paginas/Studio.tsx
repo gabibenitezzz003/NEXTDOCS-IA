@@ -174,10 +174,41 @@ function ListaProcesos({
           alCerrar={() => setNuevoAbierto(false)}
         >
           {modoNuevo === "opciones" ? (
-            <div className="grid gap-espacio-3">
-              <Boton
-                variante="secundario"
-                className="h-auto justify-start px-espacio-4 py-espacio-4 text-left"
+            <div className="grid gap-espacio-4 sm:grid-cols-2">
+              <button
+                type="button"
+                disabled={crear.isPending}
+                className="group relative overflow-hidden rounded-panel border-2 border-violeta-borde bg-violeta-tenue p-espacio-5 text-left transition hover:border-accion-primaria hover:shadow-superficie-elevada focus-visible:outline-foco disabled:opacity-40"
+                onClick={() => setModoNuevo("ia")}
+              >
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-4 -top-4 h-20 w-20 rounded-full bg-accion-tonal blur-xl transition group-hover:scale-125"
+                />
+                <span className="relative flex items-start gap-espacio-3">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control degradado-marca text-blanco shadow-violeta">
+                    <IconoInteligencia />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-espacio-1">
+                    <span className="flex items-center gap-espacio-2 font-titulo text-titulo-panel text-tinta">
+                      {t("procesos.hazloConIa")}
+                      <span className="rounded-full degradado-marca px-espacio-2 py-0.5 text-micro font-semibold text-blanco">
+                        {t("procesos.nuevoIaRecomendado")}
+                      </span>
+                    </span>
+                    <span className="text-pequeno text-tinta-media">
+                      {t("procesos.nuevoIaDesc")}
+                    </span>
+                    <span className="mt-espacio-2 text-pequeno font-semibold text-accion-tonal-texto transition group-hover:translate-x-1">
+                      {t("procesos.nuevoIaAccion")} →
+                    </span>
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                disabled={crear.isPending}
+                className="group relative overflow-hidden rounded-panel border border-borde bg-superficie p-espacio-5 text-left transition hover:border-borde-fuerte hover:shadow-superficie-elevada focus-visible:outline-foco disabled:opacity-40"
                 onClick={() =>
                   crear.mutate({
                     codigo: `PROC-${Date.now().toString(36).toUpperCase()}`,
@@ -186,32 +217,36 @@ function ListaProcesos({
                   })
                 }
               >
-                <span className="flex flex-col items-start gap-espacio-1">
-                  <span className="font-bold">{t("procesos.nuevoManual")}</span>
-                  <span className="text-micro font-normal text-tinta-suave">
-                    {t("procesos.nuevoManualDesc")}
+                <span className="relative flex items-start gap-espacio-3">
+                  <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-control border border-borde bg-lienzo text-tinta-media">
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                    </svg>
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-espacio-1">
+                    <span className="font-titulo text-titulo-panel text-tinta">
+                      {t("procesos.nuevoManual")}
+                    </span>
+                    <span className="text-pequeno text-tinta-media">
+                      {t("procesos.nuevoManualDesc")}
+                    </span>
+                    <span className="mt-espacio-2 text-pequeno font-semibold text-tinta-media transition group-hover:translate-x-1">
+                      {t("procesos.nuevoManualAccion")} →
+                    </span>
                   </span>
                 </span>
-              </Boton>
-              <Boton
-                variante="secundario"
-                className="h-auto justify-start px-espacio-4 py-espacio-4 text-left"
-                onClick={() => setModoNuevo("ia")}
-              >
-                <span className="flex items-start gap-espacio-3">
-                  <span className="mt-espacio-1 text-accion-primaria">
-                    <IconoInteligencia />
-                  </span>
-                  <span className="flex flex-col items-start gap-espacio-1">
-                    <span className="font-bold">
-                      {t("procesos.hazloConIa")}
-                    </span>
-                    <span className="text-micro font-normal text-tinta-suave">
-                      {t("procesos.nuevoIaDesc")}
-                    </span>
-                  </span>
-                </span>
-              </Boton>
+              </button>
             </div>
           ) : (
             <ConversacionIa
