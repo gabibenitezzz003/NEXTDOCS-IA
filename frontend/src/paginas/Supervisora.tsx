@@ -105,6 +105,33 @@ function ReglasSupervisora() {
 
   return (
     <div className="grid gap-espacio-4">
+      <Tarjeta className="border-violeta-borde! bg-violeta-tenue!">
+        <CabeceraTarjeta
+          titulo={t("reglasSupervisora.comoFunciona")}
+          descripcion={t("reglasSupervisora.comoFuncionaDesc")}
+        />
+        <ol className="mt-espacio-4 grid min-w-0 gap-espacio-3 sm:grid-cols-3">
+          {[1, 2, 3].map((paso) => (
+            <li
+              key={paso}
+              className="flex min-w-0 items-start gap-espacio-3 rounded-control border border-violeta-borde bg-superficie p-espacio-3"
+            >
+              <span
+                aria-hidden="true"
+                className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accion-tonal-fondo text-micro font-semibold text-accion-tonal-texto"
+              >
+                {paso}
+              </span>
+              <p className="min-w-0 text-micro text-tinta-media">
+                {t(`reglasSupervisora.paso${paso}`)}
+              </p>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-espacio-3 text-micro text-tinta-suave">
+          {t("reglasSupervisora.ejemplo")}
+        </p>
+      </Tarjeta>
       <Tarjeta>
         <CabeceraTarjeta
           titulo={t("reglasSupervisora.titulo")}

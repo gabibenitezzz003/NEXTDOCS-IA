@@ -282,6 +282,7 @@ export interface ErrorApi {
   codigo?: number;
   correlacionId?: string;
   campos?: Record<string, string>;
+  detalles?: string[];
 }
 
 export type EstadoTipoPropuesto = "PENDIENTE" | "APROBADO" | "DESCARTADO";

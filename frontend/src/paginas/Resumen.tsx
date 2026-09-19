@@ -8,7 +8,7 @@ import {
   Vacio,
 } from "../componentes/Estados";
 import { CabeceraTarjeta, Metrica, Tarjeta } from "../componentes/Interfaz";
-import { Columnas } from "../componentes/Graficos";
+import { Anillo, Columnas, Embudo } from "../componentes/Graficos";
 import { IconoDerecha, IconoReloj } from "../componentes/Iconos";
 import { InsigniaEstado } from "../componentes/Insignias";
 import {
@@ -445,7 +445,46 @@ export function Resumen() {
                   </div>
                 ) : (
                   <figure className="mt-espacio-6">
-                    <div aria-hidden="true" className="hidden min-w-0 sm:block">
+                    <div className="grid min-w-0 items-center gap-espacio-6 sm:grid-cols-[auto_minmax(0,1fr)]">
+                      <div
+                        aria-hidden="true"
+                        className="mx-auto flex flex-col items-center"
+                      >
+                        <Anillo
+                          porcentaje={
+                            totalDocumentos
+                              ? ((Number(datos.APROBADO ?? 0) +
+                                    Number(datos.CERRADO ?? 0)) /
+                                    totalDocumentos) *
+                                  100
+                              : 0
+                          }
+                          tono="exito"
+                          subtitulo={t("resumen.resueltos")}
+                        />
+                      </div>
+                      <div aria-hidden="true" className="min-w-0">
+                        <Embudo
+                          plano
+                          etapas={[
+                            "RECIBIDO",
+                            "PROCESANDO",
+                            "VALIDADO",
+                            "APROBADO",
+                          ].map((clave) => ({
+                            etiqueta: t(`estadosDocumento.${clave}`),
+                            valor: Number(datos[clave] ?? 0),
+                            tono:
+                              clave === "APROBADO"
+                                ? "exito"
+                                : clave === "VALIDADO"
+                                  ? "informacion"
+                                  : "violeta",
+                          }))}
+                        />
+                      </div>
+                    </div>
+                    <div aria-hidden="true" className="mt-espacio-6 hidden min-w-0 sm:block">
                       <Columnas
                         barras={estados
                           .sort((uno, otro) => Number(otro[1]) - Number(uno[1]))

@@ -118,7 +118,12 @@ export function mensajeDeError(error: unknown): string {
         .join(". ");
     }
     if (cuerpo?.mensaje) {
-      return cuerpo.mensaje;
+      const detalles = (cuerpo.detalles ?? [])
+        .filter((detalle) => typeof detalle === "string" && detalle.trim())
+        .slice(0, 4);
+      return detalles.length
+        ? `${cuerpo.mensaje} ${detalles.join(" · ")}`
+        : cuerpo.mensaje;
     }
     if (!error.response) {
       return traducir("errores.sinConexionServidor");

@@ -482,6 +482,7 @@ export const pt: Diccionario = {
     operacionYAtencion: "Operação e atenção",
     distribucion: "Distribuição por estado",
     distribucionDesc: "Documentos atuais da organização, sem recorte de datas.",
+    resueltos: "resolvidos",
     sinDocumentos: "Ainda não há documentos",
     sinDocumentosDetalle:
       "Quando o primeiro documento chegar, seu estado aparecerá aqui.",
@@ -1262,7 +1263,17 @@ export const pt: Diccionario = {
   reglasSupervisora: {
     titulo: "Regras da IA Supervisora",
     descripcion:
-      "Cada regra compara um dado da instância com um limite. São avaliadas ao concluir cada tarefa.",
+      "Vigie os processos em execução: cada regra compara um dado da instância contra um limite e gera uma ocorrência — ou bloqueia a instância — quando dispara.",
+    comoFunciona: "Como funciona",
+    comoFuncionaDesc:
+      "A supervisora vigia os processos em execução e avisa ou freia quando um dado cruza o limite que você definiu.",
+    paso1: "Um processo corre sobre um documento ou caso (Processos em curso).",
+    paso2:
+      "Ao concluir cada passo, a regra compara o dado escolhido contra o seu limite.",
+    paso3:
+      "Se dispara, gera uma ocorrência na instância — ou a bloqueia diretamente.",
+    ejemplo:
+      "Exemplo: a regra «confidence é menor que 35 → Avisar» detecta documentos que o motor leu com pouca certeza. As ocorrências aparecem dentro de cada instância em Processos em curso.",
     nuevaRegla: "Nova regra",
     sinReglas: "Ainda não há regras",
     sinReglasDetalle:
@@ -1687,10 +1698,12 @@ export const pt: Diccionario = {
       google: {
         nombre: "Gmail",
         detalle: "Envie e-mails com sua conta Google, sem configurar nada",
+        como: "Entre com Google e pronto: os passos de e-mail enviam dessa conta, sem tocar em servidores nem senhas.",
       },
       microsoft: {
         nombre: "Microsoft 365",
         detalle: "Envie e-mails com sua conta Outlook ou Microsoft",
+        como: "Entre com Microsoft e pronto: os passos de e-mail enviam dessa conta, sem tocar em servidores nem senhas.",
       },
       slack: {
         nombre: "Slack",

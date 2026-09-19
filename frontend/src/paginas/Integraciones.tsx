@@ -1,4 +1,4 @@
-import { useEffect, useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
@@ -14,6 +14,7 @@ import {
 import {
   IconoCheck,
   IconoCorreo,
+  IconoDerecha,
   IconoEliminar,
   IconoGoogle,
   IconoInfo,
@@ -42,6 +43,81 @@ const ICONO_TIPO: Record<TipoIntegracion, ComponentType<{ tamano?: number }>> = 
   WHATSAPP: IconoWhatsapp,
 };
 
+type EstadoIntegracion = { texto: string; tono: Tono };
+
+function estadoDe(
+  integracion: Integracion | undefined,
+  t: (ruta: string) => string,
+): EstadoIntegracion {
+  if (!integracion?.configurada) {
+    return { texto: t("integraciones.sinConfigurar"), tono: "neutro" };
+  }
+  if (!integracion.habilitada) {
+    return { texto: t("integraciones.deshabilitada"), tono: "alerta" };
+  }
+  if (integracion.verificadaEn) {
+    return { texto: t("integraciones.verificada"), tono: "exito" };
+  }
+  return { texto: t("integraciones.configurada"), tono: "informacion" };
+}
+
+function MarcoApp({
+  icono,
+  nombre,
+  detalle,
+  estado,
+  expandida,
+  alAlternar,
+  accion,
+  children,
+}: {
+  icono: ReactNode;
+  nombre: string;
+  detalle: string;
+  estado: EstadoIntegracion;
+  expandida: boolean;
+  alAlternar: () => void;
+  accion?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <Tarjeta padding="p-0">
+      <button
+        type="button"
+        onClick={alAlternar}
+        aria-expanded={expandida}
+        className="flex w-full items-center justify-between gap-espacio-3 p-espacio-5 text-left transition-colors hover:bg-lienzo focus-visible:outline-foco rounded-tarjeta"
+      >
+        <div className="flex min-w-0 items-center gap-espacio-3">
+          <span
+            aria-hidden="true"
+            className="grid size-espacio-10 shrink-0 place-items-center rounded-insignia bg-violeta-tenue text-violeta"
+          >
+            {icono}
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-base font-semibold text-tinta">{nombre}</h3>
+            <p className="truncate text-micro text-tinta-media">{detalle}</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-espacio-3">
+          <Pastilla tono={estado.tono}>{estado.texto}</Pastilla>
+          {accion}
+          <span
+            aria-hidden="true"
+            className={`text-tinta-suave transition-transform ${expandida ? "rotate-90" : ""}`}
+          >
+            <IconoDerecha tamano={16} />
+          </span>
+        </div>
+      </button>
+      {expandida ? (
+        <div className="border-t border-borde p-espacio-5">{children}</div>
+      ) : null}
+    </Tarjeta>
+  );
+}
+
 export function Integraciones() {
   const { t } = useIdioma();
   const [parametros, setParametros] = useSearchParams();
@@ -50,12 +126,15 @@ export function Integraciones() {
       return null;
     }
     const proveedor = parametros.get("proveedor");
-    const nombre = proveedor === "google" ? "Gmail" : proveedor === "microsoft" ? "Microsoft 365" : proveedor ?? "";
+    const nombre =
+      proveedor === "google"
+        ? "Gmail"
+        : proveedor === "microsoft"
+          ? "Microsoft 365"
+          : (proveedor ?? "");
     return t("integraciones.oauth.conectada", { nombre });
   });
-  const [errorConexion] = useState<string | null>(() =>
-    parametros.get("error"),
-  );
+  const [errorConexion] = useState<string | null>(() => parametros.get("error"));
 
   useEffect(() => {
     if (parametros.get("conectado") || parametros.get("error")) {
@@ -126,7 +205,7 @@ export function Integraciones() {
               <h2 className="mb-espacio-3 text-base font-semibold text-tinta">
                 {t("integraciones.seccion.correo")}
               </h2>
-              <div className="grid gap-espacio-5 xl:grid-cols-2">
+              <div className="grid items-start gap-espacio-5 xl:grid-cols-2">
                 <TarjetaOauth
                   proveedor="google"
                   disponible={oauthDisponibles.includes("google")}
@@ -161,7 +240,7 @@ export function Integraciones() {
               <h2 className="mb-espacio-3 text-base font-semibold text-tinta">
                 {t("integraciones.seccion.mensajeria")}
               </h2>
-              <div className="grid gap-espacio-5 xl:grid-cols-2">
+              <div className="grid items-start gap-espacio-5 xl:grid-cols-2">
                 {telegram ? (
                   <TarjetaIntegracion
                     integracion={telegram}
@@ -188,14 +267,14 @@ export function Integraciones() {
               <h2 className="mb-espacio-3 text-base font-semibold text-tinta">
                 {t("integraciones.seccion.proximamente")}
               </h2>
-              <div className="grid gap-espacio-5 xl:grid-cols-2">
+              <div className="grid items-start gap-espacio-5 xl:grid-cols-2">
                 {["slack", "googledrive"].map((app) => (
                   <Tarjeta key={app} className="opacity-60">
                     <div className="flex items-center justify-between gap-espacio-3">
                       <div className="flex items-center gap-espacio-3">
                         <span
                           aria-hidden="true"
-                          className="grid size-espacio-10 shrink-0 place-items-center rounded-insignia bg-tinta-tenue text-tinta-media"
+                          className="grid size-espacio-10 shrink-0 place-items-center rounded-insignia bg-lienzo text-tinta-media"
                         >
                           <IconoCorreo tamano={22} />
                         </span>
@@ -238,6 +317,7 @@ function TarjetaOauth({
 }) {
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
+  const [expandida, setExpandida] = useState(false);
   const [destinoPrueba, setDestinoPrueba] = useState("");
   const [resultado, setResultado] = useState<ResultadoPrueba | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -254,6 +334,10 @@ function TarjetaOauth({
     integracion?.configurada === true &&
     integracion.configuracion?.modo !== modoEsperado;
 
+  const estado: EstadoIntegracion = conectada
+    ? estadoDe(integracion, t)
+    : { texto: t("integraciones.sinConfigurar"), tono: "neutro" };
+
   const conectar = useMutation({
     mutationFn: () => iniciarOauth(proveedor),
     onSuccess: (url) => {
@@ -263,8 +347,7 @@ function TarjetaOauth({
   });
 
   const probar = useMutation({
-    mutationFn: () =>
-      probarIntegracion("CORREO", destinoPrueba || undefined),
+    mutationFn: () => probarIntegracion("CORREO", destinoPrueba || undefined),
     onSuccess: (salida) => {
       setResultado(salida);
       if (salida.exitosa) {
@@ -288,42 +371,47 @@ function TarjetaOauth({
     },
   });
 
-  const estado: { texto: string; tono: Tono } = conectada
-    ? integracion?.verificadaEn
-      ? { texto: t("integraciones.verificada"), tono: "exito" }
-      : { texto: t("integraciones.configurada"), tono: "informacion" }
-    : { texto: t("integraciones.sinConfigurar"), tono: "neutro" };
-
   return (
-    <Tarjeta>
-      <div className="flex items-start justify-between gap-espacio-3">
-        <div className="flex items-center gap-espacio-3">
-          <span
-            aria-hidden="true"
-            className="grid size-espacio-10 shrink-0 place-items-center rounded-insignia bg-violeta-tenue text-violeta"
+    <MarcoApp
+      icono={<Icono tamano={22} />}
+      nombre={t(`integraciones.catalogo.${proveedor}.nombre`)}
+      detalle={
+        conectada && cuenta
+          ? t("integraciones.oauth.conectadaComo", { cuenta })
+          : t(`integraciones.catalogo.${proveedor}.detalle`)
+      }
+      estado={estado}
+      expandida={expandida}
+      alAlternar={() => setExpandida((v) => !v)}
+      accion={
+        !conectada && disponible ? (
+          <Boton
+            type="button"
+            variante="primario"
+            cargando={conectar.isPending}
+            onClick={(e) => {
+              e.stopPropagation();
+              conectar.mutate();
+            }}
           >
-            <Icono tamano={22} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-base font-semibold text-tinta">
-              {t(`integraciones.catalogo.${proveedor}.nombre`)}
-            </h3>
-            <p className="text-micro text-tinta-media">
-              {t(`integraciones.catalogo.${proveedor}.detalle`)}
-            </p>
-          </div>
-        </div>
-        <Pastilla tono={estado.tono}>{estado.texto}</Pastilla>
-      </div>
-
-      {conectada && cuenta ? (
-        <p className="mt-espacio-3 text-pequeno text-tinta">
-          {t("integraciones.oauth.conectadaComo", { cuenta })}
+            {t(`integraciones.oauth.conectar.${proveedor}`)}
+          </Boton>
+        ) : undefined
+      }
+    >
+      {!conectada && otraActiva ? (
+        <p className="text-pequeno text-tinta-media">
+          {t("integraciones.oauth.otraActiva")}
         </p>
       ) : null}
-      {!conectada && otraActiva ? (
-        <p className="mt-espacio-3 text-micro text-tinta-media">
-          {t("integraciones.oauth.otraActiva")}
+      {!conectada && !disponible ? (
+        <p className="text-pequeno text-tinta-media">
+          {t("integraciones.oauth.noDisponible")}
+        </p>
+      ) : null}
+      {!conectada && disponible ? (
+        <p className="text-pequeno text-tinta-media">
+          {t(`integraciones.catalogo.${proveedor}.como`)}
         </p>
       ) : null}
 
@@ -356,42 +444,27 @@ function TarjetaOauth({
         </div>
       ) : null}
 
-      <div className="mt-espacio-4 flex flex-wrap items-center gap-espacio-2">
-        {conectada ? (
-          <>
-            <Boton
-              type="button"
-              variante="secundario"
-              cargando={probar.isPending}
-              onClick={() => probar.mutate()}
-            >
-              {t("integraciones.probar")}
-            </Boton>
-            <Boton
-              type="button"
-              variante="fantasma"
-              className="text-rojo-alto"
-              onClick={() => setConfirmarBaja(true)}
-            >
-              <IconoEliminar tamano={14} />
-              {t("integraciones.oauth.desconectar")}
-            </Boton>
-          </>
-        ) : disponible ? (
+      {conectada ? (
+        <div className="mt-espacio-4 flex flex-wrap items-center gap-espacio-2">
           <Boton
             type="button"
-            variante="primario"
-            cargando={conectar.isPending}
-            onClick={() => conectar.mutate()}
+            variante="secundario"
+            cargando={probar.isPending}
+            onClick={() => probar.mutate()}
           >
-            {t(`integraciones.oauth.conectar.${proveedor}`)}
+            {t("integraciones.probar")}
           </Boton>
-        ) : (
-          <p className="text-micro text-tinta-media">
-            {t("integraciones.oauth.noDisponible")}
-          </p>
-        )}
-      </div>
+          <Boton
+            type="button"
+            variante="fantasma"
+            className="text-rojo-alto"
+            onClick={() => setConfirmarBaja(true)}
+          >
+            <IconoEliminar tamano={14} />
+            {t("integraciones.oauth.desconectar")}
+          </Boton>
+        </div>
+      ) : null}
 
       {confirmarBaja ? (
         <DialogoConfirmacion
@@ -405,7 +478,7 @@ function TarjetaOauth({
           alCancelar={() => setConfirmarBaja(false)}
         />
       ) : null}
-    </Tarjeta>
+    </MarcoApp>
   );
 }
 
@@ -422,6 +495,7 @@ function TarjetaIntegracion({
 }) {
   const { t } = useIdioma();
   const clienteConsultas = useQueryClient();
+  const [expandida, setExpandida] = useState(false);
   const [valores, setValores] = useState<Record<string, string>>({});
   const [habilitada, setHabilitada] = useState(integracion.habilitada);
   const [destinoPrueba, setDestinoPrueba] = useState("");
@@ -482,51 +556,31 @@ function TarjetaIntegracion({
   });
 
   const Icono = ICONO_TIPO[integracion.tipo];
-  const estado: { texto: string; tono: Tono } = !integracion.configurada
-    ? { texto: t("integraciones.sinConfigurar"), tono: "neutro" }
-    : !integracion.habilitada
-      ? { texto: t("integraciones.deshabilitada"), tono: "alerta" }
-      : integracion.verificadaEn
-        ? { texto: t("integraciones.verificada"), tono: "exito" }
-        : { texto: t("integraciones.configurada"), tono: "informacion" };
 
   return (
-    <Tarjeta>
-      <div className="flex items-start justify-between gap-espacio-3">
-        <div className="flex items-center gap-espacio-3">
-          <span
-            aria-hidden="true"
-            className="grid size-espacio-10 shrink-0 place-items-center rounded-insignia bg-violeta-tenue text-violeta"
-          >
-            <Icono tamano={22} />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-base font-semibold text-tinta">
-              {titulo ?? t(`integraciones.nombre.${integracion.tipo}`)}
-            </h3>
-            <p className="text-micro text-tinta-media">
-              {t(`integraciones.detalle.${integracion.tipo}`)}
-            </p>
-          </div>
-        </div>
-        <Pastilla tono={estado.tono}>{estado.texto}</Pastilla>
-      </div>
-
+    <MarcoApp
+      icono={<Icono tamano={22} />}
+      nombre={titulo ?? t(`integraciones.nombre.${integracion.tipo}`)}
+      detalle={t(`integraciones.detalle.${integracion.tipo}`)}
+      estado={estadoDe(integracion, t)}
+      expandida={expandida}
+      alAlternar={() => setExpandida((v) => !v)}
+    >
       {avisoPrevio ? (
-        <p className="mt-espacio-3 rounded-panel border border-informacion-borde bg-informacion-tenue p-espacio-3 text-pequeno text-tinta">
+        <p className="mb-espacio-3 rounded-panel border border-informacion-borde bg-informacion-tenue p-espacio-3 text-pequeno text-tinta">
           {avisoPrevio}
         </p>
       ) : null}
 
       {guia ? (
-        <ol className="mt-espacio-3 list-decimal space-y-espacio-1 pl-espacio-5 text-pequeno text-tinta-media">
+        <ol className="mb-espacio-4 list-decimal space-y-espacio-1 pl-espacio-5 text-pequeno text-tinta-media">
           {guia.map((paso, indice) => (
             <li key={indice}>{paso}</li>
           ))}
         </ol>
       ) : null}
 
-      <div className="mt-espacio-4 grid gap-espacio-3 sm:grid-cols-2">
+      <div className="grid gap-espacio-3 sm:grid-cols-2">
         {integracion.campos.map((campo) =>
           campo === "seguridad" ? (
             <Selector
@@ -656,6 +710,6 @@ function TarjetaIntegracion({
           alCancelar={() => setConfirmarBaja(false)}
         />
       ) : null}
-    </Tarjeta>
+    </MarcoApp>
   );
 }

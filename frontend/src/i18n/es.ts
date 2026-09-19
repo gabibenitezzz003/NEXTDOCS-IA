@@ -479,6 +479,7 @@ export const es = {
     distribucion: "Distribución por estado",
     distribucionDesc:
       "Documentos actuales de la organización, sin recorte de fechas.",
+    resueltos: "resueltos",
     sinDocumentos: "Todavía no hay documentos",
     sinDocumentosDetalle:
       "Cuando ingrese el primer documento, su estado aparecerá aquí.",
@@ -1260,7 +1261,17 @@ export const es = {
   reglasSupervisora: {
     titulo: "Reglas de la IA Supervisora",
     descripcion:
-      "Cada regla compara un dato de la instancia contra un umbral. Se evaluan al completar cada tarea.",
+      "Vigilá los procesos en ejecución: cada regla compara un dato de la instancia contra un umbral y genera un hallazgo — o bloquea la instancia — cuando se dispara.",
+    comoFunciona: "Cómo funciona",
+    comoFuncionaDesc:
+      "La supervisora vigila los procesos que corren y avisa o frena cuando un dato cruza el límite que definís.",
+    paso1: "Un proceso corre sobre un documento o un caso (Procesos en curso).",
+    paso2:
+      "Al completar cada paso, la regla compara el dato elegido contra tu umbral.",
+    paso3:
+      "Si se dispara, genera un hallazgo en la instancia — o la bloquea directamente.",
+    ejemplo:
+      "Ejemplo: la regla «confidence es menor que 35 → Advertir» detecta documentos que el motor leyó con poca certeza. Los hallazgos se ven dentro de cada instancia en Procesos en curso.",
     nuevaRegla: "Nueva regla",
     sinReglas: "Todavia no hay reglas",
     sinReglasDetalle:
@@ -1686,10 +1697,12 @@ export const es = {
       google: {
         nombre: "Gmail",
         detalle: "Enviá correos con tu cuenta de Google, sin configurar nada",
+        como: "Iniciás sesión con Google y listo: los pasos de correo envían desde esa cuenta, sin tocar servidores ni claves.",
       },
       microsoft: {
         nombre: "Microsoft 365",
         detalle: "Enviá correos con tu cuenta de Outlook o Microsoft",
+        como: "Iniciás sesión con Microsoft y listo: los pasos de correo envían desde esa cuenta, sin tocar servidores ni claves.",
       },
       slack: {
         nombre: "Slack",

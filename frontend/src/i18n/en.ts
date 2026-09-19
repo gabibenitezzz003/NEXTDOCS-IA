@@ -482,6 +482,7 @@ export const en: Diccionario = {
     distribucion: "Distribution by status",
     distribucionDesc:
       "The organization's current documents, with no date filtering.",
+    resueltos: "resolved",
     sinDocumentos: "No documents yet",
     sinDocumentosDetalle:
       "When the first document arrives, its status will appear here.",
@@ -1256,7 +1257,17 @@ export const en: Diccionario = {
   reglasSupervisora: {
     titulo: "Supervisor AI rules",
     descripcion:
-      "Each rule compares an instance data point against a threshold. They are evaluated when each task completes.",
+      "Watch running processes: each rule compares an instance value against a threshold and raises a finding — or blocks the instance — when triggered.",
+    comoFunciona: "How it works",
+    comoFuncionaDesc:
+      "The supervisor watches running processes and warns or stops them when a value crosses the limit you set.",
+    paso1: "A process runs over a document or a case (Running processes).",
+    paso2:
+      "When each step completes, the rule compares the chosen value against your threshold.",
+    paso3:
+      "If it fires, it raises a finding on the instance — or blocks it outright.",
+    ejemplo:
+      "Example: the rule «confidence is less than 35 → Warn» catches documents the engine read with low certainty. Findings appear inside each instance under Running processes.",
     nuevaRegla: "New rule",
     sinReglas: "No rules yet",
     sinReglasDetalle:
@@ -1679,10 +1690,12 @@ export const en: Diccionario = {
       google: {
         nombre: "Gmail",
         detalle: "Send emails with your Google account, no setup needed",
+        como: "Sign in with Google and that's it: email steps send from that account, no servers or passwords to configure.",
       },
       microsoft: {
         nombre: "Microsoft 365",
         detalle: "Send emails with your Outlook or Microsoft account",
+        como: "Sign in with Microsoft and that's it: email steps send from that account, no servers or passwords to configure.",
       },
       slack: {
         nombre: "Slack",
