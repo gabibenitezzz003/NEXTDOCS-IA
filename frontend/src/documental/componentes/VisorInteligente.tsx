@@ -11,7 +11,7 @@ import {
   type CampoValor,
 } from "../../api/documental";
 import { mensajeDeError } from "../../api/cliente";
-import { Boton, BotonIcono, Tarjeta } from "../../componentes/Interfaz";
+import { Boton, BotonIcono, Campo, DialogoConfirmacion, Tarjeta } from "../../componentes/Interfaz";
 import { Cargando, ErrorPanel, Vacio } from "../../componentes/Estados";
 import { BarraConfianza } from "../../componentes/Insignias";
 import {
@@ -211,6 +211,9 @@ export function VisorInteligente({
   const [correoDestino, setCorreoDestino] = useState("");
   const [correoAbierto, setCorreoAbierto] = useState(false);
   const [enviandoCorreo, setEnviandoCorreo] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
+  const [motivoEliminar, setMotivoEliminar] = useState("");
+  const [enviandoEliminar, setEnviandoEliminar] = useState(false);
   const [aviso, setAviso] = useState<{
     tono: "ok" | "error";
     texto: string;
@@ -341,12 +344,7 @@ export function VisorInteligente({
   const puedeEliminar = documento.estado !== "ELIMINADO";
 
   const eliminar = async () => {
-    const motivoEliminar = window.prompt(
-      t("documental.visor.motivoEliminar", {
-        nombre: String(documento.nombre_archivo ?? ""),
-      }),
-    );
-    if (motivoEliminar === null) return;
+    setEnviandoEliminar(true);
     try {
       await eliminarDocumento(documentoId, motivoEliminar.trim() || null);
       clienteConsultas.invalidateQueries({
@@ -355,6 +353,7 @@ export function VisorInteligente({
       alVolver();
     } catch (error) {
       setAviso({ tono: "error", texto: mensajeDeError(error) });
+      setEnviandoEliminar(false);
     }
   };
 
@@ -518,7 +517,10 @@ export function VisorInteligente({
             <Boton
               variante="peligro"
               tamano="sm"
-              onClick={() => void eliminar()}
+              onClick={() => {
+                setMotivoEliminar("");
+                setConfirmandoEliminar(true);
+              }}
               data-testid="documental-eliminar"
             >
               <IconoEliminar />
@@ -739,6 +741,29 @@ export function VisorInteligente({
           </div>
         </Tarjeta>
       </div>
+
+      {confirmandoEliminar ? (
+        <DialogoConfirmacion
+          titulo={t("documental.visor.eliminar")}
+          descripcion={t("documental.visor.motivoEliminar", {
+            nombre: String(documento.nombre_archivo ?? ""),
+          })}
+          etiquetaConfirmar={t("documental.visor.eliminar")}
+          cargando={enviandoEliminar}
+          alCancelar={() => setConfirmandoEliminar(false)}
+          alConfirmar={() => void eliminar()}
+        >
+          <Campo
+            etiqueta={t("documental.visor.motivoOpcional")}
+            autoFocus
+            value={motivoEliminar}
+            onChange={(evento) => setMotivoEliminar(evento.target.value)}
+            onKeyDown={(evento) => {
+              if (evento.key === "Enter") void eliminar();
+            }}
+          />
+        </DialogoConfirmacion>
+      ) : null}
     </div>
   );
 }

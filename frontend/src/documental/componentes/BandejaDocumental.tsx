@@ -13,6 +13,7 @@ import {
   Boton,
   BotonIcono,
   Campo,
+  DialogoConfirmacion,
   Selector,
   Tarjeta,
 } from "../../componentes/Interfaz";
@@ -53,6 +54,9 @@ export function BandejaDocumental({
   const [estado, setEstado] = useState("");
   const [plantilla, setPlantilla] = useState("");
   const [subiendo, setSubiendo] = useState(false);
+  const [eliminando, setEliminando] = useState<DocumentoMotor | null>(null);
+  const [motivoEliminar, setMotivoEliminar] = useState("");
+  const [enviandoEliminar, setEnviandoEliminar] = useState(false);
   const [aviso, setAviso] = useState<{
     tono: "ok" | "error";
     texto: string;
@@ -135,19 +139,18 @@ export function BandejaDocumental({
     }
   };
 
-  const eliminar = async (documento: DocumentoMotor) => {
-    const motivo = window.prompt(
-      t("documental.bandeja.motivoEliminar", {
-        nombre: documento.nombre_archivo,
-      }),
-    );
-    if (motivo === null) return;
+  const eliminar = async () => {
+    if (!eliminando) return;
+    setEnviandoEliminar(true);
     try {
-      await eliminarDocumento(documento.id, motivo.trim() || null);
+      await eliminarDocumento(eliminando.id, motivoEliminar.trim() || null);
       setAviso({ tono: "ok", texto: t("documental.bandeja.eliminado") });
+      setEliminando(null);
       invalidar();
     } catch (error) {
       setAviso({ tono: "error", texto: mensajeDeError(error) });
+    } finally {
+      setEnviandoEliminar(false);
     }
   };
 
@@ -385,7 +388,8 @@ export function BandejaDocumental({
                         data-testid="documental-eliminar-fila"
                         onClick={(evento) => {
                           evento.stopPropagation();
-                          void eliminar(documento);
+                          setMotivoEliminar("");
+                          setEliminando(documento);
                         }}
                       >
                         <IconoEliminar />
@@ -399,6 +403,29 @@ export function BandejaDocumental({
         )}
         </div>
       </Tarjeta>
+
+      {eliminando ? (
+        <DialogoConfirmacion
+          titulo={t("documental.bandeja.eliminar")}
+          descripcion={t("documental.bandeja.motivoEliminar", {
+            nombre: String(eliminando.nombre_archivo ?? ""),
+          })}
+          etiquetaConfirmar={t("documental.bandeja.eliminar")}
+          cargando={enviandoEliminar}
+          alCancelar={() => setEliminando(null)}
+          alConfirmar={() => void eliminar()}
+        >
+          <Campo
+            etiqueta={t("documental.visor.motivoOpcional")}
+            autoFocus
+            value={motivoEliminar}
+            onChange={(evento) => setMotivoEliminar(evento.target.value)}
+            onKeyDown={(evento) => {
+              if (evento.key === "Enter") void eliminar();
+            }}
+          />
+        </DialogoConfirmacion>
+      ) : null}
     </div>
   );
 }

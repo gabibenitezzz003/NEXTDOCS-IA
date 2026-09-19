@@ -752,6 +752,106 @@ export function Panel({
   );
 }
 
+export function DialogoConfirmacion({
+  titulo,
+  descripcion,
+  etiquetaConfirmar,
+  cargando = false,
+  alCancelar,
+  alConfirmar,
+  children,
+}: {
+  titulo: string;
+  descripcion?: string;
+  etiquetaConfirmar: string;
+  cargando?: boolean;
+  alCancelar: () => void;
+  alConfirmar: () => void;
+  children?: ReactNode;
+}) {
+  const { t } = useIdioma();
+  const identificador = useId();
+  const dialogo = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const elemento = dialogo.current;
+    const origen =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const desbordamiento = document.body.style.overflow;
+    elemento?.showModal();
+    document.body.style.overflow = "hidden";
+    return () => {
+      elemento?.close();
+      document.body.style.overflow = desbordamiento;
+      if (origen?.isConnected) origen.focus({ preventScroll: true });
+    };
+  }, []);
+
+  return (
+    <dialog
+      ref={dialogo}
+      aria-modal="true"
+      aria-labelledby={`${identificador}-titulo`}
+      aria-describedby={
+        descripcion ? `${identificador}-descripcion` : undefined
+      }
+      onCancel={(evento) => {
+        evento.preventDefault();
+        if (!cargando) alCancelar();
+      }}
+      onClick={(evento) => {
+        if (evento.target !== evento.currentTarget || cargando) return;
+        const caja = evento.currentTarget.getBoundingClientRect();
+        if (
+          evento.clientX < caja.left ||
+          evento.clientX > caja.right ||
+          evento.clientY < caja.top ||
+          evento.clientY > caja.bottom
+        )
+          alCancelar();
+      }}
+      className="m-auto w-full max-w-md rounded-tarjeta border border-borde bg-superficie p-0 text-tinta shadow-[0_24px_60px_rgba(13,15,18,.25)] backdrop:bg-grafito/50 backdrop:backdrop-blur-[3px]"
+    >
+      <div className="px-espacio-6 py-espacio-5">
+        <h2
+          id={`${identificador}-titulo`}
+          className="font-titulo text-titulo-panel text-tinta break-words"
+        >
+          {titulo}
+        </h2>
+        {descripcion ? (
+          <p
+            id={`${identificador}-descripcion`}
+            className="mt-espacio-2 text-pequeno leading-relaxed text-tinta-suave"
+          >
+            {descripcion}
+          </p>
+        ) : null}
+        {children ? <div className="mt-espacio-4">{children}</div> : null}
+      </div>
+      <footer className="flex justify-end gap-espacio-2 border-t border-borde bg-lienzo px-espacio-6 py-espacio-4">
+        <Boton
+          variante="secundario"
+          tamano="sm"
+          disabled={cargando}
+          onClick={alCancelar}
+        >
+          {t("comun.cancelar")}
+        </Boton>
+        <Boton
+          variante="peligro"
+          tamano="sm"
+          cargando={cargando}
+          onClick={alConfirmar}
+        >
+          {etiquetaConfirmar}
+        </Boton>
+      </footer>
+    </dialog>
+  );
+}
+
 export function Metrica({
   etiqueta,
   valor,
