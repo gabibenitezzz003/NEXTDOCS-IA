@@ -381,6 +381,9 @@ export const es = {
       "Tocá un paso para configurarlo, o una conexión para editar su condición. Solo el paso Inicio es fijo: el flujo termina en el último paso de cada rama o en un paso Fin.",
     inicioAyuda:
       "Elegí cómo arranca el proceso: por un evento (ej.: documento aprobado), todos los días a una hora, cada N minutos, o combinado.",
+    enviarEnPrueba: "Enviar de verdad al ejecutar el borrador",
+    enviarEnPruebaAyuda:
+      "En las ejecuciones de prueba el envío se simula para no tocar destinatarios reales. Activá esto solo si querés probar el envío real.",
     horaDiaria: "Ejecutar todos los días a las",
     horaDiariaAyuda:
       "Con la versión publicada, el proceso se instancia solo una vez al día a esta hora.",
@@ -1074,13 +1077,15 @@ export const es = {
       "Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados.",
     validar: "Validar",
     validacionOk: "La versión es válida: puede publicarse.",
+    eliminarProceso: "Eliminar proceso",
+    confirmarEliminarProceso:
+      "«{nombre}» deja de listarse junto con sus versiones y deja de dispararse por eventos. Las instancias ya creadas conservan su historial.",
     sinGuardar: "Sin guardar",
     versionNoEditable: "Esta versión no se puede editar de forma segura",
     hayCambios:
       "Hay cambios sin guardar. Guardá el borrador antes de publicar.",
     agregarPaso: "Agregar paso",
     guardarBorrador: "Guardar borrador",
-    publicarVersion: "Publicar versión {numero}",
     versionPublicadaTitulo: "Versión {numero} publicada",
     versionPublicadaDesc:
       "Las instancias nuevas usan esta versión. Una instancia ya iniciada conserva su versión aunque publiques otra.",

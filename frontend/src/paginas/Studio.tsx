@@ -19,6 +19,7 @@ import {
   IconoAdjuntar,
   IconoCheck,
   IconoCerrar,
+  IconoEliminar,
   IconoInteligencia,
 } from "../componentes/Iconos";
 import {
@@ -29,6 +30,7 @@ import {
 import {
   actualizarGrafo,
   actualizarProceso,
+  eliminarProceso,
   completarTarea,
   crearProceso,
   generarProcesoConIa,
@@ -109,6 +111,7 @@ function ListaProcesos({
   const [editando, setEditando] = useState<string | null>(null);
   const [nuevoAbierto, setNuevoAbierto] = useState(false);
   const [modoNuevo, setModoNuevo] = useState<"opciones" | "ia">("opciones");
+  const [procesoEliminar, setProcesoEliminar] = useState<Proceso | null>(null);
 
   const consulta = useQuery({
     queryKey: ["procesos"],
@@ -121,6 +124,16 @@ function ListaProcesos({
       setError(null);
       clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
       alAbrir(proceso.id);
+    },
+    onError: (fallo) => setError(mensajeDeError(fallo)),
+  });
+
+  const eliminar = useMutation({
+    mutationFn: (definicionId: string) => eliminarProceso(definicionId),
+    onSuccess: () => {
+      setError(null);
+      setProcesoEliminar(null);
+      clienteConsultas.invalidateQueries({ queryKey: ["procesos"] });
     },
     onError: (fallo) => setError(mensajeDeError(fallo)),
   });
@@ -280,6 +293,15 @@ function ListaProcesos({
                         : t("procesos.editar")}
                     </Boton>
                     <Boton
+                      variante="fantasma"
+                      disabled={eliminar.isPending}
+                      aria-label={t("procesos.eliminarProceso")}
+                      title={t("procesos.eliminarProceso")}
+                      onClick={() => setProcesoEliminar(proceso)}
+                    >
+                      <IconoEliminar tamano={16} />
+                    </Boton>
+                    <Boton
                       variante="primario"
                       onClick={() => alAbrir(proceso.id)}
                     >
@@ -298,6 +320,17 @@ function ListaProcesos({
           ))}
         </ul>
       )}
+      {procesoEliminar ? (
+        <DialogoConfirmacion
+          titulo={t("procesos.eliminarProceso")}
+          descripcion={t("procesos.confirmarEliminarProceso", {
+            nombre: procesoEliminar.nombre,
+          })}
+          etiquetaConfirmar={t("comun.eliminar")}
+          alCancelar={() => setProcesoEliminar(null)}
+          alConfirmar={() => eliminar.mutate(procesoEliminar.id)}
+        />
+      ) : null}
     </div>
   );
 }
@@ -752,6 +785,7 @@ function EstudioProceso({
   }
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
   const [datosPrueba, setDatosPrueba] = useState("");
+  const refPrueba = useRef<HTMLDivElement>(null);
   const [editandoDatos, setEditandoDatos] = useState(false);
   const [chatIaAbierto, setChatIaAbierto] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -985,6 +1019,15 @@ function EstudioProceso({
     },
     onError: (fallo) => setError(mensajeDeError(fallo)),
   });
+
+  useEffect(() => {
+    if (instanciaPrueba) {
+      refPrueba.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [instanciaPrueba]);
 
   const consultaInstancia = useQuery({
     queryKey: ["instancia-prueba", instanciaPrueba],
@@ -1550,9 +1593,7 @@ function EstudioProceso({
                 }
                 onClick={() => publicar.mutate()}
               >
-                {t("procesos.publicarVersion", {
-                  numero: borrador.numero,
-                })}
+                {t("procesos.publicar")}
               </Boton>
             </div>
             <details className="mt-espacio-4">
@@ -1659,6 +1700,9 @@ function EstudioProceso({
           </Tarjeta>
         ) : null}
 
+        {instanciaPrueba ? (
+          <div ref={refPrueba} className="scroll-mt-espacio-4" />
+        ) : null}
         {instanciaPrueba ? (
           consultaInstancia.isError ? (
             <ErrorPanel
@@ -1934,6 +1978,28 @@ function ConfiguracionNodo({
             onChange={(evento) => cambiar("mensaje", evento.target.value)}
           />
         </>
+      ) : null}
+      {nodo.tipo === "CORREO" ||
+      nodo.tipo === "TELEGRAM" ||
+      nodo.tipo === "WHATSAPP" ? (
+        <label className="flex cursor-pointer items-start gap-espacio-3 rounded-control bg-lienzo p-espacio-3">
+          <input
+            type="checkbox"
+            className="mt-espacio-1 accent-marca"
+            checked={configuracion["enviarEnPrueba"] === true}
+            onChange={(evento) =>
+              cambiar("enviarEnPrueba", evento.target.checked || undefined)
+            }
+          />
+          <span>
+            <span className="block text-pequeno font-medium text-tinta">
+              {t("canvas.enviarEnPrueba")}
+            </span>
+            <span className="mt-espacio-1 block text-micro text-tinta-suave">
+              {t("canvas.enviarEnPruebaAyuda")}
+            </span>
+          </span>
+        </label>
       ) : null}
       {nodo.tipo === "ACCION_API" ? (
         <>

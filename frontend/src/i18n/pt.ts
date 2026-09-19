@@ -384,6 +384,9 @@ export const pt: Diccionario = {
       "Toque em um passo para configurá-lo, ou em uma conexão para editar sua condição. Apenas o passo Início é fixo: o fluxo termina no último passo de cada ramo ou em um passo Fim.",
     inicioAyuda:
       "Escolha como o processo começa: por um evento (ex.: documento aprovado), todos os dias em um horário, a cada N minutos, ou combinado.",
+    enviarEnPrueba: "Enviar de verdade ao executar o rascunho",
+    enviarEnPruebaAyuda:
+      "Nas execuções de teste o envio é simulado para não tocar destinatários reais. Ative isto apenas se quiser testar o envio real.",
     horaDiaria: "Executar todos os dias às",
     horaDiariaAyuda:
       "Com a versão publicada, o processo é instanciado sozinho uma vez por dia nesse horário.",
@@ -1077,12 +1080,14 @@ export const pt: Diccionario = {
       "Edite a sequência e salve o rascunho antes de publicar. O Workflow valida o percurso e os tipos habilitados.",
     validar: "Validar",
     validacionOk: "A versão é válida: pode ser publicada.",
+    eliminarProceso: "Excluir processo",
+    confirmarEliminarProceso:
+      '"{nombre}" e suas versões deixam de ser listados e deixam de ser disparados por eventos. As instâncias já criadas mantêm o histórico.',
     sinGuardar: "Não salvo",
     versionNoEditable: "Esta versión não pode ser editada com segurança",
     hayCambios: "Há alterações não salvas. Salve o rascunho antes de publicar.",
     agregarPaso: "Adicionar passo",
     guardarBorrador: "Salvar rascunho",
-    publicarVersion: "Publicar versão {numero}",
     versionPublicadaTitulo: "Versão {numero} publicada",
     versionPublicadaDesc:
       "As instâncias novas usam esta versão. Uma instância já iniciada mantém sua versão mesmo que você publique outra.",

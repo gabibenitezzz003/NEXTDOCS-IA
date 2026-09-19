@@ -299,6 +299,10 @@ export async function actualizarProceso(
   return data;
 }
 
+export async function eliminarProceso(definicionId: string): Promise<void> {
+  await clienteProcesos.delete(`/procesos/${definicionId}`);
+}
+
 export async function nuevaVersion(definicionId: string, cambios?: string): Promise<VersionProceso> {
   const { data } = await clienteProcesos.post<VersionProceso>(`/procesos/${definicionId}/versiones`, {
     cambios,

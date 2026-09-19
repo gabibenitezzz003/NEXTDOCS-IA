@@ -384,6 +384,9 @@ export const en: Diccionario = {
       "Click a step to configure it, or a connection to edit its condition. Only the Start step is fixed: the flow ends at the last step of each branch or at an End step.",
     inicioAyuda:
       "Choose how the process starts: on an event (e.g.: document approved), every day at a time, every N minutes, or combined.",
+    enviarEnPrueba: "Send for real when running the draft",
+    enviarEnPruebaAyuda:
+      "Sending is simulated in test runs so real recipients are not touched. Enable this only if you want to test the real send.",
     horaDiaria: "Run every day at",
     horaDiariaAyuda:
       "Once published, the process starts itself once a day at this time.",
@@ -1072,12 +1075,14 @@ export const en: Diccionario = {
       "Edit the sequence and save the draft before publishing. Workflow validates the route and enabled types.",
     validar: "Validate",
     validacionOk: "The version is valid: it can be published.",
+    eliminarProceso: "Delete process",
+    confirmarEliminarProceso:
+      '"{nombre}" and its versions stop being listed and stop triggering on events. Existing instances keep their history.',
     sinGuardar: "Unsaved",
     versionNoEditable: "This version cannot be edited safely",
     hayCambios: "There are unsaved changes. Save the draft before publishing.",
     agregarPaso: "Add step",
     guardarBorrador: "Save draft",
-    publicarVersion: "Publish version {numero}",
     versionPublicadaTitulo: "Version {numero} published",
     versionPublicadaDesc:
       "New instances use this version. An instance already started keeps its version even if you publish another.",
