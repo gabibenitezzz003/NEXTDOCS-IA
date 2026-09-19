@@ -316,31 +316,6 @@ export async function validarVersion(versionId: string): Promise<VersionProceso>
   return data;
 }
 
-export interface SimulacionPaso {
-  nodoId: string;
-  nombre?: string;
-  tipo?: string;
-  accion?: string;
-  detalle?: string;
-}
-
-export interface SimulacionResultado {
-  pasos: SimulacionPaso[];
-  terminada: boolean;
-  advertencias: string[];
-}
-
-export async function simularVersion(
-  versionId: string,
-  datos: Record<string, unknown>,
-): Promise<SimulacionResultado> {
-  const { data } = await clienteProcesos.post<SimulacionResultado>(
-    `/procesos/versiones/${versionId}/simular`,
-    { datos },
-  );
-  return data;
-}
-
 export async function dispararEvento(
   evento: string,
   datos?: Record<string, unknown>,

@@ -21,7 +21,11 @@ import {
   IconoCerrar,
   IconoInteligencia,
 } from "../componentes/Iconos";
-import { formatearFecha } from "../utilidades/fechas";
+import {
+  formatearDuracion,
+  formatearFecha,
+  formatearHora,
+} from "../utilidades/fechas";
 import {
   actualizarGrafo,
   actualizarProceso,
@@ -36,18 +40,15 @@ import {
   obtenerInstancia,
   obtenerProceso,
   publicarVersion,
-  simularVersion,
   validarVersion,
 } from "../api/procesos";
 import type {
   GeneracionProcesoReq,
   GeneracionProcesoRes,
   GrafoProceso,
-  EventoInstancia,
   InstanciaProceso,
   NodoProceso,
   Proceso,
-  SimulacionResultado,
   VersionProceso,
 } from "../api/procesos";
 import { obtenerPlantillasMotor } from "../api/documental";
@@ -750,7 +751,7 @@ function EstudioProceso({
     setHistorial({ deshacer: 0, rehacer: 0 });
   }
   const [instanciaPrueba, setInstanciaPrueba] = useState<string | null>(null);
-  const [simulacionAbierta, setSimulacionAbierta] = useState(false);
+  const [datosPrueba, setDatosPrueba] = useState("");
   const [editandoDatos, setEditandoDatos] = useState(false);
   const [chatIaAbierto, setChatIaAbierto] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -946,17 +947,6 @@ function EstudioProceso({
     },
   });
 
-  const simular = useMutation({
-    mutationFn: (datos: Record<string, unknown>) => {
-      if (!borrador) throw new Error(t("procesos.guardarAntesDePublicar"));
-      return simularVersion(borrador.id, datos);
-    },
-    onError: (fallo) => {
-      setAviso(null);
-      setError(mensajeDeError(fallo));
-    },
-  });
-
   const clonar = useMutation({
     mutationFn: () => nuevaVersion(procesoId, t("procesos.notaNuevaVersion")),
     onSuccess: () => {
@@ -969,11 +959,26 @@ function EstudioProceso({
   });
 
   const probar = useMutation({
-    mutationFn: () =>
-      iniciarInstancia(procesoId, {
+    mutationFn: () => {
+      const texto = datosPrueba.trim();
+      let datos: Record<string, unknown> | undefined;
+      if (texto) {
+        const parseado = JSON.parse(texto) as unknown;
+        if (
+          typeof parseado !== "object" ||
+          parseado === null ||
+          Array.isArray(parseado)
+        ) {
+          throw new Error(t("procesos.datosPruebaInvalidos"));
+        }
+        datos = parseado as Record<string, unknown>;
+      }
+      return iniciarInstancia(procesoId, {
         versionId: borrador?.id,
         prueba: true,
-      }),
+        datos,
+      });
+    },
     onSuccess: (instancia) => {
       setError(null);
       setInstanciaPrueba(instancia.id);
@@ -985,14 +990,13 @@ function EstudioProceso({
     queryKey: ["instancia-prueba", instanciaPrueba],
     queryFn: () => obtenerInstancia(instanciaPrueba!),
     enabled: instanciaPrueba !== null,
-    refetchInterval: (consulta) =>
-      consulta.state.status !== "error" &&
-      consulta.state.data &&
-      ["CREADA", "ACTIVA", "ESPERANDO", "BLOQUEADA"].includes(
-        consulta.state.data.estado,
-      )
-        ? 15_000
-        : false,
+    refetchInterval: (consulta) => {
+      const estado = consulta.state.data?.estado;
+      if (consulta.state.status === "error" || !estado) return false;
+      if (estado === "CREADA" || estado === "ACTIVA") return 1_500;
+      if (estado === "ESPERANDO" || estado === "BLOQUEADA") return 8_000;
+      return false;
+    },
     refetchIntervalInBackground: false,
   });
 
@@ -1003,24 +1007,50 @@ function EstudioProceso({
     const tipos = new Map(
       (grafoTrabajo?.nodos ?? []).map((nodo) => [nodo.id, nodo.tipo]),
     );
-    for (const evento of instancia.eventos) {
+    const destinos = new Map<string, Set<string>>();
+    for (const arista of grafoTrabajo?.aristas ?? []) {
+      const lista = destinos.get(arista.origen) ?? new Set<string>();
+      lista.add(arista.destino);
+      destinos.set(arista.origen, lista);
+    }
+    const eventos = instancia.eventos;
+    for (const evento of eventos) {
       if (!evento.nodoId) continue;
+      const anterior = mapa.get(evento.nodoId);
       if (evento.accion === "NODO_FALLIDO") {
         mapa.set(evento.nodoId, "error");
       } else if (evento.accion === "TAREA_CREADA") {
-        mapa.set(evento.nodoId, "esperando");
+        if (anterior !== "error") mapa.set(evento.nodoId, "esperando");
       } else if (evento.accion === "NODO_INGRESADO") {
-        const tipo = tipos.get(evento.nodoId);
-        mapa.set(
-          evento.nodoId,
-          tipo === "INICIO" || tipo === "FIN"
-            ? "ok"
-            : instancia.estado === "ESPERANDO"
-              ? "esperando"
-              : "activo",
-        );
-      } else {
+        if (!anterior) {
+          const tipo = tipos.get(evento.nodoId);
+          mapa.set(
+            evento.nodoId,
+            tipo === "INICIO" || tipo === "FIN" ? "ok" : "activo",
+          );
+        }
+      } else if (anterior !== "error") {
         mapa.set(evento.nodoId, "ok");
+      }
+    }
+    eventos.forEach((evento, indice) => {
+      if (evento.accion !== "NODO_INGRESADO" || !evento.nodoId) return;
+      for (const [origen, alcanzables] of destinos) {
+        if (mapa.get(origen) !== "activo" || !alcanzables.has(evento.nodoId)) {
+          continue;
+        }
+        const ultimoPropio = eventos
+          .slice(0, indice)
+          .filter((propio) => propio.nodoId === origen)
+          .pop();
+        if (ultimoPropio?.accion === "NODO_INGRESADO") {
+          mapa.set(origen, "ok");
+        }
+      }
+    });
+    if (instancia.estado === "COMPLETADA") {
+      for (const [id, estado] of mapa) {
+        if (estado === "activo") mapa.set(id, "ok");
       }
     }
     return mapa.size ? mapa : undefined;
@@ -1495,16 +1525,6 @@ function EstudioProceso({
               </Boton>
               <Boton
                 variante="secundario"
-                disabled={editandoBloqueado || hayCambios || !grafoTrabajo}
-                onClick={() => {
-                  setError(null);
-                  setSimulacionAbierta((abierta) => !abierta);
-                }}
-              >
-                {t("procesos.simular")}
-              </Boton>
-              <Boton
-                variante="secundario"
                 cargando={probar.isPending}
                 disabled={
                   editandoBloqueado ||
@@ -1535,20 +1555,22 @@ function EstudioProceso({
                 })}
               </Boton>
             </div>
+            <details className="mt-espacio-4">
+              <summary className="cursor-pointer text-pequeno text-tinta-suave">
+                {t("procesos.datosPruebaTitulo")}
+              </summary>
+              <AreaTexto
+                etiqueta={t("procesos.datosPrueba")}
+                placeholder='{"monto_total": 1200, "email": "qa@fenix.com"}'
+                ayuda={t("procesos.datosPruebaAyuda")}
+                rows={3}
+                className="mt-espacio-3 font-codigo"
+                value={datosPrueba}
+                onChange={(evento) => setDatosPrueba(evento.target.value)}
+              />
+            </details>
           </Tarjeta>
         )}
-
-        {simulacionAbierta ? (
-          <PanelSimulacion
-            alSimular={(datos) => simular.mutate(datos)}
-            resultado={simular.data}
-            simulando={simular.isPending}
-            alCerrar={() => {
-              setSimulacionAbierta(false);
-              simular.reset();
-            }}
-          />
-        ) : null}
 
         {eliminacionPendiente ? (
           <DialogoConfirmacion
@@ -1648,6 +1670,7 @@ function EstudioProceso({
             <PanelPrueba
               key={instanciaPrueba}
               instancia={consultaInstancia.data}
+              nodos={grafoTrabajo?.nodos}
               alCompletar={alCompletar}
               completando={completar.isPending}
               alAbrir={alAbrirInstancia}
@@ -2101,37 +2124,47 @@ function SelectorTipoDocumento({
   );
 }
 
-const ACCIONES_NODO_OK = new Set([
-  "TAREA_COMPLETADA",
-  "DECISION_TOMADA",
-  "VALIDACION_IA_EJECUTADA",
-  "NOTIFICACION_ENVIADA",
-  "ACCION_API_EJECUTADA",
-  "CORREO_ENVIADO",
-  "TELEGRAM_ENVIADO",
-  "WHATSAPP_ENVIADO",
-  "PARALELO_LANZADO",
-  "UNION_LIBERADA",
-  "RAMA_FINALIZADA",
-  "FIRMA_REGISTRADA",
-  "FIRMA_SOLICITADA",
-]);
+const TONOS_ACCION: Record<string, "exito" | "rojo" | "alerta" | "violeta"> = {
+  INSTANCIA_INICIADA: "violeta",
+  NODO_INGRESADO: "violeta",
+  TAREA_CREADA: "alerta",
+  TAREA_COMPLETADA: "exito",
+  DECISION_TOMADA: "exito",
+  INSTANCIA_COMPLETADA: "exito",
+  INSTANCIA_CANCELADA: "alerta",
+  INSTANCIA_BLOQUEADA: "rojo",
+  INSTANCIA_REANUDADA: "violeta",
+  TAREA_VENCIDA: "alerta",
+  VALIDACION_IA_EJECUTADA: "exito",
+  NOTIFICACION_ENVIADA: "exito",
+  ACCION_API_EJECUTADA: "exito",
+  CORREO_ENVIADO: "exito",
+  TELEGRAM_ENVIADO: "exito",
+  WHATSAPP_ENVIADO: "exito",
+  NODO_FALLIDO: "rojo",
+  PARALELO_LANZADO: "exito",
+  UNION_LIBERADA: "exito",
+  RAMA_FINALIZADA: "exito",
+  FIRMA_REGISTRADA: "exito",
+  FIRMA_SOLICITADA: "exito",
+  EVENTO_EXTERNO_FALLIDO: "rojo",
+};
 
-function ResumenEjecucionNodos({ instancia }: { instancia: InstanciaProceso }) {
+function nombreDeNodo(nodos: NodoProceso[] | undefined, nodoId?: string) {
+  if (!nodoId) return null;
+  return nodos?.find((nodo) => nodo.id === nodoId)?.nombre ?? nodoId;
+}
+
+function TrazaEjecucion({
+  instancia,
+  nodos,
+}: {
+  instancia: InstanciaProceso;
+  nodos?: NodoProceso[];
+}) {
   const { t } = useIdioma();
-  const eventos = (instancia.eventos ?? []).filter(
-    (evento) => evento.nodoId,
-  );
+  const eventos = instancia.eventos ?? [];
   if (!eventos.length) return null;
-
-  const ultimoPorNodo = new Map<string, EventoInstancia>();
-  const detallesPorNodo = new Map<string, EventoInstancia[]>();
-  for (const evento of eventos) {
-    ultimoPorNodo.set(evento.nodoId!, evento);
-    const lista = detallesPorNodo.get(evento.nodoId!) ?? [];
-    lista.push(evento);
-    detallesPorNodo.set(evento.nodoId!, lista);
-  }
 
   return (
     <div className="mt-espacio-4">
@@ -2139,50 +2172,51 @@ function ResumenEjecucionNodos({ instancia }: { instancia: InstanciaProceso }) {
         {t("procesos.ejecucionPorNodo")}
       </h3>
       <ol className="mt-espacio-2 space-y-espacio-2">
-        {[...ultimoPorNodo.entries()].map(([nodoId, evento]) => {
-          const tono =
-            evento.accion === "NODO_FALLIDO"
-              ? "rojo"
-              : evento.accion === "TAREA_CREADA"
-                ? "alerta"
-                : ACCIONES_NODO_OK.has(evento.accion)
-                  ? "exito"
-                  : "violeta";
-          const detalle = detallesPorNodo.get(nodoId) ?? [];
-          const conDetalle = detalle.filter(
-            (entrada) =>
-              entrada.detalle && Object.keys(entrada.detalle).length > 0,
-          );
+        {eventos.map((evento, indice) => {
+          const tono = TONOS_ACCION[evento.accion] ?? "violeta";
+          const nombre = nombreDeNodo(nodos, evento.nodoId);
+          const errorTexto =
+            evento.accion === "NODO_FALLIDO" && evento.detalle?.error
+              ? String(evento.detalle.error)
+              : null;
+          const conDetalle =
+            !errorTexto &&
+            evento.detalle &&
+            Object.keys(evento.detalle).length > 0;
           return (
             <li
-              key={nodoId}
+              key={`${evento.id}-${indice}`}
               className="flex items-start gap-espacio-3 rounded-control border border-borde bg-lienzo p-espacio-3"
             >
-              <Pastilla tono={tono}>
-                {t(`accionNodo.${evento.accion}`)}
-              </Pastilla>
+              <span className="w-6 shrink-0 text-right text-micro text-tinta-suave tabular-nums">
+                {indice + 1}
+              </span>
+              <Pastilla tono={tono}>{t(`accionNodo.${evento.accion}`)}</Pastilla>
               <div className="min-w-0 flex-1">
                 <p className="break-words text-pequeno font-medium text-tinta">
-                  {nodoId}
+                  {nombre ?? t("procesos.ejecucionInstancia")}
                 </p>
-                {conDetalle.length ? (
+                {errorTexto ? (
+                  <p
+                    role="alert"
+                    className="mt-espacio-1 break-words text-pequeno text-rojo-alto"
+                  >
+                    {errorTexto}
+                  </p>
+                ) : conDetalle ? (
                   <details className="mt-espacio-1">
                     <summary className="cursor-pointer text-micro text-tinta-suave">
                       {t("procesos.ejecucionDetalle")}
                     </summary>
                     <pre className="mt-espacio-1 max-h-40 overflow-auto rounded-control bg-superficie p-espacio-2 font-codigo text-codigo text-tinta-suave">
-                      {JSON.stringify(
-                        conDetalle[conDetalle.length - 1].detalle,
-                        null,
-                        2,
-                      )}
+                      {JSON.stringify(evento.detalle, null, 2)}
                     </pre>
                   </details>
                 ) : null}
               </div>
               {evento.alta ? (
                 <span className="shrink-0 text-micro tabular-nums text-tinta-suave">
-                  {formatearFecha(evento.alta)}
+                  {formatearHora(evento.alta)}
                 </span>
               ) : null}
             </li>
@@ -2195,11 +2229,13 @@ function ResumenEjecucionNodos({ instancia }: { instancia: InstanciaProceso }) {
 
 function PanelPrueba({
   instancia,
+  nodos,
   alCompletar,
   completando,
   alAbrir,
 }: {
   instancia?: InstanciaProceso;
+  nodos?: NodoProceso[];
   alCompletar: (
     tareaId: string,
     decision?: string,
@@ -2237,8 +2273,6 @@ function PanelPrueba({
       </Tarjeta>
     );
   }
-  const finalizada =
-    instancia.estado === "COMPLETADA" || instancia.estado === "CANCELADA";
   const permiteCompletar =
     instancia.estado === "ACTIVA" || instancia.estado === "ESPERANDO";
   const pendientes = instancia.tareas.filter(
@@ -2260,8 +2294,46 @@ function PanelPrueba({
           {t("procesos.abrirEnInstancias")}
         </Boton>
       </div>
-      <ResumenEjecucionNodos instancia={instancia} />
-      {finalizada ? (
+      <TrazaEjecucion instancia={instancia} nodos={nodos} />
+      {instancia.estado === "COMPLETADA" ? (
+        <div
+          role="status"
+          className="mt-espacio-4 rounded-panel border border-exito-borde bg-exito-tenue p-espacio-4"
+        >
+          <p className="text-pequeno font-semibold text-exito-texto">
+            {t("procesos.ejecucionExito")}
+          </p>
+          <p className="mt-espacio-1 text-pequeno text-exito-texto">
+            {t("procesos.ejecucionResumen", {
+              fin: instancia.fin ? formatearFecha(instancia.fin) : "—",
+              duracion: formatearDuracion(instancia.alta, instancia.fin),
+            })}
+          </p>
+        </div>
+      ) : instancia.estado === "BLOQUEADA" ? (
+        <div
+          role="alert"
+          className="mt-espacio-4 rounded-panel border border-rojo-borde bg-rojo-tenue p-espacio-4"
+        >
+          <p className="text-pequeno font-semibold text-rojo-alto">
+            {t("procesos.ejecucionError")}
+          </p>
+          <p className="mt-espacio-1 break-words text-pequeno text-rojo-alto-texto">
+            {(() => {
+              const fallo = [...(instancia.eventos ?? [])]
+                .reverse()
+                .find((evento) => evento.accion === "NODO_FALLIDO");
+              const nombre = nombreDeNodo(nodos, fallo?.nodoId);
+              const error = fallo?.detalle?.error
+                ? String(fallo.detalle.error)
+                : "";
+              return nombre
+                ? t("procesos.ejecucionErrorEn", { nodo: nombre, error })
+                : error || t("procesos.instanciaBloqueada");
+            })()}
+          </p>
+        </div>
+      ) : instancia.estado === "CANCELADA" ? (
         <p
           role="status"
           className="mt-espacio-4 rounded-panel border border-borde bg-lienzo p-espacio-4 text-pequeno text-tinta-media"
@@ -2276,13 +2348,11 @@ function PanelPrueba({
             role="status"
             className="mt-espacio-4 text-pequeno text-tinta-media"
           >
-            {instancia.estado === "BLOQUEADA"
-              ? t("procesos.instanciaBloqueada")
-              : instancia.estado === "CREADA"
-                ? t("procesos.instanciaCreada")
-                : instancia.estado === "ESPERANDO"
-                  ? t("procesos.instanciaEsperando")
-                  : t("procesos.instanciaActiva")}
+            {instancia.estado === "CREADA"
+              ? t("procesos.instanciaCreada")
+              : instancia.estado === "ESPERANDO"
+                ? t("procesos.instanciaEsperando")
+                : t("procesos.instanciaActiva")}
           </p>
           {pendientes.length ? (
             <ul
@@ -2556,129 +2626,6 @@ function PanelSeleccion({
       <p className="mt-espacio-4 text-pequeno text-tinta-suave">
         {t("canvas.ayuda")}
       </p>
-    </Tarjeta>
-  );
-}
-
-function PanelSimulacion({
-  alSimular,
-  resultado,
-  simulando,
-  alCerrar,
-}: {
-  alSimular: (datos: Record<string, unknown>) => void;
-  resultado?: SimulacionResultado;
-  simulando: boolean;
-  alCerrar: () => void;
-}) {
-  const { t } = useIdioma();
-  const [datos, setDatos] = useState("{\n\n}");
-  const [errorDatos, setErrorDatos] = useState<string | null>(null);
-
-  function ejecutar() {
-    let parseado: Record<string, unknown>;
-    try {
-      parseado = JSON.parse(datos || "{}") as Record<string, unknown>;
-      if (
-        typeof parseado !== "object" ||
-        parseado === null ||
-        Array.isArray(parseado)
-      )
-        throw new Error();
-    } catch {
-      setErrorDatos(t("procesos.simulacionDatosInvalidos"));
-      return;
-    }
-    setErrorDatos(null);
-    alSimular(parseado);
-  }
-
-  return (
-    <Tarjeta className="mt-espacio-6" padding="p-espacio-4 sm:p-espacio-6">
-      <div className="flex flex-wrap items-start justify-between gap-espacio-4">
-        <CabeceraTarjeta
-          titulo={t("procesos.simulacionTitulo")}
-          descripcion={t("procesos.simulacionDesc")}
-        />
-        <Boton variante="fantasma" tamano="sm" onClick={alCerrar}>
-          {t("comun.cerrar")}
-        </Boton>
-      </div>
-      <AreaTexto
-        etiqueta={t("procesos.simulacionDatos")}
-        placeholder='{"monto_total": 1200, "decision": "APROBADO"}'
-        ayuda={t("procesos.simulacionDatosAyuda")}
-        rows={4}
-        className="mt-espacio-4 font-codigo"
-        value={datos}
-        onChange={(evento) => setDatos(evento.target.value)}
-      />
-      {errorDatos ? (
-        <p role="alert" className="mt-espacio-2 text-pequeno text-peligro">
-          {errorDatos}
-        </p>
-      ) : null}
-      <div className="mt-espacio-4">
-        <Boton
-          variante="primario"
-          cargando={simulando}
-          disabled={simulando}
-          onClick={ejecutar}
-        >
-          {t("procesos.ejecutarSimulacion")}
-        </Boton>
-      </div>
-      {resultado ? (
-        <div className="mt-espacio-5 border-t border-borde pt-espacio-4">
-          <p className="flex items-center gap-espacio-2 text-pequeno text-tinta-media">
-            <Pastilla tono={resultado.terminada ? "exito" : "informacion"}>
-              {resultado.terminada
-                ? t("procesos.simulacionTerminada")
-                : t("procesos.simulacionIncompleta")}
-            </Pastilla>
-            <span className="tabular-nums">
-              {t("procesos.simulacionPasos", {
-                cantidad: resultado.pasos.length,
-              })}
-            </span>
-          </p>
-          {resultado.advertencias.length ? (
-            <ul
-              role="alert"
-              className="mt-espacio-4 space-y-espacio-1 rounded-control border border-alerta-borde bg-alerta-tenue p-espacio-3 text-pequeno text-alerta-texto"
-            >
-              {resultado.advertencias.map((advertencia) => (
-                <li key={advertencia}>{advertencia}</li>
-              ))}
-            </ul>
-          ) : null}
-          <ol className="mt-espacio-4 space-y-espacio-2">
-            {resultado.pasos.map((paso, indice) => (
-              <li
-                key={`${paso.nodoId}-${indice}`}
-                className="flex items-baseline gap-espacio-3 rounded-control bg-lienzo p-espacio-3"
-              >
-                <span className="w-6 shrink-0 text-right text-micro text-tinta-suave tabular-nums">
-                  {indice + 1}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-pequeno font-semibold text-tinta">
-                    {paso.nombre || paso.nodoId}
-                    <span className="ml-espacio-2 font-normal text-tinta-suave">
-                      {paso.tipo ? t(`tipoNodo.${paso.tipo}`) : ""}
-                    </span>
-                  </p>
-                  {paso.detalle ? (
-                    <p className="text-pequeno text-tinta-suave">
-                      {paso.detalle}
-                    </p>
-                  ) : null}
-                </div>
-              </li>
-            ))}
-          </ol>
-        </div>
-      ) : null}
     </Tarjeta>
   );
 }

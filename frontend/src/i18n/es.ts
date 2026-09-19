@@ -1050,8 +1050,19 @@ export const es = {
     probarProceso: "Probar proceso",
     probarBorrador: "Ejecutar borrador",
     probarGuardarAntes: "Guardá el borrador antes de ejecutarlo",
-    ejecucionPorNodo: "Ejecución por paso",
+    ejecucionPorNodo: "Paso a paso de la ejecución",
     ejecucionDetalle: "Ver detalle",
+    datosPruebaTitulo: "Datos de entrada (opcional)",
+    datosPrueba: "Datos de entrada (JSON)",
+    datosPruebaAyuda:
+      "Si el flujo lee variables como {{datos.campo}}, cargalas acá como objeto JSON.",
+    datosPruebaInvalidos:
+      "Los datos de entrada deben ser un objeto JSON válido.",
+    ejecucionInstancia: "Instancia",
+    ejecucionExito: "Ejecución completada con éxito",
+    ejecucionResumen: "Terminó el {fin} · duró {duracion}",
+    ejecucionError: "La ejecución se detuvo con un error",
+    ejecucionErrorEn: "«{nodo}»: {error}",
     probarNota:
       "Probar proceso crea una instancia real persistente de la versión publicada, la versión {numero}. No utiliza los cambios del borrador.",
     sinBorrador: "Sin borrador abierto",
@@ -1063,18 +1074,6 @@ export const es = {
       "Editá la secuencia y guardá el borrador antes de publicar. Workflow valida el recorrido y los tipos habilitados.",
     validar: "Validar",
     validacionOk: "La versión es válida: puede publicarse.",
-    simular: "Simular",
-    simulacionTitulo: "Simulación del recorrido",
-    simulacionDesc:
-      "Recorre el grafo en memoria con datos de ejemplo: no crea instancias ni tareas reales.",
-    simulacionDatos: "Datos de ejemplo (JSON)",
-    simulacionDatosAyuda:
-      "Las decisiones y validaciones se evalúan contra estos datos.",
-    simulacionDatosInvalidos: "Los datos de ejemplo deben ser un JSON válido.",
-    ejecutarSimulacion: "Ejecutar simulación",
-    simulacionTerminada: "El recorrido llegó al fin",
-    simulacionIncompleta: "El recorrido no llegó al fin",
-    simulacionPasos: "{cantidad} pasos recorridos",
     sinGuardar: "Sin guardar",
     versionNoEditable: "Esta versión no se puede editar de forma segura",
     hayCambios:

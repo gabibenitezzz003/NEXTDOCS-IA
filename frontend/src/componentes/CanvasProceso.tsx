@@ -990,6 +990,17 @@ export function CanvasProceso({
             >
               <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--color-violeta)" />
             </marker>
+            <marker
+              id="canvas-flecha-ok"
+              viewBox="0 0 8 8"
+              refX="7"
+              refY="4"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--color-exito)" />
+            </marker>
             <filter
               id="canvas-sombra-nodo"
               x="-20%"
@@ -1047,6 +1058,9 @@ export function CanvasProceso({
               const trazo = `M ${x1} ${y1} C ${x1 + control} ${y1}, ${x2 - control} ${y2}, ${x2} ${y2}`;
               const clave = claveArista(arista);
               const activa = seleccionArista === clave;
+              const recorrida =
+                estadosEjecucion?.get(arista.origen) === "ok" &&
+                estadosEjecucion.has(arista.destino);
               return (
                 <g key={clave}>
                   <path
@@ -1064,14 +1078,18 @@ export function CanvasProceso({
                     stroke={
                       activa
                         ? "var(--color-violeta)"
-                        : "var(--color-borde-fuerte)"
+                        : recorrida
+                          ? "var(--color-exito)"
+                          : "var(--color-borde-fuerte)"
                     }
-                    strokeWidth={activa ? 2.5 : 1.75}
+                    strokeWidth={activa || recorrida ? 2.5 : 1.75}
                     strokeLinecap="round"
                     markerEnd={
                       activa
                         ? "url(#canvas-flecha-activa)"
-                        : "url(#canvas-flecha)"
+                        : recorrida
+                          ? "url(#canvas-flecha-ok)"
+                          : "url(#canvas-flecha)"
                     }
                     className="pointer-events-none"
                   />
@@ -1263,7 +1281,9 @@ export function CanvasProceso({
                     className={`${marca ? "" : color.chipTexto} pointer-events-none`}
                   />
                   {ejecucion ? (
-                    <g className="pointer-events-none">
+                    <g
+                      className={`pointer-events-none${ejecucion === "activo" ? " animate-pulse" : ""}`}
+                    >
                       <circle
                         cx={ANCHO - 4}
                         cy={4}
