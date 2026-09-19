@@ -75,6 +75,12 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         icono: IconoProceso,
       },
       {
+        a: "/marketplace",
+        texto: "disposicion.navMarketplace",
+        permiso: "tenant.administrar",
+        icono: IconoMarketplace,
+      },
+      {
         a: "/supervisora",
         texto: "disposicion.navSupervisora",
         permiso: "tenant.administrar",
@@ -86,6 +92,12 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
     titulo: "disposicion.grupoOrganizacion",
     entradas: [
       {
+        a: "/integraciones",
+        texto: "disposicion.navIntegraciones",
+        permiso: "tenant.administrar",
+        icono: IconoEnlaceExterno,
+      },
+      {
         a: "/equipo",
         texto: "disposicion.navEquipo",
         permiso: "tenant.administrar",
@@ -96,18 +108,6 @@ const GRUPOS: { titulo: string; entradas: EntradaNavegacion[] }[] = [
         texto: "disposicion.navPartners",
         permiso: "tenant.administrar",
         icono: IconoPartner,
-      },
-      {
-        a: "/marketplace",
-        texto: "disposicion.navMarketplace",
-        permiso: "tenant.administrar",
-        icono: IconoMarketplace,
-      },
-      {
-        a: "/integraciones",
-        texto: "disposicion.navIntegraciones",
-        permiso: "tenant.administrar",
-        icono: IconoEnlaceExterno,
       },
     ],
   },

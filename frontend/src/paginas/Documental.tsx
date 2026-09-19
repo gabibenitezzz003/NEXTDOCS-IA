@@ -1,6 +1,6 @@
-import { Suspense, lazy, useCallback, useState } from "react";
+import { Suspense, lazy, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { obtenerEstadoDocumental } from "../api/documental";
 import { useIdioma } from "../contextos/ProveedorIdioma";
 import { ErrorPanel } from "../componentes/Estados";
@@ -68,7 +68,8 @@ export function Documental() {
   const { t } = useIdioma();
   const { seccion } = useParams<{ seccion?: string }>();
   const navegar = useNavigate();
-  const [documentoAbierto, setDocumentoAbierto] = useState<string | null>(null);
+  const [parametros, setParametros] = useSearchParams();
+  const documentoAbierto = parametros.get("documento");
 
   const estadoServicio = useQuery({
     queryKey: ["documental-estado"],
@@ -79,16 +80,26 @@ export function Documental() {
   const activa: Seccion =
     SECCIONES.find((item) => item.id === seccion)?.id ?? "bandeja";
 
-  const abrirDocumento = useCallback((documentoId: string) => {
-    setDocumentoAbierto(documentoId);
-  }, []);
+  const abrirDocumento = useCallback(
+    (documentoId: string) => {
+      setParametros((anteriores) => {
+        const nuevos = new URLSearchParams(anteriores);
+        nuevos.set("documento", documentoId);
+        return nuevos;
+      });
+    },
+    [setParametros],
+  );
 
   const volver = useCallback(() => {
-    setDocumentoAbierto(null);
-  }, []);
+    setParametros((anteriores) => {
+      const nuevos = new URLSearchParams(anteriores);
+      nuevos.delete("documento");
+      return nuevos;
+    });
+  }, [setParametros]);
 
   const cambiarSeccion = (id: Seccion) => {
-    setDocumentoAbierto(null);
     navegar(`/documental/${id}`);
   };
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Boton, Campo, Pastilla, Selector, Tarjeta } from "./Interfaz";
 import { formatearFecha } from "../utilidades/fechas";
@@ -163,9 +164,19 @@ export function TarjetaTarea({
             ) : null}
           </div>
           <p className="mt-espacio-1 text-pequeno text-tinta-suave">
-            {conInstancia
-              ? `${tarea.nombreDefinicion?.trim() || tarea.codigoDefinicion?.trim() || t("operacion.procesoSinNombre")} · `
-              : ""}
+            {conInstancia ? (
+              <>
+                <Link
+                  to={`/operacion/instancias/${tarea.instanciaId}`}
+                  className="font-semibold text-accion-tonal-texto hover:underline focus-visible:outline-foco"
+                >
+                  {tarea.nombreDefinicion?.trim() ||
+                    tarea.codigoDefinicion?.trim() ||
+                    t("operacion.procesoSinNombre")}
+                </Link>
+                {" · "}
+              </>
+            ) : null}
             {t("operacion.paso", {
               nodo: tarea.nombreNodo?.trim() || tarea.nodoId,
             })}

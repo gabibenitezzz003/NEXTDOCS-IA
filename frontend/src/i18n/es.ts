@@ -71,17 +71,17 @@ export const es = {
     grupoHoy: "Hoy",
     grupoDocumentos: "Documentos",
     grupoAutomatizacion: "Automatización",
-    grupoOrganizacion: "Organización",
+    grupoOrganizacion: "Configuración",
     navResumen: "Mi trabajo",
     navDocumentos: "Documentos",
-    navDocumental: "Inteligencia documental",
+    navDocumental: "Documentos",
     navExcepciones: "Excepciones",
     navTareas: "Mis tareas",
     navOperacion: "Procesos en curso",
-    navStudio: "Workflow",
-    navSupervisora: "Reglas",
+    navStudio: "Procesos",
+    navSupervisora: "Reglas de supervisión",
     navPartners: "Partners",
-    navMarketplace: "Marketplace",
+    navMarketplace: "Catálogo",
     navIntegraciones: "Integraciones",
     navPanel: "Indicadores",
     navTiposNuevos: "Tipos detectados",
@@ -190,7 +190,7 @@ export const es = {
     },
     rolDesc: {
       ADMINISTRADOR:
-        "Administra todo: equipo, workflow, reglas y configuración de la organización.",
+        "Administra todo: equipo, procesos, reglas y configuración de la organización.",
       OPERADOR:
         "Trabaja con documentos y tareas del día a día. No toca la configuración.",
       REVISOR: "Revisa y decide sobre documentos observados y excepciones.",
@@ -425,7 +425,7 @@ export const es = {
       "Lo que necesita tu atención ahora: tareas pendientes, procesos bloqueados y actividad reciente.",
     bienvenida: "Empezá por acá",
     bienvenidaDesc:
-      "Tu espacio está listo. Con estos tres pasos tu organización empieza a operar.",
+      "Los documentos entran, el sistema los entiende y los procesos los mueven. Con estos tres pasos queda andando.",
     pasoSubir: "Subí tu primer documento",
     pasoSubirDesc:
       "Arrastrá una factura, remito o cualquier PDF: el sistema lo clasifica y lee sus datos solo.",
@@ -434,10 +434,14 @@ export const es = {
     pasoTiposDesc:
       "Cada tipo define qué datos se leen y cuándo un documento se aprueba solo. Ya vienen los más comunes.",
     pasoTiposAccion: "Ver tipos",
-    pasoEquipo: "Sumá a tu equipo",
-    pasoEquipoDesc:
-      "Creá accesos para tus empleados y asignales un rol. Entran con su email y el código de la organización.",
-    pasoEquipoAccion: "Ir a Equipo",
+    pasoProceso: "Automatizá el recorrido",
+    pasoProcesoDesc:
+      "Diseñá o instalá un proceso: cada tipo de documento camina solo por sus pasos y sólo frena donde hace falta una persona.",
+    pasoProcesoAccion: "Abrir Procesos",
+    pasoTareas: "Tu trabajo aparece en Tareas",
+    pasoTareasDesc:
+      "Cuando un proceso necesita que alguien revise, firme o entregue un documento, la tarea te espera acá.",
+    pasoTareasAccion: "Ir a Mis tareas",
     accionRequerida: "Acción requerida",
     miTrabajo: "Tu trabajo pendiente",
     miTrabajoDesc: "Tareas que las ejecuciones en curso te piden completar.",
@@ -775,7 +779,7 @@ export const es = {
   operacion: {
     titulo: "Operación de procesos",
     descripcion:
-      "Ejecuciones de los procesos publicados en Workflow: instancias activas, indicadores y el paso en que va cada una.",
+      "Ejecuciones de los procesos publicados: instancias activas, indicadores y el paso en que va cada una.",
     indicadores: "Indicadores",
     indicadoresDesc: "Cómo viene el motor de procesos en la ventana elegida.",
     ventanaIndicadores: "Ventana de los indicadores",
@@ -809,12 +813,14 @@ export const es = {
     todosLosProcesos: "Todos los procesos",
     sinInstancias: "Todavía no hay procesos en ejecución",
     sinInstanciasDetalle:
-      "Iniciá uno desde Workflow con el botón Probar proceso de una versión publicada, o desde donde el producto lo dispare.",
+      "Iniciá uno desde Procesos con el botón Probar proceso de una versión publicada, o desde donde el producto lo dispare.",
     listaInstancias: "Instancias de proceso",
     version: "Versión {version}",
     iniciada: "iniciada {fecha}",
     finalizada: "finalizada {fecha}",
     sujetoTipo: "sujeto",
+    sujeto: "Sobre",
+    verDocumento: "Ver documento",
     tareasPendientes: "{pendientes} de {total} tareas pendientes",
     progresoTareas: "{completadas} de {total} tareas",
     responsableDe: "Responsable: {actor}",
@@ -974,7 +980,7 @@ export const es = {
     EVENTO_EXTERNO_FALLIDO: "Evento externo fallido",
   },
   studio: {
-    titulo: "Workflow",
+    titulo: "Procesos",
     descripcion:
       "Diseñá los procesos en el canvas: cada versión publicada se ejecuta en Operación y genera el trabajo que aparece en Tareas.",
   },
@@ -1316,7 +1322,7 @@ export const es = {
       "Todavía no hay delegaciones de acceso. Creá una para habilitar a un partner sobre un tenant cliente.",
   },
   marketplace: {
-    titulo: "Marketplace",
+    titulo: "Catálogo",
     descripcion:
       "Catálogo de plantillas de proceso publicadas por la comunidad de tenants.",
     grupoSeccion: "Sección",
@@ -1336,7 +1342,7 @@ export const es = {
     instalar: "Instalar",
     confirmarInstalar: "Confirmar instalación",
     instalada: "Instalada",
-    instaladaAviso: "Plantilla instalada como copia propia en el workflow.",
+    instaladaAviso: "Proceso instalado como copia propia de tu organización.",
     publicadaAviso: "Versión publicada en el marketplace.",
     retiradaAviso: "Publicación retirada del catálogo.",
     retirar: "Retirar",
@@ -1354,20 +1360,20 @@ export const es = {
     instaladaEl: "Instalada",
     publicadaEl: "Publicada",
     instalacion: "Instalación",
-    abrirEnStudio: "Abrir en el workflow",
+    abrirEnStudio: "Abrir en Procesos",
     catalogoVacio: "El catálogo está vacío",
     catalogoVacioDetalle:
       "Cuando un tenant publique una plantilla aparecerá acá para instalarla como copia propia.",
     sinInstalaciones: "Sin plantillas instaladas",
     sinInstalacionesDetalle:
-      "Instalá una plantilla del catálogo para materializar una copia propia en el workflow.",
+      "Instalá un proceso del catálogo: se copia a tu organización listo para publicar y usar.",
     sinPublicaciones: "Sin publicaciones",
     sinPublicacionesDetalle:
       "Publicá una versión PUBLICADA de un proceso propio para ofrecerla en el catálogo.",
     errorAccion: "No se pudo completar la acción",
   },
   documental: {
-    titulo: "Inteligencia documental",
+    titulo: "Documentos",
     sinConfigurar:
       "El motor documental no está configurado para esta organización. Pedile al administrador que habilite el conector.",
     estado: {
@@ -1510,6 +1516,7 @@ export const es = {
       ilegible: "Ilegible",
       noFigura: "No figura",
       noEncontrado: "No se encontró el documento.",
+      enProceso: "Procesos con este documento",
       delLote: "{valor} en el lote",
       pagina: "Página",
       paginaAnterior: "Página anterior",

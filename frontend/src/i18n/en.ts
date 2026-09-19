@@ -73,17 +73,17 @@ export const en: Diccionario = {
     grupoHoy: "Today",
     grupoDocumentos: "Documents",
     grupoAutomatizacion: "Automation",
-    grupoOrganizacion: "Organization",
+    grupoOrganizacion: "Settings",
     navResumen: "My work",
     navDocumentos: "Documents",
-    navDocumental: "Document intelligence",
+    navDocumental: "Documents",
     navExcepciones: "Exceptions",
     navTareas: "My tasks",
     navOperacion: "Running processes",
-    navStudio: "Workflow",
-    navSupervisora: "Rules",
+    navStudio: "Processes",
+    navSupervisora: "Supervision rules",
     navPartners: "Partners",
-    navMarketplace: "Marketplace",
+    navMarketplace: "Catalog",
     navIntegraciones: "Integrations",
     navPanel: "Indicators",
     navTiposNuevos: "Detected types",
@@ -192,7 +192,7 @@ export const en: Diccionario = {
     },
     rolDesc: {
       ADMINISTRADOR:
-        "Manages everything: team, workflow, rules and organization settings.",
+        "Manages everything: team, processes, rules and organization settings.",
       OPERADOR:
         "Works with documents and day-to-day tasks. Cannot change settings.",
       REVISOR: "Reviews and decides on flagged documents and exceptions.",
@@ -428,7 +428,7 @@ export const en: Diccionario = {
       "What needs your attention now: pending tasks, blocked processes and recent activity.",
     bienvenida: "Start here",
     bienvenidaDesc:
-      "Your workspace is ready. These three steps get your organization up and running.",
+      "Documents come in, the system understands them and processes move them along. These three steps get it running.",
     pasoSubir: "Upload your first document",
     pasoSubirDesc:
       "Drop an invoice, receipt or any PDF: the system classifies it and reads its data automatically.",
@@ -437,10 +437,14 @@ export const en: Diccionario = {
     pasoTiposDesc:
       "Each type defines which data is read and when a document can be auto-approved. The most common ones are already included.",
     pasoTiposAccion: "View types",
-    pasoEquipo: "Add your team",
-    pasoEquipoDesc:
-      "Create access for your employees and assign them a role. They sign in with their email and the organization code.",
-    pasoEquipoAccion: "Go to Team",
+    pasoProceso: "Automate the journey",
+    pasoProcesoDesc:
+      "Design or install a process: each document type moves through its steps on its own and only stops where a person is needed.",
+    pasoProcesoAccion: "Open Processes",
+    pasoTareas: "Your work shows up in Tasks",
+    pasoTareasDesc:
+      "When a process needs someone to review, sign or deliver a document, the task waits for you here.",
+    pasoTareasAccion: "Go to My tasks",
     accionRequerida: "Action required",
     miTrabajo: "Your pending work",
     miTrabajoDesc: "Tasks that running executions ask you to complete.",
@@ -775,7 +779,7 @@ export const en: Diccionario = {
   operacion: {
     titulo: "Process operations",
     descripcion:
-      "Executions of the processes published in Workflow: active instances, indicators and the step each one is on.",
+      "Executions of published processes: active instances, indicators and the step each one is on.",
     indicadores: "Indicators",
     indicadoresDesc: "How the process engine is doing in the chosen window.",
     ventanaIndicadores: "Indicator window",
@@ -810,12 +814,14 @@ export const en: Diccionario = {
     todosLosProcesos: "All processes",
     sinInstancias: "No processes running yet",
     sinInstanciasDetalle:
-      "Start one from Workflow with the Test process button on a published version, or from wherever the product triggers it.",
+      "Start one from Processes with the Test process button on a published version, or from wherever the product triggers it.",
     listaInstancias: "Process instances",
     version: "Version {version}",
     iniciada: "started {fecha}",
     finalizada: "finished {fecha}",
     sujetoTipo: "subject",
+    sujeto: "About",
+    verDocumento: "View document",
     tareasPendientes: "{pendientes} of {total} pending tasks",
     progresoTareas: "{completadas} of {total} tasks",
     responsableDe: "Assignee: {actor}",
@@ -973,7 +979,7 @@ export const en: Diccionario = {
     EVENTO_EXTERNO_FALLIDO: "External event failed",
   },
   studio: {
-    titulo: "Workflow",
+    titulo: "Processes",
     descripcion:
       "Design your processes on the canvas: each published version runs in Operations and generates the work that shows up in Tasks.",
   },
@@ -1311,7 +1317,7 @@ export const en: Diccionario = {
       "There are no access delegations yet. Create one to enable a partner on a client tenant.",
   },
   marketplace: {
-    titulo: "Marketplace",
+    titulo: "Catalog",
     descripcion:
       "Catalog of process templates published by the tenant community.",
     grupoSeccion: "Section",
@@ -1331,7 +1337,7 @@ export const en: Diccionario = {
     instalar: "Install",
     confirmarInstalar: "Confirm installation",
     instalada: "Installed",
-    instaladaAviso: "Template installed as your own copy in the workflow.",
+    instaladaAviso: "Process installed as your organization's own copy.",
     publicadaAviso: "Version published to the marketplace.",
     retiradaAviso: "Publication withdrawn from the catalog.",
     retirar: "Withdraw",
@@ -1349,20 +1355,20 @@ export const en: Diccionario = {
     instaladaEl: "Installed",
     publicadaEl: "Published",
     instalacion: "Installation",
-    abrirEnStudio: "Open in workflow",
+    abrirEnStudio: "Open in Processes",
     catalogoVacio: "The catalog is empty",
     catalogoVacioDetalle:
       "When a tenant publishes a template it will appear here to install as your own copy.",
     sinInstalaciones: "No installed templates",
     sinInstalacionesDetalle:
-      "Install a template from the catalog to materialize your own copy in the workflow.",
+      "Install a process from the catalog: it is copied to your organization ready to publish and use.",
     sinPublicaciones: "No publications",
     sinPublicacionesDetalle:
       "Publish a PUBLICADA version of your own process to offer it in the catalog.",
     errorAccion: "The action could not be completed",
   },
   documental: {
-    titulo: "Document intelligence",
+    titulo: "Documents",
     sinConfigurar:
       "The document engine is not configured for this organization. Ask the administrator to enable the connector.",
     estado: {
@@ -1503,6 +1509,7 @@ export const en: Diccionario = {
       ilegible: "Illegible",
       noFigura: "Not present",
       noEncontrado: "Document not found.",
+      enProceso: "Processes with this document",
       delLote: "{valor} in batch",
       pagina: "Page",
       paginaAnterior: "Previous page",

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Contenido, Encabezado } from "../componentes/Disposicion";
 import {
@@ -68,6 +68,29 @@ type Traductor = (ruta: string, params?: Record<string, string | number>) => str
 
 function textoAccion(accion: string, t: Traductor): string {
   return ACCIONES_CONOCIDAS.has(accion) ? t(`accionEvento.${accion}`) : accion;
+}
+
+function EnlaceSujeto({ instancia }: { instancia: InstanciaProceso }) {
+  const { t } = useIdioma();
+  if (!instancia.sujetoId) return null;
+  const esDocumento = (instancia.sujetoTipo ?? "")
+    .toLowerCase()
+    .includes("documento");
+  if (!esDocumento) {
+    return (
+      <span>
+        {instancia.sujetoTipo ?? t("operacion.sujetoTipo")} {instancia.sujetoId}
+      </span>
+    );
+  }
+  return (
+    <Link
+      to={`/documental?documento=${instancia.sujetoId}`}
+      className="font-semibold text-accion-tonal-texto hover:underline focus-visible:outline-foco"
+    >
+      {t("operacion.verDocumento")}
+    </Link>
+  );
 }
 
 function tonoEstadoInstancia(estado: EstadoInstanciaProceso) {
@@ -484,9 +507,12 @@ export function BandejaInstancias({ alAbrir }: { alAbrir: (id: string) => void }
                           ? formatearFecha(instancia.alta)
                           : "—",
                       })}
-                      {instancia.sujetoId
-                        ? ` · ${instancia.sujetoTipo ?? t("operacion.sujetoTipo")} ${instancia.sujetoId}`
-                        : ""}
+                      {instancia.sujetoId ? (
+                        <>
+                          {" · "}
+                          <EnlaceSujeto instancia={instancia} />
+                        </>
+                      ) : null}
                       {resumen.responsable
                         ? ` · ${t("operacion.responsableDe", { actor: resumen.responsable })}`
                         : ""}
@@ -642,6 +668,11 @@ export function DetalleInstancia({
               : ""
           }`}
         />
+        {instancia.sujetoId ? (
+          <p className="mt-espacio-3 text-pequeno text-tinta-suave">
+            {t("operacion.sujeto")}: <EnlaceSujeto instancia={instancia} />
+          </p>
+        ) : null}
         {error ? (
           <div
             role="alert"

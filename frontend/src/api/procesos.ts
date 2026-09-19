@@ -363,11 +363,13 @@ export async function obtenerInstancia(instanciaId: string): Promise<InstanciaPr
 export async function listarInstancias(
   estado?: string,
   definicion?: string,
+  sujetoId?: string,
 ): Promise<InstanciaProceso[]> {
   const { data } = await clienteProcesos.get<InstanciaProceso[]>("/instancias", {
     params: {
       ...(estado ? { estado } : {}),
       ...(definicion ? { definicion } : {}),
+      ...(sujetoId ? { sujetoId } : {}),
     },
   });
   return data;

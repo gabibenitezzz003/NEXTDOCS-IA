@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import {
   confirmarEmparejamiento,
   eliminarDocumento,
@@ -11,7 +12,15 @@ import {
   type CampoValor,
 } from "../../api/documental";
 import { mensajeDeError } from "../../api/cliente";
-import { Boton, BotonIcono, Campo, DialogoConfirmacion, Tarjeta } from "../../componentes/Interfaz";
+import { listarInstancias } from "../../api/procesos";
+import {
+  Boton,
+  BotonIcono,
+  Campo,
+  DialogoConfirmacion,
+  Pastilla,
+  Tarjeta,
+} from "../../componentes/Interfaz";
 import { Cargando, ErrorPanel, Vacio } from "../../componentes/Estados";
 import { BarraConfianza } from "../../componentes/Insignias";
 import {
@@ -20,6 +29,7 @@ import {
   IconoCorreo,
   IconoEliminar,
   IconoIzquierda,
+  IconoProceso,
   IconoRecargar,
 } from "../../componentes/Iconos";
 import { useIdioma } from "../../contextos/ProveedorIdioma";
@@ -204,6 +214,13 @@ export function VisorInteligente({
     queryKey: ["documental-bitacora", documentoId],
     queryFn: () => obtenerBitacora(documentoId),
   });
+
+  const procesos = useQuery({
+    queryKey: ["documental-procesos", documentoId],
+    queryFn: () => listarInstancias(undefined, undefined, documentoId),
+    staleTime: 15000,
+  });
+  const instancias = procesos.data ?? [];
 
   const [campoActivo, setCampoActivo] = useState<string | null>(null);
   const [pestana, setPestana] = useState<PestanaVisor>("campos");
@@ -537,6 +554,52 @@ export function VisorInteligente({
         >
           {aviso.texto}
         </p>
+      ) : null}
+
+      {instancias.length ? (
+        <Tarjeta padding="p-espacio-3">
+          <div className="flex flex-wrap items-center gap-espacio-3">
+            <span className="inline-flex items-center gap-espacio-2 text-pequeno font-semibold text-tinta">
+              <IconoProceso tamano={15} />
+              {t("documental.visor.enProceso")}
+            </span>
+            {instancias.map((instancia) => {
+              const tareaActual = instancia.tareas?.find(
+                (tarea) =>
+                  tarea.estado === "PENDIENTE" || tarea.estado === "VENCIDA",
+              );
+              return (
+                <Link
+                  key={instancia.id}
+                  to={`/operacion/instancias/${instancia.id}`}
+                  className="inline-flex min-w-0 items-center gap-espacio-2 rounded-control border border-borde bg-lienzo px-espacio-3 py-espacio-2 text-pequeno text-tinta transition-colors hover:border-accion-primaria focus-visible:outline-foco"
+                >
+                  <span className="truncate font-semibold">
+                    {instancia.codigoDefinicion}
+                  </span>
+                  <Pastilla
+                    tono={
+                      instancia.estado === "COMPLETADA"
+                        ? "exito"
+                        : instancia.estado === "BLOQUEADA"
+                          ? "alerta"
+                          : instancia.estado === "CANCELADA"
+                            ? "rojo"
+                            : "informacion"
+                    }
+                  >
+                    {t(`estadoInstancia.${instancia.estado}`)}
+                  </Pastilla>
+                  {tareaActual ? (
+                    <span className="truncate text-tinta-suave">
+                      {tareaActual.nombreNodo?.trim() || tareaActual.nodoId}
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </div>
+        </Tarjeta>
       ) : null}
 
       <div className="grid min-h-0 flex-1 grid-cols-1 gap-espacio-4 lg:grid-cols-[1.15fr_1fr]">

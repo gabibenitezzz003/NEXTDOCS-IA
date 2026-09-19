@@ -153,14 +153,23 @@ export function Resumen() {
                 destino="/documental/plantillas"
                 accion={t("resumen.pasoTiposAccion")}
               />
-              <PasoInicio
-                numero={3}
-                titulo={t("resumen.pasoEquipo")}
-                detalle={t("resumen.pasoEquipoDesc")}
-                destino="/equipo"
-                accion={t("resumen.pasoEquipoAccion")}
-                soloAdmin
-              />
+              {tienePermiso("tenant.administrar") ? (
+                <PasoInicio
+                  numero={3}
+                  titulo={t("resumen.pasoProceso")}
+                  detalle={t("resumen.pasoProcesoDesc")}
+                  destino="/workflow"
+                  accion={t("resumen.pasoProcesoAccion")}
+                />
+              ) : (
+                <PasoInicio
+                  numero={3}
+                  titulo={t("resumen.pasoTareas")}
+                  detalle={t("resumen.pasoTareasDesc")}
+                  destino="/tareas"
+                  accion={t("resumen.pasoTareasAccion")}
+                />
+              )}
             </ol>
           </Tarjeta>
         ) : null}
@@ -566,19 +575,13 @@ function PasoInicio({
   detalle,
   destino,
   accion,
-  soloAdmin,
 }: {
   numero: number;
   titulo: string;
   detalle: string;
   destino: string;
   accion: string;
-  soloAdmin?: boolean;
 }) {
-  const { tienePermiso } = useSesion();
-  if (soloAdmin && !tienePermiso("tenant.administrar")) {
-    return null;
-  }
   return (
     <li className="flex min-w-0 flex-col rounded-control border border-violeta-borde bg-superficie p-espacio-4">
       <div className="flex items-center gap-espacio-2">

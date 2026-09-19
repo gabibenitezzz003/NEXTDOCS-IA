@@ -73,17 +73,17 @@ export const pt: Diccionario = {
     grupoHoy: "Hoje",
     grupoDocumentos: "Documentos",
     grupoAutomatizacion: "Automação",
-    grupoOrganizacion: "Organização",
+    grupoOrganizacion: "Configuração",
     navResumen: "Meu trabalho",
     navDocumentos: "Documentos",
-    navDocumental: "Inteligência documental",
+    navDocumental: "Documentos",
     navExcepciones: "Exceções",
     navTareas: "Minhas tarefas",
     navOperacion: "Processos em curso",
-    navStudio: "Workflow",
-    navSupervisora: "Regras",
+    navStudio: "Processos",
+    navSupervisora: "Regras de supervisão",
     navPartners: "Partners",
-    navMarketplace: "Marketplace",
+    navMarketplace: "Catálogo",
     navIntegraciones: "Integrações",
     navPanel: "Indicadores",
     navTiposNuevos: "Tipos detectados",
@@ -192,7 +192,7 @@ export const pt: Diccionario = {
     },
     rolDesc: {
       ADMINISTRADOR:
-        "Gerencia tudo: equipe, workflow, regras e configurações da organização.",
+        "Gerencia tudo: equipe, processos, regras e configurações da organização.",
       OPERADOR:
         "Trabalha com documentos e tarefas do dia a dia. Não altera configurações.",
       REVISOR: "Revisa e decide sobre documentos observados e exceções.",
@@ -428,7 +428,7 @@ export const pt: Diccionario = {
       "O que precisa da sua atenção agora: tarefas pendentes, processos bloqueados e atividade recente.",
     bienvenida: "Comece por aqui",
     bienvenidaDesc:
-      "Seu espaço está pronto. Com estes três passos sua organização começa a operar.",
+      "Os documentos entram, o sistema os entende e os processos os movem. Com estes três passos fica funcionando.",
     pasoSubir: "Envie seu primeiro documento",
     pasoSubirDesc:
       "Arraste uma fatura, recibo ou qualquer PDF: o sistema classifica e lê os dados sozinho.",
@@ -437,10 +437,14 @@ export const pt: Diccionario = {
     pasoTiposDesc:
       "Cada tipo define quais dados são lidos e quando um documento pode ser aprovado sozinho. Os mais comuns já vêm prontos.",
     pasoTiposAccion: "Ver tipos",
-    pasoEquipo: "Adicione sua equipe",
-    pasoEquipoDesc:
-      "Crie acessos para seus funcionários e atribua um papel. Eles entram com o e-mail e o código da organização.",
-    pasoEquipoAccion: "Ir para Equipe",
+    pasoProceso: "Automatize o percurso",
+    pasoProcesoDesc:
+      "Desenhe ou instale um processo: cada tipo de documento avança sozinho pelas etapas e só para onde uma pessoa é necessária.",
+    pasoProcesoAccion: "Abrir Processos",
+    pasoTareas: "Seu trabalho aparece em Tarefas",
+    pasoTareasDesc:
+      "Quando um processo precisa que alguém revise, assine ou entregue um documento, a tarefa espera por você aqui.",
+    pasoTareasAccion: "Ir para Minhas tarefas",
     accionRequerida: "Ação requerida",
     miTrabajo: "Seu trabalho pendente",
     miTrabajoDesc:
@@ -777,7 +781,7 @@ export const pt: Diccionario = {
   operacion: {
     titulo: "Operação de processos",
     descripcion:
-      "Execuções dos processos publicados no Workflow: instâncias ativas, indicadores e a etapa em que cada uma está.",
+      "Execuções dos processos publicados: instâncias ativas, indicadores e a etapa em que cada uma está.",
     indicadores: "Indicadores",
     indicadoresDesc: "Como está o motor de processos na janela escolhida.",
     ventanaIndicadores: "Janela dos indicadores",
@@ -812,12 +816,14 @@ export const pt: Diccionario = {
     todosLosProcesos: "Todos os processos",
     sinInstancias: "Ainda não há processos em execução",
     sinInstanciasDetalle:
-      "Inicie um pelo Workflow com o botão Testar processo de uma versão publicada, ou de onde o produto o disparar.",
+      "Inicie um pelo Processos com o botão Testar processo de uma versão publicada, ou de onde o produto o disparar.",
     listaInstancias: "Instâncias de processo",
     version: "Versão {version}",
     iniciada: "iniciada {fecha}",
     finalizada: "finalizada {fecha}",
     sujetoTipo: "sujeito",
+    sujeto: "Sobre",
+    verDocumento: "Ver documento",
     tareasPendientes: "{pendientes} de {total} tarefas pendentes",
     progresoTareas: "{completadas} de {total} tarefas",
     responsableDe: "Responsável: {actor}",
@@ -1337,7 +1343,7 @@ export const pt: Diccionario = {
     instalar: "Instalar",
     confirmarInstalar: "Confirmar instalação",
     instalada: "Instalado",
-    instaladaAviso: "Modelo instalado como cópia própria no workflow.",
+    instaladaAviso: "Processo instalado como cópia própria da sua organização.",
     publicadaAviso: "Versão publicada no marketplace.",
     retiradaAviso: "Publicação retirada do catálogo.",
     retirar: "Retirar",
@@ -1355,13 +1361,13 @@ export const pt: Diccionario = {
     instaladaEl: "Instalada",
     publicadaEl: "Publicada",
     instalacion: "Instalação",
-    abrirEnStudio: "Abrir no workflow",
+    abrirEnStudio: "Abrir em Processos",
     catalogoVacio: "O catálogo está vazio",
     catalogoVacioDetalle:
       "Quando um tenant publicar um modelo, ele aparecerá aqui para instalar como cópia própria.",
     sinInstalaciones: "Sem modelos instalados",
     sinInstalacionesDetalle:
-      "Instale um modelo do catálogo para materializar uma cópia própria no workflow.",
+      "Instale um processo do catálogo: ele é copiado para a sua organização pronto para publicar e usar.",
     sinPublicaciones: "Sem publicações",
     sinPublicacionesDetalle:
       "Publique uma versão PUBLICADA de um processo próprio para oferecê-la no catálogo.",
@@ -1511,6 +1517,7 @@ export const pt: Diccionario = {
       ilegible: "Ilegível",
       noFigura: "Não consta",
       noEncontrado: "Documento não encontrado.",
+      enProceso: "Processos com este documento",
       delLote: "{valor} no lote",
       pagina: "Página",
       paginaAnterior: "Página anterior",
